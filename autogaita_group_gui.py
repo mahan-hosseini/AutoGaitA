@@ -193,10 +193,10 @@ def build_mainwindow(root, group_number, root_dimensions):
         )
         cfgheader_label.grid(row=2, column=0, columnspan=2, pady=10, sticky="nsew")
         # !!! only for easier testing - initial names & dirs
-        initial_names = ["one", "two", "", "", "", ""]
+        initial_names = ["", "", "", "", "", ""]
         initial_dirs = [
-            "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group2/",
-            "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group1/",
+            "",
+            "",
             "",
             "",
             "",
@@ -246,7 +246,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         # results dir
         results_dir = tk.StringVar(
             mainwindow,
-            "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/GroupResults/",
+            "",
         )
         results_dir_string = "Where do you want group-results to be saved?"
         results_dir_label = ctk.CTkLabel(mainwindow, text=results_dir_string)
@@ -442,6 +442,10 @@ def definefeatures_window(
             error_msg = "No directory found at: " + directory
             tk.messagebox.showerror(title="Folder not found!", message=error_msg)
             return
+    if not results_dir.get():
+        error_msg = "You did not specify a directory to save results to!"
+        tk.messagebox.showerror(title="Folder not found!", message=error_msg)
+        return
     if not os.path.exists(results_dir.get()):  # for results dir, create if not there
         os.makedirs(results_dir.get())
     some_groups_dir = group_dirs[0].get()

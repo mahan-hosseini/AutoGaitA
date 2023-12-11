@@ -86,11 +86,11 @@ def dlc_gui():
     # of POPULATE_RUN_WINDOW local function
     global cfg
     cfg = {}
-    cfg["sampling_rate"] = tk.StringVar(root, "100")
+    cfg["sampling_rate"] = tk.StringVar(root, "")
     cfg["subtract_beam"] = tk.BooleanVar(root, True)
     cfg["dont_show_plots"] = tk.BooleanVar(root, False)
-    cfg["convert_to_mm"] = tk.BooleanVar(root, True)
-    cfg["pixel_to_mm_ratio"] = tk.StringVar(root, "3.76")
+    cfg["convert_to_mm"] = tk.BooleanVar(root, False)
+    cfg["pixel_to_mm_ratio"] = tk.StringVar(root, "")
     cfg["x_sc_broken_threshold"] = tk.StringVar(root, "200")
     cfg["y_sc_broken_threshold"] = tk.StringVar(root, "50")
     cfg["x_acceleration"] = tk.BooleanVar(root, True)
@@ -861,19 +861,19 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
     # .........................  prepare vars  .................................
     results = {}
     if analysis == "single":
-        results["mouse_num"] = tk.StringVar(runwindow, 18)
-        results["run_num"] = tk.StringVar(runwindow, 2)
+        results["mouse_num"] = tk.StringVar(runwindow, "")
+        results["run_num"] = tk.StringVar(runwindow, "")
     results["root_dir"] = tk.StringVar(
         runwindow,
-        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/",
+        "",
     )
-    results["sctable_filename"] = tk.StringVar(runwindow, "25mm")
-    results["data_string"] = tk.StringVar(runwindow, "SIMINew")
-    results["beam_string"] = tk.StringVar(runwindow, "BeamTraining")
-    results["premouse_string"] = tk.StringVar(runwindow, "Mouse")
-    results["postmouse_string"] = tk.StringVar(runwindow, "_25mm")
-    results["prerun_string"] = tk.StringVar(runwindow, "run")
-    results["postrun_string"] = tk.StringVar(runwindow, "-6DLC")
+    results["sctable_filename"] = tk.StringVar(runwindow, "")
+    results["data_string"] = tk.StringVar(runwindow, "")
+    results["beam_string"] = tk.StringVar(runwindow, "")
+    results["premouse_string"] = tk.StringVar(runwindow, "")
+    results["postmouse_string"] = tk.StringVar(runwindow, "")
+    results["prerun_string"] = tk.StringVar(runwindow, "")
+    results["postrun_string"] = tk.StringVar(runwindow, "")
 
     # ........................  build the frame  ...............................
     if analysis == "single":

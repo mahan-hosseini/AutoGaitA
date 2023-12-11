@@ -75,10 +75,10 @@ def simi_gui():
     global cfg  # global cfg variable
     cfg = {}
     cfg["analyse_singlerun"] = tk.BooleanVar(root, False)
-    cfg["sampling_rate"] = tk.StringVar(root, "100")
+    cfg["sampling_rate"] = tk.StringVar(root, "")
     cfg["dont_show_plots"] = tk.BooleanVar(root, False)
-    cfg["y_acceleration"] = tk.BooleanVar(root, False)
-    cfg["angular_acceleration"] = tk.BooleanVar(root, False)
+    cfg["y_acceleration"] = tk.BooleanVar(root, True)
+    cfg["angular_acceleration"] = tk.BooleanVar(root, True)
     cfg["bin_num"] = tk.StringVar(root, "25")
     cfg["plot_joint_number"] = tk.StringVar(root, "3")
     cfg["plot_SE"] = tk.BooleanVar(root, False)
@@ -86,9 +86,9 @@ def simi_gui():
     results = {}  # local results variable
     results["name"] = tk.StringVar(root, "")
     results["root_dir"] = tk.StringVar(
-        root, "/Users/mahan/sciebo/Research/AutoGaitA/Human/Testing/"
+        root, ""
     )
-    results["sctable_filename"] = tk.StringVar(root, "SC Latency Table")
+    results["sctable_filename"] = tk.StringVar(root, "")
     results["postname_flag"] = tk.BooleanVar(root, False)
     results["postname_string"] = tk.StringVar(root, "")
     # joint columns
