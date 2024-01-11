@@ -101,6 +101,7 @@ def dlc_gui():
     cfg["plot_SE"] = tk.BooleanVar(root, False)
     cfg["normalise_height_at_SC_level"] = tk.BooleanVar(root, False)
     cfg["invert_y_axis"] = tk.BooleanVar(root, True)
+    cfg["flip_gait_direction"] = tk.BooleanVar(root, True)
     # joint columns - hind limb
     default_hind_joints = ["Hind paw tao ", "Ankle ", "Knee ", "Hip ", "Iliac Crest "]
     cfg["hind_joints"] = []
@@ -420,6 +421,18 @@ def build_cfg_window(root, cfg, root_dimensions):
         fg_color=FG_COLOR,
     )
     invert_y_axis_box.grid(row=13, column=0)
+    # flip gait direction
+    flip_gait_direction_string = "Standardise gait direction"
+    flip_gait_direction_box = ctk.CTkCheckBox(
+        cfg_window,
+        text=flip_gait_direction_string,
+        variable=cfg["flip_gait_direction"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+    )
+    flip_gait_direction_box.grid(row=14, column=0)
     # column name information window
     column_info_string = "Configure custom column names & features"
     column_info_button = ctk.CTkButton(
@@ -430,7 +443,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
     column_info_button.grid(
-        row=14, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=15, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -441,7 +454,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: cfg_window.destroy(),
     )
     adv_cfg_done_button.grid(
-        row=16, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=17, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # maximise widgets
     maximise_widgets(cfg_window)
@@ -1106,14 +1119,22 @@ def get_results_and_cfg(results, cfg):
             input_dict = cfg
         for key in input_dict.keys():
             if key in FLOAT_VARS:
-                try:
-                    output_dicts[i][key] = float(input_dict[key].get())
-                except ValueError:
-                    return (
-                        key
-                        + " value was not a decimal number, but "
-                        + input_dict[key].get()
-                    )
+                # make sure that if user doesn't want to convert then we just use 0 so
+                # the float() statement doesn't throw an error
+                # => set the outer dict directly instead of modulating the input_dict,
+                #    since that would also modify cfg which might be dangerous for
+                #    future runs
+                if (key == "pixel_to_mm_ratio") & (cfg["convert_to_mm"].get() is False):
+                    output_dicts[i][key] = 0
+                else:
+                    try:
+                        output_dicts[i][key] = float(input_dict[key].get())
+                    except ValueError:
+                        return (
+                            key
+                            + " value was not a decimal number, but "
+                            + input_dict[key].get()
+                        )
             elif key in INT_VARS:
                 try:
                     output_dicts[i][key] = int(input_dict[key].get())

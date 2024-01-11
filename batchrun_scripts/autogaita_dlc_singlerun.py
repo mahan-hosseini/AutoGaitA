@@ -28,6 +28,7 @@ BIN_NUM = 25
 PLOT_SE = True
 NORMALISE_HEIGHT_AT_SC_LEVEL = True
 INVERT_Y_AXIS = True
+FLIP_GAIT_DIRECTION = True
 PLOT_JOINT_NUMBER = 3
 HIND_JOINTS = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
 FORE_JOINTS = [
@@ -95,6 +96,7 @@ def prepare_cfg():
     cfg["normalise_height_at_SC_level"] = NORMALISE_HEIGHT_AT_SC_LEVEL
     cfg["plot_joint_number"] = PLOT_JOINT_NUMBER
     cfg["invert_y_axis"] = INVERT_Y_AXIS
+    cfg["flip_gait_direction"] = FLIP_GAIT_DIRECTION
     cfg["hind_joints"] = HIND_JOINTS
     cfg["fore_joints"] = FORE_JOINTS
     cfg["beam_hind_jointadd"] = BEAM_HIND_JOINTADD

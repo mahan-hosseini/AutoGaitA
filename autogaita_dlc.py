@@ -79,6 +79,7 @@ def some_prep(info, folderinfo, cfg):
     pixel_to_mm_ratio = cfg["pixel_to_mm_ratio"]
     normalise_height_at_SC_level = cfg["normalise_height_at_SC_level"]
     invert_y_axis = cfg["invert_y_axis"]
+    flip_gait_direction = cfg["flip_gait_direction"]
 
     # .............................  move data  ........................................
     # => see if we can delete a previous runs results folder if existant. if not, it's a
@@ -245,7 +246,7 @@ def some_prep(info, folderinfo, cfg):
             if not column.endswith("likelihood"):
                 data[column] = data[column] / pixel_to_mm_ratio
     # check gait direction & DLC file validity
-    data = check_gait_direction(data, direction_joint, info)
+    data = check_gait_direction(data, direction_joint, flip_gait_direction, info)
     if data is None:  # this means DLC file is broken
         return
     # subtract the beam from the joints to normalise y
@@ -526,13 +527,15 @@ def flip_mouse_body(data, info):
     return flipped_data
 
 
-def check_gait_direction(data, direction_joint, info):
+def check_gait_direction(data, direction_joint, flip_gait_direction, info):
     """Check direction of gait - reverse it if needed
 
     Note
     ----
     Also using this check to check for DLC files being broken
+    flip_gait_direction is only used after the check for DLC files being broken
     """
+
 
     data["Flipped"] = False
     enterframe = 0
@@ -584,9 +587,10 @@ def check_gait_direction(data, direction_joint, info):
         data[direction_joint + "x"][enterframe]
         > data[direction_joint + "x"][leaveframe]
     ):  # i.e.: right to left
-        # simulate that mouse ran from left to right
-        data = flip_mouse_body(data, info)
-        data["Flipped"] = True
+        # simulate that mouse ran from left to right (only if user wants it)
+        if flip_gait_direction:
+            data = flip_mouse_body(data, info)
+            data["Flipped"] = True
     return data
 
 
