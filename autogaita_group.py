@@ -287,30 +287,31 @@ def extract_cfg_vars(folderinfo, cfg):
 
 
     # .........................  test if PCA config is valid  ..........................
-    if len(cfg["PCA_variables"]) < cfg["number_of_PCs"]:
-        PCA_variable_num = len(cfg["PCA_variables"])
-        PCA_variables_str = '\n'.join(cfg["PCA_variables"])
-        PCA_error_message = (
-        "\n***********\n! ERROR !\n***********\n"
-        + "\nPCA Configuration invalid, number of input features cannot exceed number "
-        + "of principal components to compute!\n"
-        + str(PCA_variable_num)
-        + " PCA variables: \n"
-        + PCA_variables_str
-        + "\n & Number of wanted PCs: "
-        + str("number_of_PCs")
-        + "\n Fix & re-run!"
-        )
-        write_issues_to_textfile(PCA_error_message, results_dir)
-        raise ValueError(PCA_error_message)
-    if cfg["number_of_PCs"] < 2:
-        print(
-            "\n***********\n! WARNING !\n***********\n"
-            + "Number of principal components of PCA cannot be smaller than 2!"
-            + "\nRunning PCA on 2 components - if you do not want to perform PCA, just "
-            + "don't choose any variables for it."
+    if cfg["PCA_variables"]:  # only test if user wants PCA (ie. selected any features)
+        if len(cfg["PCA_variables"]) < cfg["number_of_PCs"]:
+            PCA_variable_num = len(cfg["PCA_variables"])
+            PCA_variables_str = '\n'.join(cfg["PCA_variables"])
+            PCA_error_message = (
+            "\n***********\n! ERROR !\n***********\n"
+            + "\nPCA Configuration invalid, number of input features cannot exceed "
+            + "number of principal components to compute!\n"
+            + str(PCA_variable_num)
+            + " PCA variables: \n"
+            + PCA_variables_str
+            + "\n & Number of wanted PCs: "
+            + str("number_of_PCs")
+            + "\n Fix & re-run!"
             )
-        cfg["number_of_PCs"] = 2  # make sure to update in cfg dict
+            write_issues_to_textfile(PCA_error_message, results_dir)
+            raise ValueError(PCA_error_message)
+        if cfg["number_of_PCs"] < 2:
+            print(
+                "\n***********\n! WARNING !\n***********\n"
+                + "Number of principal components of PCA cannot be smaller than 2!"
+                + "\nRunning PCA on 2 components - if you do not want to perform PCA, "
+                + "just don't choose any variables for it."
+                )
+            cfg["number_of_PCs"] = 2  # make sure to update in cfg dict
 
 
     # ..............................  dont show plots  .................................
@@ -2145,28 +2146,36 @@ def print_start(folderinfo, cfg):
         start_string += "\n" + group_name
     # pca
     start_string += "\n\n\n*****\n PCA \n*****"
-    start_string += "\n\nFeatures:"
-    for PCA_var in cfg["PCA_variables"]:
-        start_string += "\n" + PCA_var
-    start_string += (
-        "\n\nConfiguration:\n" + str(cfg["number_of_PCs"]) + " principal components"
-    )
+    if cfg["PCA_variables"]:
+        start_string += "\n\nFeatures:"
+        for PCA_var in cfg["PCA_variables"]:
+            start_string += "\n" + PCA_var
+        start_string += (
+            "\n\nConfiguration:\n" + str(cfg["number_of_PCs"]) + " principal components"
+        )
+    else:
+        start_string += "\n\nNo PCA wanted!"
     # stats
     start_string += "\n\n\n*************\n Statistics \n*************"
-    start_string += "\n\nFeatures:"
-    for stats_var in cfg["stats_variables"]:
-        start_string += "\n" + stats_var
-    start_string += "\n\nConfiguration:"
-    if cfg["do_anova"]:
-        start_string += "\n" + cfg["anova_design"]
+    if cfg["stats_variables"]:
+        start_string += "\n\nFeatures:"
+        for stats_var in cfg["stats_variables"]:
+            start_string += "\n" + stats_var
+        start_string += "\n\nConfiguration:"
+        if cfg["do_anova"]:
+            start_string += "\n" + cfg["anova_design"]
+        else:
+            start_string += "\nNo Anova"
+        start_string += (
+            "\nCluster-extent permutation test with "
+            + str(cfg["permutation_number"])
+            + " permutations"
+        )
+        start_string += (
+            "\nAlpha Level of " + str(cfg["stats_threshold"] * 100) + "%\n\n"
+            )
     else:
-        start_string += "\n No Anova"
-    start_string += (
-        "\nCluster-extent permutation test with "
-        + str(cfg["permutation_number"])
-        + " permutations"
-    )
-    start_string += "\nAlpha Level of " + str(cfg["stats_threshold"] * 100) + "%"
+        start_string += "\n\nNo stats wanted!\n\n"
 
     # done - print
     print(start_string)
