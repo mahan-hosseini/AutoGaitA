@@ -1245,6 +1245,11 @@ def compute_and_assign_clustersize(results_df, contrast):
         if results_df.iloc[i, ttest_mask_col_idx] == True:
             this_cluster_size += 1
             this_cluster_indices.append(i)
+            # handle the case of results_df ending with a sig. cluster
+            if i == max(np.where(results_df[CONTRASTS_COL] == contrast)[0]):
+                results_df.iloc[
+                    this_cluster_indices, cluster_size_col_idx
+                ] = this_cluster_size
         else:  # if p was not significant, assign the previous cluster & reset our vars
             results_df.iloc[
                 this_cluster_indices, cluster_size_col_idx
