@@ -491,7 +491,8 @@ def definefeatures_window(
     # grid prep
     scrollbar_rows = 5  # scrollbar rowspan (in featureswindow)
     scrollbar_grid_ncols = 3
-    scrollbar_grid_nrows = math.ceil(len(feature_strings) / scrollbar_grid_ncols)
+    # + 5 to be sure we have enough rows
+    scrollbar_grid_nrows = math.ceil(len(feature_strings) / scrollbar_grid_ncols) + 5
 
     # stats label
     stats_label = ctk.CTkLabel(
@@ -529,7 +530,7 @@ def definefeatures_window(
             key = "stats_variables"
         elif frame == PCA_frame:
             key = "PCA_variables"
-        row_counter = 0
+        row_counter = 1  # index rows at 1 for the top otherwise it breaks (dont ask)
         col_counter = 0
         for feature in feature_strings:
             checkbox_vars[key][feature] = var = tk.BooleanVar()
@@ -541,13 +542,13 @@ def definefeatures_window(
                 hover_color=HOVER_COLOR,
                 font=("Britannic Bold", HEADER_FONT_SIZE - 5),
             )
-            if row_counter <= scrollbar_grid_nrows:
-                this_checkbox.grid(row=row_counter, column=col_counter, sticky="nsew")
-                row_counter += 1
-            else:
-                row_counter = 0
+            this_checkbox.grid(row=row_counter, column=col_counter, sticky="nsew")
+            row_counter += 1
+            # # CARE - the -1 is important here since indexing starts at 0 and grid_nrows
+            # # is like len() kinda
+            if row_counter == scrollbar_grid_nrows:  # not nrows-1 because we start @ 1
+                row_counter = 1  # index rows at 1 for the top otherwise it breaks
                 col_counter += 1
-                this_checkbox.grid(row=row_counter, column=col_counter, sticky="nsew")
         # maximise widgets to fit frame (of scrollbar!)
         maximise_widgets(frame)
 
