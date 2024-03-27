@@ -13,7 +13,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation, FFMpegWriter
-from pingouin import mixed_anova
+from pingouin import sphericity, mixed_anova
 from scipy import stats
 
 # %% A note on cross species functionality
@@ -60,8 +60,9 @@ SC_PERCENTAGE_COL = "SC Percentage"
 CONTRASTS_COL = "Contrasts"
 TTEST_MASK_THRESHOLD = 0.05
 TTEST_P_COL = "Ttest p"
+TTEST_T_COL = "Ttest t"
 TTEST_MASK_COL = "Ttest Mask"
-CLUSTER_SIZE_COL = "Cluster Size"
+CLUSTER_TMASS_COL = "Cluster Tmass"
 CLUSTER_P_COL = "Cluster p"
 CLUSTER_MASK_COL = "Cluster Mask"
 
@@ -116,10 +117,11 @@ def group(folderinfo, cfg):
 
     # ......................  cluster-extent permutation test  .........................
     if cfg["stats_variables"]:  # empty lists are falsey!
-        for stats_var in cfg["stats_variables"]:
-            cluster_extent_test(
-                stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg
-            )
+        if cfg["do_permtest"]:
+            for stats_var in cfg["stats_variables"]:
+                cluster_extent_test(
+                    stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg
+                )
 
     # ..................................  ANOVA  .......................................
         if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
@@ -166,7 +168,6 @@ def some_prep(folderinfo, cfg):
 
     # extracted_cfg_vars: save_to_xls, PCA tests & dont show plots
     cfg = extract_cfg_vars(folderinfo, cfg)
-
 
     # see if there's a config json file and add to cfg dict
     for g_idx, group_dir in enumerate(group_dirs):
@@ -299,7 +300,7 @@ def extract_cfg_vars(folderinfo, cfg):
             + " PCA variables: \n"
             + PCA_variables_str
             + "\n & Number of wanted PCs: "
-            + str("number_of_PCs")
+            + str(cfg["number_of_PCs"])
             + "\n Fix & re-run!"
             )
             write_issues_to_textfile(PCA_error_message, results_dir)
@@ -316,6 +317,7 @@ def extract_cfg_vars(folderinfo, cfg):
 
     # ..............................  dont show plots  .................................
     # => in group gaita is always dependent on user system
+    # !!! THIS DOES NOT PLOT ANYTHING BUT I HAD TO DO IT LIKE THIS OTHERWISE IT CRASHES
     # !!! If users should complain that they dont get figures but they should, it might
     #     be because these lines wrongly determine user to be in non-interactive mode
     #     while they are not!
@@ -1040,7 +1042,7 @@ def plot_PCA(PCA_df, PCA_info, folderinfo, cfg):
             + str(round(PCA_info["explained_vars"][2] * 100, 2))
             + "%"
         )
-    f.savefig(results_dir + "PCA Scatterplot.png")
+    f.savefig(results_dir + "PCA Scatterplot.png", bbox_inches="tight")
     save_as_svg(f, results_dir, "PCA Scatterplot")
     if dont_show_plots:
         plt.close(f)
@@ -1049,7 +1051,7 @@ def plot_PCA(PCA_df, PCA_info, folderinfo, cfg):
 
     # 3d scatterplot image file
     if number_of_PCs > 2:
-        f_3d.savefig(results_dir + "PCA 3D Scatterplot.png")
+        f_3d.savefig(results_dir + "PCA 3D Scatterplot.png", bbox_inches="tight")
         save_as_svg(f_3d, results_dir, "PCA 3D Scatterplot")
         if dont_show_plots:
             plt.close(f_3d)
@@ -1123,14 +1125,15 @@ def cluster_extent_test(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, c
         trueobs_df, trueobs_results_df, stats_var, folderinfo
     )
     # permutation
-    max_clustersizes = np.zeros(permutation_number)
+    max_tmass = np.zeros(permutation_number)  # tmass
     for p in range(permutation_number):
         permuted_df = permute_true_observed_df(trueobs_df, cfg)
         permuted_results_df = initialise_results_df(folderinfo, cfg)
         permuted_results_df = compute_first_level_results(
             permuted_df, permuted_results_df, stats_var, folderinfo
         )
-        max_clustersizes[p] = max(permuted_results_df[CLUSTER_SIZE_COL])
+        # max tmass
+        max_tmass[p] = max(permuted_results_df[CLUSTER_TMASS_COL])
         sys.stdout.write(
             "\r*************** Permuting "
             + stats_var
@@ -1143,7 +1146,7 @@ def cluster_extent_test(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, c
         sys.stdout.flush()
     # assign final p values of true observed cluster sizes
     trueobs_results_df = test_trueobs_clusters(
-        trueobs_results_df, max_clustersizes, permutation_number, stats_threshold
+        trueobs_results_df, max_tmass, permutation_number, stats_threshold
     )
     # print & save exact numerical results (significant SC % clusters) to a textfile
     save_stats_results_to_text(
@@ -1153,7 +1156,6 @@ def cluster_extent_test(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, c
         folderinfo,
         cfg,
     )
-
     # plot results
     plot_permutation_test_results(
         g_avg_dfs, g_std_dfs, trueobs_results_df, stats_var, folderinfo, cfg
@@ -1174,8 +1176,9 @@ def initialise_results_df(folderinfo, cfg):
     results_df = pd.DataFrame(data=initial_contrasts_list, columns=[CONTRASTS_COL])
     results_df[SC_PERCENTAGE_COL] = None
     results_df[TTEST_P_COL] = float(1)
+    results_df[TTEST_T_COL] = float(0)
     results_df[TTEST_MASK_COL] = False
-    results_df[CLUSTER_SIZE_COL] = 0
+    results_df[CLUSTER_TMASS_COL] = 0.0
     return results_df
 
 
@@ -1217,16 +1220,17 @@ def run_and_assign_ttest(
     # get location of current SC Percentage
     sc_percentage_col_idx = results_df.columns.get_loc(SC_PERCENTAGE_COL)
     results_df.iloc[idx, sc_percentage_col_idx] = sc_percentage
-    # extract the two arrays to be tested, test & get its p-value
+    # extract the two arrays to be tested, test & get its results
     arr1 = extract_variable_array(stats_df, stats_var, group1, sc_percentage)
     arr2 = extract_variable_array(stats_df, stats_var, group2, sc_percentage)
-    this_p = stats.ttest_ind(arr1, arr2)[1]
-    # assign the p-value and assign significance mask to mask-column
+    this_t, this_p = stats.ttest_ind(arr1, arr2)
+    # assign the t & p-value and assign significance mask to mask-column
     # ==> this_result_rowidx_mask is all False & one True, with the True being current
     #     contrast & SC Percentage
     this_result_rowidx_mask = (results_df[CONTRASTS_COL] == contrast) & (
         results_df[SC_PERCENTAGE_COL] == sc_percentage
     )
+    results_df.loc[this_result_rowidx_mask, TTEST_T_COL] = this_t
     results_df.loc[this_result_rowidx_mask, TTEST_P_COL] = this_p
     if this_p < TTEST_MASK_THRESHOLD:
         results_df.loc[this_result_rowidx_mask, TTEST_MASK_COL] = True
@@ -1237,28 +1241,38 @@ def compute_and_assign_clustersize(results_df, contrast):
     """Compute size of all clusters of a given contrast and assign to results_df."""
     # prepare some variables
     ttest_mask_col_idx = results_df.columns.get_loc(TTEST_MASK_COL)
-    cluster_size_col_idx = results_df.columns.get_loc(CLUSTER_SIZE_COL)
-    this_cluster_size = 0
+    ttest_tval_col_idx = results_df.columns.get_loc(TTEST_T_COL)
+    tmass_col_idx = results_df.columns.get_loc(CLUSTER_TMASS_COL)
+    this_tmass = 0.0  # tmass
+    this_cluster_size = 0  # cluster size only used for checking if all ps were sig
     this_cluster_indices = []
-    # loop over current contrast, update cluster size & indices if p was significant
+    # loop over current contrast, update tmass, cluster size & indices if p was
+    # significant
     for i in np.where(results_df[CONTRASTS_COL] == contrast)[0]:
         if results_df.iloc[i, ttest_mask_col_idx] == True:
-            this_cluster_size += 1
+            this_tmass += abs(results_df.iloc[i, ttest_tval_col_idx])  # tval
+            this_cluster_size += 1  # cluster size
             this_cluster_indices.append(i)
             # handle the case of results_df ending with a sig. cluster
             if i == max(np.where(results_df[CONTRASTS_COL] == contrast)[0]):
                 results_df.iloc[
-                    this_cluster_indices, cluster_size_col_idx
-                ] = this_cluster_size
-        else:  # if p was not significant, assign the previous cluster & reset our vars
+                    this_cluster_indices, tmass_col_idx
+                    ] = this_tmass
+        else:
+            # if p was not significant, assign the previous cluster & reset our vars
+            # => note this else also occurs when we keep having nonsig ts but for those
+            #    nothing happens... coding it like this might make it a bit slower than
+            #    a more sophisticated conditional logic here but the difference should
+            #    be minimal so I just keep it as is
             results_df.iloc[
-                this_cluster_indices, cluster_size_col_idx
-            ] = this_cluster_size
+                this_cluster_indices, tmass_col_idx
+            ] = this_tmass
+            this_tmass = 0.0
             this_cluster_size = 0
             this_cluster_indices = []
     # handle case of all ps being significant
     if this_cluster_size == len(np.where(results_df[CONTRASTS_COL] == contrast)[0]):
-        results_df.iloc[this_cluster_indices, cluster_size_col_idx] = this_cluster_size
+        results_df.iloc[this_cluster_indices, tmass_col_idx] = this_tmass
     return results_df
 
 
@@ -1287,19 +1301,20 @@ def permute_true_observed_df(trueobs_df, cfg):
 
 # ................................  second-level test  .................................
 def test_trueobs_clusters(
-    trueobs_results_df, max_clustersizes, permutation_number, stats_threshold
+    trueobs_results_df, max_tmass, permutation_number, stats_threshold
 ):
     """Test the true observed cluster sizes against max cluster sizes under null."""
     # prepare stuff
     trueobs_results_df[CLUSTER_P_COL] = None
     trueobs_results_df[CLUSTER_MASK_COL] = False
     cluster_p_col_idx = trueobs_results_df.columns.get_loc(CLUSTER_P_COL)
-    cluster_size_col_idx = trueobs_results_df.columns.get_loc(CLUSTER_SIZE_COL)
+    cluster_tmass_col_idx = trueobs_results_df.columns.get_loc(CLUSTER_TMASS_COL)
     cluster_mask_col_idx = trueobs_results_df.columns.get_loc(CLUSTER_MASK_COL)
     # loop over results, check each clustersize, assign final p value & mask
     for i in range(len(trueobs_results_df)):
+        # tmass
         this_p = (
-            sum(max_clustersizes >= trueobs_results_df.iloc[i, cluster_size_col_idx])
+            sum(max_tmass >= trueobs_results_df.iloc[i, cluster_tmass_col_idx])
             / permutation_number
         )
         trueobs_results_df.iloc[i, cluster_p_col_idx] = this_p
@@ -1457,11 +1472,17 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
 
     # run the (fully) RM or Mixed ANOVA
     ANOVA_result = run_ANOVA(stats_df, stats_var, cfg)
-    # pingouin automatically checks sphericity to see if p vals have to be GG corrected
-    try:
-        SC_percent_ME_pval = ANOVA_result["p-GG-corr"][1]
-    except:
+    # check if sphericity is given for SC% to see if p vals have to be GG corrected
+    # => even though this is done automatically for mixed anovas, you always get the GG
+    #    col in results of rm anovas so we have to test it ourselves and can not (as
+    #    done in an earlier version of gaita, have "if GG-col is there")
+    sphericity_flag = sphericity(
+        stats_df, dv=stats_var, within=SC_PERCENTAGE_COL, subject=ID_COL
+        )[0]
+    if sphericity_flag:  # sphericity is given, no need to correct
         SC_percent_ME_pval = ANOVA_result["p-unc"][1]
+    else:
+        SC_percent_ME_pval = ANOVA_result["p-GG-corr"][1]
     if SC_percent_ME_pval < 0.05:  # if SC% maineffect is sig, do multcomps
         multcomp_df = multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg)
         save_stats_results_to_text(
@@ -1645,7 +1666,7 @@ def plot_multcomp_results(
         fontsize=PERM_PLOT_SUPLABEL_SIZE,
         y=0.993,
     )
-    f.savefig(results_dir + figure_file_string + ".png")
+    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1753,7 +1774,7 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             )
             ax.set_ylabel("Z")
             figure_file_string = " - Joint Z-coord.s over average step cycle"
-        f.savefig(results_dir + group_name + figure_file_string + ".png")
+        f.savefig(results_dir + group_name + figure_file_string + ".png", bbox_inches="tight")
         save_as_svg(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -1796,7 +1817,7 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.set_title(title_leg + " " + joint + " Z over average step cycle")
             ax.set_ylabel("Z")
             figure_file_string = "- Z-coord.s over average step cycle"
-        f.savefig(results_dir + joint + figure_file_string + ".png")
+        f.savefig(results_dir + joint + figure_file_string + ".png", bbox_inches="tight")
         save_as_svg(f, results_dir, joint + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -1846,7 +1867,7 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 group_name + " - " + which_leg + " joint angles over average step cycle"
             )
         figure_file_string = " - Joint angles over average step cycle"
-        f.savefig(results_dir + group_name + figure_file_string + ".png")
+        f.savefig(results_dir + group_name + figure_file_string + ".png", bbox_inches="tight")
         save_as_svg(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -1882,7 +1903,7 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 title_leg = which_leg
             ax.set_title(title_leg + " " + angle + " angle over average step cycle")
         figure_file_string = " - angle over average step cycle"
-        f.savefig(results_dir + angle + figure_file_string + ".png")
+        f.savefig(results_dir + angle + figure_file_string + ".png", bbox_inches="tight")
         save_as_svg(f, results_dir, angle + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -1951,7 +1972,7 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 + " joint velocities over average step cycle"
             )
         figure_file_string = " - Joint velocities over average step cycle"
-        f.savefig(results_dir + group_name + figure_file_string + ".png")
+        f.savefig(results_dir + group_name + figure_file_string + ".png", bbox_inches="tight")
         save_as_svg(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -2004,7 +2025,7 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 title_leg + " " + joint + " velocities over average step cycle"
             )
         figure_file_string = "- Velocities over average step cycle"
-        f.savefig(results_dir + joint + figure_file_string + ".png")
+        f.savefig(results_dir + joint + figure_file_string + ".png", bbox_inches="tight")
         if dont_show_plots:
             plt.close(f)
 
@@ -2058,7 +2079,7 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
                 + " angular velocities over average step cycle"
             )
         figure_file_string = " - Angular velocities over average step cycle"
-        f.savefig(results_dir + group_name + figure_file_string + ".png")
+        f.savefig(results_dir + group_name + figure_file_string + ".png", bbox_inches="tight")
         save_as_svg(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -2096,7 +2117,7 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
                 title_leg = which_leg
             ax.set_title(title_leg + " " + angle + " - Angular velocities over average step cycle")
         figure_file_string = " - Angular Velocities over average step cycle"
-        f.savefig(results_dir + angle + figure_file_string + ".png")
+        f.savefig(results_dir + angle + figure_file_string + ".png", bbox_inches="tight")
         save_as_svg(f, results_dir, angle + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -2107,7 +2128,7 @@ def save_as_svg(figure, results_dir, figure_file_string):
     svg_dir = os.path.join(results_dir, "SVG Figures")
     if not os.path.exists(svg_dir):
         os.makedirs(svg_dir)
-    figure.savefig(svg_dir + "/" + figure_file_string + ".svg")
+    figure.savefig(svg_dir + "/" + figure_file_string + ".svg", bbox_inches="tight")
 
 
 def ytickconvert_mm_to_cm(axis):
@@ -2214,8 +2235,11 @@ def check_mouse_conversion(feature, cfg):
     if "convert_to_mm" not in cfg.keys():
         return False
     else:
-        if (feature == "y") & (cfg["convert_to_mm"] is True):
-            return True
+        if cfg["convert_to_mm"] is False:
+            return False
+        else:
+            if feature == "y":
+                return True
 
 
 def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cfg):
@@ -2264,12 +2288,44 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
             for cluster in clusters:
                 message = (
                     message
-                    + "\n"
+                    + "\n\n"
                     + str(rounded_sc_percentages[cluster[0]])
                     + "-"
                     + str(rounded_sc_percentages[cluster[1]])
                     + "%"
+                    + ", p values:\n\n"
                 )
+                # add pvals to message
+                # => handle ANOVA and perm test differently since results_df different
+                if "ANOVA" in which_test:
+                    # important to include cluster-end bin here thus cluster[1]+1!
+                    for i in range(cluster[0], cluster[1]+1):
+                        message = (
+                            message
+                            + "\n"
+                            + str(rounded_sc_percentages[i])
+                            + "% - p = "
+                            + str(round(results_df.loc[i, contrast], 4))
+                            )
+                else:
+                    # extract subset df of only this contrast because cluster variables
+                    # idxs values correspond to 0:bin_num and results_df of perm test
+                    # (this is different for anovas) has 0:bin_num*contrast_number!
+                    this_contrast_results_df = results_df[
+                        results_df[CONTRASTS_COL] == contrast
+                        ]
+                    cluster_p_colidx = this_contrast_results_df.columns.get_loc(
+                        CLUSTER_P_COL
+                        )
+                    # also note that we only use cluster[0] to retrieve cluster's pval
+                    # since the pval is constant across the whole cluster always
+                    message = (
+                        message
+                        + "Cluster p value = "
+                        + str(
+                            this_contrast_results_df.iloc[cluster[0], cluster_p_colidx]
+                            )
+                        )
 
     # message end
     message = (

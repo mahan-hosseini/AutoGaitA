@@ -157,8 +157,8 @@ def dlc_gui():
         + "\n\nFor this, it requires: "
         + "\n1) DLC-generated CSV file of joint (i.e., key point) coordinates "
         + "(optional: corresponding video files)."
-        + "\n2) A (group-level) XLS file of step-cycle latencies (see instructions doc)"
-        + "\n3) Optional: corresponding CSV file & video of beam coordinates."
+        + "\n2) A (group-level) Annotation Table Excel file (see documentation)"
+        + "\n3) Optional: corresponding CSV file & video of tracked height baseline."
         + "\nPlease place all these files into a single folder "
         + "(filenames between CSVs and videos have to match)."
         + "\n\nTo use program: \n1) Enter main configuration info below."
@@ -184,12 +184,14 @@ def dlc_gui():
 
     # .........................  left section  .................................
     # sampling rate
-    samprate_label = ctk.CTkLabel(root, text="What is your sampling rate in Hertz?")
+    samprate_label = ctk.CTkLabel(
+        root, text="Insert sampling rate of videos (frames/second)"
+        )
     samprate_label.grid(row=4, column=0)
     samprate_entry = ctk.CTkEntry(root, textvariable=cfg["sampling_rate"])
     samprate_entry.grid(row=5, column=0)
     # subtract beam
-    subtract_beam_string = "Subtract beam from body coordinates"
+    subtract_beam_string = "Normalise y-coordinates to baseline height"
     subtract_beam_checkbox = ctk.CTkCheckBox(
         root,
         text=subtract_beam_string,
@@ -201,7 +203,7 @@ def dlc_gui():
     )
     subtract_beam_checkbox.grid(row=6, column=0)
     # plot plots to python
-    showplots_string = "Don't show plots in Python (only save)"
+    showplots_string = "Don't show plots in Python (save only)"
     showplots_checkbox = ctk.CTkCheckBox(
         root,
         text=showplots_string,
@@ -327,7 +329,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     x_thresh_entry.grid(row=1, column=0)
     # y threshold for rejecting SCs
     y_threshold_string = (
-        "What y-criterion (in pixels) to use for " + "rejecting step cycles?"
+        "What y-criterion (in pixels) to use for rejecting step cycles?"
     )
     y_thresh_label = ctk.CTkLabel(cfg_window, text=y_threshold_string, width=cfg_w)
     y_thresh_label.grid(row=2, column=0)
@@ -358,7 +360,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     )
     angular_accel_box.grid(row=5, column=0)
     # save to xls
-    save_to_xls_string = "Save .xlsx instead of .csv files"
+    save_to_xls_string = "Save results as .xlsx instead of .csv files"
     save_to_xls_box = ctk.CTkCheckBox(
         cfg_window,
         text=save_to_xls_string,
@@ -370,13 +372,13 @@ def build_cfg_window(root, cfg, root_dimensions):
     )
     save_to_xls_box.grid(row=6, column=0)
     # bin number of SC normalisation
-    bin_num_string = "How many bins to use for step cycle normalisation?"
+    bin_num_string = "Number of bins to use for normalising the step cycle"
     bin_num_label = ctk.CTkLabel(cfg_window, text=bin_num_string, width=cfg_w)
     bin_num_label.grid(row=7, column=0)
     bin_num_entry = ctk.CTkEntry(cfg_window, textvariable=cfg["bin_num"])
     bin_num_entry.grid(row=8, column=0)
     # number of hindlimb joints to plot
-    plot_joint_num_string = "How many hindlimb joints to plot in detail?"
+    plot_joint_num_string = "Number of hindlimb joints to plot in detail"
     plot_joint_num__label = ctk.CTkLabel(
         cfg_window, text=plot_joint_num_string, width=cfg_w
     )
@@ -386,7 +388,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     )
     plot_joint_num_entry.grid(row=10, column=0)
     # plot SE
-    plot_SE_string = "Plot standard error instead of standard deviation as error bars"
+    plot_SE_string = "Use standard error instead of standard deviation for plots"
     plot_SE_box = ctk.CTkCheckBox(
         cfg_window,
         text=plot_SE_string,
@@ -398,7 +400,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     )
     plot_SE_box.grid(row=11, column=0)
     # height normalisation at each step cycle separately
-    height_normalisation_string = "Normalise heights for all step cycles separately"
+    height_normalisation_string = "Normalise height of all step cycles separately"
     height_normalisation_box = ctk.CTkCheckBox(
         cfg_window,
         text=height_normalisation_string,
@@ -422,7 +424,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     )
     invert_y_axis_box.grid(row=13, column=0)
     # flip gait direction
-    flip_gait_direction_string = "Standardise gait direction"
+    flip_gait_direction_string = "Adjust x-coordinates to follow direction of movement"
     flip_gait_direction_box = ctk.CTkCheckBox(
         cfg_window,
         text=flip_gait_direction_string,
@@ -434,7 +436,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     )
     flip_gait_direction_box.grid(row=14, column=0)
     # column name information window
-    column_info_string = "Configure custom column names & features"
+    column_info_string = "Customise joints and angles"
     column_info_button = ctk.CTkButton(
         cfg_window,
         text=column_info_string,
@@ -908,61 +910,70 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
     else:
         r = 0
     # root directory
-    rootdir_string = "Where is the directory with the files?"
+    rootdir_string = "Directory location of the folder containing the files to analyse"
     rootdir_label = ctk.CTkLabel(runwindow, text=rootdir_string, width=runwindow_w)
     rootdir_label.grid(row=r + 0, column=0)
     rootdir_entry = ctk.CTkEntry(runwindow, textvariable=results["root_dir"])
     rootdir_entry.grid(row=r + 1, column=0)
     # stepcycle latency XLS
-    SCXLS_string = "What is the name of the step-cycle latency XLS file?"
+    SCXLS_string = "Name of the Annotation Table Excel file"
     SCXLS_label = ctk.CTkLabel(runwindow, text=SCXLS_string, width=runwindow_w)
     SCXLS_label.grid(row=r + 2, column=0)
     SCXLS_entry = ctk.CTkEntry(runwindow, textvariable=results["sctable_filename"])
     SCXLS_entry.grid(row=r + 3, column=0)
+    # file naming convention label
+    name_convention_string = ("According to [A]_[B]_[C]_[D]-[E][G] filename convention "
+                              + "(e.g. C57B6_Mouse10_25mm_Run1-6DLC-JointTracking):")
+    name_convention_label = ctk.CTkLabel(
+        runwindow, text=name_convention_string, width=runwindow_w
+        )
+    name_convention_label.grid(row=r + 4, column=0)
     # data string
-    data_string = "What part of the data-filenames is unique to data?"
+    data_string = "[G] What is the identifier of the DLC-tracked coordinate file?"
     data_label = ctk.CTkLabel(runwindow, text=data_string, width=runwindow_w)
-    data_label.grid(row=r + 4, column=0)
+    data_label.grid(row=r + 5, column=0)
     data_entry = ctk.CTkEntry(runwindow, textvariable=results["data_string"])
-    data_entry.grid(row=r + 5, column=0)
+    data_entry.grid(row=r + 6, column=0)
     # beam string
-    beam_string = "What part of the beam-filenames is unique to beam?"
+    beam_string = (
+        "[G] What is the identifier of the DLC-tracked baseline file? (optional)"
+        )
     beam_label = ctk.CTkLabel(runwindow, text=beam_string, width=runwindow_w)
-    beam_label.grid(row=r + 6, column=0)
+    beam_label.grid(row=r + 7, column=0)
     beam_entry = ctk.CTkEntry(runwindow, textvariable=results["beam_string"])
-    beam_entry.grid(row=r + 7, column=0)
+    beam_entry.grid(row=r + 8, column=0)
     # premouse_num string
     premouse_string = (
-        "What is (uniquely!) written immediately BEFORE the ANIMAL/SUBJECT number?"
+        "[B] Define the 'unique subject identifier' preceding the number"
     )
     premouse_label = ctk.CTkLabel(runwindow, text=premouse_string, width=runwindow_w)
-    premouse_label.grid(row=r + 8, column=0)
+    premouse_label.grid(row=r + 9, column=0)
     premouse_entry = ctk.CTkEntry(runwindow, textvariable=results["premouse_string"])
-    premouse_entry.grid(row=r + 9, column=0)
+    premouse_entry.grid(row=r + 10, column=0)
     # postmouse_num string
     postmouse_string = (
-        "What is (uniquely!) written immediately AFTER the ANIMAL/SUBJECT number?"
+        "[C] Define the 'unique task identifier"
     )
     postmouse_label = ctk.CTkLabel(runwindow, text=postmouse_string, width=runwindow_w)
-    postmouse_label.grid(row=r + 10, column=0)
+    postmouse_label.grid(row=r + 11, column=0)
     postmouse_entry = ctk.CTkEntry(runwindow, textvariable=results["postmouse_string"])
-    postmouse_entry.grid(row=r + 11, column=0)
+    postmouse_entry.grid(row=r + 12, column=0)
     # prerun string
     prerun_string = (
-        "What is (uniquely!) written immediately BEFORE the TRIAL number?"
+        "[D] Define the 'unique trial identifier"
     )
     prerun_label = ctk.CTkLabel(runwindow, text=prerun_string, width=runwindow_w)
-    prerun_label.grid(row=r + 12, column=0)
+    prerun_label.grid(row=r + 13, column=0)
     prerun_entry = ctk.CTkEntry(runwindow, textvariable=results["prerun_string"])
-    prerun_entry.grid(row=r + 13, column=0)
+    prerun_entry.grid(row=r + 14, column=0)
     # postrun string
     postrun_string = (
-        "What is (uniquely!) written immediately AFTER the TRIAL number?"
+        "[E] Define the 'unique camera identifier"
     )
     postrun_label = ctk.CTkLabel(runwindow, text=postrun_string, width=runwindow_w)
-    postrun_label.grid(row=r + 14, column=0)
+    postrun_label.grid(row=r + 15, column=0)
     postrun_entry = ctk.CTkEntry(runwindow, textvariable=results["postrun_string"])
-    postrun_entry.grid(row=r + 15, column=0)
+    postrun_entry.grid(row=r + 16, column=0)
     # button confirming being done
     # => change value of user_ready in this call
     finishbutton = ctk.CTkButton(
@@ -972,7 +983,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         hover_color=HOVER_COLOR,
         command=lambda: user_ready.set(1),
     )
-    finishbutton.grid(row=r + 16, column=0, rowspan=2, sticky="nsew", pady=5, padx=70)
+    finishbutton.grid(row=r + 17, column=0, rowspan=2, sticky="nsew", pady=5, padx=70)
     # maximise widgets - do this manually (& only for rows) because it interferes with
     # user_ready if called as a function for some reason
     num_rows = runwindow.grid_size()[1]  # maximise rows
@@ -1100,7 +1111,6 @@ def configure_the_icon(root):
     elif platform.system().startswith("win"):
         with resources.path("autogaita", "autogaita_icon.ico") as icon_path:
             root.iconbitmap(str(icon_path))
-
 
 def get_results_and_cfg(results, cfg):
     """Before calling analysis, use .get() to extract values from tk-vars"""

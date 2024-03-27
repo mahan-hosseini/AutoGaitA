@@ -125,8 +125,8 @@ def simi_gui():
         "This program analyses kinematics after tracking with Simi Motion."
         + "\n\nFor this, it requires:"
         + "\n1) A data XLS-file of joint (i.e., key point) coordinates per "
-        + "animal/subject. \n2) A (group-level) XLS file of step-cycle latencies "
-        + "(please see instructions document)."
+        + "animal/subject. \n2) A (group-level) Annotation Table Excel file (see "
+        + "documentation)"
         + "\n\nPlease place all these files into a single folder, enter configuration "
         + "(customise joint names & angle definitions if desired) & hit run."
     )
@@ -149,7 +149,7 @@ def simi_gui():
 
     # .............................  left section  ......................................
     # root directory
-    rootdir_string = "Where is the directory with the data files?"
+    rootdir_string = "Directory location of the folder containing the files to analyse"
     rootdir_label = ctk.CTkLabel(root, text=rootdir_string)
     rootdir_label.grid(row=3, column=0)
     rootdir_entry = ctk.CTkEntry(root, textvariable=results["root_dir"])
@@ -191,13 +191,15 @@ def simi_gui():
 
     # .............................  right section  .....................................
     # stepcycle latency XLS
-    SCXLS_string = "What is the name of the step-cycle latency XLS file?"
+    SCXLS_string = "Name of the Annotation Table Excel file"
     SCXLS_label = ctk.CTkLabel(root, text=SCXLS_string)
     SCXLS_label.grid(row=3, column=1)
     SCXLS_entry = ctk.CTkEntry(root, textvariable=results["sctable_filename"])
     SCXLS_entry.grid(row=4, column=1)
     # sampling rate
-    samprate_label = ctk.CTkLabel(root, text="What is your sampling rate in Hertz?")
+    samprate_label = ctk.CTkLabel(
+        root, text="Insert sampling rate of videos (frames/second)"
+        )
     samprate_label.grid(row=5, column=1)
     samprate_entry = ctk.CTkEntry(root, textvariable=cfg["sampling_rate"])
     samprate_entry.grid(row=6, column=1)
@@ -236,7 +238,7 @@ def simi_gui():
 
     # .............................  left section  .....................................
     # plot plots to python
-    showplots_string = "Don't show plots in Python (only save)"
+    showplots_string = "Don't show plots in Python (save only)"
     showplots_checkbox = ctk.CTkCheckBox(
         root,
         text=showplots_string,
@@ -248,13 +250,13 @@ def simi_gui():
     )
     showplots_checkbox.grid(row=11, column=0)
     # bin_num
-    bin_num_string = "How many bins to use for step cycle normalisation?"
+    bin_num_string = "Number of bins to use for normalising the step cycle"
     bin_num_label = ctk.CTkLabel(root, text=bin_num_string)
     bin_num_label.grid(row=12, column=0)
     bin_num_entry = ctk.CTkEntry(root, textvariable=cfg["bin_num"])
     bin_num_entry.grid(row=13, column=0)
     # number of joints to plot
-    plot_joint_num_string = "How many joints (i.e., key points) to plot in detail?"
+    plot_joint_num_string = "Number of joints to plot in detail"
     plot_joint_num_label = ctk.CTkLabel(root, text=plot_joint_num_string)
     plot_joint_num_label.grid(row=14, column=0)
     plot_joint_num_entry = ctk.CTkEntry(root, textvariable=cfg["plot_joint_number"])
@@ -288,7 +290,7 @@ def simi_gui():
     )
     angular_accel_box.grid(row=12, column=1)
     # plot SE
-    plot_SE_string = "Plot standard error instead of standard deviation as error bars"
+    plot_SE_string = "Use standard error instead of standard deviation for plots"
     plot_SE_box = ctk.CTkCheckBox(
         root,
         text=plot_SE_string,
@@ -300,7 +302,7 @@ def simi_gui():
     )
     plot_SE_box.grid(row=13, column=1)
     # height normalisation at each step cycle separately
-    height_normalisation_string = "Normalise heights for all step cycles separately"
+    height_normalisation_string = "Normalise heights of all step cycles separately"
     height_normalisation_box = ctk.CTkCheckBox(
         root,
         text=height_normalisation_string,
@@ -312,7 +314,7 @@ def simi_gui():
     )
     height_normalisation_box.grid(row=14, column=1)
     # column name information window
-    column_info_string = "Configure custom column names & features"
+    column_info_string = "Customise joints and angles"
     column_info_button = ctk.CTkButton(
         root,
         text=column_info_string,
@@ -714,7 +716,6 @@ def configure_the_icon(root):
     elif platform.system().startswith("win"):
         with resources.path("autogaita", "autogaita_icon.ico") as icon_path:
             root.iconbitmap(str(icon_path))
-
 
 def change_postname_entry_state(postname_entry, results):
     """Change the state of ID entry widget based on whether user wants to only analyse

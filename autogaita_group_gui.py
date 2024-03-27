@@ -70,6 +70,7 @@ def group_gui():
     # (see run_analysis)
     global cfg
     cfg = {}
+    cfg["do_permtest"] = tk.BooleanVar(root, True)
     cfg["do_anova"] = tk.BooleanVar(root, False)
     cfg["anova_design"] = tk.StringVar(root, "")
     cfg["permutation_number"] = tk.StringVar(root, "10000")
@@ -255,8 +256,20 @@ def build_mainwindow(root, group_number, root_dimensions):
         results_dir_entry.grid(
             row=last_group_row + 1, column=0, columnspan=2, sticky="ew"
         )
+        # Perm Test
+        perm_string = "Run cluster-extent permutation test"
+        perm_checkbox = ctk.CTkCheckBox(
+            mainwindow,
+            text=perm_string,
+            variable=cfg["do_permtest"],
+            onvalue=True,
+            offvalue=False,
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+        )
+        perm_checkbox.grid(row=last_group_row + 2, column=0, columnspan=2, pady=10)
         # ANOVA info
-        ANOVA_string = "Perform ANOVA in addition to cluster-extent test?"
+        ANOVA_string = "Run ANOVA - if yes: choose design below"
         ANOVA_checkbox = ctk.CTkCheckBox(
             mainwindow,
             text=ANOVA_string,
@@ -267,7 +280,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             hover_color=HOVER_COLOR,
             command=lambda: change_ANOVA_buttons_state(ANOVA_buttons, cfg),
         )
-        ANOVA_checkbox.grid(row=last_group_row + 2, column=0, columnspan=2, pady=10)
+        ANOVA_checkbox.grid(row=last_group_row + 3, column=0, columnspan=2, pady=10)
         # ANOVA design
         ANOVA_buttons_strings = ["Mixed ANOVA", "RM ANOVA"]
         ANOVA_buttons = []
@@ -285,7 +298,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             )
             if cfg["do_anova"].get() == True:
                 ANOVA_buttons[i].configure(state="normal")
-            ANOVA_buttons[-1].grid(row=last_group_row + 3, column=i)
+            ANOVA_buttons[-1].grid(row=last_group_row + 4, column=i)
         # ....................  advanced cfg & define features  ........................
         # advanced cfg
         cfgwindow_label = ctk.CTkLabel(
@@ -296,7 +309,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             font=("Britannic Bold", HEADER_FONT_SIZE),
         )
         cfgwindow_label.grid(
-            row=last_group_row + 4, column=0, pady=(15, 0), sticky="nsew"
+            row=last_group_row + 5, column=0, pady=(15, 0), sticky="nsew"
         )
         cfgwindow_button = ctk.CTkButton(
             mainwindow,
@@ -306,7 +319,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             command=lambda: (advanced_cfgwindow(mainwindow, root_dimensions)),
         )
         cfgwindow_button.grid(
-            row=last_group_row + 5, column=0, sticky="nsew", pady=15, padx=30
+            row=last_group_row + 6, column=0, sticky="nsew", pady=15, padx=30
         )
         # define features
         definefeatures_label = ctk.CTkLabel(
@@ -317,7 +330,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             font=("Britannic Bold", HEADER_FONT_SIZE),
         )
         definefeatures_label.grid(
-            row=last_group_row + 4, column=1, pady=(15, 0), sticky="nsew"
+            row=last_group_row + 5, column=1, pady=(15, 0), sticky="nsew"
         )
         definefeatures_button = ctk.CTkButton(
             mainwindow,
@@ -329,7 +342,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             ),
         )
         definefeatures_button.grid(
-            row=last_group_row + 5, column=1, sticky="nsew", pady=15, padx=30
+            row=last_group_row + 6, column=1, sticky="nsew", pady=15, padx=30
         )
 
         # maximise widgets to fit fullscreen
@@ -543,6 +556,10 @@ def definefeatures_window(
                 font=("Britannic Bold", HEADER_FONT_SIZE - 5),
             )
             this_checkbox.grid(row=row_counter, column=col_counter, sticky="nsew")
+            # if user doesn't want to do stats, dont have them choose features
+            if frame == stats_frame:
+                if (cfg["do_permtest"].get() is False) & (cfg["do_anova"].get() is False):
+                    this_checkbox.configure(state="disabled")
             row_counter += 1
             # # CARE - the -1 is important here since indexing starts at 0 and grid_nrows
             # # is like len() kinda
@@ -555,7 +572,7 @@ def definefeatures_window(
     # which leg label
     which_leg_label = ctk.CTkLabel(
         featureswindow,
-        text="Choose Leg",
+        text="Choose Body Side",
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
         font=("Britannic Bold", HEADER_FONT_SIZE),
@@ -563,8 +580,8 @@ def definefeatures_window(
     which_leg_label.grid(row=2 + scrollbar_rows, column=0, sticky="nsew")
     # which leg of human data to analyse
     which_leg_string = (
-        "If you ran AutoGaitA Simi first: which leg's step-cycles do you want to "
-        + "analyse?"
+        "If you ran AutoGaitA Simi first: which body side's behaviour "
+        " (e.g. step-cycles) do you want to analyse?"
     )
     which_leg_label = ctk.CTkLabel(featureswindow, text=which_leg_string)
     which_leg_label.grid(row=3 + scrollbar_rows, column=0, sticky="ew")
@@ -901,7 +918,6 @@ def configure_the_icon(root):
     elif platform.system().startswith("win"):
         with resources.path("autogaita", "autogaita_icon.ico") as icon_path:
             root.iconbitmap(str(icon_path))
-
 
 # %% what happens if we hit run
 if __name__ == "__main__":

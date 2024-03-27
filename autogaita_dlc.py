@@ -15,7 +15,9 @@ DIRECTION_DLC_THRESHOLD = 0.95  # DLC confidence used for direction-detection
 TIME_COL = "Time"
 ISSUES_TXT_FILENAME = "Issues.txt"  # filename to which we write issues-info
 CONFIG_JSON_FILENAME = "config.json"  # filename to which we write cfg-infos
-SCXLS_MOUSECOLS = ["Mouse", "mouse", "Animal", "animal", "Subject", "subject", "ID", "id"]  # SC XLS info
+SCXLS_MOUSECOLS = [
+    "Mouse", "mouse", "Fly", "fly", "Animal", "animal", "Subject", "subject", "ID", "id"
+    ]  # SC XLS info
 SCXLS_RUNCOLS = ["Run", "run", "Runs", "runs", "Trial", "trial", "Trials", "trials"]
 SCXLS_SCCOLS = ["SC Number", "SC number", "sc number", "SC Num", "sc num", "SC num"]
 SWINGSTART_COL = "Swing (ti)"
@@ -536,7 +538,6 @@ def check_gait_direction(data, direction_joint, flip_gait_direction, info):
     flip_gait_direction is only used after the check for DLC files being broken
     """
 
-
     data["Flipped"] = False
     enterframe = 0
     idx = 0
@@ -891,7 +892,7 @@ def handle_issues(condition, info):
     elif condition == "no_mouse":
         this_message = (
             "\n***********\n! WARNING !\n***********\n"
-            + "Skipped since Mouse not in latency XLS!"
+            + "Skipped since ID not in latency XLS!"
         )
         print(this_message)
         write_issues_to_textfile(this_message, info)
@@ -909,7 +910,7 @@ def handle_issues(condition, info):
     elif condition == "double_mouse":
         this_message = (
             "\n***********\n! WARNING !\n***********\n"
-            + "Skipped since Mouse found more than once in "
+            + "Skipped since ID found more than once in "
             + "latency XLS!"
         )
         print(this_message)
@@ -1010,14 +1011,11 @@ def norm_y_and_add_features_to_one_step(step, cfg):
     """For a single step cycle's data, normalise z if wanted, flip y columns if needed
     (to simulate equal run direction) and add features (angles & velocities)
     """
-    # unpack
-    hind_joints = cfg["hind_joints"]
     # if user wanted this, normalise z (height) at step-cycle level
     step_copy = step.copy()
     if cfg["normalise_height_at_SC_level"] is True:
-        hind_joints_colstrings = [joint + "y" for joint in hind_joints]
-        this_y_min = step_copy[hind_joints_colstrings].min().min()
         y_cols = [col for col in step_copy.columns if col.endswith("y")]
+        this_y_min = step_copy[y_cols].min().min()
         step_copy[y_cols] -= this_y_min
     # add angles and velocities
     step_copy = add_features(step_copy, cfg)
@@ -1125,7 +1123,6 @@ def normalise_one_steps_data(step, bin_num):
     The input step here is a pd dataframe that only captures ONE stepcycle!
     (concatenation happens in exportsteps function)
     """
-
     normalised_step = pd.DataFrame()
     for c, col in enumerate(step.columns):
         thistrial = step[col]
@@ -1260,7 +1257,6 @@ def add_step_separators(dataframe, nanvector, numvector):
 def plot_results(info, results, folderinfo, cfg):
     """Plot results - y coords by x coords & average angles over SC %"""
     # unpack
-    hind_joints = cfg["hind_joints"]
     fore_joints = cfg["fore_joints"]
     angles = cfg["angles"]
     all_steps_data = results["all_steps_data"]
@@ -1328,7 +1324,8 @@ def extract_sc_idxs(all_steps_data):
     #     start of an SC + (if you subtract -1 to nan-idx) the end of that SC
     # ==> E.g.: separations[1]+1 is 1st idx of SC2 - separations[2]-1 is last
     #     idx of SC2
-    xls_separations = np.where(pd.isnull(all_steps_data["Nose x"]))[0]
+    check_col = all_steps_data.columns[0]  # take the first col to find nan-separators
+    xls_separations = np.where(pd.isnull(all_steps_data[check_col]))[0]
     sc_idxs = []
     # the next line means that we have exactly one step, because we would not
     # build all_steps_data (and have results in the first place) if there was no step
@@ -1408,7 +1405,7 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
             figure_file_string = " - Foot y by x coordinates"
         else:
             figure_file_string = " - " + joint + "y by x coordinates"
-        f[j].savefig(results_dir + name + figure_file_string + ".png")
+        f[j].savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
         save_as_svg(f[j], results_dir, name, figure_file_string)
         if dont_show_plots:
             plt.close(f[j])
@@ -1444,7 +1441,7 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
             this_y = all_steps_data.iloc[sc_idxs[s], y_col_idx]
             ax[a].plot(this_x, this_y)
         figure_file_string = " - " + angle + " Angle by Time"
-        f[a].savefig(results_dir + name + figure_file_string + ".png")
+        f[a].savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
         save_as_svg(f[a], results_dir, name, figure_file_string)
         if dont_show_plots:
             plt.close(f[a])
@@ -1501,7 +1498,7 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
         tickconvert_mm_to_cm(ax, "both")
     ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
     figure_file_string = " - Hindlimb Stick Diagram"
-    f.savefig(results_dir + name + figure_file_string + ".png")
+    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1557,7 +1554,7 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
         tickconvert_mm_to_cm(ax, "both")
     ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
     figure_file_string = " - Forelimb Stick Diagram"
-    f.savefig(results_dir + name + figure_file_string + ".png")
+    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1598,7 +1595,7 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg):
     if convert_to_mm:
         tickconvert_mm_to_cm(ax, "y")
     figure_file_string = " - Joint y-coord.s over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png")
+    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1636,7 +1633,7 @@ def plot_angles_by_average_SC(average_data, std_data, info, cfg):
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     ax.legend()
     figure_file_string = " - Joint angles over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png")
+    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1683,7 +1680,7 @@ def plot_x_velocities_by_average_SC(average_data, std_data, info, cfg):
             "Velocity (x in cm / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
         )
     figure_file_string = " - Joint velocities over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png")
+    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1722,7 +1719,7 @@ def plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg):
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     ax.legend()
     figure_file_string = " - Angular velocities over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png")
+    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1769,7 +1766,7 @@ def plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg):
             "Acceleration (x in cm / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
         )
     figure_file_string = " - Joint acceleration over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png")
+    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1812,7 +1809,7 @@ def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     ax.legend()
     figure_file_string = " - Angular acceleration over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png")
+    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1823,7 +1820,7 @@ def save_as_svg(figure, results_dir, name, figure_file_string):
     svg_dir = os.path.join(results_dir, "SVG Figures")
     if not os.path.exists(svg_dir):
         os.makedirs(svg_dir)
-    figure.savefig(svg_dir + "/" + name + figure_file_string + ".svg")
+    figure.savefig(svg_dir + "/" + name + figure_file_string + ".svg", bbox_inches="tight")
 
 
 def tickconvert_mm_to_cm(axis, whichlabel):

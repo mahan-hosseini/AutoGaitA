@@ -354,10 +354,10 @@ def test_and_expand_cfg(data, cfg, info):
     if cfg["plot_joint_number"] > len(joints):  # 1) joints to plot in detail
         this_message = (
             "\n***********\n! WARNING !\n***********\n"
-            + "You asked us to plot more hind limb joints than available!"
+            + "You asked us to plot more joints than available!"
             + "\nNumber of joints to plot: "
             + str(cfg["plot_joint_number"])
-            + "\nNumber of selected hindlimb joints: "
+            + "\nNumber of selected joints: "
             + str(len(joints))
             + "\n\nWe'll just plot the most we can :)"
         )
@@ -1064,21 +1064,14 @@ def norm_z_flip_y_and_add_features_to_one_step(step, l_idx, global_Y_max, cfg):
     (to simulate equal run direction) and add features (angles & velocities)
     """
     # unpack
-    joints = cfg["joints"]
     direction_joint = cfg["direction_joint"]
     # if user wanted this, normalise z (height) at step-cycle level
     step_copy = step.copy()
     if cfg["normalise_height_at_SC_level"] is True:
-        joints_Z_minima = []
-        for joint in joints:
-            if joint + "Z" in step.columns:
-                colname = joint + "Z"
-            elif joint + LEGS_COLFORMAT[l_idx] + "Z" in step.columns:
-                colname = joint + LEGS_COLFORMAT[l_idx] + "Z"
-            joints_Z_minima.append(step_copy[colname].min())
-        Z_minimum = min(joints_Z_minima)
+        # Finally, standardise all Z columns to global Z minimum being zero
         z_cols = [col for col in step_copy.columns if col.endswith("Z")]
-        step_copy[z_cols] -= Z_minimum
+        z_minimum = min(step_copy[z_cols].min())
+        step_copy[z_cols] -= z_minimum
     # find out if we need to flip y columns of this step and flip them if we do
     direction_joint_col_idx = step_copy.columns.get_loc(direction_joint)
     direction_joint_mean = np.mean(step_copy[direction_joint])
@@ -1631,7 +1624,7 @@ def plot_joint_z_by_y(legname, all_steps_data, all_cycles, info, cfg):
         f[j].supylabel("z (m)")
         figure_string = name + " - " + legname + " - " + joint + " z by y coordinates"
         f[j].suptitle(figure_string, y=0.925)
-        f[j].savefig(results_dir + figure_string + ".png")
+        f[j].savefig(results_dir + figure_string + ".png", bbox_inches="tight")
         save_as_svg(f[j], results_dir, figure_string)
         if dont_show_plots:
             plt.close(f[j])
@@ -1693,7 +1686,7 @@ def plot_angles_by_time(legname, all_steps_data, all_cycles, info, cfg):
         f[a].supylabel("Angle (degree)")
         figure_string = name + " - " + legname + " - " + angle + " angle by time"
         f[a].suptitle(figure_string, y=0.925)
-        f[a].savefig(results_dir + figure_string + ".png")
+        f[a].savefig(results_dir + figure_string + ".png", bbox_inches="tight")
         save_as_svg(f[a], results_dir, figure_string)
         if dont_show_plots:
             plt.close(f[a])
@@ -1800,7 +1793,7 @@ def plot_stickdiagram(legname, all_steps_data, all_cycles, info, cfg):
     f.supylabel("z (m)")
     figure_file_string = name + " - " + legname + " - Stick Diagram"
     f.suptitle(figure_file_string, y=0.925)
-    f.savefig(results_dir + figure_file_string + ".png")
+    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1815,15 +1808,15 @@ def plot_joint_z_by_average_SC(legname, average_data, std_data, sc_num, info, cf
     dont_show_plots = cfg["dont_show_plots"]
     bin_num = cfg["bin_num"]
     plot_SE = cfg["plot_SE"]
-    plot_joints = cfg["plot_joints"]
+    joints = cfg["joints"]
 
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(plot_joints))))
+        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(joints))))
     )
     x = np.linspace(0, 100, bin_num)
-    for joint in plot_joints:  # joint loop (lines)
+    for joint in joints:  # joint loop (lines)
         # check for bodyside-specificity
         z_col = extract_feature_column(average_data, joint, legname, "Z")
         this_z = average_data.iloc[:, z_col]  # average & std_data share colnames
@@ -1840,7 +1833,7 @@ def plot_joint_z_by_average_SC(legname, average_data, std_data, sc_num, info, cf
         name + " - " + legname + " - Joint z-coord.s over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png")
+    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1884,7 +1877,7 @@ def plot_angles_by_average_SC(legname, average_data, std_data, sc_num, info, cfg
         name + " - " + legname + " - Joint angles over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png")
+    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1926,7 +1919,7 @@ def plot_y_velocities_by_average_SC(legname, average_data, std_data, sc_num, inf
         name + " - " + legname + " - Joint y-velocities over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png")
+    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1970,7 +1963,7 @@ def plot_angular_velocities_by_average_SC(
         name + " - " + legname + " - Angular velocities over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png")
+    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -2015,7 +2008,7 @@ def plot_y_acceleration_by_average_SC(
         name + " - " + legname + " - Joint y-accelerations over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png")
+    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -2062,7 +2055,7 @@ def plot_angular_acceleration_by_average_SC(
         name + " - " + legname + " - Angular accelerations over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png")
+    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
     save_as_svg(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -2074,7 +2067,7 @@ def save_as_svg(figure, results_dir, figure_file_string):
     svg_dir = os.path.join(results_dir, "SVG Figures")
     if not os.path.exists(svg_dir):
         os.makedirs(svg_dir)
-    figure.savefig(svg_dir + "/" + figure_file_string + ".svg")
+    figure.savefig(svg_dir + "/" + figure_file_string + ".svg", bbox_inches="tight")
 
 
 def extract_feature_column(df, joint, legname, feature):
