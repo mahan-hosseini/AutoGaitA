@@ -6,6 +6,7 @@ def group_simirun():
     # constant folderinfo & cfg vars
     folderinfo = {}
     cfg = {}
+    cfg["do_permtest"] = True
     cfg["do_anova"] = True
     cfg["permutation_number"] = 10
     cfg["number_of_PCs"] = 3

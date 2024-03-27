@@ -5,6 +5,7 @@ def group_dlcrun():
     """Batch run group level analyses for results obtained with _dlc"""
     folderinfo = {}
     cfg = {}
+    cfg["do_permtest"] = True
     cfg["do_anova"] = True
     cfg["permutation_number"] = 100
     cfg["number_of_PCs"] = 3
