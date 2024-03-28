@@ -2,9 +2,12 @@
 ![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
-# Welcome to Automated Gait Analysis in Python 🐸
+# Automated Gait Analysis in Python 🐸
 
-AutoGaitA simplifies, accelerates, and standardises gait analyses after body posture tracking with DeepLabCut and Simi Motion. AutoGaitA's first-level tools provide a wide range of automated kinematic analyses for each input video and AutoGaitA Group allows the comparison of up to six groups. AutoGaitA enables comparisons to be made across experimental conditions, species, disease states or genotypes. Further, despite being developed with locomotion data, AutoGaitA can be utilised for the analysis of any motor behaviour.
+- AutoGaitA simplifies, accelerates, and standardises gait analyses after body posture tracking with [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut) and [Simi Motion](http://www.simi.com/en/products/movement-analysis/simi-motion-2d3d.html?type=rss%2F). 
+- AutoGaitA's first-level tools provide a wide range of automated kinematic analyses for each input video and AutoGaitA Group allows the comparison of up to six groups. 
+- AutoGaitA enables comparisons to be made across experimental conditions, species, disease states or genotypes. 
+- Despite being developed with gait data, AutoGaitA can be utilised for the analysis of any motor behaviour.
 
 ## Getting Started
 
