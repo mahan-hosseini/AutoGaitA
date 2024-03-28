@@ -1,3 +1,4 @@
+<p align="center"><img width=60% src="https://github.com/mahan-hosseini/AutoGaitA/res/autogaita_logo.png"></p>
 # autogaita
 ## The temporary documentation (actively under development) can be found as a Google Doc
 https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit?usp=sharing 
