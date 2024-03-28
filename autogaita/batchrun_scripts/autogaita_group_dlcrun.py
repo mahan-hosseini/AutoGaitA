@@ -15,7 +15,7 @@ def group_dlcrun():
     cfg["which_leg"] = "left"
 
     # mouse anova cfg!
-    cfg["anova_design"] = "RM ANOVA"
+    cfg["anova_design"] = "Mixed ANOVA"
     cfg["permutation_number"] = 100
     cfg["PCA_variables"] = ["Hind paw tao y", "Ankle y", "Knee y", "Elbow Angle Velocity"]
     cfg["stats_variables"] = [
