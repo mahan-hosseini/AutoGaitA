@@ -321,11 +321,19 @@ def extract_cfg_vars(folderinfo, cfg):
     # !!! If users should complain that they dont get figures but they should, it might
     #     be because these lines wrongly determine user to be in non-interactive mode
     #     while they are not!
-    if not hasattr(sys, "ps1") and not sys.flags.interactive:
-        cfg["dont_show_plots"] = True
-        matplotlib.use("agg")
-    else:
-        cfg["dont_show_plots"] = False
+    # if not hasattr(sys, "ps1") and not sys.flags.interactive:
+    #     cfg["dont_show_plots"] = True
+    #     matplotlib.use("agg")
+    # else:
+    #     cfg["dont_show_plots"] = False
+    # !!! UPDATE FOR PYTHON MODULE
+    # ==> I just always set this to True to not show plots because otherwise weird
+    #     things happened with grouprun_ functions
+    # ==> .agg is used because otherwise we get a warning for f,ax=plt.subplots()
+    # ==> Not sure why this is different for our first-level GUIs but I'll just try
+    #     to implement a window for showing plots using GUI
+    matplotlib.use("agg")
+    cfg["dont_show_plots"] = True
 
     return cfg
 

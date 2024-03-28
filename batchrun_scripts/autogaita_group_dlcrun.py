@@ -1,5 +1,5 @@
 # Contrast autogaita_dlc results using autogaita_group
-from autogaita import autogaita_utils
+from autogaita import autogaita_group
 
 def group_dlcrun():
     """Batch run group level analyses for results obtained with _dlc"""
@@ -9,7 +9,7 @@ def group_dlcrun():
     cfg["do_anova"] = True
     cfg["permutation_number"] = 100
     cfg["number_of_PCs"] = 3
-    cfg["save_3D_PCA_video"] = True
+    cfg["save_3D_PCA_video"] = False
     cfg["stats_threshold"] = 0.05
     cfg["plot_SE"] = False
     cfg["which_leg"] = "left"
@@ -40,3 +40,6 @@ def group_dlcrun():
         "results_dir"
     # mouse
     ] = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/GroupResults/"
+
+    # run
+    autogaita_group.group(folderinfo, cfg)

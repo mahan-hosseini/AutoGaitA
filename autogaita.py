@@ -1,5 +1,5 @@
 # %% imports
-from . import autogaita_dlc_gui, autogaita_simi_gui, autogaita_group_gui
+from autogaita import autogaita_dlc_gui, autogaita_simi_gui, autogaita_group_gui
 import tkinter as tk
 import customtkinter as ctk
 from PIL import Image, ImageTk

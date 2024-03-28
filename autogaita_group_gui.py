@@ -1,5 +1,5 @@
 # %% imports
-from . import autogaita_group
+from autogaita import autogaita_group
 import tkinter as tk
 import customtkinter as ctk
 import pandas as pd

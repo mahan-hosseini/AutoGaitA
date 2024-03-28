@@ -1,5 +1,5 @@
 # ...................................  imports  ........................................
-from . import autogaita_dlc, autogaita_simi
+from autogaita import autogaita_dlc, autogaita_simi
 import pandas as pd
 import numpy as np
 import os

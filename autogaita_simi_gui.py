@@ -1,5 +1,5 @@
 # %% imports
-from . import autogaita_utils
+from autogaita import autogaita_utils
 import tkinter as tk
 import customtkinter as ctk
 import os
