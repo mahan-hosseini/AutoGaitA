@@ -10,15 +10,15 @@ AutoGaitA simplifies, accelerates, and standardises gait analyses after body pos
 
 It is strongly recommended that create a separate virtual environment for AutoGaitA via:
 
-'python -m venv env_gaita'
+`python -m venv env_gaita`
 
 After creating and activating the virtual environment, AutoGaitA can be installed via pip:
 
-'pip install autogaita'
+`pip install autogaita`
 
 And the main user interface can be evoked via:
 
-'python -m autogaita'
+`python -m autogaita`
 
 For a detailed step-by-step walkthrough of how to set up the virtual environment in MacOS and Windows and install autogaita, see our [Documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit?usp=sharing)
 
