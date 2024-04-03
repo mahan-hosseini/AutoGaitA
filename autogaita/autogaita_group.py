@@ -1499,6 +1499,12 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
         plot_multcomp_results(
             g_avg_dfs, g_std_dfs, multcomp_df, stats_var, folderinfo, cfg
         )
+    else:  # if SC% ME not sig, inform user that we didn't perform Tukey's!
+        nonsig_multcomp_df = pd.DataFrame()
+        save_stats_results_to_text(
+            nonsig_multcomp_df, stats_var, "non-significant ANOVA", folderinfo, cfg
+        )
+
 
 
 def multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg):
@@ -2251,7 +2257,15 @@ def check_mouse_conversion(feature, cfg):
 
 
 def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cfg):
-    """Save the numerical results of our cluster extent or ANOVA results to a text file"""
+    """Save the numerical results of our cluster extent or ANOVA results to a text file
+    Note
+    ----
+    which_test can either be:
+        "RM ANOVA", "Mixed ANOVA", "non-significant ANOVA",
+        or "Cluster-extent permutation test"
+        If in the future you want to have some other test be mindful about the:
+            if "ANOVA" in which_test lines!
+    """
     # unpack
     contrasts = folderinfo["contrasts"]
     results_dir = folderinfo["results_dir"]
@@ -2275,16 +2289,27 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
         #    both cases it returns a list of lists of indices with range(bin_num)
         #   - which is why we can use rounded_sc_percentages as we do below
         if "ANOVA" in which_test:
-            clusters = extract_multcomp_significance_clusters(
-                results_df, contrast, stats_threshold
-            )
+            if "non-significant" in which_test:  # SC% ME was not significant - no multcomps done
+                clusters = []
+            else:
+                # SC% ME was significant (which_test is either RM ANOVA or Mixed ANOVA)
+                clusters = extract_multcomp_significance_clusters(
+                    results_df, contrast, stats_threshold
+                )
         else:
             clusters = extract_all_clusters(results_df, contrast)
         # write message
         if len(clusters) == 0:  # no sig clusters were found!
-            message = (
-                message + "\n\nContrast: " + contrast + " - No significant clusters!"
-            )
+            if "non-significant" in which_test:
+                message = (
+                    message + "\n\nContrast: " + contrast + " - SC% ME not significant."
+                    + " Tukey's test was not performed!"
+                    )
+            else:
+                message = (
+                    message + "\n\nContrast: " + contrast + " - No significant clusters"
+                    + "!"
+                )
         else:
             rounded_sc_percentages = np.linspace(0, 100, bin_num).round(2)
             message = (

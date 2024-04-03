@@ -142,7 +142,7 @@ def extract_info():
             this_mouse_num = find_number(filename, PREMOUSE_STRING,
                                         POSTMOUSE_STRING)
             this_run_num = find_number(filename, PRERUN_STRING, POSTRUN_STRING)
-            this_name = "Mouse " + str(
+            this_name = "ID " + str(
                 this_mouse_num) + " - Run " + str(this_run_num)
             if this_name not in info["name"]:  # no data/beam duplicates here
                 info["name"].append(this_name)

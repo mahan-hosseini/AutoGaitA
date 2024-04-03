@@ -1026,7 +1026,7 @@ def analyse_single_run(this_runs_results, this_runs_cfg):
     info = {}  # info dict: run-specific info
     info["mouse_num"] = this_runs_results["mouse_num"]
     info["run_num"] = this_runs_results["run_num"]
-    info["name"] = "Mouse " + str(info["mouse_num"]) + " - Run " + str(info["run_num"])
+    info["name"] = "ID " + str(info["mouse_num"]) + " - Run " + str(info["run_num"])
     info["results_dir"] = os.path.join(
         folderinfo["root_dir"] + "Results/" + info["name"] + "/"
     )
@@ -1223,7 +1223,7 @@ def extract_info(folderinfo):
             this_run_num = find_number(
                 filename, folderinfo["prerun_string"], folderinfo["postrun_string"]
             )
-            this_name = "Mouse " + str(this_mouse_num) + " - Run " + str(this_run_num)
+            this_name = "ID " + str(this_mouse_num) + " - Run " + str(this_run_num)
             if this_name not in info["name"]:  # no data/beam duplicates here
                 info["name"].append(this_name)
                 info["mouse_num"].append(this_mouse_num)

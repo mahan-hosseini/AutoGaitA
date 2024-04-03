@@ -47,7 +47,7 @@ ANGLES = {"name": ["Ankle", "Elbow"], "lower_joint": ["Hind paw tao", "Wrist"], 
 info = {}
 info["mouse_num"] = 18
 info["run_num"] = 2
-info["name"] = ("Mouse " + str(info["mouse_num"])
+info["name"] = ("ID " + str(info["mouse_num"])
                 + " - Run " + str(info["run_num"]))
 info["results_dir"] = os.path.join(ROOT_DIR + "Results/" + info["name"] + "/")
 
