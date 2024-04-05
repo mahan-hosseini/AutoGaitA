@@ -27,7 +27,7 @@ The main user interface can then be accessed via
 
 ## Examples
 
-[![AutoGaitA DLC Tutorial]([http://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg](https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/autogaita_logo.png?raw=true))](
+[![AutoGaitA DLC Tutorial]([https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/autogaita_logo.png?raw=true])](
 https://youtu.be/S8dBqCCivxM?feature=shared")
 
 ## License
