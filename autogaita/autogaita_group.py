@@ -1480,7 +1480,7 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
 
     # run the (fully) RM or Mixed ANOVA
     ANOVA_result = run_ANOVA(stats_df, stats_var, cfg)
-    # check if sphericity is given for SC% to see if p vals have to be GG corrected
+    # check if sphericity is given to see if p vals have to be GG corrected
     # => even though this is done automatically for mixed anovas, you always get the GG
     #    col in results of rm anovas so we have to test it ourselves and can not (as
     #    done in an earlier version of gaita, have "if GG-col is there")
@@ -1488,10 +1488,10 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
         stats_df, dv=stats_var, within=SC_PERCENTAGE_COL, subject=ID_COL
         )[0]
     if sphericity_flag:  # sphericity is given, no need to correct
-        SC_percent_ME_pval = ANOVA_result["p-unc"][1]
+        interaction_effect_pval = ANOVA_result["p-unc"][2]
     else:
-        SC_percent_ME_pval = ANOVA_result["p-GG-corr"][1]
-    if SC_percent_ME_pval < 0.05:  # if SC% maineffect is sig, do multcomps
+        interaction_effect_pval = ANOVA_result["p-GG-corr"][2]
+    if interaction_effect_pval < 0.05:  # if interaction effect is sig, do multcomps
         multcomp_df = multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg)
         save_stats_results_to_text(
             multcomp_df, stats_var, anova_design, folderinfo, cfg
@@ -1499,7 +1499,7 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
         plot_multcomp_results(
             g_avg_dfs, g_std_dfs, multcomp_df, stats_var, folderinfo, cfg
         )
-    else:  # if SC% ME not sig, inform user that we didn't perform Tukey's!
+    else:  # if interaction effect not sig, inform user that we didn't perform Tukey's!
         nonsig_multcomp_df = pd.DataFrame()
         save_stats_results_to_text(
             nonsig_multcomp_df, stats_var, "non-significant ANOVA", folderinfo, cfg
@@ -1508,7 +1508,7 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
 
 
 def multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg):
-    """Perform multiple comparison test if the ANOVA's ME of SC % was significant.
+    """Perform multiple comparison test if the ANOVA's interaction was significant.
     Do a separate multcomp test for each SC % bin."""
 
     # unpack
@@ -2289,10 +2289,10 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
         #    both cases it returns a list of lists of indices with range(bin_num)
         #   - which is why we can use rounded_sc_percentages as we do below
         if "ANOVA" in which_test:
-            if "non-significant" in which_test:  # SC% ME was not significant - no multcomps done
+            if "non-significant" in which_test:  # interaction nonsig - no multcomps
                 clusters = []
             else:
-                # SC% ME was significant (which_test is either RM ANOVA or Mixed ANOVA)
+                # interaction significant (which_test is either RM ANOVA or Mixed ANOVA)
                 clusters = extract_multcomp_significance_clusters(
                     results_df, contrast, stats_threshold
                 )
@@ -2302,8 +2302,8 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
         if len(clusters) == 0:  # no sig clusters were found!
             if "non-significant" in which_test:
                 message = (
-                    message + "\n\nContrast: " + contrast + " - SC% ME not significant."
-                    + " Tukey's test was not performed!"
+                    message + "\n\nContrast: " + contrast + " - interaction effect " +
+                    "not significant. Tukey's test was not performed!"
                     )
             else:
                 message = (
