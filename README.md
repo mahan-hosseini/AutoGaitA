@@ -25,7 +25,13 @@ The main user interface can then be accessed via
 
 `python -m autogaita`
 
-## Examples
+## Examples and Tutorials
+
+### Example Data Explanation
+
+### Annotation Table Examples and Templates
+
+### Video Walkthrough Tutorials
 
 [![AutoGaitA DLC Tutorial]([https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/autogaita_logo.png?raw=true])](
 https://youtu.be/S8dBqCCivxM?feature=shared")
