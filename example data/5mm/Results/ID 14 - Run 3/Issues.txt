@@ -1,0 +1,10 @@
+
+Determined gait direction of right => left - simulating it to be left => right
+***********
+! WARNING !
+***********
+Skipped since no SCs in latency XLS!
+***********
+! WARNING !
+***********
+Skipped since all SCs invalid!
