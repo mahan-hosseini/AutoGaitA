@@ -29,10 +29,10 @@ The main user interface can then be accessed via
 
 ### Video Walkthrough Tutorials
 
-Tutorials for file preparation and instructions on how to use AutoGaitA can be found on our YouTube Channel:
+**Tutorials for file preparation and instructions on how to use AutoGaitA can be found on our YouTube Channel:**
 **[AutoGaitA Tutorials](https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&si=mV5p2--nYvbofkPh)**
 
-### Example Data Explanation
+### Example Data
 We provide an example dataset in the **example data** folder of this repository, with a set of mice walking over differently wide beams and both the beam as well as body coordinates being tracked with DLC. Note that this dataset was used in our tutorial videos introducing *AutoGaitA_DLC*, *AutoGaitA_Group* and in our video explaining file preparation for *AutoGaitA_DLC*.  We further provide a **group** folder there that can be used alongside the *AutoGaitA_Group* tutorial to confirm that users generate the same set of results following our instructions.
 
 ### Annotation Table Examples and Templates
