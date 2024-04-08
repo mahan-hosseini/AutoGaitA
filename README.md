@@ -25,16 +25,19 @@ The main user interface can then be accessed via
 
 `python -m autogaita`
 
-## Examples and Tutorials
-
-### Example Data Explanation
-
-### Annotation Table Examples and Templates
+## Tutorials and Examples
 
 ### Video Walkthrough Tutorials
 
-[![AutoGaitA DLC Tutorial]([https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/autogaita_logo.png?raw=true])](
-https://youtu.be/S8dBqCCivxM?feature=shared")
+Tutorials for file preparation and instructions on how to use AutoGaitA can be found on our YouTube Channel:
+**[AutoGaitA Tutorials](https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&si=mV5p2--nYvbofkPh)**
+
+### Example Data Explanation
+We provide an example dataset in the **example data** folder of this repository, with a set of mice walking over differently wide beams and both the beam as well as body coordinates being tracked with DLC. Note that this dataset was used in our tutorial videos introducing *AutoGaitA_DLC*, *AutoGaitA_Group* and in our video explaining file preparation for *AutoGaitA_DLC*.  We further provide a **group** folder there that can be used alongside the *AutoGaitA_Group* tutorial to confirm that users generate the same set of results following our instructions.
+
+### Annotation Table Examples and Templates
+Annotation Table example and template files for *AutoGaitA_DLC* and *AutoGaitA_Simi* can be found in the **example data** folder of this repository.
+Users are advised to use the template to enter their data's timestamp information and to then compare the resulting table with our example to check formatting.
 
 ## License
 

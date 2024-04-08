@@ -1,0 +1,104 @@
+
+
+**************************************************************************
+
+*****  Results of non-significant ANOVA for Knee y  ****
+
+Contrast: 5 mm & 12 mm - interaction effect not significant. Tukey's test was not performed!
+
+Contrast: 5 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
+
+Contrast: 12 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
+
+**************************************************************************
+
+
+
+**************************************************************************
+
+*****  Results of non-significant ANOVA for Ankle y  ****
+
+Contrast: 5 mm & 12 mm - interaction effect not significant. Tukey's test was not performed!
+
+Contrast: 5 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
+
+Contrast: 12 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
+
+**************************************************************************
+
+
+
+**************************************************************************
+
+*****  Results of non-significant ANOVA for Hind paw tao y  ****
+
+Contrast: 5 mm & 12 mm - interaction effect not significant. Tukey's test was not performed!
+
+Contrast: 5 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
+
+Contrast: 12 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
+
+**************************************************************************
+
+
+
+**************************************************************************
+
+*****  Results of RM ANOVA for Ankle Angle  ****
+
+Contrast: 5 mm & 12 mm - Significant clusters found at (in SC Percentage):
+
+8.33-16.67%, p values:
+
+
+8.33% - p = 0.0431
+12.5% - p = 0.0014
+16.67% - p = 0.0011
+
+Contrast: 5 mm & 25 mm - Significant clusters found at (in SC Percentage):
+
+8.33-16.67%, p values:
+
+
+8.33% - p = 0.0186
+12.5% - p = 0.0011
+16.67% - p = 0.0046
+
+Contrast: 12 mm & 25 mm - No significant clusters!
+
+**************************************************************************
+
+
+
+**************************************************************************
+
+*****  Results of non-significant ANOVA for Knee Angle  ****
+
+Contrast: 5 mm & 12 mm - interaction effect not significant. Tukey's test was not performed!
+
+Contrast: 5 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
+
+Contrast: 12 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
+
+**************************************************************************
+
+
+
+**************************************************************************
+
+*****  Results of RM ANOVA for Hip Angle  ****
+
+Contrast: 5 mm & 12 mm - No significant clusters!
+
+Contrast: 5 mm & 25 mm - No significant clusters!
+
+Contrast: 12 mm & 25 mm - Significant clusters found at (in SC Percentage):
+
+91.67-95.83%, p values:
+
+
+91.67% - p = 0.042
+95.83% - p = 0.0371
+
+**************************************************************************
+
