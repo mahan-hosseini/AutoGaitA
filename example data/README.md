@@ -2,7 +2,7 @@
 
 Here we provide example mouse data for users to explore *AutoGaitA*. Note that this dataset was used in our tutorial videos introducing *AutoGaitA_DLC*, *AutoGaitA_Group* and in our video explaining file preparation for *AutoGaitA_DLC*. 
 
-**Content**
+## Content
 - **Example full dataset** (i.e., .csv and video files, Annotation Table, and Results folder) with DLC-tracked body and beam (i.e.) coordinates for mice walking on a 25mm wide beam.
 - **Example *Results* folders** for mice walking on 25mm, 12mm, and 5mm wide beams (to be used with *AutoGaitA_Group*)
 - **Example and Template** Annotation Table files to be used with *AutoGaitA_DLC* and *AutoGaitA_Simi*
