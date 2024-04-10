@@ -9,6 +9,10 @@
 - AutoGaitA enables comparisons to be made across experimental conditions, species, disease states or genotypes. 
 - Despite being developed with gait data, AutoGaitA can be utilised for the analysis of any motor behaviour.
 
+## Documentation
+
+**[The AutoGaitA Documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit?usp=sharing) provides complete guidelines on installation, file preparation, AutoGaitA GUIs, using AutoGaitA via the command line, installing FFmpeg for rotating 3D PCA videos, lists known issues and FAQ.**  
+
 ## Getting Started
 
 ***Note!** Our documentation provides step-by-step walkthroughs of how to install autogaita for **[Windows](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.28j6wu2vamre)** and **[Mac](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit)***
