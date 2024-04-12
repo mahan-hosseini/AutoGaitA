@@ -1438,7 +1438,7 @@ def plot_permutation_test_results(
         f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE, x=-0.02)
     figure_file_string = stats_var + " - Cluster-extent Test"
     f.suptitle(figure_file_string, fontsize=PERM_PLOT_SUPLABEL_SIZE, y=0.993)
-    f.savefig(results_dir + figure_file_string + ".png")
+    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight"))
     save_as_svg(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
