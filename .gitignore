@@ -2,3 +2,5 @@
 .DS_Store
 my_utils/
 dev/
+autogaita.egg-info/
+dist/
