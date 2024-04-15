@@ -42,6 +42,15 @@ Users are advised to use the template to enter their data's timestamp informatio
 
 **[The AutoGaitA Documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit?usp=sharing) provides complete guidelines on installation, file preparation, AutoGaitA GUIs, using AutoGaitA via the command line, installing FFmpeg for rotating 3D PCA videos, lists known issues and FAQ.**  
 
+## Please note
+**We strongly recommend** users to pay attention to the *custom joints and angles* windows of AutoGaitA's first level toolboxes. Please see the relevant links below. These windows allow users to customise which columns of their data should be analysed and how angles should be computed. By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for mouse and human locomotion, respectively. If your analysis deviates from these standards (e.g. by focussing on another limb or a different species) **you must change the values** in the *custom joints and angles* window, otherwise you will encounter errors. The window can be found in *advanced configuration* sections. 
+
+Find out more about *AutoGaitA's custom joints and angles*:
+- [YouTube - AutoGaitA DLC Advanced Configuration](https://youtu.be/YABoQMOqChk?feature=shared) 
+- [YouTube - AutoGaitA Simi](https://youtu.be/fJhnjrJbA5c?feature=shared) 
+- [Documentation - AutoGaitA DLC](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.20bg7b7ymt0b)
+- [Documentation - AutoGaitA Simi](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.uz61bpmua7qz)
+
 ## License
 
 AutoGaitA is licensed under [GPL v3.0](https://github.com/mahan-hosseini/AutoGaitA/blob/main/LICENSE) and Forschungszentrum Jülich GmbH holds all copyrights.
