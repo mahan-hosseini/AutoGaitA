@@ -3,4 +3,6 @@
 my_utils/
 dev/
 autogaita.egg-info/
-dist/
+autogaita_icon.icns
+autogaita_icon.ico
+autogaita_logo.png

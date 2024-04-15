@@ -17,7 +17,7 @@ def group_dlcrun():
     # mouse anova cfg!
     cfg["anova_design"] = "Mixed ANOVA"
     cfg["permutation_number"] = 100
-    cfg["PCA_variables"] = ["Hind paw tao y", "Ankle y", "Knee y", "Elbow Angle Velocity"]
+    cfg["PCA_variables"] = ["Hind paw tao y", "Ankle y", "Knee y"]
     cfg["stats_variables"] = [
         # "Hind paw tao y",
         "Ankle y",
@@ -25,14 +25,14 @@ def group_dlcrun():
         "Ankle Angle",
         # "Knee Angle",
         # "Hip Angle",
-        "Elbow Angle"
+        # "Elbow Angle"
     ]
 
     # 2 groups
     folderinfo["group_names"] = ["one", "two"]
     folderinfo["group_dirs"] = [
-        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group1/",
-        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group2/",
+        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group 1/",
+        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group 2/",
     ]
 
     # results dir

@@ -26,7 +26,7 @@ setup(
     version='0.0.5',
     author="Mahan Hosseini",
     description="Automatic Gait Analysis in Python",
-    packages=["autogaita"],
+    packages=["autogaita", "autogaita.batchrun_scripts"],
     include_package_data=True,
     package_data={'': ['*.txt', '*.rst', '*.png', "*.icns", "*.ico"]},
     install_requires=install_requires,
