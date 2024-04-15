@@ -44,6 +44,7 @@ Users are advised to use the template to enter their data's timestamp informatio
 
 ## Please note
 **We strongly recommend** users to pay attention to the *custom joints and angles* windows of AutoGaitA's first level toolboxes. Please see the relevant links below. These windows allow users to customise which columns of their data should be analysed and how angles should be computed. 
+
 By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for mouse and human locomotion, respectively. If your analysis deviates from these standards (e.g. by focussing on another limb or a different species) **you must change the values** in the *custom joints and angles* window! The window can be found in the *advanced configuration* sections. 
 
 Find out more about *AutoGaitA's custom joints and angles*:
