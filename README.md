@@ -42,12 +42,12 @@ Users are advised to use the template to enter their data's timestamp informatio
 
 **[The AutoGaitA Documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit?usp=sharing) provides complete guidelines on installation, file preparation, AutoGaitA GUIs, using AutoGaitA via the command line, installing FFmpeg for rotating 3D PCA videos, lists known issues and FAQ.**  
 
-## Please note
+## Please Note: Custom Joints and Angles!
 **We strongly recommend** users to pay attention to the *custom joints and angles* windows of AutoGaitA's first level toolboxes. Please see the relevant links below. These windows allow users to customise which columns of their data should be analysed and how angles should be computed. 
 
-By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for mouse and human locomotion, respectively. If your analysis deviates from these standards (e.g. by focussing on another limb or a different species) **you must change these values**! You can find the window in the *advanced configuration* sections and once values are customised they remain for subsequent executions of AutoGaitA (i.e., until the program is closed). 
+By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for mouse and human locomotion, respectively. If your analysis deviates from these standards (e.g. by focussing on another limb or a different species) **you must change these values!** You can find the window in the *advanced configuration* sections and once values are customised they remain for subsequent executions of AutoGaitA (i.e., until the program is closed). 
 
-Find out more about *AutoGaitA's custom joints and angles*:
+**Find out more about *AutoGaitA's custom joints and angles:***
 - [YouTube - AutoGaitA DLC Advanced Configuration](https://youtu.be/YABoQMOqChk?feature=shared) 
 - [YouTube - AutoGaitA Simi](https://youtu.be/fJhnjrJbA5c?feature=shared) 
 - [Documentation - AutoGaitA DLC](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.20bg7b7ymt0b)
