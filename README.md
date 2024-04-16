@@ -36,6 +36,7 @@ We provide an example dataset in the **example data** folder of this repository,
 
 ### Annotation Table Examples and Templates
 Annotation Table example and template files for *AutoGaitA_DLC* and *AutoGaitA_Simi* can be found in the [**annotation tables**](https://github.com/mahan-hosseini/AutoGaitA/tree/main/annotation%20tables) folder of this repository.
+
 Users are advised to read the ***important note*** of that folder, use the template to enter their data's timestamp information and to then compare the resulting table with our example to check formatting.
 
 ## Documentation
