@@ -230,6 +230,8 @@ def some_prep(info, folderinfo, cfg):
     data[DF_TIME_COL] = data.index * (1 / sampling_rate)
     if sampling_rate <= 100:
         data[DF_TIME_COL] = round(data[DF_TIME_COL], 2)
+    elif 100 < sampling_rate <= 1000:
+        data[DF_TIME_COL] = round(data[DF_TIME_COL], 3)
     else:
         data[DF_TIME_COL] = round(data[DF_TIME_COL], 4)
 
@@ -742,6 +744,8 @@ def read_SC_info(data, SCdf, info, legname, cfg):
             end_in_s = float(SCdf.iloc[run_row, end_col].values[0])
             if sampling_rate <= 100:
                 float_precision = 2  # how many decimals we round to
+            elif 100 < sampling_rate <= 1000:
+                float_precision = 3
             else:
                 float_precision = 4
             start_in_s = round(start_in_s, float_precision)
@@ -750,12 +754,6 @@ def read_SC_info(data, SCdf, info, legname, cfg):
             all_cycles[r][s][1] = np.where(data[DF_TIME_COL] == end_in_s)[0][0]
 
     # ............................  clean all_cycles  ..................................
-
-    # pdb.set_trace()
-
-    # !!! FOR US ONLY: extract only even or odd runs
-    # all_cycles = [run for index, run in enumerate(all_cycles) if index % 2 != 0]
-
     # check if we skipped latencies because they were out of data-bounds
     all_cycles = check_cycle_out_of_bounds(all_cycles, info, legname)
     # check if there are any duplicates (e.g., SC2's start-lat == SC1's end-lat)

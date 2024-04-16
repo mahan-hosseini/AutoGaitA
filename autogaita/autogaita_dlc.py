@@ -1,6 +1,7 @@
 # %% imports
 import os
 import sys
+import pdb
 import shutil
 import json
 import pandas as pd
@@ -265,10 +266,13 @@ def some_prep(info, folderinfo, cfg):
             data[joint + "y"] = data[joint + "y"] - data["BeamRight y"]
         dropcols = [c for c in data.columns if "Beam" in c]
         data.drop(columns=dropcols, inplace=True)  # beamcols not needed anymore
-    # add Time
+    # add Time and round based on sampling rate
     data[TIME_COL] = data.index * (1 / sampling_rate)
+    pdb.set_trace()
     if sampling_rate <= 100:
         data[TIME_COL] = round(data[TIME_COL], 2)
+    elif 100 < sampling_rate <= 1000:
+        data[TIME_COL] = round(data[TIME_COL], 3)
     else:
         data[TIME_COL] = round(data[TIME_COL], 4)
     # reorder the columns we added
@@ -295,6 +299,7 @@ def move_data_to_folders(info, folderinfo):
     prerun_string = folderinfo["prerun_string"]
     postrun_string = folderinfo["postrun_string"]
     os.makedirs(results_dir)  # important to do this outside of loop!
+    whichvideo = ""  # initialise
     for filename in os.listdir(root_dir):
         # the following condition is True for data & beam csv
         if (
@@ -727,11 +732,13 @@ def extract_stepcycles(data, info, folderinfo, cfg):
             start_col = SCdf.columns.get_loc(SWINGSTART_COL + "." + str(s))
             end_col = SCdf.columns.get_loc(STANCEEND_COL + "." + str(s))
         user_scnum += 1
-        # make sure times have two decimals (because data[TIME_COL] has!)
+        # extract the SC times
         start_in_s = float(SCdf.iloc[info_row, start_col].values[0])
         end_in_s = float(SCdf.iloc[info_row, end_col].values[0])
         if sampling_rate <= 100:
             float_precision = 2  # how many decimals we round to
+        elif 100 < sampling_rate <= 1000:
+            float_precision = 3
         else:
             float_precision = 4
         start_in_s = round(start_in_s, float_precision)
