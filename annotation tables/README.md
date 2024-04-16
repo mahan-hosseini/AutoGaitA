@@ -6,7 +6,9 @@ In this folder we provide template and example Annotation Tables for *AutoGaitA_
 Users have to make sure that: 
 - The timestamps entered in the Annotation Table are in seconds and match the sampling (or frame) rate of their data.
 - The decimal precision (i.e., how many decimals are used) corresponds to the sampling rate 
-- E.g., the correct time of the 20th frame in a video with 180 Hz is (20/180) = 0.111s (**important**: rounded to 3 decimals!)
+- Examples:
+	- 5th frame of a 100 Hz video: 5/100 = 0.05s (**important**: rounded to 2 decimals!)
+	- 20th frame of a 180 Hz video: 20/180 = 0.111s (**important**: rounded to 3 decimals!)
 - For more detail, see [the corresponding section of our documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.ji1oyj9y1v1c)
 
 ## Contents
