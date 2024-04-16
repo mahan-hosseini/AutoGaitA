@@ -7,19 +7,19 @@ import pdb
 
 # constants
 # folderinfo
-ROOT_DIR = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Error Mouse 2 Ines/"
-SCTABLE_FILENAME = "CB_5mm_SC.xlsx"  # has to be an excel file
-DATA_STRING = "SalkData"
-BEAM_STRING = "SalkBeam"
+ROOT_DIR = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/"
+SCTABLE_FILENAME = "25mm.xlsx"  # has to be an excel file
+DATA_STRING = "SIMINewOct"
+BEAM_STRING = "BeamTraining"
 PREMOUSE_STRING = "Mouse"
-POSTMOUSE_STRING = "_5mm"
-PRERUN_STRING = "Run"
-POSTRUN_STRING = "-2DLC_resnet50"
+POSTMOUSE_STRING = "_25mm"
+PRERUN_STRING = "run"
+POSTRUN_STRING = "-6DLC"
 # base cfg
-SAMPLING_RATE = 180
+SAMPLING_RATE = 100
 SUBTRACT_BEAM = True
 DONT_SHOW_PLOTS = False
-CONVERT_TO_MM = False
+CONVERT_TO_MM = True
 PIXEL_TO_MM_RATIO = 3.76  # used for converting x & y data to millimeters
 # advanced cfg
 X_SC_BROKEN_THRESHOLD = 200  # reject SC if x/y goes +-value @ neighbouring tps
@@ -29,7 +29,7 @@ ANGULAR_ACCELERATION = True
 SAVE_TO_XLS = True
 BIN_NUM = 25
 PLOT_SE = True
-NORMALISE_HEIGHT_AT_SC_LEVEL = True
+NORMALISE_HEIGHT_AT_SC_LEVEL = False
 INVERT_Y_AXIS = True
 FLIP_GAIT_DIRECTION = True
 PLOT_JOINT_NUMBER = 3

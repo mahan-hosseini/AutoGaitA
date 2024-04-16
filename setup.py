@@ -13,7 +13,7 @@ install_requires=[
     'scipy==1.11.1',
     'ffmpeg-python==0.2.0',
     'openpyxl==3.1.2',
-    'pillow==10.0.0'
+    'pillow==10.3.0'
 ]
 
 # add platform-specific dependencies

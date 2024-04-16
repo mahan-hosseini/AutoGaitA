@@ -1,7 +1,6 @@
 # %% imports
 import os
 import sys
-import pdb
 import shutil
 import json
 import pandas as pd
@@ -268,7 +267,6 @@ def some_prep(info, folderinfo, cfg):
         data.drop(columns=dropcols, inplace=True)  # beamcols not needed anymore
     # add Time and round based on sampling rate
     data[TIME_COL] = data.index * (1 / sampling_rate)
-    pdb.set_trace()
     if sampling_rate <= 100:
         data[TIME_COL] = round(data[TIME_COL], 2)
     elif 100 < sampling_rate <= 1000:
@@ -343,6 +341,7 @@ def test_and_expand_cfg(data, cfg, info):
     Check that all features are present in the dataset
     Add plot_joints & direction_joint
     Make sure to set dont_show_plots to True if Python is not in interactive mode
+    If users subtract a beam, set normalise @ sc level to False
     """
 
     # run the 3 tests first
@@ -393,6 +392,10 @@ def test_and_expand_cfg(data, cfg, info):
     if not hasattr(sys, "ps1") and not sys.flags.interactive:
         cfg["dont_show_plots"] = True
         matplotlib.use("agg")
+
+    # never normalise @ SC level if user subtracted a beam
+    if cfg["subtract_beam"]:
+        cfg["normalise_height_at_SC_level"] = False
 
     return cfg
 

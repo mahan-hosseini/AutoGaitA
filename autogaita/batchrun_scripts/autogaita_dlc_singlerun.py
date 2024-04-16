@@ -4,17 +4,17 @@ import os
 
 # ...............  1) folderinfo & cfg-dicts: constants  ......................
 # folderinfo
-ROOT_DIR = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Error Mouse 1 Ines"
-SCTABLE_FILENAME = "AnnotationTable"  # has to be an excel file
-DATA_STRING = "BalanceJun"
+ROOT_DIR = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/"
+SCTABLE_FILENAME = "25mm.xlsx"  # has to be an excel file
+DATA_STRING = "SIMINewOct"
 BEAM_STRING = "BeamTraining"
 PREMOUSE_STRING = "Mouse"
-POSTMOUSE_STRING = "_4mm"
-PRERUN_STRING = "Run"
-POSTRUN_STRING = "_DLC"
+POSTMOUSE_STRING = "_25mm"
+PRERUN_STRING = "run"
+POSTRUN_STRING = "-6DLC"
 # base cfg
 SAMPLING_RATE = 100
-SUBTRACT_BEAM = False
+SUBTRACT_BEAM = True
 DONT_SHOW_PLOTS = False
 CONVERT_TO_MM = True
 PIXEL_TO_MM_RATIO = 3.76  # used for converting x & y data to millimeters
@@ -26,10 +26,11 @@ ANGULAR_ACCELERATION = True
 SAVE_TO_XLS = True
 BIN_NUM = 25
 PLOT_SE = True
-NORMALISE_HEIGHT_AT_SC_LEVEL = True
+NORMALISE_HEIGHT_AT_SC_LEVEL = False
 INVERT_Y_AXIS = True
 FLIP_GAIT_DIRECTION = True
 PLOT_JOINT_NUMBER = 3
+# column cfg
 HIND_JOINTS = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
 FORE_JOINTS = [
         "Front paw tao ",
@@ -45,7 +46,7 @@ ANGLES = {"name": ["Ankle", "Elbow"], "lower_joint": ["Hind paw tao", "Wrist"], 
 
 # ......................  info-dict: mouse/run-constants  ..............................
 info = {}
-info["mouse_num"] = 174
+info["mouse_num"] = 14
 info["run_num"] = 1
 info["name"] = ("ID " + str(info["mouse_num"])
                 + " - Run " + str(info["run_num"]))
