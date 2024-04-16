@@ -35,7 +35,7 @@ The main user interface can then be accessed via
 We provide an example dataset in the **example data** folder of this repository, with a set of mice walking over differently wide beams and both the beam as well as body coordinates being tracked with DLC. Note that this dataset was used in our tutorial videos introducing *AutoGaitA_DLC*, *AutoGaitA_Group* and in our video explaining file preparation for *AutoGaitA_DLC*.  We further provide a **group** folder there that can be used alongside the *AutoGaitA_Group* tutorial to confirm that users generate the same set of results following our instructions.
 
 ### Annotation Table Examples and Templates
-Annotation Table example and template files for *AutoGaitA_DLC* and *AutoGaitA_Simi* can be found in the **annotation tables** folder of this repository.
+Annotation Table example and template files for *AutoGaitA_DLC* and *AutoGaitA_Simi* can be found in the [**annotation tables**](https://github.com/mahan-hosseini/AutoGaitA/tree/main/annotation%20tables) folder of this repository.
 Users are advised to use the template to enter their data's timestamp information and to then compare the resulting table with our example to check formatting.
 
 ## Documentation
