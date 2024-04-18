@@ -54,8 +54,13 @@ By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for m
 - [Documentation - AutoGaitA DLC](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.20bg7b7ymt0b)
 - [Documentation - AutoGaitA Simi](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.uz61bpmua7qz)
 
-## License
+## Reference
+If you use this code or data please [cite our preprint](https://www.biorxiv.org/content/10.1101/2024.04.14.589409v1):
 
+*Hosseini, M., Klein, I., Kuzu, T. D., Semmler, C., Wunderle, V., Mardare, V., Galvao,	A., Haustein, M., Bueschges, A., Grefkes, C., Korotkova, T., Fink, G.R., Weiss, P.H., Gatto, G., Daun, S.  bioRxiv 2024.04.14.589409;	https://doi.org/10.1101/2024.04.14.589409* 
+
+
+## License
 AutoGaitA is licensed under [GPL v3.0](https://github.com/mahan-hosseini/AutoGaitA/blob/main/LICENSE) and Forschungszentrum Jülich GmbH holds all copyrights. 
 
 The AutoGaitA software is provided without warranty of any kind, express or implied, including, but not limited to, the implied warranty of fitness for a particular purpose.
