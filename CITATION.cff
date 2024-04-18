@@ -1,0 +1,52 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite our preprint."
+authors:
+- family-names: "Hosseini"
+  given-names: "Mahan"
+  orcid: "https://orcid.org/0000-0003-2889-6227"
+title: "AutoGaitA - Automated Gait Analysis in Python"
+version: 0.0.5
+doi: 10.5281/zenodo.10947621
+date-released: 2024-04-18
+url: "https://github.com/mahan-hosseini/AutoGaitA"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Hosseini"
+    given-names: "Mahan"
+    orcid: "https://orcid.org/0000-0003-2889-6227"
+  - family-names: "Klein"
+    given-names: "Ines"
+  - family-names: "Kuzu"
+    given-names: "Taylan D"
+  - family-names: "Semmler"
+    given-names: "Carolin"
+  - family-names: "Wunderle"
+    given-names: "Veronika"
+  - family-names: "Mardare"
+    given-names: "Vlad"
+  - family-names: "Galvao"
+    given-names: "Ana"
+  - family-names: "Haustein"
+    given-names: "Moritz"
+  - family-names: "Büschges"
+    given-names: "Ansgar"
+    orcid: "https://orcid.org/0000-0003-2123-1900"
+  - family-names: "Grefges"
+    given-names: "Christian"
+  - family-names: "Koroktova"
+    given-names: "Tatjana"
+  - family-names: "Fink"
+    given-names: "Gereon R"
+  - family-names: "Weiss"
+    given-names: "Peter H"
+  - family-names: "Gatto"
+    given-names: "Graziana"
+    orcid: "https://orcid.org/0000-0002-4244-8925"
+  - family-names: "Daun"
+    given-names: "Silvia"
+    orcid: "https://orcid.org/0000-0001-7342-1015"  
+  doi: "https://doi.org/10.1101/2024.04.14.589409"
+  journal: "bioRxiv"
+  title: "AutoGaitA - Automated Gait Analysis in Python"
+  year: 2024
