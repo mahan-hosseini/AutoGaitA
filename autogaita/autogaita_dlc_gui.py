@@ -509,7 +509,7 @@ def build_column_info_window(root, cfg, root_dimensions):
                 entry.grid(row=nrows + 2, column=angle_column + a)
         else:  # beamsubtract joints
             label = ctk.CTkLabel(
-                window, text="Beamsubtract Joint #" + str(len(cfg[key]))
+                window, text="Beamsubtraction Joint #" + str(len(cfg[key]))
             )
             label.grid(row=nrows + 1, column=0, sticky="ew")
             entry = ctk.CTkEntry(window, textvariable=cfg[key][-1])
@@ -555,12 +555,12 @@ def build_column_info_window(root, cfg, root_dimensions):
         initialise_labels_and_entries(
             beam_frame,
             key,
-            "Beamsubtract Joint",
+            "Beamsubtraction Joint",
         )
         # add button
         add_beamjoint_button = ctk.CTkButton(
             beamwindow,
-            text="Add beam-subtraction joint",
+            text="Add beamsubtraction joint",
             fg_color=FG_COLOR,
             hover_color=HOVER_COLOR,
             command=lambda: add_joint(beam_frame, key),  # input = cfg's key
