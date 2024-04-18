@@ -46,7 +46,7 @@ preferred-citation:
   - family-names: "Daun"
     given-names: "Silvia"
     orcid: "https://orcid.org/0000-0001-7342-1015"  
-  doi: "https://doi.org/10.1101/2024.04.14.589409"
+  doi: "10.1101/2024.04.14.589409"
   journal: "bioRxiv 2024.04.14.589409"
   title: "AutoGaitA - Automated Gait Analysis in Python"
   year: 2024
