@@ -31,9 +31,9 @@ NORMALISE_HEIGHT_AT_SC_LEVEL = True
 PLOT_JOINT_NUMBER = 7
 JOINTS = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis", "Shoulder", "Neck"]
 ANGLES = {
-    "name": ["WHO", "Ankle", "Knee", "Elbow", "Skullbase"],
-    "lower_joint": ["Midfoot", "IS", "Ankle", "Wrist", "Neck"],
-    "upper_joint": ["Knee", "Hip", "Shoulder", "Skull"],
+    "name": ["Ankle", "Knee"],
+    "lower_joint": ["Midfoot", "Ankle"],
+    "upper_joint": ["Knee", "Hip"],
 }
 
 

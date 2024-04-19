@@ -114,7 +114,6 @@ def simi(info, folderinfo, cfg):
 # ................................  main function  .....................................
 def some_prep(info, folderinfo, cfg):
     """Preparation of the data for later analyses"""
-
     # ............................  unpack stuff  ......................................
     name = info["name"]
     results_dir = info["results_dir"]
@@ -458,6 +457,23 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
 
     # things are more involved for angle dicts
     elif type(string_variable) is dict:
+        # 1) test if the lists of all keys are equally long, if not throw out last idxs
+        key_lengths = [len(string_variable[key]) for key in string_variable.keys()]
+        if not all(key_length == key_lengths[0] for key_length in key_lengths):
+            min_length = min(key_lengths)
+            for key in string_variable:  # remove invalid idxs
+                string_variable[key] = string_variable[key][:min_length]
+            key_length_mismatch_message = (  # inform user
+                "\n***********\n! WARNING !\n***********\n"
+                + "\nLength-mismatch in angle configuration!"
+                + "\nCheck angles' name/upper/lower-joint entries."
+                + "\nOnly processing first "
+                + str(min_length)
+                + " entries."
+            )
+            print(key_length_mismatch_message)
+            write_issues_to_textfile(key_length_mismatch_message, info)
+        # 2) check if all strings in the angle dict are valid columns
         invalid_angletrio_message = ""
         invalid_idxs = []  # these idxs hold across the 3 keys of our angles-dict
         for key in string_variable:
