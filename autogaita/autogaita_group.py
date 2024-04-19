@@ -123,7 +123,7 @@ def group(folderinfo, cfg):
                     stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg
                 )
 
-    # ..................................  ANOVA  .......................................
+        # ..................................  ANOVA  ...................................
         if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
             for stats_var in cfg["stats_variables"]:
                 twoway_RMANOVA(
@@ -171,7 +171,9 @@ def some_prep(folderinfo, cfg):
 
     # see if there's a config json file and add to cfg dict
     for g_idx, group_dir in enumerate(group_dirs):
-        with open(os.path.join(group_dir + CONFIG_JSON_FILENAME), "r") as config_json_file:
+        with open(
+            os.path.join(group_dir + CONFIG_JSON_FILENAME), "r"
+        ) as config_json_file:
             config_vars_from_json = json.load(config_json_file)
             for key in config_vars_from_json.keys():
                 # assigning like this ensure all keys are in all jsons across groups
@@ -280,28 +282,27 @@ def extract_cfg_vars(folderinfo, cfg):
                 + "No valid results folder found for "
                 + group_names[g]
                 + "\nFix & re-run!"
-                )
+            )
             print(no_valid_results_error)
             write_issues_to_textfile(no_valid_results_error, results_dir)
     # assign to our cfg dict after group loop
     cfg["save_to_xls"] = save_to_xls
 
-
     # .........................  test if PCA config is valid  ..........................
     if cfg["PCA_variables"]:  # only test if user wants PCA (ie. selected any features)
         if len(cfg["PCA_variables"]) < cfg["number_of_PCs"]:
             PCA_variable_num = len(cfg["PCA_variables"])
-            PCA_variables_str = '\n'.join(cfg["PCA_variables"])
+            PCA_variables_str = "\n".join(cfg["PCA_variables"])
             PCA_error_message = (
-            "\n***********\n! ERROR !\n***********\n"
-            + "\nPCA Configuration invalid, number of input features cannot exceed "
-            + "number of principal components to compute!\n"
-            + str(PCA_variable_num)
-            + " PCA variables: \n"
-            + PCA_variables_str
-            + "\n & Number of wanted PCs: "
-            + str(cfg["number_of_PCs"])
-            + "\n Fix & re-run!"
+                "\n***********\n! ERROR !\n***********\n"
+                + "\nPCA Configuration invalid, number of input features cannot exceed "
+                + "number of principal components to compute!\n"
+                + str(PCA_variable_num)
+                + " PCA variables: \n"
+                + PCA_variables_str
+                + "\n & Number of wanted PCs: "
+                + str(cfg["number_of_PCs"])
+                + "\n Fix & re-run!"
             )
             write_issues_to_textfile(PCA_error_message, results_dir)
             raise ValueError(PCA_error_message)
@@ -311,9 +312,8 @@ def extract_cfg_vars(folderinfo, cfg):
                 + "Number of principal components of PCA cannot be smaller than 2!"
                 + "\nRunning PCA on 2 components - if you do not want to perform PCA, "
                 + "just don't choose any variables for it."
-                )
+            )
             cfg["number_of_PCs"] = 2  # make sure to update in cfg dict
-
 
     # ..............................  dont show plots  .................................
     # => in group gaita is always dependent on user system
@@ -459,10 +459,14 @@ def test_bin_num_consistency(dfs, group_names, results_dir):
         for b in range(1, len(sc_breaks)):
             this_bin_num = sc_breaks[b] - sc_breaks[b - 1] - 1
             if this_bin_num != bin_num:
-                bin_num_error_helper_function(dfs, g, group_names, sc_breaks, results_dir, b)
+                bin_num_error_helper_function(
+                    dfs, g, group_names, sc_breaks, results_dir, b
+                )
         # handle the last step-cycle of the df (it doesn't have a sc_break after it!)
         if (len(dfs[g]) - sc_breaks[-1] - 1) != this_bin_num:
-            bin_num_error_helper_function(dfs, g, group_names, sc_breaks, results_dir, b)
+            bin_num_error_helper_function(
+                dfs, g, group_names, sc_breaks, results_dir, b
+            )
     return bin_num
 
 
@@ -492,7 +496,7 @@ def test_PCA_and_stats_variables(df, group_name, name, results_dir, cfg):
             missing_PCA_variables = [
                 variable for variable in PCA_variables if variable not in df.columns
             ]
-            missing_PCA_variables_str = '\n'.join(missing_PCA_variables)
+            missing_PCA_variables_str = "\n".join(missing_PCA_variables)
             PCA_variable_mismatch_message = (
                 "\n***********\n! ERROR !\n***********\n"
                 + "\nNot all features you asked us to analyse WITH PCA were present in "
@@ -512,7 +516,7 @@ def test_PCA_and_stats_variables(df, group_name, name, results_dir, cfg):
             missing_stats_variables = [
                 variable for variable in stats_variables if variable not in df.columns
             ]
-            missing_stats_variables_str = '\n'.join(missing_stats_variables)
+            missing_stats_variables_str = "\n".join(missing_stats_variables)
             stats_variable_mismatch_message = (
                 "\n***********\n! ERROR !\n***********\n"
                 + "\nNot all features you asked us to analyse STATISTICALLY were "
@@ -530,7 +534,15 @@ def test_PCA_and_stats_variables(df, group_name, name, results_dir, cfg):
 
 
 def import_and_combine_dfs(
-    group_df, group_name, group_dir, tracking_software, name, which_df, which_leg, results_dir, cfg
+    group_df,
+    group_name,
+    group_dir,
+    tracking_software,
+    name,
+    which_df,
+    which_leg,
+    results_dir,
+    cfg,
 ):
     """Import one run's df at a time and combine to group-level df"""
     if which_df == "Normalised":
@@ -745,16 +757,16 @@ def avg_and_std(dfs, folderinfo, cfg):
             sc_percentage_col_idx = this_ID_avg_df.columns.get_loc(SC_PERCENTAGE_COL)
             for i in range(len(this_ID_avg_df)):
                 this_index = this_ID_avg_df.index[i]
-                this_ID_avg_df.iloc[
-                    i, sc_percentage_col_idx
-                ] = one_bin_in_sc_percent + (this_index * one_bin_in_sc_percent)
+                this_ID_avg_df.iloc[i, sc_percentage_col_idx] = (
+                    one_bin_in_sc_percent + (this_index * one_bin_in_sc_percent)
+                )
             this_ID_std_df[SC_PERCENTAGE_COL] = 0
             sc_percentage_col_idx = this_ID_std_df.columns.get_loc(SC_PERCENTAGE_COL)
             for i in range(len(this_ID_std_df)):
                 this_index = this_ID_std_df.index[i]
-                this_ID_std_df.iloc[
-                    i, sc_percentage_col_idx
-                ] = one_bin_in_sc_percent + (this_index * one_bin_in_sc_percent)
+                this_ID_std_df.iloc[i, sc_percentage_col_idx] = (
+                    one_bin_in_sc_percent + (this_index * one_bin_in_sc_percent)
+                )
             # add ID-level avg & std dfs to group-level dfs
             if avg_dfs[g].empty:
                 avg_dfs[g] = this_ID_avg_df
@@ -1263,18 +1275,14 @@ def compute_and_assign_clustersize(results_df, contrast):
             this_cluster_indices.append(i)
             # handle the case of results_df ending with a sig. cluster
             if i == max(np.where(results_df[CONTRASTS_COL] == contrast)[0]):
-                results_df.iloc[
-                    this_cluster_indices, tmass_col_idx
-                    ] = this_tmass
+                results_df.iloc[this_cluster_indices, tmass_col_idx] = this_tmass
         else:
             # if p was not significant, assign the previous cluster & reset our vars
             # => note this else also occurs when we keep having nonsig ts but for those
             #    nothing happens... coding it like this might make it a bit slower than
             #    a more sophisticated conditional logic here but the difference should
             #    be minimal so I just keep it as is
-            results_df.iloc[
-                this_cluster_indices, tmass_col_idx
-            ] = this_tmass
+            results_df.iloc[this_cluster_indices, tmass_col_idx] = this_tmass
             this_tmass = 0.0
             this_cluster_size = 0
             this_cluster_indices = []
@@ -1486,7 +1494,7 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
     #    done in an earlier version of gaita, have "if GG-col is there")
     sphericity_flag = sphericity(
         stats_df, dv=stats_var, within=SC_PERCENTAGE_COL, subject=ID_COL
-        )[0]
+    )[0]
     if sphericity_flag:  # sphericity is given, no need to correct
         interaction_effect_pval = ANOVA_result["p-unc"][2]
     else:
@@ -1504,7 +1512,6 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
         save_stats_results_to_text(
             nonsig_multcomp_df, stats_var, "non-significant ANOVA", folderinfo, cfg
         )
-
 
 
 def multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg):
@@ -1788,7 +1795,9 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             )
             ax.set_ylabel("Z")
             figure_file_string = " - Joint Z-coord.s over average step cycle"
-        f.savefig(results_dir + group_name + figure_file_string + ".png", bbox_inches="tight")
+        f.savefig(
+            results_dir + group_name + figure_file_string + ".png", bbox_inches="tight"
+        )
         save_as_svg(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -1831,7 +1840,9 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.set_title(title_leg + " " + joint + " Z over average step cycle")
             ax.set_ylabel("Z")
             figure_file_string = "- Z-coord.s over average step cycle"
-        f.savefig(results_dir + joint + figure_file_string + ".png", bbox_inches="tight")
+        f.savefig(
+            results_dir + joint + figure_file_string + ".png", bbox_inches="tight"
+        )
         save_as_svg(f, results_dir, joint + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -1881,7 +1892,9 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 group_name + " - " + which_leg + " joint angles over average step cycle"
             )
         figure_file_string = " - Joint angles over average step cycle"
-        f.savefig(results_dir + group_name + figure_file_string + ".png", bbox_inches="tight")
+        f.savefig(
+            results_dir + group_name + figure_file_string + ".png", bbox_inches="tight"
+        )
         save_as_svg(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -1917,7 +1930,9 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 title_leg = which_leg
             ax.set_title(title_leg + " " + angle + " angle over average step cycle")
         figure_file_string = " - angle over average step cycle"
-        f.savefig(results_dir + angle + figure_file_string + ".png", bbox_inches="tight")
+        f.savefig(
+            results_dir + angle + figure_file_string + ".png", bbox_inches="tight"
+        )
         save_as_svg(f, results_dir, angle + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -1977,7 +1992,9 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.set_title(group_name + " - Joint velocities over average step cycle")
         elif tracking_software == "Simi":
             ax.set_ylabel(
-                "Velocity (Y in (your_units) / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
+                "Velocity (Y in (your_units) / "
+                + str(int((1 / sampling_rate) * 1000))
+                + "ms)"
             )
             ax.set_title(
                 group_name
@@ -1986,7 +2003,9 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 + " joint velocities over average step cycle"
             )
         figure_file_string = " - Joint velocities over average step cycle"
-        f.savefig(results_dir + group_name + figure_file_string + ".png", bbox_inches="tight")
+        f.savefig(
+            results_dir + group_name + figure_file_string + ".png", bbox_inches="tight"
+        )
         save_as_svg(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -2029,7 +2048,9 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.set_title(joint + "velocities over average step cycle")
         elif tracking_software == "Simi":
             ax.set_ylabel(
-                "Velocity (Y in (your_units) / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
+                "Velocity (Y in (your_units) / "
+                + str(int((1 / sampling_rate) * 1000))
+                + "ms)"
             )
             if joint + "Velocity" in g_avg_dfs[g].columns:
                 title_leg = ""
@@ -2039,7 +2060,9 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 title_leg + " " + joint + " velocities over average step cycle"
             )
         figure_file_string = "- Velocities over average step cycle"
-        f.savefig(results_dir + joint + figure_file_string + ".png", bbox_inches="tight")
+        f.savefig(
+            results_dir + joint + figure_file_string + ".png", bbox_inches="tight"
+        )
         if dont_show_plots:
             plt.close(f)
 
@@ -2093,7 +2116,9 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
                 + " angular velocities over average step cycle"
             )
         figure_file_string = " - Angular velocities over average step cycle"
-        f.savefig(results_dir + group_name + figure_file_string + ".png", bbox_inches="tight")
+        f.savefig(
+            results_dir + group_name + figure_file_string + ".png", bbox_inches="tight"
+        )
         save_as_svg(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -2129,9 +2154,16 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
                 title_leg = ""
             else:
                 title_leg = which_leg
-            ax.set_title(title_leg + " " + angle + " - Angular velocities over average step cycle")
+            ax.set_title(
+                title_leg
+                + " "
+                + angle
+                + " - Angular velocities over average step cycle"
+            )
         figure_file_string = " - Angular Velocities over average step cycle"
-        f.savefig(results_dir + angle + figure_file_string + ".png", bbox_inches="tight")
+        f.savefig(
+            results_dir + angle + figure_file_string + ".png", bbox_inches="tight"
+        )
         save_as_svg(f, results_dir, angle + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -2213,7 +2245,7 @@ def print_start(folderinfo, cfg):
         )
         start_string += (
             "\nAlpha Level of " + str(cfg["stats_threshold"] * 100) + "%\n\n"
-            )
+        )
     else:
         start_string += "\n\nNo stats wanted!\n\n"
 
@@ -2302,12 +2334,18 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
         if len(clusters) == 0:  # no sig clusters were found!
             if "non-significant" in which_test:
                 message = (
-                    message + "\n\nContrast: " + contrast + " - interaction effect " +
-                    "not significant. Tukey's test was not performed!"
-                    )
+                    message
+                    + "\n\nContrast: "
+                    + contrast
+                    + " - interaction effect "
+                    + "not significant. Tukey's test was not performed!"
+                )
             else:
                 message = (
-                    message + "\n\nContrast: " + contrast + " - No significant clusters"
+                    message
+                    + "\n\nContrast: "
+                    + contrast
+                    + " - No significant clusters"
                     + "!"
                 )
         else:
@@ -2332,24 +2370,24 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
                 # => handle ANOVA and perm test differently since results_df different
                 if "ANOVA" in which_test:
                     # important to include cluster-end bin here thus cluster[1]+1!
-                    for i in range(cluster[0], cluster[1]+1):
+                    for i in range(cluster[0], cluster[1] + 1):
                         message = (
                             message
                             + "\n"
                             + str(rounded_sc_percentages[i])
                             + "% - p = "
                             + str(round(results_df.loc[i, contrast], 4))
-                            )
+                        )
                 else:
                     # extract subset df of only this contrast because cluster variables
                     # idxs values correspond to 0:bin_num and results_df of perm test
                     # (this is different for anovas) has 0:bin_num*contrast_number!
                     this_contrast_results_df = results_df[
                         results_df[CONTRASTS_COL] == contrast
-                        ]
+                    ]
                     cluster_p_colidx = this_contrast_results_df.columns.get_loc(
                         CLUSTER_P_COL
-                        )
+                    )
                     # also note that we only use cluster[0] to retrieve cluster's pval
                     # since the pval is constant across the whole cluster always
                     message = (
@@ -2357,8 +2395,8 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
                         + "Cluster p value = "
                         + str(
                             this_contrast_results_df.iloc[cluster[0], cluster_p_colidx]
-                            )
                         )
+                    )
 
     # message end
     message = (
@@ -2382,5 +2420,5 @@ if __name__ == "__main__":
         + "possible.\nIf you prefer a non-GUI approach, please either: "
         + "\n1. Call this as a function, i.e. autogaita.group(folderinfo, cfg)"
         + "\n2. Use the dlc or simirun scripts in the batchrun_scripts folder"
-        )
+    )
     print(group_info_message)

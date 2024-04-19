@@ -1,6 +1,7 @@
 # Contrast autogaita_dlc results using autogaita_group
 from autogaita import autogaita_group
 
+
 def group_dlcrun():
     """Batch run group level analyses for results obtained with _dlc"""
     folderinfo = {}
@@ -38,7 +39,7 @@ def group_dlcrun():
     # results dir
     folderinfo[
         "results_dir"
-    # mouse
+        # mouse
     ] = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/GroupResults/"
 
     # run

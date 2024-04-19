@@ -186,7 +186,7 @@ def dlc_gui():
     # sampling rate
     samprate_label = ctk.CTkLabel(
         root, text="Insert sampling rate of videos (frames/second)"
-        )
+    )
     samprate_label.grid(row=4, column=0)
     samprate_entry = ctk.CTkEntry(root, textvariable=cfg["sampling_rate"])
     samprate_entry.grid(row=5, column=0)
@@ -472,8 +472,7 @@ def build_column_info_window(root, cfg, root_dimensions):
 
     # .............  Nested Function: Add joint label & entry  .........................
     def add_joint(window, key):
-        """Add a joint if needed or a angle name/lower_joint/upper_joint if angle widget
-        """
+        """Add a joint if needed or a angle name/lower_joint/upper_joint if angle widget"""
         # append StringVar to cfg appropriately
         if key == "angles":
             for angle_key in cfg[key]:
@@ -922,11 +921,13 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
     SCXLS_entry = ctk.CTkEntry(runwindow, textvariable=results["sctable_filename"])
     SCXLS_entry.grid(row=r + 3, column=0)
     # file naming convention label
-    name_convention_string = ("According to [A]_[B]_[C]_[D]-[E][G] filename convention "
-                              + "(e.g. C57B6_Mouse10_25mm_Run1-6DLC-JointTracking):")
+    name_convention_string = (
+        "According to [A]_[B]_[C]_[D]-[E][G] filename convention "
+        + "(e.g. C57B6_Mouse10_25mm_Run1-6DLC-JointTracking):"
+    )
     name_convention_label = ctk.CTkLabel(
         runwindow, text=name_convention_string, width=runwindow_w
-        )
+    )
     name_convention_label.grid(row=r + 4, column=0)
     # data string
     data_string = "[G] What is the identifier of the DLC-tracked coordinate file?"
@@ -937,39 +938,31 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
     # beam string
     beam_string = (
         "[G] What is the identifier of the DLC-tracked baseline file? (optional)"
-        )
+    )
     beam_label = ctk.CTkLabel(runwindow, text=beam_string, width=runwindow_w)
     beam_label.grid(row=r + 7, column=0)
     beam_entry = ctk.CTkEntry(runwindow, textvariable=results["beam_string"])
     beam_entry.grid(row=r + 8, column=0)
     # premouse_num string
-    premouse_string = (
-        "[B] Define the 'unique subject identifier' preceding the number"
-    )
+    premouse_string = "[B] Define the 'unique subject identifier' preceding the number"
     premouse_label = ctk.CTkLabel(runwindow, text=premouse_string, width=runwindow_w)
     premouse_label.grid(row=r + 9, column=0)
     premouse_entry = ctk.CTkEntry(runwindow, textvariable=results["premouse_string"])
     premouse_entry.grid(row=r + 10, column=0)
     # postmouse_num string
-    postmouse_string = (
-        "[C] Define the 'unique task identifier"
-    )
+    postmouse_string = "[C] Define the 'unique task identifier"
     postmouse_label = ctk.CTkLabel(runwindow, text=postmouse_string, width=runwindow_w)
     postmouse_label.grid(row=r + 11, column=0)
     postmouse_entry = ctk.CTkEntry(runwindow, textvariable=results["postmouse_string"])
     postmouse_entry.grid(row=r + 12, column=0)
     # prerun string
-    prerun_string = (
-        "[D] Define the 'unique trial identifier"
-    )
+    prerun_string = "[D] Define the 'unique trial identifier"
     prerun_label = ctk.CTkLabel(runwindow, text=prerun_string, width=runwindow_w)
     prerun_label.grid(row=r + 13, column=0)
     prerun_entry = ctk.CTkEntry(runwindow, textvariable=results["prerun_string"])
     prerun_entry.grid(row=r + 14, column=0)
     # postrun string
-    postrun_string = (
-        "[E] Define the 'unique camera identifier"
-    )
+    postrun_string = "[E] Define the 'unique camera identifier"
     postrun_label = ctk.CTkLabel(runwindow, text=postrun_string, width=runwindow_w)
     postrun_label.grid(row=r + 15, column=0)
     postrun_entry = ctk.CTkEntry(runwindow, textvariable=results["postrun_string"])
@@ -1102,7 +1095,7 @@ def configure_the_icon(root):
         try:
             from Cocoa import NSApplication, NSImage
         except ImportError:
-            print('Unable to import pyobjc modules')
+            print("Unable to import pyobjc modules")
         else:
             with resources.path("autogaita", "autogaita_icon.icns") as icon_path:
                 ns_application = NSApplication.sharedApplication()
@@ -1111,6 +1104,7 @@ def configure_the_icon(root):
     elif platform.system().startswith("win"):
         with resources.path("autogaita", "autogaita_icon.ico") as icon_path:
             root.iconbitmap(str(icon_path))
+
 
 def get_results_and_cfg(results, cfg):
     """Before calling analysis, use .get() to extract values from tk-vars"""

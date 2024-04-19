@@ -85,9 +85,7 @@ def simi_gui():
     cfg["normalise_height_at_SC_level"] = tk.BooleanVar(root, True)
     results = {}  # local results variable
     results["name"] = tk.StringVar(root, "")
-    results["root_dir"] = tk.StringVar(
-        root, ""
-    )
+    results["root_dir"] = tk.StringVar(root, "")
     results["sctable_filename"] = tk.StringVar(root, "")
     results["postname_flag"] = tk.BooleanVar(root, False)
     results["postname_string"] = tk.StringVar(root, "")
@@ -199,7 +197,7 @@ def simi_gui():
     # sampling rate
     samprate_label = ctk.CTkLabel(
         root, text="Insert sampling rate of videos (frames/second)"
-        )
+    )
     samprate_label.grid(row=5, column=1)
     samprate_entry = ctk.CTkEntry(root, textvariable=cfg["sampling_rate"])
     samprate_entry.grid(row=6, column=1)
@@ -322,7 +320,9 @@ def simi_gui():
         hover_color=HOVER_COLOR,
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
-    column_info_button.grid(row=15, column=1, sticky="nsew", rowspan=2, padx=10, pady=10)
+    column_info_button.grid(
+        row=15, column=1, sticky="nsew", rowspan=2, padx=10, pady=10
+    )
     # .........................  run and done section  .................................
     # run button
     runheader_label = ctk.CTkLabel(
@@ -357,6 +357,7 @@ def simi_gui():
 
     # main loop
     root.mainloop()
+
 
 # %%..............  LOCAL FUNCTION(S) #1 - BUILD COLUMN INFO WINDOW  ...................
 def build_column_info_window(root, cfg, root_dimensions):
@@ -417,9 +418,7 @@ def build_column_info_window(root, cfg, root_dimensions):
     joint_label.grid(row=0, column=joint_column, sticky="nsew", pady=(0, 5))
     # initialise scrollable frame for hindlimb
     joint_frame = ctk.CTkScrollableFrame(columnwindow)
-    joint_frame.grid(
-        row=1, column=joint_column, rowspan=scrollable_rows, sticky="nsew"
-    )
+    joint_frame.grid(row=1, column=joint_column, rowspan=scrollable_rows, sticky="nsew")
     # initialise labels & entries with hind limb defaults
     initialise_labels_and_entries(joint_frame, "joints", "Joint ")
     # add joint button
@@ -428,12 +427,14 @@ def build_column_info_window(root, cfg, root_dimensions):
         text="Add joint",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
-        command=lambda: add_joint(
-            joint_frame, "joints"
-        ),  # 2nd input = cfg's key
+        command=lambda: add_joint(joint_frame, "joints"),  # 2nd input = cfg's key
     )
     add_joint_button.grid(
-        row=2 + scrollable_rows, column=joint_column, sticky="nsew", padx=5, pady=(10, 5)
+        row=2 + scrollable_rows,
+        column=joint_column,
+        sticky="nsew",
+        padx=5,
+        pady=(10, 5),
     )
 
     # .........  Column 1: angle names/joint-definitions & done button  ................
@@ -535,8 +536,6 @@ def initialise_labels_and_entries(window, key, which_case_string, *args):
         window.grid_columnconfigure(c, weight=1)
 
 
-
-
 # %%..................  LOCAL FUNCTION(S) #2 - BUILD DONE WINDOW  ......................
 def build_donewindow(results, root, root_dimensions):
     """Build done window informing people"""
@@ -635,7 +634,9 @@ def analyse_single_run(this_runs_results, this_runs_cfg):
     this_info["name"] = this_runs_results["name"]
     this_folderinfo = prepare_folderinfo(this_runs_results)
     if this_folderinfo is None:
-        error_msg = ("No directory found at: " + this_runs_results["root_dir"] + " - try again!")
+        error_msg = (
+            "No directory found at: " + this_runs_results["root_dir"] + " - try again!"
+        )
         tk.messagebox.showerror(title="Try again", message=error_msg)
         print(error_msg)
         return
@@ -643,7 +644,9 @@ def analyse_single_run(this_runs_results, this_runs_cfg):
         this_runs_results["root_dir"] + "Results/" + this_info["name"] + "/"
     )
     # execute
-    autogaita_utils.try_to_run_gaita("Simi", this_info, this_folderinfo, this_runs_cfg, False)
+    autogaita_utils.try_to_run_gaita(
+        "Simi", this_info, this_folderinfo, this_runs_cfg, False
+    )
 
 
 def analyse_multi_run(this_runs_results, this_runs_cfg):
@@ -653,10 +656,8 @@ def analyse_multi_run(this_runs_results, this_runs_cfg):
     this_folderinfo = prepare_folderinfo(this_runs_results)
     if this_folderinfo is None:
         error_msg = (
-            "No directory found at: "
-            + this_runs_results["root_dir"]
-            + " - try again!"
-            )
+            "No directory found at: " + this_runs_results["root_dir"] + " - try again!"
+        )
         tk.messagebox.showerror(title="Try again", message=error_msg)
         print(error_msg)
         return
@@ -676,7 +677,9 @@ def multirun_run_a_single_dataset(idx, multirun_info, this_folderinfo, this_runs
     for keyname in keynames:
         this_info[keyname] = multirun_info[keyname][idx]
     # important to only pass this_info here (1 run at a time - prints error if needed)
-    autogaita_utils.try_to_run_gaita("Simi", this_info, this_folderinfo, this_runs_cfg, True)
+    autogaita_utils.try_to_run_gaita(
+        "Simi", this_info, this_folderinfo, this_runs_cfg, True
+    )
 
 
 # %%..............  LOCAL FUNCTION(S) #4 - VARIOUS HELPER FUNCTIONS  ...................
@@ -707,7 +710,7 @@ def configure_the_icon(root):
         try:
             from Cocoa import NSApplication, NSImage
         except ImportError:
-            print('Unable to import pyobjc modules')
+            print("Unable to import pyobjc modules")
         else:
             with resources.path("autogaita", "autogaita_icon.icns") as icon_path:
                 ns_application = NSApplication.sharedApplication()
@@ -716,6 +719,7 @@ def configure_the_icon(root):
     elif platform.system().startswith("win"):
         with resources.path("autogaita", "autogaita_icon.ico") as icon_path:
             root.iconbitmap(str(icon_path))
+
 
 def change_postname_entry_state(postname_entry, results):
     """Change the state of ID entry widget based on whether user wants to only analyse

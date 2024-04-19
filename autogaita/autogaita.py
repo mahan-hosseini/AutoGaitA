@@ -124,7 +124,7 @@ def configure_the_icon(root):
         try:
             from Cocoa import NSApplication, NSImage
         except ImportError:
-            print('Unable to import pyobjc modules')
+            print("Unable to import pyobjc modules")
         else:
             with resources.path("autogaita", "autogaita_icon.icns") as icon_path:
                 ns_application = NSApplication.sharedApplication()

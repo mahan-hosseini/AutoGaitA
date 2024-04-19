@@ -1,10 +1,18 @@
-# %% If we just want to analyse one run...
 from autogaita import autogaita_utils
+import pandas as pd
 import os
+import shutil
+import pdb
 
-# ...............  1) folderinfo & cfg-dicts: constants  ......................
+# .................................................  1) GLOBAL VARS  .........................................................
+# for testing - reset any previous test
+TEST_PATH = "tests/test_data/dlc_data/"
+TRUE_PATH = "example data/25mm/Results/ID 15 - Run 3/"
+if os.path.exists(os.path.join(TEST_PATH, "Results")):
+    shutil.rmtree(os.path.join(TEST_PATH, "Results"))
+# batchrun_script global vars
 # folderinfo
-ROOT_DIR = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/"
+ROOT_DIR = TEST_PATH
 SCTABLE_FILENAME = "25mm.xlsx"  # has to be an excel file
 DATA_STRING = "SIMINewOct"
 BEAM_STRING = "BeamTraining"
@@ -15,7 +23,7 @@ POSTRUN_STRING = "-6DLC"
 # base cfg
 SAMPLING_RATE = 100
 SUBTRACT_BEAM = True
-DONT_SHOW_PLOTS = False
+DONT_SHOW_PLOTS = True
 CONVERT_TO_MM = True
 PIXEL_TO_MM_RATIO = 3.76  # used for converting x & y data to millimeters
 # advanced cfg
@@ -42,28 +50,54 @@ FORE_JOINTS = [
 BEAM_HIND_JOINTADD = ["Tail base ", "Tail center ", "Tail tip "]
 BEAM_FORE_JOINTADD = ["Nose ", "Ear base "]
 ANGLES = {
-    "name": ["Ankle", "Elbow"],
-    "lower_joint": ["Hind paw tao", "Wrist"],
-    "upper_joint": ["Knee", "Lower Shoulder"],
+    "name": ["Ankle ", "Knee ", "Hip "],
+    "lower_joint": ["Hind paw tao ", "Ankle ", "Knee "],
+    "upper_joint": ["Knee ", "Hip ", "Iliac Crest "],
 }
-
-
-# ......................  info-dict: mouse/run-constants  ..............................
 info = {}
-info["mouse_num"] = 14
-info["run_num"] = 1
+info["mouse_num"] = 15
+info["run_num"] = 3
 info["name"] = "ID " + str(info["mouse_num"]) + " - Run " + str(info["run_num"])
 info["results_dir"] = os.path.join(ROOT_DIR + "Results/" + info["name"] + "/")
 
 
-# %% code
-def dlc_singlerun():
+# ....................................................  2) RUN TEST  .......................................................
+def test_dlc_approval():
+    """
+    Approval Test of AutoGaitA DLC
+    1. Run autogaita.dlc for ID 15 - Run 3 (with the cfg used there)
+    2. Load the "Average Stepcycles".xlsx file from the repo and compare for equivalence to  average_data
+    3. Do the same for "Standard Devs. Stepcycle.xlsx" and std_data
+    4. Pass the test if the two df-pairs are equal
+    """
     folderinfo = prepare_folderinfo()
     cfg = prepare_cfg()
     # run
     autogaita_utils.try_to_run_gaita("DLC", info, folderinfo, cfg, False)
+    # load true dfs from xlsx files
+    true_av_df = pd.read_excel(
+        os.path.join(TRUE_PATH, "ID 15 - Run 3 - Average Stepcycle.xlsx")
+    )
+    true_std_df = pd.read_excel(
+        os.path.join(TRUE_PATH, "ID 15 - Run 3 - Standard Devs. Stepcycle.xlsx")
+    )
+    test_av_df = pd.read_excel(
+        os.path.join(
+            TEST_PATH, "Results/ID 15 - Run 3/ID 15 - Run 3 - Average Stepcycle.xlsx"
+        )
+    )
+    test_std_df = pd.read_excel(
+        os.path.join(
+            TEST_PATH,
+            "Results/ID 15 - Run 3/ID 15 - Run 3 - Standard Devs. Stepcycle.xlsx",
+        )
+    )
+    # finally assert equivalence of df-pairs
+    assert test_av_df.equals(true_av_df) == True
+    assert test_std_df.equals(true_std_df) == True
 
 
+# ..................................................  3) LOCAL FUNCTIONS  ....................................................
 def prepare_folderinfo():
     """Dump all infos about this given folder into a dict"""
     folderinfo = {}
@@ -108,8 +142,3 @@ def prepare_cfg():
     cfg["beam_fore_jointadd"] = BEAM_FORE_JOINTADD
     cfg["angles"] = ANGLES
     return cfg
-
-
-# %% what happens if we just hit run
-if __name__ == "__main__":
-    dlc_singlerun()

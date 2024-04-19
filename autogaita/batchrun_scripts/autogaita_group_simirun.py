@@ -1,6 +1,7 @@
 # Contrast autogaita_simi results using autogaita_group
 from autogaita import autogaita_group
 
+
 def group_simirun():
     """Batch run group level analyses for results obtained with _simi"""
     # constant folderinfo & cfg vars
@@ -35,13 +36,10 @@ def group_simirun():
             # "Shoulder, " + cfg["which_leg"] + " Angle",
             "Skullbase Angle",
             "Elbow, " + cfg["which_leg"] + " Angle",
-            ]
+        ]
 
         # 2 groups - human
-        folderinfo["group_names"] = [
-            "Young",
-            "Old"
-            ]
+        folderinfo["group_names"] = ["Young", "Old"]
         folderinfo["group_dirs"] = [
             "/Users/mahan/sciebo/Research/AutoGaitA/Human/Testing2/Young/",
             "/Users/mahan/sciebo/Research/AutoGaitA/Human/Testing2/Old/",
@@ -50,6 +48,10 @@ def group_simirun():
         folderinfo[
             "results_dir"
             # human
-        ] = "/Users/mahan/sciebo/Research/AutoGaitA/Human/Testing2/Group/" + cfg["which_leg"] + " leg/"
+        ] = (
+            "/Users/mahan/sciebo/Research/AutoGaitA/Human/Testing2/Group/"
+            + cfg["which_leg"]
+            + " leg/"
+        )
 
         autogaita_group.group(folderinfo, cfg)

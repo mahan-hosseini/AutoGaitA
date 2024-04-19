@@ -3,7 +3,7 @@ from autogaita import autogaita_utils
 import os
 import traceback
 
-# .............  1) folderinfo-dict: the folder-constants  ....................
+# .............  1) folderinfo-dict: the folder-constants  ...............
 # constants
 ROOT_DIR = "/Users/mahan/sciebo/Research/AutoGaitA/Human/Testing2/"
 SCTABLE_FILENAME = "SC Latency Table"  # has to be an xlsxfile
@@ -25,9 +25,11 @@ PLOT_SE = True
 NORMALISE_HEIGHT_AT_SC_LEVEL = True
 PLOT_JOINT_NUMBER = 7
 JOINTS = ["Ankle", "Knee", "Hip", "Pelvis", "Shoulder", "Neck"]
-ANGLES = {"name": ["Ankle", "Knee", "Elbow", "Skullbase"],
-          "lower_joint": ["Midfoot", "Ankle", "Wrist", "Neck"],
-          "upper_joint": ["Knee", "Hip", "Shoulder", "Skull"]}
+ANGLES = {
+    "name": ["Ankle", "Knee", "Elbow", "Skullbase"],
+    "lower_joint": ["Midfoot", "Ankle", "Wrist", "Neck"],
+    "upper_joint": ["Knee", "Hip", "Shoulder", "Skull"],
+}
 
 # .................  3) info-dict: ID-constants  .......................
 info = {}
@@ -44,7 +46,7 @@ def simi_singlerun():
 
 
 def prepare_folderinfo():
-    """ Dump all infos about constants in this given folder into a dict """
+    """Dump all infos about constants in this given folder into a dict"""
     folderinfo = {}
     folderinfo["root_dir"] = ROOT_DIR
     folderinfo["sctable_filename"] = SCTABLE_FILENAME
@@ -53,7 +55,7 @@ def prepare_folderinfo():
 
 
 def prepare_cfg():
-    """ Dump all configuration information into a dict """
+    """Dump all configuration information into a dict"""
     cfg = {}
     cfg["sampling_rate"] = SAMPLING_RATE  # base cfg
     cfg["dont_show_plots"] = DONT_SHOW_PLOTS
@@ -66,6 +68,7 @@ def prepare_cfg():
     cfg["joints"] = JOINTS
     cfg["angles"] = ANGLES
     return cfg
+
 
 # %% what happens if we just hit run
 if __name__ == "__main__":

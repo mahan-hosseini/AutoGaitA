@@ -11,9 +11,7 @@ ISSUES_TXT_FILENAME = "Issues.txt"
 
 
 # ...............................  error handling  .....................................
-def try_to_run_gaita(
-    which_gaita, info, folderinfo, cfg, multirun_flag
-):
+def try_to_run_gaita(which_gaita, info, folderinfo, cfg, multirun_flag):
     """Try to run AutoGaitA for a single dataset - print and log error if there was any
     error that prevented completion of the main code
 

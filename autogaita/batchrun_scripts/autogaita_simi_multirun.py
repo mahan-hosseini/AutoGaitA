@@ -30,9 +30,11 @@ PLOT_SE = False
 NORMALISE_HEIGHT_AT_SC_LEVEL = True
 PLOT_JOINT_NUMBER = 7
 JOINTS = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis", "Shoulder", "Neck"]
-ANGLES = {"name": ["WHO", "Ankle", "Knee", "Elbow", "Skullbase"],
-          "lower_joint": ["Midfoot", "IS", "Ankle", "Wrist", "Neck"],
-          "upper_joint": ["Knee", "Hip", "Shoulder", "Skull"]}
+ANGLES = {
+    "name": ["WHO", "Ankle", "Knee", "Elbow", "Skullbase"],
+    "lower_joint": ["Midfoot", "IS", "Ankle", "Wrist", "Neck"],
+    "upper_joint": ["Knee", "Hip", "Shoulder", "Skull"],
+}
 
 
 # %% main program
@@ -50,7 +52,7 @@ def simi_multirun():
 
 
 def run_singlerun(idx, info, folderinfo, cfg):
-    """ Run the main code of individual run-analyses based on current cfg """
+    """Run the main code of individual run-analyses based on current cfg"""
     # extract and pass info of this mouse/run (also update resdir)
     this_info = {}
     keynames = info.keys()
@@ -61,26 +63,26 @@ def run_singlerun(idx, info, folderinfo, cfg):
 
 
 def extract_info():
-    """ Prepare a dict of lists that include unique name infos"""
-    info = {"name": [], "results_dir":[]}
+    """Prepare a dict of lists that include unique name infos"""
+    info = {"name": [], "results_dir": []}
     for filename in os.listdir(ROOT_DIR):
         if not POSTNAME_STRING:
             if (".xls" in filename) & (SCTABLE_FILENAME not in filename):
                 info["name"].append(filename.split(".xls")[0])
                 info["results_dir"].append(
                     os.path.join(ROOT_DIR + "Results/" + info["name"][-1] + "/")
-                    )
+                )
         else:
             if POSTNAME_STRING in filename:
                 info["name"].append(filename.split(POSTNAME_STRING)[0])
                 info["results_dir"].append(
                     os.path.join(ROOT_DIR + "Results/" + info["name"][-1] + "/")
-                    )
+                )
     return info
 
 
 def prepare_folderinfo():
-    """ Dump all infos about constants in this given folder into a dict """
+    """Dump all infos about constants in this given folder into a dict"""
     folderinfo = {}
     folderinfo["root_dir"] = ROOT_DIR
     folderinfo["sctable_filename"] = SCTABLE_FILENAME
@@ -89,7 +91,7 @@ def prepare_folderinfo():
 
 
 def prepare_cfg():
-    """ Dump all configuration information into a dict """
+    """Dump all configuration information into a dict"""
     cfg = {}
     cfg["sampling_rate"] = SAMPLING_RATE  # base cfg
     cfg["dont_show_plots"] = DONT_SHOW_PLOTS
@@ -102,6 +104,7 @@ def prepare_cfg():
     cfg["joints"] = JOINTS
     cfg["angles"] = ANGLES
     return cfg
+
 
 # %% what happens if we just hit run
 if __name__ == "__main__":

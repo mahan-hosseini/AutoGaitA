@@ -16,8 +16,17 @@ TIME_COL = "Time"
 ISSUES_TXT_FILENAME = "Issues.txt"  # filename to which we write issues-info
 CONFIG_JSON_FILENAME = "config.json"  # filename to which we write cfg-infos
 SCXLS_MOUSECOLS = [
-    "Mouse", "mouse", "Fly", "fly", "Animal", "animal", "Subject", "subject", "ID", "id"
-    ]  # SC XLS info
+    "Mouse",
+    "mouse",
+    "Fly",
+    "fly",
+    "Animal",
+    "animal",
+    "Subject",
+    "subject",
+    "ID",
+    "id",
+]  # SC XLS info
 SCXLS_RUNCOLS = ["Run", "run", "Runs", "runs", "Trial", "trial", "Trials", "trials"]
 SCXLS_SCCOLS = ["SC Number", "SC number", "sc number", "SC Num", "sc num", "SC num"]
 SWINGSTART_COL = "Swing (ti)"
@@ -379,7 +388,7 @@ def test_and_expand_cfg(data, cfg, info):
             + "After testing your hind limb joint names, no valid joint was left to "
             + "perform gait direction checks on.\nPlease make sure that at least one "
             + "hind limb joint is provided & try again!"
-            )
+        )
         write_issues_to_textfile(no_hind_joint_message, info)
         print(no_hind_joint_message)
         return
@@ -463,7 +472,7 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
                     invalid_idxs.append(idx)
                     if not this_keys_missing_strings:  # first occurance
                         this_keys_missing_strings += "\nAngle's " + key + " key: "
-                    this_keys_missing_strings += (string + "(#" + str(idx+1) + ") / ")
+                    this_keys_missing_strings += string + "(#" + str(idx + 1) + ") / "
             # string concat outside of idx-forloop above please
             invalid_angletrio_message += this_keys_missing_strings
         # if we have to remove idxs from all keys of our angles dict
@@ -630,7 +639,7 @@ def extract_stepcycles(data, info, folderinfo, cfg):
             SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename))
         else:
             raise FileNotFoundError(
-                "No SC XLS table found! sctable_filename has to be @ root_dir"
+                "No Annotation Table found! sctable_filename has to be @ root_dir"
             )
     else:
         # in cases below use string-concat (+) - otherwise xls added as path
@@ -640,7 +649,7 @@ def extract_stepcycles(data, info, folderinfo, cfg):
             SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename + ".xlsx"))
         else:
             raise FileNotFoundError(
-                "No SC XLS table found! sctable_filename has to be @ root_dir"
+                "No Annotation Table found! sctable_filename has to be @ root_dir"
             )
     # see if table columns are labelled correctly (try a couple to allow user typos)
     valid_col_flags = [False, False, False]
@@ -773,6 +782,7 @@ def extract_stepcycles(data, info, folderinfo, cfg):
     all_cycles = check_DLC_tracking(data, info, all_cycles, cfg)
     return all_cycles
 
+
 # ..............................  helper functions  ....................................
 def check_cycle_out_of_bounds(all_cycles):
     """Check if user provided SC latencies that were not in video/data bounds"""
@@ -820,7 +830,7 @@ def check_cycle_order(all_cycles, info):
                 this_message = (
                     "\n***********\n! WARNING !\n***********\n"
                     + "SC #"
-                    + str(c+1)
+                    + str(c + 1)
                     + " has a later start than end latency - Skipping!"
                 )
                 print(this_message)
@@ -829,7 +839,7 @@ def check_cycle_order(all_cycles, info):
             this_message = (
                 "\n***********\n! WARNING !\n***********\n"
                 + "SC #"
-                + str(c+1)
+                + str(c + 1)
                 + " has an earlier start than previous SC's end latency - Skipping!"
             )
             print(this_message)
@@ -1276,7 +1286,7 @@ def plot_results(info, results, folderinfo, cfg):
     angular_acceleration = cfg["angular_acceleration"]
     dont_show_plots = cfg["dont_show_plots"]
     if dont_show_plots:
-        plt.switch_backend('Agg')
+        plt.switch_backend("Agg")
 
     # ....................0 - extract SCs from all_steps_data...........................
     sc_idxs = extract_sc_idxs(all_steps_data)
@@ -1400,9 +1410,19 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
             else:
                 float_precision = 4
             this_label = (
-                str(round(all_steps_data.iloc[sc_idxs[s][0], time_col_idx], float_precision))
+                str(
+                    round(
+                        all_steps_data.iloc[sc_idxs[s][0], time_col_idx],
+                        float_precision,
+                    )
+                )
                 + "-"
-                + str(round(all_steps_data.iloc[sc_idxs[s][-1], time_col_idx], float_precision))
+                + str(
+                    round(
+                        all_steps_data.iloc[sc_idxs[s][-1], time_col_idx],
+                        float_precision,
+                    )
+                )
                 + "s"
             )
             ax[j].plot(this_x, this_y, label=this_label)
@@ -1415,7 +1435,9 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
             figure_file_string = " - Foot y by x coordinates"
         else:
             figure_file_string = " - " + joint + "y by x coordinates"
-        f[j].savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
+        f[j].savefig(
+            results_dir + name + figure_file_string + ".png", bbox_inches="tight"
+        )
         save_as_svg(f[j], results_dir, name, figure_file_string)
         if dont_show_plots:
             plt.close(f[j])
@@ -1451,7 +1473,9 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
             this_y = all_steps_data.iloc[sc_idxs[s], y_col_idx]
             ax[a].plot(this_x, this_y)
         figure_file_string = " - " + angle + " Angle by Time"
-        f[a].savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
+        f[a].savefig(
+            results_dir + name + figure_file_string + ".png", bbox_inches="tight"
+        )
         save_as_svg(f[a], results_dir, name, figure_file_string)
         if dont_show_plots:
             plt.close(f[a])
@@ -1484,9 +1508,15 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
         else:
             float_precision = 4
         this_label = (
-            str(round(all_steps_data.iloc[sc_idxs[s][0], time_col_idx], float_precision))
+            str(
+                round(all_steps_data.iloc[sc_idxs[s][0], time_col_idx], float_precision)
+            )
             + "-"
-            + str(round(all_steps_data.iloc[sc_idxs[s][-1], time_col_idx], float_precision))
+            + str(
+                round(
+                    all_steps_data.iloc[sc_idxs[s][-1], time_col_idx], float_precision
+                )
+            )
             + "s"
         )
         for i in sc_idxs[s]:  # loop over timepoints of current SC
@@ -1540,9 +1570,15 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
         else:
             float_precision = 4
         this_label = (
-            str(round(all_steps_data.iloc[sc_idxs[s][0], time_col_idx], float_precision))
+            str(
+                round(all_steps_data.iloc[sc_idxs[s][0], time_col_idx], float_precision)
+            )
             + "-"
-            + str(round(all_steps_data.iloc[sc_idxs[s][-1], time_col_idx], float_precision))
+            + str(
+                round(
+                    all_steps_data.iloc[sc_idxs[s][-1], time_col_idx], float_precision
+                )
+            )
             + "s"
         )
         for i in sc_idxs[s]:
@@ -1830,7 +1866,9 @@ def save_as_svg(figure, results_dir, name, figure_file_string):
     svg_dir = os.path.join(results_dir, "SVG Figures")
     if not os.path.exists(svg_dir):
         os.makedirs(svg_dir)
-    figure.savefig(svg_dir + "/" + name + figure_file_string + ".svg", bbox_inches="tight")
+    figure.savefig(
+        svg_dir + "/" + name + figure_file_string + ".svg", bbox_inches="tight"
+    )
 
 
 def tickconvert_mm_to_cm(axis, whichlabel):
@@ -1875,5 +1913,5 @@ if __name__ == "__main__":
         + "possible.\nIf you prefer a non-GUI approach, please either: "
         + "\n1. Call this as a function, i.e. autogaita.dlc(info, folderinfo, cfg)"
         + "\n2. Use the single or multirun scripts in the batchrun_scripts folder"
-        )
+    )
     print(dlc_info_message)

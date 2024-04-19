@@ -133,7 +133,12 @@ def group_gui():
         ),
     )
     continue_button.grid(
-        row=3, column=0, columnspan=MAX_GROUP_NUM - 1, pady=23, padx=30, sticky="nsew"
+        row=3,
+        column=0,
+        columnspan=MAX_GROUP_NUM - 1,
+        pady=23,
+        padx=30,
+        sticky="nsew",
     )
     root.grid_rowconfigure(3, weight=1)
     num_cols = root.grid_size()[0]  # maximise cols
@@ -220,7 +225,8 @@ def build_mainwindow(root, group_number, root_dimensions):
             # group names - labels
             group_names_labels.append(
                 ctk.CTkLabel(
-                    mainwindow, text="Group " + str(this_groups_number) + "'s Name"
+                    mainwindow,
+                    text="Group " + str(this_groups_number) + "'s Name",
                 )
             )
             group_names_labels[-1].grid(row=row_counter, column=0)
@@ -338,7 +344,12 @@ def build_mainwindow(root, group_number, root_dimensions):
             fg_color=FG_COLOR,
             hover_color=HOVER_COLOR,
             command=lambda: definefeatures_window(
-                mainwindow, group_names, group_dirs, results_dir, root, root_dimensions
+                mainwindow,
+                group_names,
+                group_dirs,
+                results_dir,
+                root,
+                root_dimensions,
             ),
         )
         definefeatures_button.grid(
@@ -432,13 +443,14 @@ def definefeatures_window(
 ):
     """Build define features window"""
 
-    # nested function (called by run-button): extract boolean checkbox vars and store in
-    # cfg dicts!
+    # nested function (called by run-button): extract boolean checkbox vars and store
+    # in cfg dicts!
     def get_selected_variables():
         for key in LIST_VARS:
             # this list comprehension extracts all strings (keys) of checkbox_vars'
             # given sub-dict (either stats_variables or PCA_variables) and stores it to
-            # the correct key of our cfg dict if it was checked (i.e., if var.get() is True!)
+            # the correct key of our cfg dict if it was checked (i.e., if var.get() is
+            # True!)
             cfg[key] = [
                 string for string, var in checkbox_vars[key].items() if var.get()
             ]
@@ -495,7 +507,7 @@ def definefeatures_window(
         print("Analysis did not run due to above errors. Fix them & re-try!")
         return
 
-    # .......................  BUILD THE TOPLEVEL WINDOW  ..............................
+    # .......................  BUILD THE TOPLEVEL WINDOW  .............................
     # build window
     featureswindow = ctk.CTkToplevel(mainwindow)
     featureswindow.title("Add Features & Run!")
@@ -558,7 +570,9 @@ def definefeatures_window(
             this_checkbox.grid(row=row_counter, column=col_counter, sticky="nsew")
             # if user doesn't want to do stats, dont have them choose features
             if frame == stats_frame:
-                if (cfg["do_permtest"].get() is False) & (cfg["do_anova"].get() is False):
+                if (cfg["do_permtest"].get() is False) & (
+                    cfg["do_anova"].get() is False
+                ):
                     this_checkbox.configure(state="disabled")
             row_counter += 1
             # # CARE - the -1 is important here since indexing starts at 0 and grid_nrows
@@ -611,7 +625,12 @@ def definefeatures_window(
         hover_color=HOVER_COLOR,
         command=lambda: (
             build_donewindow(
-                group_names, group_dirs, results_dir, root, mainwindow, featureswindow
+                group_names,
+                group_dirs,
+                results_dir,
+                root,
+                mainwindow,
+                featureswindow,
             ),
             get_selected_variables(),
         ),
@@ -868,6 +887,7 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
     #         tk.messagebox(title="Finished :)", message=done_message)
     #         dummy_number = 0  # so we exit the while loop
 
+
 # %%...............  LOCAL FUNCTION(S) #6 - VARIOUS HELPER FUNCTIONS  ..................
 
 
@@ -909,7 +929,7 @@ def configure_the_icon(root):
         try:
             from Cocoa import NSApplication, NSImage
         except ImportError:
-            print('Unable to import pyobjc modules')
+            print("Unable to import pyobjc modules")
         else:
             with resources.path("autogaita", "autogaita_icon.icns") as icon_path:
                 ns_application = NSApplication.sharedApplication()
@@ -918,6 +938,7 @@ def configure_the_icon(root):
     elif platform.system().startswith("win"):
         with resources.path("autogaita", "autogaita_icon.ico") as icon_path:
             root.iconbitmap(str(icon_path))
+
 
 # %% what happens if we hit run
 if __name__ == "__main__":

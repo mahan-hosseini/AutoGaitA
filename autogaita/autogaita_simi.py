@@ -20,7 +20,16 @@ OUTPUTS = LEGS + ["both"]
 ISSUES_TXT_FILENAME = "Issues.txt"  # filename to which we write issues-info
 CONFIG_JSON_FILENAME = "config.json"  # filename to which we write cfg-infos
 # sc extraction
-SCXLS_SUBJCOLS = ["Participant", "participant", "Animal", "animal", "Subject", "subject", "ID", "id"]  # SC XLS info
+SCXLS_SUBJCOLS = [
+    "Participant",
+    "participant",
+    "Animal",
+    "animal",
+    "Subject",
+    "subject",
+    "ID",
+    "id",
+]  # SC XLS info
 SCXLS_LEGCOLS = ["Leg", "leg", "Legs", "legs", "Side", "side"]
 SCXLS_RUNCOLS = ["Run", "run", "Runs", "runs", "Trial", "trial", "Trials", "trials"]
 SCXLS_SCCOLS = ["SC Number", "SC number", "sc number", "SC Num", "sc num", "SC num"]
@@ -51,15 +60,15 @@ STICK_LINEWIDTH = 0.5
 # ......................................................................................
 # Please read this (& check_data_column_names!) when you are confused about col-names.
 # It's a bit tricky in this code, see comments & doc about this issue in:
-    # 1. check_and_fix_cfg_strings (why am I here, read the others)
-    # 2. check_data_column_names (read me first)
-    # 3. add_features (then me)
-    # 4. plot_results (me if you really have to)
+# 1. check_and_fix_cfg_strings (why am I here, read the others)
+# 2. check_data_column_names (read me first)
+# 3. add_features (then me)
+# 4. plot_results (me if you really have to)
 # => mainly (from 2.):
-    # Bodyside-specific colnames have to end WITHOUT a space (because we concat
-    # "name" + ", leg " + "Z" - so leg ends with a space)
-    # Bodyside-nonspecific colnames have to end WITH a space (because we concat "name "
-    # + "Z" so name has to end with a space)
+# Bodyside-specific colnames have to end WITHOUT a space (because we concat
+# "name" + ", leg " + "Z" - so leg ends with a space)
+# Bodyside-nonspecific colnames have to end WITH a space (because we concat "name "
+# + "Z" so name has to end with a space)
 # ......................................................................................
 
 
@@ -74,7 +83,7 @@ def simi(info, folderinfo, cfg):
     1) import & preparation
     2) step cycle extraction
     3) z-normalisation, y-flipping & feature computation for individual step cycles
-    4) step cycle normalisation, dataframe creation & XLS-exportation
+    4) step cycle normalisaion, dataframe creation & XLS-exportation
     5) plots
     """
 
@@ -136,9 +145,7 @@ def some_prep(info, folderinfo, cfg):
     else:
         move_data_to_folders(info, folderinfo)
 
-
-
-     # .......  initialise Issues.txt & quick check for file existence  .................
+    # .......  initialise Issues.txt & quick check for file existence  .................
     issue_txt_path = os.path.join(results_dir, ISSUES_TXT_FILENAME)
     if os.path.exists(issue_txt_path):
         os.remove(issue_txt_path)
@@ -164,7 +171,7 @@ def some_prep(info, folderinfo, cfg):
                     + name
                     + "!\nPlease ensure your root directory only has one "
                     + "datafile per ID"
-                    )
+                )
 
     # ............................  import data  .......................................
     import_error_message = ""  # prep stuff for error handling
@@ -376,7 +383,7 @@ def test_and_expand_cfg(data, cfg, info):
             + "After testing your joint names, no valid joint was left to "
             + "perform gait direction checks on.\nPlease make sure that at least one "
             + "joint is provided & try again!"
-            )
+        )
         write_issues_to_textfile(no_joint_message, info)
         print(no_joint_message)
         return (None, None)  # returning tuple bc. some_prep returns 2 variables
@@ -420,19 +427,21 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
         # characters and returns invalid_idxs that we'll use next to clean the list
         string_variable, invalid_joint_idxs = check_data_column_names(
             data, string_variable
-            )
+        )
         # if user gave us joints we didnt find, write, print & save error message
         if invalid_joint_idxs:  # if none found, func returns an empty list (falsey!)
             # backup dirty variable
             dirty_string_variable = string_variable
             # now clean the list
             string_variable = [
-                item for i, item in enumerate(string_variable) if i not in invalid_joint_idxs
-                ]
+                item
+                for i, item in enumerate(string_variable)
+                if i not in invalid_joint_idxs
+            ]
             # now print & save erroneous & remaining joints
             joint_error = (
-            "\n***********\n! WARNING !\n***********\n"
-            + "\nYou entered joint-names that are not included in your dataset:"
+                "\n***********\n! WARNING !\n***********\n"
+                + "\nYou entered joint-names that are not included in your dataset:"
             )
             for idx in invalid_joint_idxs:
                 joint_error += "\n" + dirty_string_variable[idx]
@@ -443,7 +452,7 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
                 "\n\nNote that capitalisation matters."
                 + "\nIf you are running a group analysis, we'll use this updated cfg "
                 + "throughout.\nCheck out the config.json file for the full cfg used."
-                )
+            )
             print(joint_error)
             write_issues_to_textfile(joint_error, info)
 
@@ -455,18 +464,15 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
             this_keys_missing_strings = ""
             string_variable[key], this_keys_invalid_idxs = check_data_column_names(
                 data, string_variable[key]
-                )
+            )
             if this_keys_invalid_idxs:  # if none found this is an empty list (falsey!)
                 invalid_idxs.append(this_keys_invalid_idxs)
                 if not this_keys_missing_strings:  # first occurance
                     this_keys_missing_strings += "\nAngle's " + key + " key: "
                 for idx in this_keys_invalid_idxs:
                     this_keys_missing_strings += (
-                        string_variable[key][idx]
-                        + " (#"
-                        + str(idx+1)
-                        + ") / "
-                        )
+                        string_variable[key][idx] + " (#" + str(idx + 1) + ") / "
+                    )
                 # string concat outside of idx-forloop above please
                 invalid_angletrio_message += this_keys_missing_strings
         # if we have to remove idxs from all keys of our angles dict
@@ -577,8 +583,7 @@ def extract_stepcycles(data, info, folderinfo, cfg):
         SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename) + ".xls")
     else:
         no_sc_table_message = (
-            "I did not find a step-cycle latency table. "
-            + "sctable_filename has to be @ root_dir"
+            "No Annotation Table found! sctable_filename has to be @ root_dir"
         )
         raise Exception(no_sc_table_message)
 
@@ -598,9 +603,16 @@ def read_SC_info(data, SCdf, info, legname, cfg):
     sampling_rate = cfg["sampling_rate"]
 
     # very first sanity check - see if table columns are labelled correctly
-    valid_col_flags = [False, False, False, False]  # add some flexibility to allow user typos
+    valid_col_flags = [
+        False,
+        False,
+        False,
+        False,
+    ]  # for user typos
     header_columns = ["", "", "", ""]
-    for h, header in enumerate([SCXLS_SUBJCOLS, SCXLS_LEGCOLS, SCXLS_RUNCOLS, SCXLS_SCCOLS]):
+    for h, header in enumerate(
+        [SCXLS_SUBJCOLS, SCXLS_LEGCOLS, SCXLS_RUNCOLS, SCXLS_SCCOLS]
+    ):
         for header_col in header:
             if header_col in SCdf.columns:
                 valid_col_flags[h] = True
@@ -610,7 +622,7 @@ def read_SC_info(data, SCdf, info, legname, cfg):
         this_message = (
             "\n******************\n! CRITICAL ERROR !"
             + "\n******************\n"
-            + "Latency XLS Column names are wrong!\n"
+            + "Annotation Table Column names are wrong!\n"
             + "Check Instructions!"
         )
         print(this_message)
@@ -626,9 +638,9 @@ def read_SC_info(data, SCdf, info, legname, cfg):
     if start_row.empty:
         this_message = (
             "\n******************\n! CRITICAL ERROR !\n******************\n"
-            + "\nNo SC latency information found for ID: "
+            + "\nNo timestamp information found for ID: "
             + name
-            + "\nCheck your SC Latency Table & try again!"
+            + "\nCheck your Annotation Table & try again!"
         )
         print(this_message)
         write_issues_to_textfile(this_message, info)
@@ -640,7 +652,7 @@ def read_SC_info(data, SCdf, info, legname, cfg):
             + "\nID "
             + name
             + " was found more than once in ID column!"
-            + "\nCheck your SC Latency Table & try again!"
+            + "\nCheck your Annotation Table & try again!"
         )
         print(this_message)
         write_issues_to_textfile(this_message, info)
@@ -662,7 +674,7 @@ def read_SC_info(data, SCdf, info, legname, cfg):
                 + name
                 + ", Leg: "
                 + legname
-                + "\nRun & Leg columns of SC "
+                + "\nRun & Leg columns of Annotation "
                 + "Table seem wrong! \nYou need to have an "
                 + "empty row before each new leg or subject!"
                 + "\nCheck your table & make sure that it "
@@ -1187,7 +1199,6 @@ def add_angles(step, legname, cfg):
 
 
 def compute_angle(joint_angle, joint2, joint3):
-
     """Compute a given angle at a joint & a given timepoint"""
     # Get vectors between the joints
     v1 = (joint_angle[0] - joint2[0], joint_angle[1] - joint2[1])
@@ -1238,7 +1249,7 @@ def add_velocities(step, legname, cfg):
         step[angle_colname + " Velocity"] = 0.0  # spaces in colnames here!
         step.loc[:, angle_colname + " Velocity"] = np.gradient(
             step.loc[:, angle_colname]
-            )
+        )
         if angular_acceleration:
             step[angle_colname + " Acceleration"] = 0.0
             step.loc[:, angle_colname + " Acceleration"] = np.gradient(
@@ -1473,6 +1484,7 @@ def add_step_separators(dataframe, nanvector, numvector):
 # surprised that we don't use this local func everywhere, since the first couple of
 # plotting functions extract values using .loc!)
 
+
 # ................................  master function  ...................................
 def plot_results(results, all_cycles, info, cfg):
     """Plot various results"""
@@ -1507,7 +1519,7 @@ def plot_results(results, all_cycles, info, cfg):
         if angles["name"]:
             plot_angles_by_average_SC(
                 legname, average_data, std_data, sc_num, info, cfg
-                )
+            )
 
         # .............  6 - average y velocities over SC percentage   .................
         plot_y_velocities_by_average_SC(
@@ -1660,7 +1672,7 @@ def plot_angles_by_time(legname, all_steps_data, all_cycles, info, cfg):
             else:
                 angle_col_string = transform_joint_and_leg_to_colname(
                     angle, legname, "Angle"
-                    )
+                )
             for s in range(sc_num):
                 this_time = all_steps_data.loc[
                     run_cycles[s][0] : run_cycles[s][1], DF_TIME_COL
@@ -1746,10 +1758,10 @@ def plot_stickdiagram(legname, all_steps_data, all_cycles, info, cfg):
                     else:
                         y_col_string = transform_joint_and_leg_to_colname(
                             joint, legname, "Y"
-                            )
+                        )
                         z_col_string = transform_joint_and_leg_to_colname(
                             joint, legname, "Z"
-                            )
+                        )
                     this_ys.append(all_steps_data.loc[i, y_col_string])
                     this_zs.append(all_steps_data.loc[i, z_col_string])
                 if i == range(cycle[0], cycle[1] + 1)[0]:
@@ -2112,5 +2124,5 @@ if __name__ == "__main__":
         + "possible.\nIf you prefer a non-GUI approach, please either: "
         + "\n1. Call this as a function, i.e. autogaita.simi(info, folderinfo, cfg)"
         + "\n2. Use the single or multirun scripts in the batchrun_scripts folder"
-        )
+    )
     print(simi_info_message)

@@ -36,15 +36,19 @@ PLOT_JOINT_NUMBER = 3
 # column cfg
 HIND_JOINTS = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
 FORE_JOINTS = [
-        "Front paw tao ",
-        "Wrist ",
-        "Elbow ",
-        "Lower Shoulder ",
-        "Upper Shoulder ",
-    ]
+    "Front paw tao ",
+    "Wrist ",
+    "Elbow ",
+    "Lower Shoulder ",
+    "Upper Shoulder ",
+]
 BEAM_HIND_JOINTADD = ["Tail base ", "Tail center ", "Tail tip "]
 BEAM_FORE_JOINTADD = ["Nose ", "Ear base "]
-ANGLES = {"name": ["Ankle", "Elbow"], "lower_joint": ["Hind paw tao", "Wrist"], "upper_joint": ["Knee", "Lower Shoulder"]}
+ANGLES = {
+    "name": ["Ankle", "Elbow"],
+    "lower_joint": ["Hind paw tao", "Wrist"],
+    "upper_joint": ["Knee", "Lower Shoulder"],
+}
 
 
 # .....................  User note - please configure  ........................
@@ -71,20 +75,21 @@ def dlc_multirun():
 
 
 def run_singlerun(idx, info, folderinfo, cfg):
-    """ Run the main code of individual run-analyses based on current cfg """
+    """Run the main code of individual run-analyses based on current cfg"""
     # extract and pass info of this mouse/run (also update resdir)
     this_info = {}
     keynames = info.keys()
     for keyname in keynames:
         this_info[keyname] = info[keyname][idx]
-    this_info["results_dir"] = os.path.join(folderinfo["root_dir"] + "Results/"
-                                        + this_info["name"] + "/")
+    this_info["results_dir"] = os.path.join(
+        folderinfo["root_dir"] + "Results/" + this_info["name"] + "/"
+    )
     # important to only pass this_info to main script here (1 run at a time!)
     autogaita_utils.try_to_run_gaita("DLC", this_info, folderinfo, cfg, True)
 
 
 def prepare_folderinfo():
-    """ Dump all infos about this given folder into a dict """
+    """Dump all infos about this given folder into a dict"""
     folderinfo = {}
     folderinfo["root_dir"] = ROOT_DIR
     # to make sure root_dir works under windows
@@ -103,7 +108,7 @@ def prepare_folderinfo():
 
 
 def prepare_cfg():
-    """ Dump all configuration information into a dict """
+    """Dump all configuration information into a dict"""
     cfg = {}
     cfg["sampling_rate"] = SAMPLING_RATE  # base cfg
     cfg["subtract_beam"] = SUBTRACT_BEAM
@@ -130,20 +135,20 @@ def prepare_cfg():
 
 
 def extract_info():
-    """ Prepare a dict of lists that include unique name/mouse/run infos"""
-    info = {"name": [], "mouse_num":[], "run_num":[]}
+    """Prepare a dict of lists that include unique name/mouse/run infos"""
+    info = {"name": [], "mouse_num": [], "run_num": []}
     for filename in os.listdir(ROOT_DIR):
-        if ((PREMOUSE_STRING in filename)  # make sure we don't get wrong files
-        & (PRERUN_STRING in filename)
-        & (filename.endswith(".csv"))):
+        if (
+            (PREMOUSE_STRING in filename)  # make sure we don't get wrong files
+            & (PRERUN_STRING in filename)
+            & (filename.endswith(".csv"))
+        ):
             # we can use COUNT vars as we do here, since we start @ 0 and do
             # not include the last index (so if counts=2, idx=[0:2]=include
             # 0&1 only!)
-            this_mouse_num = find_number(filename, PREMOUSE_STRING,
-                                        POSTMOUSE_STRING)
+            this_mouse_num = find_number(filename, PREMOUSE_STRING, POSTMOUSE_STRING)
             this_run_num = find_number(filename, PRERUN_STRING, POSTRUN_STRING)
-            this_name = "ID " + str(
-                this_mouse_num) + " - Run " + str(this_run_num)
+            this_name = "ID " + str(this_mouse_num) + " - Run " + str(this_run_num)
             if this_name not in info["name"]:  # no data/beam duplicates here
                 info["name"].append(this_name)
                 info["mouse_num"].append(this_mouse_num)
@@ -152,7 +157,7 @@ def extract_info():
 
 
 def find_number(fullstring, prestring, poststring):
-    """ Find (mouse/run) number based on user-defined strings in filenames """
+    """Find (mouse/run) number based on user-defined strings in filenames"""
     start_idx = fullstring.find(prestring) + len(prestring)
     end_idx = fullstring.find(poststring)
     return int(fullstring[start_idx:end_idx])
