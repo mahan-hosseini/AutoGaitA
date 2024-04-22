@@ -47,6 +47,8 @@ FORE_JOINTS = [
     "Lower Shoulder ",
     "Upper Shoulder ",
 ]
+BEAM_COL_LEFT = ["BeamLeft"]  # BEAM_COL_LEFT & _RIGHT must be lists of len=1
+BEAM_COL_RIGHT = ["BeamRight"]
 BEAM_HIND_JOINTADD = ["Tail base ", "Tail center ", "Tail tip "]
 BEAM_FORE_JOINTADD = ["Nose ", "Ear base "]
 ANGLES = {
@@ -138,6 +140,8 @@ def prepare_cfg():
     cfg["flip_gait_direction"] = FLIP_GAIT_DIRECTION
     cfg["hind_joints"] = HIND_JOINTS
     cfg["fore_joints"] = FORE_JOINTS
+    cfg["beam_col_left"] = BEAM_COL_LEFT
+    cfg["beam_col_right"] = BEAM_COL_RIGHT
     cfg["beam_hind_jointadd"] = BEAM_HIND_JOINTADD
     cfg["beam_fore_jointadd"] = BEAM_FORE_JOINTADD
     cfg["angles"] = ANGLES
