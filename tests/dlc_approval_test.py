@@ -1,5 +1,6 @@
 from autogaita import autogaita_utils
 import pandas as pd
+import pandas.testing as pdt
 import os
 import shutil
 import pdb
@@ -95,8 +96,8 @@ def test_dlc_approval():
         )
     )
     # finally assert equivalence of df-pairs
-    assert test_av_df.equals(true_av_df) == True
-    assert test_std_df.equals(true_std_df) == True
+    pdt.assert_frame_equal(test_av_df, true_av_df)
+    pdt.assert_frame_equal(test_std_df, true_std_df)
 
 
 # ..................................................  3) LOCAL FUNCTIONS  ....................................................
