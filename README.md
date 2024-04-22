@@ -26,7 +26,7 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
 
 - Once activated, install AutoGaitA in the virtual environment via pip: `pip install autogaita`.
 
-- Access The main user interface via `python -m autogaita`.
+- Access the main user interface via `python -m autogaita`.
 
 ## Tutorials and Examples
 
