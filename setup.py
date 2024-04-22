@@ -23,7 +23,7 @@ if platform.system() == "Darwin":
 # call setup function
 setup(
     name="autogaita",
-    version="0.0.5",
+    version="0.0.6rc",  # rc == release candidate (before release is finished)
     author="Mahan Hosseini",
     description="Automatic Gait Analysis in Python",
     packages=["autogaita", "autogaita.batchrun_scripts"],
