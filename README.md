@@ -13,17 +13,18 @@
 
 ***Note!** Our documentation provides step-by-step walkthroughs of how to install autogaita for **[Windows](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.28j6wu2vamre)** and **[Mac](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit)***
 
-It is strongly recommended that a separate virtual environment for AutoGaitA is created via
+It is strongly recommended that a separate virtual environment for AutoGaitA is created (note that the approach below creates the virtual environment to your current directory):
 
-`python -m venv env_gaita`
+- Create the virtual environment
+    - `python -m venv env_gaita`
 
-After creating and activating the virtual environment, AutoGaitA can be installed via pip
+- After creation, activate the virtual environment via:
+    - *Windows:* `env_gaita\Scripts\activate`
+    - *Mac:* `source env_gaita/bin/activate`
 
-`pip install autogaita`
+- Once activated, install AutoGaitA in the virtual environment via pip: `pip install autogaita`
 
-The main user interface can then be accessed via
-
-`python -m autogaita`
+- Access The main user interface via `python -m autogaita`.
 
 ## Tutorials and Examples
 
