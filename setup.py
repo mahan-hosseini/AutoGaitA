@@ -23,6 +23,7 @@ if platform.system() == "Darwin":
 # call setup function
 setup(
     name="autogaita",
+    python_requires=">=3.10",
     version="0.0.6rc",  # rc == release candidate (before release is finished)
     author="Mahan Hosseini",
     description="Automatic Gait Analysis in Python",
@@ -30,6 +31,7 @@ setup(
     include_package_data=True,
     package_data={"": ["*.txt", "*.rst", "*.png", "*.icns", "*.ico"]},
     install_requires=install_requires,
+    extras_require={"dev": ["pytest"]},
     license="GPLv3",
     url="https://github.com/mahan-hosseini/AutoGaitA/",
 )
