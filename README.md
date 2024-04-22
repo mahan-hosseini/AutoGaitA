@@ -22,7 +22,7 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
     - *Windows:* `env_gaita\Scripts\activate`
     - *Mac:* `source env_gaita/bin/activate`
 
-- Once activated, install AutoGaitA in the virtual environment via pip: `pip install autogaita`
+- Once activated, install AutoGaitA in the virtual environment via pip: `pip install autogaita`.
 
 - Access The main user interface via `python -m autogaita`.
 
