@@ -1,5 +1,6 @@
 ![AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/autogaita_logo.png?raw=true)
-![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)
+[![PyPI version](https://badge.fury.io/py/autogaita.svg)](https://badge.fury.io/py/autogaita)
+![Python](https://img.shields.io/badge/python-v3.10+-blue.svg)
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![Test AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/auto_test_gaita.yml/badge.svg)](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/auto_test_gaita.yml)
