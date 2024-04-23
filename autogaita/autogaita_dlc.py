@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 import json
+import warnings
 import pandas as pd
 import numpy as np
 import math
@@ -243,7 +244,7 @@ def some_prep(info, folderinfo, cfg):
     # if wanted: fix that deeplabcut inverses y
     if invert_y_axis:
         for col in data.columns:
-            if col.endswith("y"):
+            if col.endswith(" y"):
                 data[col] = data[col] * -1
     # if we don't have a beam to subtract, normalise y to global y minimum being 0
     if not subtract_beam:
@@ -267,13 +268,16 @@ def some_prep(info, folderinfo, cfg):
     #    pushing it towards zero.
     # => using list(set()) to ensure that we don't have duplicate values (if users
     #    should have provided them in both cfg vars by misstake)
+    # => beam_col_left and right is provided by users
     if subtract_beam:
+        # note beam_col_left/right are always lists in cfg!
+        beam_col_left = cfg["beam_col_left"][0]
+        beam_col_right = cfg["beam_col_right"][0]
         for joint in list(set(hind_joints + beam_hind_jointadd)):
-            data[joint + "y"] = data[joint + "y"] - data["BeamLeft y"]
+            data[joint + "y"] = data[joint + "y"] - data[beam_col_left + "y"]
         for joint in list(set(fore_joints + beam_fore_jointadd)):
-            data[joint + "y"] = data[joint + "y"] - data["BeamRight y"]
-        dropcols = [c for c in data.columns if "Beam" in c]
-        data.drop(columns=dropcols, inplace=True)  # beamcols not needed anymore
+            data[joint + "y"] = data[joint + "y"] - data[beam_col_right + "y"]
+        data.drop(columns=list(beamdf.columns), inplace=True)  # beam not needed anymore
     # add Time and round based on sampling rate
     data[TIME_COL] = data.index * (1 / sampling_rate)
     if sampling_rate <= 100:
@@ -353,11 +357,13 @@ def test_and_expand_cfg(data, cfg, info):
     If users subtract a beam, set normalise @ sc level to False
     """
 
-    # run the 3 tests first
+    # run the tests first
     for cfg_key in [
         "angles",
         "hind_joints",
         "fore_joints",
+        "beam_col_left",  # note beamcols are lists even though len=1 bc. of
+        "beam_col_right",  # check function's procedure
         "beam_hind_jointadd",
         "beam_fore_jointadd",
     ]:
@@ -381,7 +387,7 @@ def test_and_expand_cfg(data, cfg, info):
     else:
         cfg["plot_joints"] = hind_joints[: cfg["plot_joint_number"]]
 
-    # add direction_joint - used to determine gait direction
+    # check hindlimb joints & add direction_joint - used to determine gait direction
     if not hind_joints:  # no valid string after above cleaning
         no_hind_joint_message = (
             "\n******************\n! CRITICAL ERROR !\n******************\n"
@@ -393,6 +399,29 @@ def test_and_expand_cfg(data, cfg, info):
         print(no_hind_joint_message)
         return
     cfg["direction_joint"] = hind_joints[0]
+
+    # if subtracting beam, check that its colnames were valid.
+    if cfg["subtract_beam"]:
+        beam_col_error_message = (
+            "\n******************\n! CRITICAL ERROR !\n******************\n"
+            + "It seems like you want to normalise heights to a baseline (beam)."
+            + "\nUnfortunately we were unable to find the y-columns you listed in "
+            + "your beam's csv-file.\nPlease try again.\nInvalid beam side(s) was/were:"
+        )
+        beam_error = False  # check 3 possible cases
+        if (cfg["beam_col_left"]) and (not cfg["beam_col_right"]):
+            beam_error = True
+            beam_col_error_message += "\n right beam!"
+        elif (not cfg["beam_col_left"]) and (cfg["beam_col_right"]):
+            beam_error = True
+            beam_col_error_message += "\n left beam!"
+        elif (not cfg["beam_col_left"]) and (not cfg["beam_col_right"]):
+            beam_error = True
+            beam_col_error_message += "\n both beams!"
+        if beam_error:  # if any case was True, stop everything
+            write_issues_to_textfile(beam_col_error_message, info)
+            print(beam_col_error_message)
+            return
 
     # dont show plots
     # !!! If users should complain that they dont get figures but they should, it might
@@ -450,7 +479,7 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
                 clean_strings_message += "\n" + string
             clean_strings_message += (
                 "\n\nNote that capitalisation matters."
-                + "\nIf you are running a group analysis, we'll use this updated cfg "
+                + "\nIf you are running a batch analysis, we'll use this updated cfg "
                 + "throughout\nCheck out the config.json file for the full cfg used."
             )
             print(clean_strings_message)
@@ -526,7 +555,7 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
                 )
             clean_angles_message += (
                 "\n\nNote that capitalisation matters."
-                + "\nIf you are running a group analysis, we'll use this updated cfg "
+                + "\nIf you are running a batch analysis, we'll use this updated cfg "
                 + "throughout\nCheck out the config.json file for the full cfg used."
             )
             print(clean_angles_message)
@@ -960,7 +989,7 @@ def handle_issues(condition, info):
 # ----
 # There is quite a lot going on in this function. We:
 # 1) loop through all step cycles for one leg at a time and extract data
-# 2) for each step's data we normalise all y (height) values to the hind paw's minimum
+# 2) for each step's data we normalise all y (height) values to the body's minimum
 #    if wanted
 # 3) we compute and add features (angles, velocities, accelerations)
 #    ==> see norm_y_and_add_features_to_one_step & helper functions a
@@ -988,7 +1017,7 @@ def analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg):
         normalised_steps_data = normalise_one_steps_data(all_steps_data, bin_num)
     # 2 or more steps - build dataframe
     elif len(all_cycles) > 1:
-        # first step is added manually
+        # first- step is added manually
         first_step = data_copy.loc[all_cycles[0][0] : all_cycles[0][1]]
         first_step = norm_y_and_add_features_to_one_step(first_step, cfg)
         all_steps_data = first_step
@@ -996,12 +1025,18 @@ def analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg):
         # some prep for addition of further steps
         sc_num = len(all_cycles)
         nanvector = data_copy.loc[[1]]
-        nanvector[:] = np.nan
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            nanvector[:] = np.nan
         # ..............................  step-loop  ...................................
         for s in range(1, sc_num, 1):
             # get step separators
             numvector = data_copy.loc[[1]]
-            numvector[:] = s + 1
+            # we are ignoring this because we wont work with the incompatible dtypes ourselves much anymore (just export as xlsx and plot) - so its fine
+            # https://docs.python.org/3/library/warnings.html#temporarily-suppressing-warnings
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                numvector[:] = s + 1
             all_steps_data = add_step_separators(all_steps_data, nanvector, numvector)
             # this_step
             this_step = data_copy.loc[all_cycles[s][0] : all_cycles[s][1]]

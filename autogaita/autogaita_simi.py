@@ -449,7 +449,7 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
                 joint_error += "\n" + string
             joint_error += (
                 "\n\nNote that capitalisation matters."
-                + "\nIf you are running a group analysis, we'll use this updated cfg "
+                + "\nIf you are running a batch analysis, we'll use this updated cfg "
                 + "throughout.\nCheck out the config.json file for the full cfg used."
             )
             print(joint_error)
@@ -527,7 +527,7 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
                 )
             clean_angles_message += (
                 "\n\nNote that capitalisation matters."
-                + "\nIf you are running a group analysis, we'll use this updated cfg "
+                + "\nIf you are running a batch analysis, we'll use this updated cfg "
                 + "throughout\nCheck out the config.json file for the full cfg used."
             )
             print(clean_angles_message)

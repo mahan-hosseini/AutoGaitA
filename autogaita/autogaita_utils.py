@@ -23,9 +23,9 @@ def try_to_run_gaita(which_gaita, info, folderinfo, cfg, multirun_flag):
     # print info
     message = (
         "\n\n\n*********************************************"
-        + "\n*                  "
+        + "\n*              "
         + info["name"]
-        + "                     *"
+        + "                *"
         + "\n*********************************************"
     )
     print(message)

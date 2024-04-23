@@ -23,7 +23,8 @@ INT_VARS = [
     "run_num",
     "plot_joint_number",
 ]
-LIST_VARS = ["hind_joints", "fore_joints", "beam_hind_jointadd", "beam_fore_jointadd"]
+LIST_VARS = ["hind_joints", "fore_joints", "beam_hind_jointadd", "beam_fore_jointadd",
+             "beam_col_left", "beam_col_right"]
 DICT_VARS = ["angles"]
 WINDOWS_TASKBAR_MAXHEIGHT = 72
 
@@ -118,7 +119,12 @@ def dlc_gui():
     cfg["fore_joints"] = []
     for joint in default_fore_joints:
         cfg["fore_joints"].append(tk.StringVar(root, joint))
-    # beam subtraction columns
+    # beam columns - append to empty list to have a list of len=1
+    # (required for test in _dlc)
+    cfg["beam_col_left"] = []
+    cfg["beam_col_left"].append(tk.StringVar(root, "BeamLeft"))
+    cfg["beam_col_right"] = []
+    cfg["beam_col_right"].append(tk.StringVar(root, "BeamRight"))
     default_beam_hind_jointadd = ["Tail base ", "Tail center ", "Tail tip "]
     cfg["beam_hind_jointadd"] = []
     for joint in default_beam_hind_jointadd:
@@ -482,13 +488,21 @@ def build_column_info_window(root, cfg, root_dimensions):
         # find out the number of rows to append to it
         nrows = window.grid_size()[1]
         # add stuff based on to which case we are adding
-        if key == "hind_joints":
-            label = ctk.CTkLabel(window, text="Hindlimb Joint #" + str(len(cfg[key])))
-            label.grid(row=nrows + 1, column=0, sticky="ew")
-            entry = ctk.CTkEntry(window, textvariable=cfg[key][-1])
-            entry.grid(row=nrows + 2, column=0)
-        elif key == "fore_joints":
-            label = ctk.CTkLabel(window, text="Forelimb Joint #" + str(len(cfg[key])))
+        if key in [
+            "hind_joints",
+            "fore_joints",
+            "beam_hind_jointadd",
+            "beam_fore_jointadd",
+        ]:
+            if key == "hind_joints":
+                label_string = "Hindlimb Joint #" + str(len(cfg[key]))
+            elif key == "fore_joints":
+                label_string = "Forelimb Joint #" + str(len(cfg[key]))
+            elif key == "beam_hind_jointadd":
+                label_string = "Hindlimb Beamsubtraction Joint #" + str(len(cfg[key]))
+            elif key == "beam_fore_jointadd":
+                label_string = "Forelimb Beamsubtraction Joint #" + str(len(cfg[key]))
+            label = ctk.CTkLabel(window, text=label_string)
             label.grid(row=nrows + 1, column=0, sticky="ew")
             entry = ctk.CTkEntry(window, textvariable=cfg[key][-1])
             entry.grid(row=nrows + 2, column=0)
@@ -506,67 +520,138 @@ def build_column_info_window(root, cfg, root_dimensions):
                 label.grid(row=nrows + 1, column=angle_column + a, sticky="ew")
                 entry = ctk.CTkEntry(window, textvariable=cfg[key][angle_key][-1])
                 entry.grid(row=nrows + 2, column=angle_column + a)
-        else:  # beamsubtract joints
-            label = ctk.CTkLabel(
-                window, text="Beamsubtraction Joint #" + str(len(cfg[key]))
-            )
-            label.grid(row=nrows + 1, column=0, sticky="ew")
-            entry = ctk.CTkEntry(window, textvariable=cfg[key][-1])
-            entry.grid(row=nrows + 2, column=0)
         # maximise columns
         for c in range(window.grid_size()[0]):
             window.grid_columnconfigure(c, weight=1)
 
     # ...............  Nested Function: Beam jointadd window  ..........................
-    def build_beam_jointadd_window(limb):
-        """Build small windows for configuring joints to subtract the beam from if
-        users had one"""
-        # build window and make it pretty and nice
-        w = root_dimensions[0]
-        h = root_dimensions[1]
+    def build_beam_window():
+        """Build a window for configuring the beam, i.e.:
+        1. beam_col_left and right
+        ==> what were the col names of your beam in the beam file
+        2. beam_hind_jointadd and beam_fore_jointadd
+        ==> what additional joints (not included in hind/fore) do you want to include in beam standardisation?
+        """
+        # build window and fullscreen
         beamwindow = ctk.CTkToplevel(columnwindow)
-        beam_w = w * (1 / 3)
-        beam_h = h * (1 / 2)
-        beam_x = ((1 / 2) * w) - (1 / 2 * beam_w)
-        beam_y = ((1 / 2) * h) - (1 / 2 * beam_h)
-        beamwindow.geometry("%dx%d+%d+%d" % (beam_w, beam_h, beam_x, beam_y))
+        beamwindow.geometry("%dx%d+%d+%d" % (root_dimensions))
         beamwindow.title("Beam Configuration")
         fix_window_after_its_creation(beamwindow)
-        # prepare key based on limb input
-        if limb == "hind":
-            key = "beam_hind_jointadd"
-        elif limb == "fore":
-            key = "beam_fore_jointadd"
-        # header label
-        beam_label = ctk.CTkLabel(
+        beam_scrollable_rows = 1
+        total_padx = 20
+        left_padx = (total_padx, total_padx / 2)
+        right_padx = (total_padx / 2, total_padx)
+        # ................... left section - left beam / hind joints ...................
+        # left beam label
+        beam_left_label = ctk.CTkLabel(
             beamwindow,
-            text="Which " + limb + "limb joints to subtract beam from",
+            text="Left Beam Column",
             fg_color=FG_COLOR,
             text_color=HEADER_TXT_COLOR,
             font=("Britannic Bold", HEADER_FONT_SIZE),
         )
-        beam_label.grid(row=0, column=0, sticky="nsew")
+        beam_left_label.grid(row=0, column=0, sticky="nsew")
+        # left beam entry
+        beam_left_entry = ctk.CTkEntry(beamwindow, textvariable=cfg["beam_col_left"][0])
+        beam_left_entry.grid(row=1, column=0)
+        # important: cfg key for forelimb joint add
+        hindlimb_key = "beam_hind_jointadd"
+        # hindlimb jointadd label
+        hind_jointsubtract_label = ctk.CTkLabel(
+            beamwindow,
+            text="Hindlimb Joints subtracted from Left Beam",
+            fg_color=FG_COLOR,
+            text_color=HEADER_TXT_COLOR,
+            font=("Britannic Bold", HEADER_FONT_SIZE),
+        )
+        hind_jointsubtract_label.grid(row=2, column=0, sticky="nsew")
         # initialise scrollable frame for beamsubtract windows
-        beam_frame = ctk.CTkScrollableFrame(beamwindow)
-        beam_scrollable_rows = 1
-        beam_frame.grid(row=1, column=0, rowspan=beam_scrollable_rows, sticky="nsew")
+        hind_jointsubtract_frame = ctk.CTkScrollableFrame(beamwindow)
+        hind_jointsubtract_frame.grid(
+            row=3,
+            column=0,
+            rowspan=beam_scrollable_rows,
+            sticky="nsew",
+        )
         # initialise labels & entries
         initialise_labels_and_entries(
-            beam_frame,
-            key,
-            "Beamsubtraction Joint",
+            hind_jointsubtract_frame,
+            hindlimb_key,
+            "Hindlimb Beamsubtraction Joint",
         )
         # add button
-        add_beamjoint_button = ctk.CTkButton(
+        add_hindjoint_button = ctk.CTkButton(
             beamwindow,
-            text="Add beamsubtraction joint",
+            text="Add Hindlimb Beamsubtraction Joint",
             fg_color=FG_COLOR,
             hover_color=HOVER_COLOR,
-            command=lambda: add_joint(beam_frame, key),  # input = cfg's key
+            command=lambda: add_joint(
+                hind_jointsubtract_frame, hindlimb_key
+            ),  # input = cfg's key
         )
-        add_beamjoint_button.grid(
-            row=2 + beam_scrollable_rows, column=0, sticky="nsew", padx=5, pady=(6, 3)
+        add_hindjoint_button.grid(
+            row=3 + beam_scrollable_rows,
+            column=0,
+            sticky="nsew",
+            padx=left_padx,
+            pady=20,
         )
+        # .................. right section - right beam / fore joints ..................
+        # right beam label
+        beam_right_label = ctk.CTkLabel(
+            beamwindow,
+            text="Right Beam Column",
+            fg_color=FG_COLOR,
+            text_color=HEADER_TXT_COLOR,
+            font=("Britannic Bold", HEADER_FONT_SIZE),
+        )
+        beam_right_label.grid(row=0, column=1, sticky="nsew")
+        # right beam entry
+        beam_right_entry = ctk.CTkEntry(beamwindow, textvariable=cfg["beam_col_right"][0])
+        beam_right_entry.grid(row=1, column=1)
+        # important: cfg key for forelimb joint add
+        forelimb_key = "beam_fore_jointadd"
+        # hindlimb jointadd label
+        fore_jointsubtract_label = ctk.CTkLabel(
+            beamwindow,
+            text="Forelimb Joints subtracted from Right Beam",
+            fg_color=FG_COLOR,
+            text_color=HEADER_TXT_COLOR,
+            font=("Britannic Bold", HEADER_FONT_SIZE),
+        )
+        fore_jointsubtract_label.grid(row=2, column=1, sticky="nsew")
+        # initialise scrollable frame for beamsubtract windows
+        fore_jointsubtract_frame = ctk.CTkScrollableFrame(beamwindow)
+        fore_jointsubtract_frame.grid(
+            row=3,
+            column=1,
+            rowspan=beam_scrollable_rows,
+            sticky="nsew",
+        )
+        # initialise labels & entries
+        initialise_labels_and_entries(
+            fore_jointsubtract_frame,
+            forelimb_key,
+            "Forelimb Beamsubtraction Joint",
+        )
+        # add button
+        add_forejoint_button = ctk.CTkButton(
+            beamwindow,
+            text="Add Forelimb Beamsubtraction Joint",
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+            command=lambda: add_joint(
+                fore_jointsubtract_frame, forelimb_key
+            ),  # input = cfg's key
+        )
+        add_forejoint_button.grid(
+            row=3 + beam_scrollable_rows,
+            column=1,
+            sticky="nsew",
+            padx=right_padx,
+            pady=20,
+        )
+        # .................... bottom section - update & close  ........................
         # done button
         beam_done_button = ctk.CTkButton(
             beamwindow,
@@ -576,13 +661,18 @@ def build_column_info_window(root, cfg, root_dimensions):
             command=lambda: beamwindow.destroy(),
         )
         beam_done_button.grid(
-            row=3 + beam_scrollable_rows, column=0, sticky="nsew", padx=5, pady=(6, 3)
+            row=4 + beam_scrollable_rows,
+            column=0,
+            columnspan=2,
+            sticky="nsew",
+            padx=20,
+            pady=20,
         )
         # maximise widgets
         maximise_widgets(beamwindow)
 
     # ...................  Scrollable Window Configuration  ............................
-    scrollable_rows = 8
+    scrollable_rows = 7
 
     # ...................  Column 0: hind limb joint names  ............................
     hind_column = 0
@@ -598,7 +688,7 @@ def build_column_info_window(root, cfg, root_dimensions):
     # initialise scrollable frame for hindlimb
     hindlimb_frame = ctk.CTkScrollableFrame(columnwindow)
     hindlimb_frame.grid(
-        row=1, column=hind_column, rowspan=scrollable_rows, sticky="nsew"
+        row=1, column=hind_column, rowspan=scrollable_rows, sticky="nsew",
     )
     # initialise labels & entries with hind limb defaults
     initialise_labels_and_entries(hindlimb_frame, "hind_joints", "Hindlimb Joint ")
@@ -615,16 +705,37 @@ def build_column_info_window(root, cfg, root_dimensions):
     add_hind_joint_button.grid(
         row=2 + scrollable_rows, column=hind_column, sticky="nsew", padx=5, pady=(10, 5)
     )
-    # beam subtraction joints window
-    hind_beamsubtract_button = ctk.CTkButton(
+    # beam config window label
+    beam_window_label = ctk.CTkLabel(
         columnwindow,
-        text="Add hindlimb joints for beamsubtraction",
+        text="Baseline (Beam) Configuration",
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=("Britannic Bold", HEADER_FONT_SIZE),
+    )
+    beam_window_label.grid(
+        row=4 + scrollable_rows,
+        column=hind_column,
+        columnspan=2,
+        sticky="nsew",
+        padx=1,
+        pady=(0, 5),
+    )
+    # beam config window button
+    beam_window_button = ctk.CTkButton(
+        columnwindow,
+        text="Configure Beam Columns and Beamsubtraction Joints",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
-        command=lambda: build_beam_jointadd_window("hind"),
+        command=lambda: build_beam_window(),
     )
-    hind_beamsubtract_button.grid(
-        row=3 + scrollable_rows, column=hind_column, sticky="nsew", padx=5, pady=(10, 5)
+    beam_window_button.grid(
+        row=5 + scrollable_rows,
+        column=hind_column,
+        columnspan=2,
+        sticky="nsew",
+        padx=40,
+        pady=(10, 5),
     )
 
     # ...................  Column 1: fore limb joint names  ............................
@@ -661,17 +772,6 @@ def build_column_info_window(root, cfg, root_dimensions):
     )
     add_fore_joint_button.grid(
         row=2 + scrollable_rows, column=fore_column, sticky="nsew", padx=5, pady=(10, 5)
-    )
-    # beam subtraction joints window
-    fore_beamsubtract_button = ctk.CTkButton(
-        columnwindow,
-        text="Add forelimb joints for beamsubtraction",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        command=lambda: build_beam_jointadd_window("fore"),
-    )
-    fore_beamsubtract_button.grid(
-        row=3 + +scrollable_rows, column=fore_column, sticky="nsew", padx=5, pady=5
     )
 
     # .........  Column 2: angle names/joint-definitions & done button  ................
@@ -719,6 +819,22 @@ def build_column_info_window(root, cfg, root_dimensions):
         padx=5,
         pady=(10, 5),
     )
+    # done label
+    done_label = ctk.CTkLabel(
+        columnwindow,
+        text="Update Configuration",
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=("Britannic Bold", HEADER_FONT_SIZE),
+    )
+    done_label.grid(
+        row=4 + scrollable_rows,
+        column=angle_column,
+        columnspan=3,
+        sticky="nsew",
+        padx=1,
+        pady=(0, 5),
+    )
     # done button
     columncfg_done_button = ctk.CTkButton(
         columnwindow,
@@ -728,11 +844,11 @@ def build_column_info_window(root, cfg, root_dimensions):
         command=lambda: columnwindow.destroy(),
     )
     columncfg_done_button.grid(
-        row=3 + scrollable_rows,
+        row=5 + scrollable_rows,
         column=angle_column,
         columnspan=3,
         sticky="nsew",
-        padx=5,
+        padx=40,
         pady=(10, 5),
     )
     # maximise everything in columnwindow
