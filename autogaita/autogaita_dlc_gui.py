@@ -23,8 +23,14 @@ INT_VARS = [
     "run_num",
     "plot_joint_number",
 ]
-LIST_VARS = ["hind_joints", "fore_joints", "beam_hind_jointadd", "beam_fore_jointadd",
-             "beam_col_left", "beam_col_right"]
+LIST_VARS = [
+    "hind_joints",
+    "fore_joints",
+    "beam_hind_jointadd",
+    "beam_fore_jointadd",
+    "beam_col_left",
+    "beam_col_right",
+]
 DICT_VARS = ["angles"]
 WINDOWS_TASKBAR_MAXHEIGHT = 72
 
@@ -88,7 +94,7 @@ def dlc_gui():
     global cfg
     cfg = {}
     cfg["sampling_rate"] = tk.StringVar(root, "")
-    cfg["subtract_beam"] = tk.BooleanVar(root, True)
+    cfg["subtract_beam"] = tk.BooleanVar(root, False)
     cfg["dont_show_plots"] = tk.BooleanVar(root, False)
     cfg["convert_to_mm"] = tk.BooleanVar(root, False)
     cfg["pixel_to_mm_ratio"] = tk.StringVar(root, "")
@@ -607,7 +613,9 @@ def build_column_info_window(root, cfg, root_dimensions):
         )
         beam_right_label.grid(row=0, column=1, sticky="nsew")
         # right beam entry
-        beam_right_entry = ctk.CTkEntry(beamwindow, textvariable=cfg["beam_col_right"][0])
+        beam_right_entry = ctk.CTkEntry(
+            beamwindow, textvariable=cfg["beam_col_right"][0]
+        )
         beam_right_entry.grid(row=1, column=1)
         # important: cfg key for forelimb joint add
         forelimb_key = "beam_fore_jointadd"
@@ -688,7 +696,10 @@ def build_column_info_window(root, cfg, root_dimensions):
     # initialise scrollable frame for hindlimb
     hindlimb_frame = ctk.CTkScrollableFrame(columnwindow)
     hindlimb_frame.grid(
-        row=1, column=hind_column, rowspan=scrollable_rows, sticky="nsew",
+        row=1,
+        column=hind_column,
+        rowspan=scrollable_rows,
+        sticky="nsew",
     )
     # initialise labels & entries with hind limb defaults
     initialise_labels_and_entries(hindlimb_frame, "hind_joints", "Hindlimb Joint ")

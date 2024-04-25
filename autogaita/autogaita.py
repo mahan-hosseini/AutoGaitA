@@ -6,7 +6,6 @@ from PIL import Image, ImageTk
 from importlib import resources
 import platform
 
-
 # %% global constants
 TXT_COLOR = "#ffffff"  # white
 FONT_SIZE = 20

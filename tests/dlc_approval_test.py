@@ -5,7 +5,7 @@ import os
 import shutil
 import pdb
 
-# .................................................  1) GLOBAL VARS  .........................................................
+# .............................  1) GLOBAL VARS  .......................................
 # for testing - reset any previous test
 TEST_PATH = "tests/test_data/dlc_data/"
 TRUE_PATH = "example data/25mm/Results/ID 15 - Run 3/"
@@ -64,10 +64,11 @@ info["name"] = "ID " + str(info["mouse_num"]) + " - Run " + str(info["run_num"])
 info["results_dir"] = os.path.join(ROOT_DIR + "Results/" + info["name"] + "/")
 
 
-# ....................................................  2) RUN TEST  .......................................................
+# ...............................  2) RUN TEST  ........................................
 def test_dlc_approval():
     """
     Approval Test of AutoGaitA DLC
+    ------------------------------
     1. Run autogaita.dlc for ID 15 - Run 3 (with the cfg used there)
     2. Load the "Average Stepcycles".xlsx file from the repo and compare for equivalence to  average_data
     3. Do the same for "Standard Devs. Stepcycle.xlsx" and std_data
@@ -100,7 +101,7 @@ def test_dlc_approval():
     pdt.assert_frame_equal(test_std_df, true_std_df)
 
 
-# ..................................................  3) LOCAL FUNCTIONS  ....................................................
+# ..............................  3) LOCAL FUNCTIONS  ..................................
 def prepare_folderinfo():
     """Dump all infos about this given folder into a dict"""
     folderinfo = {}
