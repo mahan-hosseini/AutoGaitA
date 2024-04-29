@@ -1298,22 +1298,6 @@ def save_results_sheet(dataframe, save_to_xls, fullfilepath):
 # ......................................................................................
 
 
-def delete_previous_xlsfiles(name, results_dir):
-    """
-    Check and delete previously stored excel files (important since appending sheets)
-    """
-    all_filenames = [
-        ORIGINAL_XLS_FILENAME,
-        NORMALISED_XLS_FILENAME,
-        AVERAGE_XLS_FILENAME,
-        STD_XLS_FILENAME,
-    ]
-    for filename in all_filenames:
-        fullfilepath = results_dir + name + filename + ".xlsx"
-        if os.path.exists(fullfilepath):
-            os.remove(fullfilepath)
-
-
 def add_step_separators(dataframe, nanvector, numvector):
     """Add nan & num vector separators between step cycles to dataframes"""
     dataframe = pd.concat([dataframe, nanvector], axis=0)  # nan
