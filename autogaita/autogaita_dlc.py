@@ -1052,7 +1052,7 @@ def analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg):
             )
     # compute average & std data
     average_data, std_data = compute_average_and_std_data(
-        name, normalised_steps_data, bin_num, results_dir
+        name, normalised_steps_data, bin_num
     )
     # save to results dict
     results = {}
@@ -1062,15 +1062,23 @@ def analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg):
     results["all_cycles"] = all_cycles
     # save to files
     save_results_sheet(
-        all_steps_data, save_to_xls, results_dir + name + ORIGINAL_XLS_FILENAME
+        all_steps_data,
+        save_to_xls,
+        os.path.join(results_dir, name + ORIGINAL_XLS_FILENAME),
     )
     save_results_sheet(
-        normalised_steps_data, save_to_xls, results_dir + name + NORMALISED_XLS_FILENAME
+        normalised_steps_data,
+        save_to_xls,
+        os.path.join(results_dir, name + NORMALISED_XLS_FILENAME),
     )
     save_results_sheet(
-        average_data, save_to_xls, results_dir + name + AVERAGE_XLS_FILENAME
+        average_data,
+        save_to_xls,
+        os.path.join(results_dir, name + AVERAGE_XLS_FILENAME),
     )
-    save_results_sheet(std_data, save_to_xls, results_dir + name + STD_XLS_FILENAME)
+    save_results_sheet(
+        std_data, save_to_xls, os.path.join(results_dir, name + STD_XLS_FILENAME)
+    )
     return results
 
 
@@ -1253,7 +1261,7 @@ def define_bins(triallength, bin_num):
 # ......................................................................................
 
 
-def compute_average_and_std_data(name, normalised_steps_data, bin_num, results_dir):
+def compute_average_and_std_data(name, normalised_steps_data, bin_num):
     """Export XLS tables that store all averages & std of y-coords & angles"""
     # initialise col of % of SC over time for plotting first
     percentages = [int(((s + 1) / bin_num) * 100) for s in range(bin_num)]
@@ -1471,10 +1479,7 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
             figure_file_string = " - Foot y by x coordinates"
         else:
             figure_file_string = " - " + joint + "y by x coordinates"
-        f[j].savefig(
-            results_dir + name + figure_file_string + ".png", bbox_inches="tight"
-        )
-        save_as_svg(f[j], results_dir, name, figure_file_string)
+        save_figures(f[j], results_dir, name, figure_file_string)
         if dont_show_plots:
             plt.close(f[j])
 
@@ -1508,11 +1513,8 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
             this_x = all_steps_data.iloc[sc_idxs[s], x_col_idx]
             this_y = all_steps_data.iloc[sc_idxs[s], y_col_idx]
             ax[a].plot(this_x, this_y)
-        figure_file_string = " - " + angle + " Angle by Time"
-        f[a].savefig(
-            results_dir + name + figure_file_string + ".png", bbox_inches="tight"
-        )
-        save_as_svg(f[a], results_dir, name, figure_file_string)
+        figure_file_string = " - " + angle + "Angle by Time"
+        save_figures(f[a], results_dir, name, figure_file_string)
         if dont_show_plots:
             plt.close(f[a])
 
@@ -1574,8 +1576,7 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
         tickconvert_mm_to_cm(ax, "both")
     ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
     figure_file_string = " - Hindlimb Stick Diagram"
-    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, name, figure_file_string)
+    save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -1636,8 +1637,7 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
         tickconvert_mm_to_cm(ax, "both")
     ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
     figure_file_string = " - Forelimb Stick Diagram"
-    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, name, figure_file_string)
+    save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -1677,8 +1677,7 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg):
     if convert_to_mm:
         tickconvert_mm_to_cm(ax, "y")
     figure_file_string = " - Joint y-coord.s over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, name, figure_file_string)
+    save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -1715,8 +1714,7 @@ def plot_angles_by_average_SC(average_data, std_data, info, cfg):
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     ax.legend()
     figure_file_string = " - Joint angles over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, name, figure_file_string)
+    save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -1762,8 +1760,7 @@ def plot_x_velocities_by_average_SC(average_data, std_data, info, cfg):
             "Velocity (x in cm / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
         )
     figure_file_string = " - Joint velocities over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, name, figure_file_string)
+    save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -1801,8 +1798,7 @@ def plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg):
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     ax.legend()
     figure_file_string = " - Angular velocities over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, name, figure_file_string)
+    save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -1848,8 +1844,7 @@ def plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg):
             "Acceleration (x in cm / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
         )
     figure_file_string = " - Joint acceleration over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, name, figure_file_string)
+    save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -1891,19 +1886,24 @@ def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     ax.legend()
     figure_file_string = " - Angular acceleration over average step cycle"
-    f.savefig(results_dir + name + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, name, figure_file_string)
+    save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
 
-def save_as_svg(figure, results_dir, name, figure_file_string):
-    """Save figures as svgs to separate subfolder"""
+def save_figures(figure, results_dir, name, figure_file_string):
+    """Save figures as pngs to results_dir and as svgs to separate subfolders"""
+    # pngs to results_dir
+    figure.savefig(
+        os.path.join(results_dir, name + figure_file_string + ".png"),
+        bbox_inches="tight",
+    )
+    # svgs to subfolders
     svg_dir = os.path.join(results_dir, "SVG Figures")
     if not os.path.exists(svg_dir):
         os.makedirs(svg_dir)
     figure.savefig(
-        svg_dir + "/" + name + figure_file_string + ".svg", bbox_inches="tight"
+        os.path.join(svg_dir, name + figure_file_string + ".svg"), bbox_inches="tight"
     )
 
 

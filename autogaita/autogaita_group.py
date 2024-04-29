@@ -147,9 +147,6 @@ def some_prep(folderinfo, cfg):
     results_dir = folderinfo["results_dir"]
 
     # names & paths to folderinfo
-    folderinfo["all_dirs"] = group_dirs + [results_dir]
-    for path in folderinfo["all_dirs"]:
-        path.replace(os.sep, "/")
     if not os.path.isdir(results_dir):
         os.makedirs(results_dir)
     folderinfo["contrasts"] = []
@@ -426,12 +423,12 @@ def import_data(folderinfo, cfg):
         consecutive_nan_raw_df = all_nan_raw_df & all_nan_raw_df.shift(fill_value=False)
         raw_dfs[g] = raw_dfs[g][~consecutive_nan_raw_df]
         # save to files & return
-        norm_filepath = (
-            results_dir + group_names[g] + " - " + NORM_GROUP_SHEET_NAME  # norm SCs
+        norm_filepath = os.path.join(
+            results_dir, group_names[g] + " - " + NORM_GROUP_SHEET_NAME  # norm SCs
         )
         save_results_sheet(dfs[g], save_to_xls[g], norm_filepath)
-        orig_filepath = (
-            results_dir + group_names[g] + " - " + ORIG_GROUP_SHEET_NAME  # orig SCs
+        orig_filepath = os.path.join(
+            results_dir, group_names[g] + " - " + ORIG_GROUP_SHEET_NAME  # orig SCs
         )
         save_results_sheet(raw_dfs[g], save_to_xls[g], orig_filepath)
     # test: is bin_num is consistent across our groups
@@ -788,12 +785,12 @@ def avg_and_std(dfs, folderinfo, cfg):
             first_cols + [c for c in std_dfs[g].columns if c not in first_cols]
         ]
         # export sheets
-        avg_filepath = (
-            results_dir + group_names[g] + " - " + AVG_GROUP_SHEET_NAME  # av SCs
+        avg_filepath = os.path.join(
+            results_dir, group_names[g] + " - " + AVG_GROUP_SHEET_NAME  # av SCs
         )
         save_results_sheet(avg_dfs[g], save_to_xls, avg_filepath)
-        std_filepath = (
-            results_dir + group_names[g] + " - " + STD_GROUP_SHEET_NAME  # std SCs
+        std_filepath = os.path.join(
+            results_dir, group_names[g] + " - " + STD_GROUP_SHEET_NAME  # std SCs
         )
         save_results_sheet(std_dfs[g], save_to_xls, std_filepath)
     return avg_dfs, std_dfs
@@ -883,12 +880,12 @@ def grand_avg_and_std(avg_dfs, folderinfo, cfg):
             first_cols + [c for c in g_std_dfs[g].columns if c not in first_cols]
         ]
         # export sheets
-        g_avg_filepath = (
-            results_dir + group_names[g] + " - " + G_AVG_GROUP_SHEET_NAME  # g_av SCs
+        g_avg_filepath = os.path.join(
+            results_dir, group_names[g] + " - " + G_AVG_GROUP_SHEET_NAME  # g_av SCs
         )
         save_results_sheet(g_avg_dfs[g], save_to_xls, g_avg_filepath)
-        g_std_filepath = (
-            results_dir + group_names[g] + " - " + G_STD_GROUP_SHEET_NAME  # g_std SCs
+        g_std_filepath = os.path.join(
+            results_dir, group_names[g] + " - " + G_STD_GROUP_SHEET_NAME  # g_std SCs
         )
         save_results_sheet(g_std_dfs[g], save_to_xls, g_std_filepath)
     return g_avg_dfs, g_std_dfs
@@ -944,7 +941,7 @@ def PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg):
             # column is pc+2 because we want pc=0 to be in xlsx column 2 etc.
             sheet.cell(row=i + 5, column=pc + 2, value=PCA_info["components"][pc, i])
     # save
-    workbook.save(results_dir + "PCA Info.xlsx")
+    workbook.save(os.path.join(results_dir, "PCA Info.xlsx"))
 
 
 def create_PCA_df(avg_dfs, folderinfo, cfg):
@@ -1062,8 +1059,7 @@ def plot_PCA(PCA_df, PCA_info, folderinfo, cfg):
             + str(round(PCA_info["explained_vars"][2] * 100, 2))
             + "%"
         )
-    f.savefig(results_dir + "PCA Scatterplot.png", bbox_inches="tight")
-    save_as_svg(f, results_dir, "PCA Scatterplot")
+    save_figures(f, results_dir, "PCA Scatterplot")
     if dont_show_plots:
         plt.close(f)
     else:
@@ -1071,8 +1067,7 @@ def plot_PCA(PCA_df, PCA_info, folderinfo, cfg):
 
     # 3d scatterplot image file
     if number_of_PCs > 2:
-        f_3d.savefig(results_dir + "PCA 3D Scatterplot.png", bbox_inches="tight")
-        save_as_svg(f_3d, results_dir, "PCA 3D Scatterplot")
+        save_figures(f_3d, results_dir, "PCA 3D Scatterplot")
         if dont_show_plots:
             plt.close(f_3d)
         else:
@@ -1446,8 +1441,7 @@ def plot_permutation_test_results(
         f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE, x=-0.02)
     figure_file_string = stats_var + " - Cluster-extent Test"
     f.suptitle(figure_file_string, fontsize=PERM_PLOT_SUPLABEL_SIZE, y=0.993)
-    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, figure_file_string)
+    save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
     else:
@@ -1687,8 +1681,7 @@ def plot_multcomp_results(
         fontsize=PERM_PLOT_SUPLABEL_SIZE,
         y=0.993,
     )
-    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, figure_file_string)
+    save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
     else:
@@ -1795,10 +1788,7 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             )
             ax.set_ylabel("Z")
             figure_file_string = " - Joint Z-coord.s over average step cycle"
-        f.savefig(
-            results_dir + group_name + figure_file_string + ".png", bbox_inches="tight"
-        )
-        save_as_svg(f, results_dir, group_name + figure_file_string)
+        save_figures(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
 
@@ -1840,10 +1830,7 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.set_title(title_leg + " " + joint + " Z over average step cycle")
             ax.set_ylabel("Z")
             figure_file_string = "- Z-coord.s over average step cycle"
-        f.savefig(
-            results_dir + joint + figure_file_string + ".png", bbox_inches="tight"
-        )
-        save_as_svg(f, results_dir, joint + figure_file_string)
+        save_figures(f, results_dir, joint + figure_file_string)
         if dont_show_plots:
             plt.close(f)
 
@@ -1892,10 +1879,7 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 group_name + " - " + which_leg + " joint angles over average step cycle"
             )
         figure_file_string = " - Joint angles over average step cycle"
-        f.savefig(
-            results_dir + group_name + figure_file_string + ".png", bbox_inches="tight"
-        )
-        save_as_svg(f, results_dir, group_name + figure_file_string)
+        save_figures(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
 
@@ -1930,10 +1914,7 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 title_leg = which_leg
             ax.set_title(title_leg + " " + angle + " angle over average step cycle")
         figure_file_string = " - angle over average step cycle"
-        f.savefig(
-            results_dir + angle + figure_file_string + ".png", bbox_inches="tight"
-        )
-        save_as_svg(f, results_dir, angle + figure_file_string)
+        save_figures(f, results_dir, angle + figure_file_string)
         if dont_show_plots:
             plt.close(f)
 
@@ -2003,10 +1984,7 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 + " joint velocities over average step cycle"
             )
         figure_file_string = " - Joint velocities over average step cycle"
-        f.savefig(
-            results_dir + group_name + figure_file_string + ".png", bbox_inches="tight"
-        )
-        save_as_svg(f, results_dir, group_name + figure_file_string)
+        save_figures(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
 
@@ -2060,9 +2038,7 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 title_leg + " " + joint + " velocities over average step cycle"
             )
         figure_file_string = "- Velocities over average step cycle"
-        f.savefig(
-            results_dir + joint + figure_file_string + ".png", bbox_inches="tight"
-        )
+        save_figures(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
 
@@ -2116,10 +2092,7 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
                 + " angular velocities over average step cycle"
             )
         figure_file_string = " - Angular velocities over average step cycle"
-        f.savefig(
-            results_dir + group_name + figure_file_string + ".png", bbox_inches="tight"
-        )
-        save_as_svg(f, results_dir, group_name + figure_file_string)
+        save_figures(f, results_dir, group_name + figure_file_string)
         if dont_show_plots:
             plt.close(f)
 
@@ -2161,20 +2134,25 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
                 + " - Angular velocities over average step cycle"
             )
         figure_file_string = " - Angular Velocities over average step cycle"
-        f.savefig(
-            results_dir + angle + figure_file_string + ".png", bbox_inches="tight"
-        )
-        save_as_svg(f, results_dir, angle + figure_file_string)
+        save_figures(f, results_dir, angle + figure_file_string)
         if dont_show_plots:
             plt.close(f)
 
 
-def save_as_svg(figure, results_dir, figure_file_string):
-    """Save figures as svgs to separate subfolder"""
+def save_figures(figure, results_dir, figure_file_string):
+    """Save figures as pngs to results_dir and as svgs to separate subfolders"""
+    # pngs to results_dir
+    figure.savefig(
+        os.path.join(results_dir, figure_file_string + ".png"),
+        bbox_inches="tight",
+    )
+    # svgs to subfolders
     svg_dir = os.path.join(results_dir, "SVG Figures")
     if not os.path.exists(svg_dir):
         os.makedirs(svg_dir)
-    figure.savefig(svg_dir + "/" + figure_file_string + ".svg", bbox_inches="tight")
+    figure.savefig(
+        os.path.join(svg_dir, figure_file_string + ".svg"), bbox_inches="tight"
+    )
 
 
 def ytickconvert_mm_to_cm(axis):

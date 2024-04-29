@@ -1066,17 +1066,23 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
         else:
             results[output]["sc_num"] = sc_num[idx]
         save_results_sheet(
-            all_steps_data[idx], output, results_dir + name + ORIGINAL_XLS_FILENAME
+            all_steps_data[idx],
+            output,
+            os.path.join(results_dir, name + ORIGINAL_XLS_FILENAME),
         )
         save_results_sheet(
             normalised_steps_data[idx],
             output,
-            results_dir + name + NORMALISED_XLS_FILENAME,
+            os.path.join(results_dir, name + NORMALISED_XLS_FILENAME),
         )
         save_results_sheet(
-            average_data[idx], output, results_dir + name + AVERAGE_XLS_FILENAME
+            average_data[idx],
+            output,
+            os.path.join(results_dir, name + AVERAGE_XLS_FILENAME),
         )
-        save_results_sheet(std_data[idx], output, results_dir + name + STD_XLS_FILENAME)
+        save_results_sheet(
+            std_data[idx], output, os.path.join(results_dir, name + STD_XLS_FILENAME)
+        )
     return results
 
 
@@ -1650,8 +1656,7 @@ def plot_joint_z_by_y(legname, all_steps_data, all_cycles, info, cfg):
         f[j].supylabel("z (m)")
         figure_string = name + " - " + legname + " - " + joint + " z by y coordinates"
         f[j].suptitle(figure_string, y=0.925)
-        f[j].savefig(results_dir + figure_string + ".png", bbox_inches="tight")
-        save_as_svg(f[j], results_dir, figure_string)
+        save_figures(f[j], results_dir, figure_string)
         if dont_show_plots:
             plt.close(f[j])
 
@@ -1712,8 +1717,7 @@ def plot_angles_by_time(legname, all_steps_data, all_cycles, info, cfg):
         f[a].supylabel("Angle (degree)")
         figure_string = name + " - " + legname + " - " + angle + " angle by time"
         f[a].suptitle(figure_string, y=0.925)
-        f[a].savefig(results_dir + figure_string + ".png", bbox_inches="tight")
-        save_as_svg(f[a], results_dir, figure_string)
+        save_figures(f[a], results_dir, figure_string)
         if dont_show_plots:
             plt.close(f[a])
 
@@ -1819,8 +1823,7 @@ def plot_stickdiagram(legname, all_steps_data, all_cycles, info, cfg):
     f.supylabel("z (m)")
     figure_file_string = name + " - " + legname + " - Stick Diagram"
     f.suptitle(figure_file_string, y=0.925)
-    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, figure_file_string)
+    save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -1859,8 +1862,7 @@ def plot_joint_z_by_average_SC(legname, average_data, std_data, sc_num, info, cf
         name + " - " + legname + " - Joint z-coord.s over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, figure_file_string)
+    save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -1903,8 +1905,7 @@ def plot_angles_by_average_SC(legname, average_data, std_data, sc_num, info, cfg
         name + " - " + legname + " - Joint angles over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, figure_file_string)
+    save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -1945,8 +1946,7 @@ def plot_y_velocities_by_average_SC(legname, average_data, std_data, sc_num, inf
         name + " - " + legname + " - Joint y-velocities over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, figure_file_string)
+    save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -1989,8 +1989,7 @@ def plot_angular_velocities_by_average_SC(
         name + " - " + legname + " - Angular velocities over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, figure_file_string)
+    save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -2034,8 +2033,7 @@ def plot_y_acceleration_by_average_SC(
         name + " - " + legname + " - Joint y-accelerations over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, figure_file_string)
+    save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
@@ -2081,19 +2079,26 @@ def plot_angular_acceleration_by_average_SC(
         name + " - " + legname + " - Angular accelerations over average step cycle"
     )
     ax.set_title(figure_file_string)
-    f.savefig(results_dir + figure_file_string + ".png", bbox_inches="tight")
-    save_as_svg(f, results_dir, figure_file_string)
+    save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
 
 # ..............................  helper functions  ....................................
-def save_as_svg(figure, results_dir, figure_file_string):
-    """Save figures as svgs to separate subfolder"""
+def save_figures(figure, results_dir, figure_file_string):
+    """Save figures as pngs to results_dir and as svgs to separate subfolders"""
+    # pngs to results_dir
+    figure.savefig(
+        os.path.join(results_dir, figure_file_string + ".png"),
+        bbox_inches="tight",
+    )
+    # svgs to subfolders
     svg_dir = os.path.join(results_dir, "SVG Figures")
     if not os.path.exists(svg_dir):
         os.makedirs(svg_dir)
-    figure.savefig(svg_dir + "/" + figure_file_string + ".svg", bbox_inches="tight")
+    figure.savefig(
+        os.path.join(svg_dir, figure_file_string + ".svg"), bbox_inches="tight"
+    )
 
 
 def extract_feature_column(df, joint, legname, feature):
