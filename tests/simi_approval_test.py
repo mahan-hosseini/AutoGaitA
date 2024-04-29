@@ -4,6 +4,8 @@ import pandas.testing as pdt
 import os
 import shutil
 import pdb
+import pytest
+
 
 # .............................  1) GLOBAL VARS  .......................................
 # for testing - reset any previous test
@@ -40,36 +42,39 @@ info["results_dir"] = os.path.join(ROOT_DIR + "Results/" + info["name"] + "/")
 
 
 # ...............................  2) RUN TEST  ........................................
-# def test_simi_approval():
-#     """
-#     Approval Test of AutoGaitA Simi
-#     -------------------------------
-#     1. Run autogaita.simi for Subject (with the cfg used there)
-#     2. Load the "Average Stepcycles".xlsx file from the repo and compare for equivalence to  average_data
-#     3. Do the same for "Standard Devs. Stepcycle.xlsx" and std_data
-#     4. Pass the test if the two df-pairs are equal
-#     """
-#     folderinfo = prepare_folderinfo()
-#     cfg = prepare_cfg()
-#     # run
-#     autogaita_utils.try_to_run_gaita("Simi", info, folderinfo, cfg, False)
-#     # load true dfs from xlsx files
-#     true_av_df = pd.read_excel(os.path.join(TRUE_PATH, "O_09 - Average Stepcycle.xlsx"))
-#     true_std_df = pd.read_excel(
-#         os.path.join(TRUE_PATH, "O_09 - Standard Devs. Stepcycle.xlsx")
-#     )
-#     test_av_df = pd.read_excel(
-#         os.path.join(TEST_PATH, "Results/O_09/O_09 - Average Stepcycle.xlsx")
-#     )
-#     test_std_df = pd.read_excel(
-#         os.path.join(
-#             TEST_PATH,
-#             "Results/O_09/O_09 - Standard Devs. Stepcycle.xlsx",
-#         )
-#     )
-#     # finally assert equivalence of df-pairs
-#     pdt.assert_frame_equal(test_av_df, true_av_df)
-#     pdt.assert_frame_equal(test_std_df, true_std_df)
+
+
+@pytest.mark.nodata  # https://docs.pytest.org/en/7.1.x/example/markers.html
+def test_simi_approval():
+    """
+    Approval Test of AutoGaitA Simi
+    -------------------------------
+    1. Run autogaita.simi for Subject (with the cfg used there)
+    2. Load the "Average Stepcycles".xlsx file from the repo and compare for equivalence to  average_data
+    3. Do the same for "Standard Devs. Stepcycle.xlsx" and std_data
+    4. Pass the test if the two df-pairs are equal
+    """
+    folderinfo = prepare_folderinfo()
+    cfg = prepare_cfg()
+    # run
+    autogaita_utils.try_to_run_gaita("Simi", info, folderinfo, cfg, False)
+    # load true dfs from xlsx files
+    true_av_df = pd.read_excel(os.path.join(TRUE_PATH, "O_09 - Average Stepcycle.xlsx"))
+    true_std_df = pd.read_excel(
+        os.path.join(TRUE_PATH, "O_09 - Standard Devs. Stepcycle.xlsx")
+    )
+    test_av_df = pd.read_excel(
+        os.path.join(TEST_PATH, "Results/O_09/O_09 - Average Stepcycle.xlsx")
+    )
+    test_std_df = pd.read_excel(
+        os.path.join(
+            TEST_PATH,
+            "Results/O_09/O_09 - Standard Devs. Stepcycle.xlsx",
+        )
+    )
+    # finally assert equivalence of df-pairs
+    pdt.assert_frame_equal(test_av_df, true_av_df)
+    pdt.assert_frame_equal(test_std_df, true_std_df)
 
 
 # ..............................  3) LOCAL FUNCTIONS  ..................................
