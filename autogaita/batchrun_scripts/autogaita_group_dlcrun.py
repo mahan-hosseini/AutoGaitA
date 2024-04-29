@@ -1,10 +1,24 @@
-# Contrast autogaita_dlc results using autogaita_group
 from autogaita import autogaita_group
 
 
 def group_dlcrun():
-    """Batch run group level analyses for results obtained with _dlc"""
+    """
+    Batchrun script to run AutoGaitA Group for Results obtained with AutoGaitA DLC.
+    folderinfo & cfg dictionaries must be configured as explained in our documentation. See the "AutoGaitA without the GUI" section of our documentation for references to in-depth explanations to all dictionary keys (note that each key of dicts corresponds to some object in the AutoGaitA Group GUI)
+    """
+    # folderinfo
+    # => Note that length of folderinfo's group_names & group_dirs lists determines how #    many groups are compared.
+    # => Also note that indices must correspond (i.e., idx #    1's name will be used #    for dataset stored in group_dir's idx 1)
     folderinfo = {}
+    folderinfo["group_names"] = ["one", "two"]
+    folderinfo["group_dirs"] = [
+        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group 1/",
+        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group 2/",
+    ]
+    folderinfo["results_dir"] = (
+        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/GroupResults/"
+    )
+    # cfg
     cfg = {}
     cfg["do_permtest"] = True
     cfg["do_anova"] = True
@@ -14,8 +28,6 @@ def group_dlcrun():
     cfg["stats_threshold"] = 0.05
     cfg["plot_SE"] = False
     cfg["which_leg"] = "left"
-
-    # mouse anova cfg!
     cfg["anova_design"] = "Mixed ANOVA"
     cfg["permutation_number"] = 100
     cfg["PCA_variables"] = ["Hind paw tao y", "Ankle y", "Knee y"]
@@ -28,19 +40,10 @@ def group_dlcrun():
         # "Hip Angle",
         # "Elbow Angle"
     ]
-
-    # 2 groups
-    folderinfo["group_names"] = ["one", "two"]
-    folderinfo["group_dirs"] = [
-        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group 1/",
-        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group 2/",
-    ]
-
-    # results dir
-    folderinfo[
-        "results_dir"
-        # mouse
-    ] = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/GroupResults/"
-
     # run
     autogaita_group.group(folderinfo, cfg)
+
+
+# %% what happens if we just hit run
+if __name__ == "__main__":
+    group_dlcrun()

@@ -1,49 +1,40 @@
-# %% Imports, constants & notes
-
-# imports
 from autogaita import autogaita_utils
 import os
-import pdb
-
-# .............  1) folderinfo-dict: the folder-constants  ....................
-# constants
-ROOT_DIR = "/Users/mahan/sciebo/Research/AutoGaitA/Human/Testing2/"
-if ROOT_DIR:
-    if ROOT_DIR[-1] != "/":
-        ROOT_DIR += "/"
-SCTABLE_FILENAME = "SC Latency Table"  # has to be an xlsxfile
-POSTNAME_FLAG = False
-if POSTNAME_FLAG is False:
-    POSTNAME_STRING = ""
-else:
-    POSTNAME_STRING = "_joint_centers"
-
-# .................  2) cfg-dict: analysis-config  .......................
-# base cfg
-SAMPLING_RATE = 100
-DONT_SHOW_PLOTS = True
-# advanced cfg
-Y_ACCELERATION = True
-ANGULAR_ACCELERATION = True
-BIN_NUM = 25
-PLOT_SE = False
-NORMALISE_HEIGHT_AT_SC_LEVEL = True
-PLOT_JOINT_NUMBER = 7
-JOINTS = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis", "Shoulder", "Neck"]
-ANGLES = {
-    "name": ["Ankle", "Knee"],
-    "lower_joint": ["Midfoot", "Ankle"],
-    "upper_joint": ["Knee", "Hip"],
-}
 
 
-# %% main program
+# %% main function
 
 
 def simi_multirun():
-    info = extract_info()
-    folderinfo = prepare_folderinfo()
-    cfg = prepare_cfg()
+    """
+    Batchrun script to run AutoGaitA Simi for a folder of datasets.
+    folderinfo & cfg dictionaries must be configured as explained in our documentation. See the "AutoGaitA without the GUI" section of our documentation for references to in-depth explanations to all dictionary keys (note that each key of dicts corresponds to some object in the AutoGaitA Simi GUI)
+    """
+    # folderinfo
+    folderinfo = {}
+    folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Human/Testing2/"
+    if folderinfo["root_dir"][-1] != "/":
+        folderinfo["root_dir"] += "/"
+    folderinfo["sctable_filename"] = "SC Latency Table"
+    folderinfo["postname_string"] = ""
+    # cfg
+    cfg = {}
+    cfg["sampling_rate"] = 100  # base cfg
+    cfg["dont_show_plots"] = False
+    cfg["y_acceleration"] = True
+    cfg["angular_acceleration"] = True
+    cfg["bin_num"] = 25
+    cfg["plot_SE"] = True
+    cfg["normalise_height_at_SC_level"] = True
+    cfg["plot_joint_number"] = 7
+    cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis", "Shoulder", "Neck"]
+    cfg["angles"] = {
+        "name": ["Ankle", "Knee"],
+        "lower_joint": ["Midfoot", "Ankle"],
+        "upper_joint": ["Knee", "Hip"],
+    }
+    # run a single gaita run for each entry of info
+    info = extract_info(folderinfo)
     for idx, name in enumerate(info["name"]):
         run_singlerun(idx, info, folderinfo, cfg)
 
@@ -62,48 +53,26 @@ def run_singlerun(idx, info, folderinfo, cfg):
     autogaita_utils.try_to_run_gaita("Simi", this_info, folderinfo, cfg, True)
 
 
-def extract_info():
+def extract_info(folderinfo):
     """Prepare a dict of lists that include unique name infos"""
+    root_dir = folderinfo["root_dir"]
+    sctable_filename = folderinfo["sctable_filename"]
+    postname_string = folderinfo["postname_string"]
     info = {"name": [], "results_dir": []}
-    for filename in os.listdir(ROOT_DIR):
-        if not POSTNAME_STRING:
-            if (".xls" in filename) & (SCTABLE_FILENAME not in filename):
+    for filename in os.listdir(root_dir):
+        if not postname_string:
+            if (".xls" in filename) & (sctable_filename not in filename):
                 info["name"].append(filename.split(".xls")[0])
                 info["results_dir"].append(
-                    os.path.join(ROOT_DIR + "Results/" + info["name"][-1] + "/")
+                    os.path.join(root_dir + "Results/" + info["name"][-1] + "/")
                 )
         else:
-            if POSTNAME_STRING in filename:
-                info["name"].append(filename.split(POSTNAME_STRING)[0])
+            if postname_string in filename:
+                info["name"].append(filename.split(postname_string)[0])
                 info["results_dir"].append(
-                    os.path.join(ROOT_DIR + "Results/" + info["name"][-1] + "/")
+                    os.path.join(root_dir + "Results/" + info["name"][-1] + "/")
                 )
     return info
-
-
-def prepare_folderinfo():
-    """Dump all infos about constants in this given folder into a dict"""
-    folderinfo = {}
-    folderinfo["root_dir"] = ROOT_DIR
-    folderinfo["sctable_filename"] = SCTABLE_FILENAME
-    folderinfo["postname_string"] = POSTNAME_STRING
-    return folderinfo
-
-
-def prepare_cfg():
-    """Dump all configuration information into a dict"""
-    cfg = {}
-    cfg["sampling_rate"] = SAMPLING_RATE  # base cfg
-    cfg["dont_show_plots"] = DONT_SHOW_PLOTS
-    cfg["y_acceleration"] = Y_ACCELERATION
-    cfg["angular_acceleration"] = ANGULAR_ACCELERATION
-    cfg["bin_num"] = BIN_NUM
-    cfg["plot_SE"] = PLOT_SE
-    cfg["normalise_height_at_SC_level"] = NORMALISE_HEIGHT_AT_SC_LEVEL
-    cfg["plot_joint_number"] = PLOT_JOINT_NUMBER
-    cfg["joints"] = JOINTS
-    cfg["angles"] = ANGLES
-    return cfg
 
 
 # %% what happens if we just hit run
