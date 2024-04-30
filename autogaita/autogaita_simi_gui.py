@@ -83,6 +83,7 @@ def simi_gui():
     cfg["plot_joint_number"] = tk.StringVar(root, "3")
     cfg["plot_SE"] = tk.BooleanVar(root, False)
     cfg["normalise_height_at_SC_level"] = tk.BooleanVar(root, True)
+    cfg["results_dir"] = tk.StringVar(root, "")
     results = {}  # local results variable
     results["name"] = tk.StringVar(root, "")
     results["root_dir"] = tk.StringVar(root, "")
@@ -259,8 +260,14 @@ def simi_gui():
     plot_joint_num_label.grid(row=14, column=0)
     plot_joint_num_entry = ctk.CTkEntry(root, textvariable=cfg["plot_joint_number"])
     plot_joint_num_entry.grid(row=15, column=0)
-    placeholder_label = ctk.CTkLabel(root, text="")
-    placeholder_label.grid(row=16, column=0)
+    # results dir
+    results_dir_string = (
+        "Save Results subfolders to directory location below instead of to data's"
+    )
+    results_dir_label = ctk.CTkLabel(root, text=results_dir_string)
+    results_dir_label.grid(row=16, column=0)
+    results_dir_entry = ctk.CTkEntry(root, textvariable=cfg["results_dir"])
+    results_dir_entry.grid(row=17, column=0)
 
     # .............................  right section  ....................................
     # x acceleration
@@ -321,7 +328,7 @@ def simi_gui():
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
     column_info_button.grid(
-        row=15, column=1, sticky="nsew", rowspan=2, padx=10, pady=10
+        row=16, column=1, sticky="nsew", rowspan=2, padx=10, pady=10
     )
     # .........................  run and done section  .................................
     # run button
@@ -333,7 +340,7 @@ def simi_gui():
         text_color=HEADER_TXT_COLOR,
         font=("Britannic Bold", HEADER_FONT_SIZE),
     )
-    runheader_label.grid(row=17, column=0, columnspan=2, sticky="nsew")
+    runheader_label.grid(row=18, column=0, columnspan=2, sticky="nsew")
     run_button = ctk.CTkButton(
         root,
         text="I am ready - run analysis!",
@@ -341,7 +348,7 @@ def simi_gui():
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
     )
-    run_button.grid(row=18, column=0, sticky="nsew", padx=10, pady=(10, 5))
+    run_button.grid(row=19, column=0, sticky="nsew", padx=10, pady=(10, 5))
     # close program button
     close_button = ctk.CTkButton(
         root,
@@ -350,7 +357,7 @@ def simi_gui():
         hover_color=HOVER_COLOR,
         command=lambda: root.after(1, root.destroy()),
     )
-    close_button.grid(row=18, column=1, sticky="nsew", padx=10, pady=(10, 5))
+    close_button.grid(row=19, column=1, sticky="nsew", padx=10, pady=(10, 5))
 
     # maximise widgets
     maximise_widgets(root)
@@ -640,9 +647,14 @@ def analyse_single_run(this_runs_results, this_runs_cfg):
         tk.messagebox.showerror(title="Try again", message=error_msg)
         print(error_msg)
         return
-    this_info["results_dir"] = os.path.join(
-        this_runs_results["root_dir"] + "Results/" + this_info["name"] + "/"
-    )
+    if this_runs_cfg["results_dir"]:
+        this_info["results_dir"] = os.path.join(
+            this_runs_cfg["results_dir"], this_info["name"]
+        )
+    else:
+        this_info["results_dir"] = os.path.join(
+            this_runs_results["root_dir"], "Results", this_info["name"]
+        )
     # execute
     autogaita_utils.try_to_run_gaita(
         "Simi", this_info, this_folderinfo, this_runs_cfg, False
@@ -671,7 +683,7 @@ def analyse_multi_run(this_runs_results, this_runs_cfg):
 def multirun_run_a_single_dataset(idx, multirun_info, this_folderinfo, this_runs_cfg):
     """If we are doing a multi-run analysis, run the main code of individual analyses
     based on current cfg"""
-    # extract and pass info of this mouse/run (also update resdir)
+    # extract and pass info of this ID
     this_info = {}
     keynames = multirun_info.keys()
     for keyname in keynames:
@@ -818,25 +830,48 @@ def prepare_folderinfo(this_runs_results):
 
 def multirun_extract_info(folderinfo):
     """If we are running multi-run analysis, prepare a dict of lists that include
-    unique name & results_dir infos"""
+    unique name & results_dir infos
+
+    A Note
+    ------
+    There are 3 "results_dirs" here:
+    1) cfg["results_dir"] is the user-provided entry
+    2) results_dir var is the value extracted from 1)
+    3) info["results_dir"] is the dir we save this ID's (!) Results to!
+    """
+
+    results_dir = cfg["results_dir"].get()
     info = {"name": [], "results_dir": []}
     for filename in os.listdir(folderinfo["root_dir"]):
+        # dont try to combine the two "join" if blocks into one - we want to append
+        # results dir WHENEVER we append name!
         if not folderinfo["postname_string"]:
+            # dont use endswith below to catch .xlsx too
             if (".xls" in filename) & (folderinfo["sctable_filename"] not in filename):
                 info["name"].append(filename.split(".xls")[0])
-                info["results_dir"].append(
-                    os.path.join(
-                        folderinfo["root_dir"] + "Results/" + info["name"][-1] + "/"
+                if results_dir:
+                    info["results_dir"].append(
+                        os.path.join(results_dir, info["name"][-1])
                     )
-                )
+                else:
+                    info["results_dir"].append(
+                        os.path.join(
+                            folderinfo["root_dir"], "Results", info["name"][-1]
+                        )
+                    )
         else:
             if folderinfo["postname_string"] in filename:
                 info["name"].append(filename.split(folderinfo["postname_string"])[0])
-            info["results_dir"].append(
-                os.path.join(
-                    folderinfo["root_dir"] + "Results/" + info["name"][-1] + "/"
-                )
-            )
+                if results_dir:
+                    info["results_dir"].append(
+                        os.path.join(results_dir, info["name"][-1])
+                    )
+                else:
+                    info["results_dir"].append(
+                        os.path.join(
+                            folderinfo["root_dir"], "Results", info["name"][-1]
+                        )
+                    )
     return info
 
 

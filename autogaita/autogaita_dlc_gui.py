@@ -109,6 +109,7 @@ def dlc_gui():
     cfg["normalise_height_at_SC_level"] = tk.BooleanVar(root, False)
     cfg["invert_y_axis"] = tk.BooleanVar(root, True)
     cfg["flip_gait_direction"] = tk.BooleanVar(root, True)
+    cfg["results_dir"] = tk.StringVar(root, "")
     # joint columns - hind limb
     default_hind_joints = ["Hind paw tao ", "Ankle ", "Knee ", "Hip ", "Iliac Crest "]
     cfg["hind_joints"] = []
@@ -447,6 +448,14 @@ def build_cfg_window(root, cfg, root_dimensions):
         fg_color=FG_COLOR,
     )
     flip_gait_direction_box.grid(row=14, column=0)
+    # results dir
+    results_dir_string = (
+        "Save Results subfolders to directory location below instead of to data's"
+    )
+    results_dir_label = ctk.CTkLabel(cfg_window, text=results_dir_string, width=cfg_w)
+    results_dir_label.grid(row=15, column=0)
+    results_dir_entry = ctk.CTkEntry(cfg_window, textvariable=cfg["results_dir"])
+    results_dir_entry.grid(row=16, column=0)
     # column name information window
     column_info_string = "Customise joints and angles"
     column_info_button = ctk.CTkButton(
@@ -457,7 +466,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
     column_info_button.grid(
-        row=15, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=17, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -468,7 +477,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: cfg_window.destroy(),
     )
     adv_cfg_done_button.grid(
-        row=17, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=19, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # maximise widgets
     maximise_widgets(cfg_window)
@@ -1147,9 +1156,10 @@ def analyse_single_run(this_runs_results, this_runs_cfg):
     info["mouse_num"] = this_runs_results["mouse_num"]
     info["run_num"] = this_runs_results["run_num"]
     info["name"] = "ID " + str(info["mouse_num"]) + " - Run " + str(info["run_num"])
-    info["results_dir"] = os.path.join(
-        folderinfo["root_dir"] + "Results/" + info["name"] + "/"
-    )
+    if this_runs_cfg["results_dir"]:
+        info["results_dir"] = os.path.join(this_runs_cfg["results_dir"], info["name"])
+    else:
+        info["results_dir"] = os.path.join(folderinfo["root_dir"], info["name"])
     # execute
     autogaita_utils.try_to_run_gaita("DLC", info, folderinfo, this_runs_cfg, False)
 
@@ -1176,9 +1186,14 @@ def multirun_run_a_single_dataset(idx, info, folderinfo, this_runs_cfg):
     this_info = {}
     for keyname in info.keys():
         this_info[keyname] = info[keyname][idx]
-    this_info["results_dir"] = os.path.join(
-        folderinfo["root_dir"] + "Results/" + this_info["name"] + "/"
-    )
+    if this_runs_cfg["results_dir"]:
+        this_info["results_dir"] = os.path.join(
+            this_runs_cfg["results_dir"], this_info["name"]
+        )
+    else:
+        this_info["results_dir"] = os.path.join(
+            folderinfo["root_dir"], this_info["name"]
+        )
     # important to only pass this_info to main script here (1 run at a time!)
     autogaita_utils.try_to_run_gaita("DLC", this_info, folderinfo, this_runs_cfg, True)
 
