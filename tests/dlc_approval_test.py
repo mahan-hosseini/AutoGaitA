@@ -16,8 +16,9 @@ def test_dlc_approval(tmp_path):
     3. Do the same for "Standard Devs. Stepcycle.xlsx" and std_data
     4. Pass the test if the two df-pairs are equal
     """
+
     # prepare paths
-    results_dir = tmp_path
+    results_dir = tmp_path  # info["results_dir"] below
     true_dir = "example data/25mm/Results/ID 15 - Run 3/"
     root_dir = "tests/test_data/dlc_data"
     # folderinfo

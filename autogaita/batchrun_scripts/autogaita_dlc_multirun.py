@@ -13,11 +13,7 @@ def dlc_multirun():
     # folderinfo
     folderinfo = {}
     folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/"
-    # to make sure root_dir works under windows
-    # (windows is okay with all dir-separators being "/", so make sure it is!)
-    folderinfo["root_dir"] = folderinfo["root_dir"].replace(os.sep, "/")
-    if folderinfo["root_dir"][-1] != "/":
-        folderinfo["root_dir"] = folderinfo["root_dir"] + "/"
+    folderinfo["results_dir"] = ""
     folderinfo["sctable_filename"] = "25mm.xlsx"
     folderinfo["data_string"] = "SIMINewOct"
     folderinfo["beam_string"] = "BeamTraining"
@@ -76,16 +72,20 @@ def run_singlerun(idx, info, folderinfo, cfg):
     keynames = info.keys()
     for keyname in keynames:
         this_info[keyname] = info[keyname][idx]
-    this_info["results_dir"] = os.path.join(
-        folderinfo["root_dir"] + "Results/" + this_info["name"] + "/"
-    )
+        if folderinfo["results_dir"]:
+            this_info["results_dir"] = os.path.join(
+                folderinfo["results_dir"], this_info["name"]
+            )
+        else:
+            this_info["results_dir"] = os.path.join(
+                folderinfo["root_dir"], "Results", this_info["name"]
+            )
     # important to only pass this_info to main script here (1 run at a time!)
     autogaita_utils.try_to_run_gaita("DLC", this_info, folderinfo, cfg, True)
 
 
 def extract_info(folderinfo):
     """Prepare a dict of lists that include unique name/mouse/run infos"""
-    root_dir = folderinfo["root_dir"]
     premouse_string = folderinfo["premouse_string"]
     postmouse_string = folderinfo["postmouse_string"]
     prerun_string = folderinfo["prerun_string"]

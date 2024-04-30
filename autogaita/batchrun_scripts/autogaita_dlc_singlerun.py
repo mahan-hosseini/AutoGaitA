@@ -11,11 +11,7 @@ def dlc_singlerun():
     # folderinfo
     folderinfo = {}
     folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/"
-    # to make sure root_dir works under windows
-    # (windows is okay with all dir-separators being "/", so make sure it is!)
-    folderinfo["root_dir"] = folderinfo["root_dir"].replace(os.sep, "/")
-    if folderinfo["root_dir"][-1] != "/":
-        folderinfo["root_dir"] = folderinfo["root_dir"] + "/"
+    folderinfo["results_dir"] = ""
     folderinfo["sctable_filename"] = "25mm.xlsx"
     folderinfo["data_string"] = "SIMINewOct"
     folderinfo["beam_string"] = "BeamTraining"
@@ -63,9 +59,12 @@ def dlc_singlerun():
     info["mouse_num"] = 14
     info["run_num"] = 1
     info["name"] = "ID " + str(info["mouse_num"]) + " - Run " + str(info["run_num"])
-    info["results_dir"] = os.path.join(
-        folderinfo["root_dir"] + "Results/" + info["name"] + "/"
-    )
+    if folderinfo["results_dir"]:
+        info["results_dir"] = os.path.join(folderinfo["results_dir"], info["name"])
+    else:
+        info["results_dir"] = os.path.join(
+            folderinfo["root_dir"], "Results", info["name"]
+        )
     # run
     autogaita_utils.try_to_run_gaita("DLC", info, folderinfo, cfg, False)
 

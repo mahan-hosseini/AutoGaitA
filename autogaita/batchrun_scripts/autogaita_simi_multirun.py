@@ -1,5 +1,6 @@
 from autogaita import autogaita_utils
 import os
+import pdb
 
 
 # %% main function
@@ -13,8 +14,7 @@ def simi_multirun():
     # folderinfo
     folderinfo = {}
     folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Human/Testing2/"
-    if folderinfo["root_dir"][-1] != "/":
-        folderinfo["root_dir"] += "/"
+    folderinfo["results_dir"] = ""
     folderinfo["sctable_filename"] = "SC Latency Table"
     folderinfo["postname_string"] = ""
     # cfg
@@ -56,22 +56,36 @@ def run_singlerun(idx, info, folderinfo, cfg):
 def extract_info(folderinfo):
     """Prepare a dict of lists that include unique name infos"""
     root_dir = folderinfo["root_dir"]
+    results_dir = folderinfo["results_dir"]
     sctable_filename = folderinfo["sctable_filename"]
     postname_string = folderinfo["postname_string"]
     info = {"name": [], "results_dir": []}
     for filename in os.listdir(root_dir):
+        # dont try to combine the two "join" if blocks into one - we want to append
+        # results dir WHENEVER we append name!
         if not postname_string:
+            # dont use endswith below to catch .xlsx too
             if (".xls" in filename) & (sctable_filename not in filename):
                 info["name"].append(filename.split(".xls")[0])
-                info["results_dir"].append(
-                    os.path.join(root_dir + "Results/" + info["name"][-1] + "/")
-                )
+                if results_dir:
+                    info["results_dir"].append(
+                        os.path.join(results_dir, info["name"][-1])
+                    )
+                else:
+                    info["results_dir"].append(
+                        os.path.join(root_dir, "Results", info["name"][-1])
+                    )
         else:
             if postname_string in filename:
                 info["name"].append(filename.split(postname_string)[0])
-                info["results_dir"].append(
-                    os.path.join(root_dir + "Results/" + info["name"][-1] + "/")
-                )
+                if results_dir:
+                    info["results_dir"].append(
+                        os.path.join(results_dir, info["name"][-1])
+                    )
+                else:
+                    info["results_dir"].append(
+                        os.path.join(root_dir, "Results", info["name"][-1])
+                    )
     return info
 
 

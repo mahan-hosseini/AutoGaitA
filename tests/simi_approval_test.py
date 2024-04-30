@@ -18,8 +18,9 @@ def test_simi_approval(tmp_path):
     3. Do the same for "Standard Devs. Stepcycle.xlsx" and std_data
     4. Pass the test if the two df-pairs are equal
     """
+
     # prepare paths
-    results_dir = tmp_path
+    results_dir = tmp_path  # info["results_dir"] below
     true_dir = "tests/test_data/simi_data/true_data/"
     test_dir = "tests/test_data/simi_data/test_data/"
     # folderinfo

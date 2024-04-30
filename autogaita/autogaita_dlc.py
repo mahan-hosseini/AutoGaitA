@@ -71,7 +71,7 @@ def dlc(info, folderinfo, cfg):
     plot_results(info, results, folderinfo, cfg)
 
     # ............................  print finish  ......................................
-    print_finish(cfg)
+    print_finish(info, cfg)
 
 
 # %% local functions 1 - preparation
@@ -1928,7 +1928,7 @@ def tickconvert_mm_to_cm(axis, whichlabel):
 # %% local functions 5 - print finish
 
 
-def print_finish(cfg):
+def print_finish(info, cfg):
     """Print that we finished this program"""
     # unpack
     dont_show_plots = cfg["dont_show_plots"]
@@ -1937,7 +1937,8 @@ def print_finish(cfg):
         plt.pause(1)  # so we ensure that plots are plotted to python before print
 
     print("\n***************************************************")
-    print("* GAITA FINISHED - RESULTS SAVED IN /Results DIR! *")
+    print("* GAITA FINISHED - RESULTS WERE SAVED HERE:       *")
+    print("* " + info["results_dir"] + " *")
     print("***************************************************")
 
 
