@@ -1,7 +1,7 @@
 # %% imports
 from autogaita import autogaita_utils
 import tkinter as tk
-import customtkinter as ctk  # type: ignore
+import customtkinter as ctk
 import os
 from threading import Thread
 from importlib import resources
@@ -971,9 +971,7 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
     )
     done_label4 = ctk.CTkLabel(donewindow, text=done_label4_string, width=donewindow_w)
     done_label4.grid(row=3, column=0)
-
     # run button
-
     done_button = ctk.CTkButton(
         donewindow,
         text="Run!",
@@ -1205,7 +1203,7 @@ def configure_the_icon(root):
     """
     if platform.system().startswith("Darwin"):
         try:
-            from Cocoa import NSApplication, NSImage  # type: ignore
+            from Cocoa import NSApplication, NSImage
         except ImportError:
             print("Unable to import pyobjc modules")
         else:
