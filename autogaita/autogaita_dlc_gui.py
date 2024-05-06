@@ -1,7 +1,7 @@
 # %% imports
 from autogaita import autogaita_utils
 import tkinter as tk
-import customtkinter as ctk
+import customtkinter as ctk  # type: ignore
 import os
 from threading import Thread
 from importlib import resources
@@ -32,7 +32,40 @@ LIST_VARS = [
     "beam_col_right",
 ]
 DICT_VARS = ["angles"]
+TK_BOOL_VARS = [
+    "subtract_beam",
+    "dont_show_plots",
+    "convert_to_mm",
+    "x_acceleration",
+    "angular_acceleration",
+    "save_to_xls",
+    "plot_SE",
+    "normalise_height_at_SC_level",
+    "invert_y_axis",
+    "flip_gait_direction",
+]
+TK_STR_VARS = [
+    "sampling_rate",
+    "pixel_to_mm_ratio",
+    "x_sc_broken_threshold",
+    "y_sc_broken_threshold",
+    "bin_num",
+    "plot_joint_number",
+    "hind_joints",
+    "fore_joints",
+    "beam_col_left",
+    "beam_col_right",
+    "beam_hind_jointadd",
+    "beam_fore_jointadd",
+    "angles",
+]
 WINDOWS_TASKBAR_MAXHEIGHT = 72
+
+# To get the path of the autogaita folder I use __file__
+# which returns the path of the autogaita_utils module imported above.
+# Removing the 18 letter long "autogaita_utils.py" return the folder path
+autogaita_utils_path = autogaita_utils.__file__
+AUTOGAITA_FOLDER_PATH = autogaita_utils_path[:-18]
 
 # %% An important Note
 # I am using a global variable called cfg because I need its info to be shared
@@ -54,6 +87,19 @@ def dlc_gui():
     # ..........................................................................
     # ......................  root window initialisation .......................
     # ..........................................................................
+    # Check for config file
+    config_file_path = os.path.join(AUTOGAITA_FOLDER_PATH, "dlc_gui_config.json")
+    if not os.path.isfile(config_file_path):
+        config_file_error_msg = (
+            "dlc_gui_config.json file not found in autogaita folder.\n"
+            "Confirm that the file exists and is named correctly.\n"
+            "If not, download it again from the GitHub repository."
+        )
+        tk.messagebox.showerror(
+            title="Config File Error", message=config_file_error_msg
+        )
+        exit()
+
     # CustomTkinter vars
     ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
     ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
@@ -91,66 +137,11 @@ def dlc_gui():
     #     initialise all vars that are not Boolean as Strings!
     # if you are looking for the initialisation of the results dict, that is at the top
     # of POPULATE_RUN_WINDOW local function
+
     global cfg
-    cfg = {}
-    cfg["sampling_rate"] = tk.StringVar(root, "")
-    cfg["subtract_beam"] = tk.BooleanVar(root, False)
-    cfg["dont_show_plots"] = tk.BooleanVar(root, False)
-    cfg["convert_to_mm"] = tk.BooleanVar(root, False)
-    cfg["pixel_to_mm_ratio"] = tk.StringVar(root, "")
-    cfg["x_sc_broken_threshold"] = tk.StringVar(root, "200")
-    cfg["y_sc_broken_threshold"] = tk.StringVar(root, "50")
-    cfg["x_acceleration"] = tk.BooleanVar(root, True)
-    cfg["angular_acceleration"] = tk.BooleanVar(root, True)
-    cfg["save_to_xls"] = tk.BooleanVar(root, True)
-    cfg["bin_num"] = tk.StringVar(root, "25")
-    cfg["plot_joint_number"] = tk.StringVar(root, "3")
-    cfg["plot_SE"] = tk.BooleanVar(root, False)
-    cfg["normalise_height_at_SC_level"] = tk.BooleanVar(root, False)
-    cfg["invert_y_axis"] = tk.BooleanVar(root, True)
-    cfg["flip_gait_direction"] = tk.BooleanVar(root, True)
-    cfg["results_dir"] = tk.StringVar(root, "")
-    # joint columns - hind limb
-    default_hind_joints = ["Hind paw tao ", "Ankle ", "Knee ", "Hip ", "Iliac Crest "]
-    cfg["hind_joints"] = []
-    for joint in default_hind_joints:
-        cfg["hind_joints"].append(tk.StringVar(root, joint))
-    # fore limb
-    default_fore_joints = [
-        "Front paw tao ",
-        "Wrist ",
-        "Elbow ",
-        "Lower Shoulder ",
-        "Upper Shoulder ",
-    ]
-    cfg["fore_joints"] = []
-    for joint in default_fore_joints:
-        cfg["fore_joints"].append(tk.StringVar(root, joint))
-    # beam columns - append to empty list to have a list of len=1
-    # (required for test in _dlc)
-    cfg["beam_col_left"] = []
-    cfg["beam_col_left"].append(tk.StringVar(root, "BeamLeft"))
-    cfg["beam_col_right"] = []
-    cfg["beam_col_right"].append(tk.StringVar(root, "BeamRight"))
-    default_beam_hind_jointadd = ["Tail base ", "Tail center ", "Tail tip "]
-    cfg["beam_hind_jointadd"] = []
-    for joint in default_beam_hind_jointadd:
-        cfg["beam_hind_jointadd"].append(tk.StringVar(root, joint))
-    default_beam_fore_jointadd = ["Nose ", "Ear base "]
-    cfg["beam_fore_jointadd"] = []
-    for joint in default_beam_fore_jointadd:
-        cfg["beam_fore_jointadd"].append(tk.StringVar(root, joint))
-    # angles
-    cfg["angles"] = {}
-    dict_of_defaults = {
-        "name": ["Ankle", "Knee", "Hip"],
-        "lower_joint": ["Hind paw tao", "Ankle", "Knee"],
-        "upper_joint": ["Knee", "Hip", "Iliac Crest"],
-    }
-    for key in dict_of_defaults:
-        cfg["angles"][key] = []
-        for this_joint_name in dict_of_defaults[key]:
-            cfg["angles"][key].append(tk.StringVar(root, this_joint_name))
+    # .....................  load cfg dict from config .....................
+    # use the values in the config json file for the results dictionary
+    cfg = extract_cfg_from_json_file(root)
 
     # .........................  top section  ..................................
     # welcome message
@@ -448,14 +439,6 @@ def build_cfg_window(root, cfg, root_dimensions):
         fg_color=FG_COLOR,
     )
     flip_gait_direction_box.grid(row=14, column=0)
-    # results dir
-    results_dir_string = (
-        "Save Results subfolders to directory location below instead of to data's"
-    )
-    results_dir_label = ctk.CTkLabel(cfg_window, text=results_dir_string, width=cfg_w)
-    results_dir_label.grid(row=15, column=0)
-    results_dir_entry = ctk.CTkEntry(cfg_window, textvariable=cfg["results_dir"])
-    results_dir_entry.grid(row=16, column=0)
     # column name information window
     column_info_string = "Customise joints and angles"
     column_info_button = ctk.CTkButton(
@@ -466,7 +449,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
     column_info_button.grid(
-        row=17, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=15, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -477,7 +460,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: cfg_window.destroy(),
     )
     adv_cfg_done_button.grid(
-        row=19, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=17, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # maximise widgets
     maximise_widgets(cfg_window)
@@ -948,9 +931,9 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
     #       -- Catch this here and don't even show donewindow if input is wrong
     # ==> NEVER, EVER change the global variable cfg!
     try:
-        this_runs_results, this_runs_cfg = get_results_and_cfg(results, cfg)
+        this_runs_results, this_runs_cfg = get_results_and_cfg(results, cfg, analysis)
     except:
-        error_msg = get_results_and_cfg(results, cfg)
+        error_msg = get_results_and_cfg(results, cfg, analysis)
         tk.messagebox.showerror(title="Try again", message=error_msg)
         return
 
@@ -988,7 +971,9 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
     )
     done_label4 = ctk.CTkLabel(donewindow, text=done_label4_string, width=donewindow_w)
     done_label4.grid(row=3, column=0)
+
     # run button
+
     done_button = ctk.CTkButton(
         donewindow,
         text="Run!",
@@ -999,6 +984,7 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
             donewindow.destroy(),
         ),
     )
+
     done_button.grid(row=4, column=0, sticky="nsew", pady=10, padx=20)
     # maximise button only
     donewindow.grid_rowconfigure(4, weight=1)
@@ -1008,22 +994,9 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
 def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
     """Populate the information window before running analysis"""
 
-    # .........................  prepare vars  .................................
-    results = {}
-    if analysis == "single":
-        results["mouse_num"] = tk.StringVar(runwindow, "")
-        results["run_num"] = tk.StringVar(runwindow, "")
-    results["root_dir"] = tk.StringVar(
-        runwindow,
-        "",
-    )
-    results["sctable_filename"] = tk.StringVar(runwindow, "")
-    results["data_string"] = tk.StringVar(runwindow, "")
-    results["beam_string"] = tk.StringVar(runwindow, "")
-    results["premouse_string"] = tk.StringVar(runwindow, "")
-    results["postmouse_string"] = tk.StringVar(runwindow, "")
-    results["prerun_string"] = tk.StringVar(runwindow, "")
-    results["postrun_string"] = tk.StringVar(runwindow, "")
+    # ..................... load results dict from config.....................
+    # use the values in the config json file for the results dictionary
+    results = extract_results_from_json_file(runwindow, analysis)
 
     # ........................  build the frame  ...............................
     if analysis == "single":
@@ -1110,7 +1083,10 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         text="I am done, pass the info!",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
-        command=lambda: user_ready.set(1),
+        command=lambda: (
+            update_config_file(results, cfg),
+            user_ready.set(1),
+        ),
     )
     finishbutton.grid(row=r + 17, column=0, rowspan=2, sticky="nsew", pady=5, padx=70)
     # maximise widgets - do this manually (& only for rows) because it interferes with
@@ -1156,10 +1132,9 @@ def analyse_single_run(this_runs_results, this_runs_cfg):
     info["mouse_num"] = this_runs_results["mouse_num"]
     info["run_num"] = this_runs_results["run_num"]
     info["name"] = "ID " + str(info["mouse_num"]) + " - Run " + str(info["run_num"])
-    if this_runs_cfg["results_dir"]:
-        info["results_dir"] = os.path.join(this_runs_cfg["results_dir"], info["name"])
-    else:
-        info["results_dir"] = os.path.join(folderinfo["root_dir"], info["name"])
+    info["results_dir"] = os.path.join(
+        folderinfo["root_dir"] + "Results/" + info["name"] + "/"
+    )
     # execute
     autogaita_utils.try_to_run_gaita("DLC", info, folderinfo, this_runs_cfg, False)
 
@@ -1186,14 +1161,9 @@ def multirun_run_a_single_dataset(idx, info, folderinfo, this_runs_cfg):
     this_info = {}
     for keyname in info.keys():
         this_info[keyname] = info[keyname][idx]
-    if this_runs_cfg["results_dir"]:
-        this_info["results_dir"] = os.path.join(
-            this_runs_cfg["results_dir"], this_info["name"]
-        )
-    else:
-        this_info["results_dir"] = os.path.join(
-            folderinfo["root_dir"], this_info["name"]
-        )
+    this_info["results_dir"] = os.path.join(
+        folderinfo["root_dir"] + "Results/" + this_info["name"] + "/"
+    )
     # important to only pass this_info to main script here (1 run at a time!)
     autogaita_utils.try_to_run_gaita("DLC", this_info, folderinfo, this_runs_cfg, True)
 
@@ -1235,7 +1205,7 @@ def configure_the_icon(root):
     """
     if platform.system().startswith("Darwin"):
         try:
-            from Cocoa import NSApplication, NSImage
+            from Cocoa import NSApplication, NSImage  # type: ignore
         except ImportError:
             print("Unable to import pyobjc modules")
         else:
@@ -1248,7 +1218,7 @@ def configure_the_icon(root):
             root.iconbitmap(str(icon_path))
 
 
-def get_results_and_cfg(results, cfg):
+def get_results_and_cfg(results, cfg, analysis):
     """Before calling analysis, use .get() to extract values from tk-vars"""
     # 1) We make sure to return and use for all "run"-purposes (i.e. everything
     #    that follows this local function) "this_" dicts (stuff is dangerous
@@ -1264,7 +1234,11 @@ def get_results_and_cfg(results, cfg):
         elif i == 1:
             input_dict = cfg
         for key in input_dict.keys():
-            if key in FLOAT_VARS:
+            # exclude mouse_num and run_num from int conversion
+            # in case analysis is multi
+            if analysis == "multi" and (key == "mouse_num" or key == "run_num"):
+                output_dicts[i][key] = input_dict[key].get()
+            elif key in FLOAT_VARS:
                 # make sure that if user doesn't want to convert then we just use 0 so
                 # the float() statement doesn't throw an error
                 # => set the outer dict directly instead of modulating the input_dict,
@@ -1372,6 +1346,92 @@ def find_number(fullstring, prestring, poststring):
     start_idx = fullstring.find(prestring) + len(prestring)
     end_idx = fullstring.find(poststring)
     return int(fullstring[start_idx:end_idx])
+
+
+def update_config_file(results, cfg):
+    """updates the dlc_gui_config file with this runs parameters"""
+    # transform tkVars into normal strings and bools
+    output_dicts = [{}, {}]
+    for i in range(len(output_dicts)):
+        if i == 0:
+            input_dict = results
+        elif i == 1:
+            input_dict = cfg
+        for key in input_dict.keys():
+            if key in LIST_VARS:
+                # if list of strings, initialise output empty list and get & append vals
+                output_dicts[i][key] = []
+                for list_idx in range(len(input_dict[key])):
+                    output_dicts[i][key].append(input_dict[key][list_idx].get())
+            elif key in DICT_VARS:
+                # if dict of list of strings, initialise as empty dict and assign stuff
+                # key = "angles" or other DICT_VAR
+                # inner_key = "name" & "lower_ / upper_joint"
+                # list_idx = idx of list of strings of inner_key
+                output_dicts[i][key] = {}
+                for inner_key in input_dict[key]:
+                    output_dicts[i][key][inner_key] = []
+                    for list_idx in range(len(input_dict[key][inner_key])):
+                        output_dicts[i][key][inner_key].append(
+                            input_dict[key][inner_key][list_idx].get()
+                        )
+            else:
+                output_dicts[i][key] = input_dict[key].get()
+
+    # merge the two configuration dictionaries
+    configs_list = [output_dicts[0], output_dicts[1]]  # 0 = results, 1 = cfg, see above
+    # write the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, "dlc_gui_config.json"), "w"
+    ) as config_json_file:
+        json.dump(configs_list, config_json_file, indent=4)
+
+
+def extract_cfg_from_json_file(root):
+    """loads the cfg dictionary from the config file"""
+    # load the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, "dlc_gui_config.json"), "r"
+    ) as config_json_file:
+        # config_json contains list with 0 -> result and 1 -> cfg data
+        last_runs_cfg = json.load(config_json_file)[1]
+
+    cfg = {}
+    # assign values to the cfg dict
+    for key in last_runs_cfg.keys():
+        if key in TK_BOOL_VARS:
+            cfg[key] = tk.BooleanVar(root, last_runs_cfg[key])
+        elif key in TK_STR_VARS:
+            if key in LIST_VARS:
+                cfg[key] = []
+                for entry in range(len(last_runs_cfg[key])):
+                    cfg[key].append(tk.StringVar(root, entry))
+            elif key in DICT_VARS:
+                cfg[key] = {}
+                for subkey in last_runs_cfg[key]:
+                    cfg[key][subkey] = []
+                    for entry in last_runs_cfg[key][subkey]:
+                        cfg[key][subkey].append(tk.StringVar(root, entry))
+            else:
+                cfg[key] = tk.StringVar(root, last_runs_cfg[key])
+    return cfg
+
+
+def extract_results_from_json_file(runwindow, analysis):
+    """loads the results dictionary from the config file"""
+
+    # load the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, "dlc_gui_config.json"), "r"
+    ) as config_json_file:
+        # config_json contains list with 0 -> result and 1 -> cfg data
+        last_runs_results = json.load(config_json_file)[0]
+
+    results = {}
+    for key in last_runs_results.keys():
+        results[key] = tk.StringVar(runwindow, last_runs_results[key])
+
+    return results
 
 
 # %% what happens if we hit run
