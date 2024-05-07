@@ -6,6 +6,7 @@ import os
 from threading import Thread
 from importlib import resources
 import platform
+import json
 
 
 # %% global constants
