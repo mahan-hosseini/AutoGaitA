@@ -3,6 +3,5 @@
 my_utils/
 dev/
 dist/
-tests/test_data/simi_data/
 autogaita.egg-info/
 venv/
