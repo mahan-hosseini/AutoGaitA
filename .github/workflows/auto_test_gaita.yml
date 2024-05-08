@@ -30,4 +30,4 @@ jobs:
         python -m pip install .[dev]
     - name: Test with pytest
       run: |
-        pytest -m
+        pytest
