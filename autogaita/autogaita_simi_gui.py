@@ -706,7 +706,7 @@ def analyse_multi_run(this_runs_results, this_runs_cfg):
 def multirun_run_a_single_dataset(idx, multirun_info, this_folderinfo, this_runs_cfg):
     """If we are doing a multi-run analysis, run the main code of individual analyses
     based on current cfg"""
-    # extract and pass info of this mouse/run (also update resdir)
+    # extract and pass info of this ID
     this_info = {}
     keynames = multirun_info.keys()
     for keyname in keynames:
