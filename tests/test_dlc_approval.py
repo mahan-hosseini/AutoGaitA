@@ -7,22 +7,10 @@ import pdb
 import pytest
 
 
-# .............................  1) GLOBAL VARS  .......................................
-@pytest.mark.slow
-def test_dlc_approval(tmp_path):
-    """
-    Approval Test of AutoGaitA DLC
-    ------------------------------
-    1. Run autogaita.dlc for ID 15 - Run 3 (with the cfg used there)
-    2. Load the "Average Stepcycles".xlsx file from the repo and compare for equivalence to average_data
-    3. Do the same for "Standard Devs. Stepcycle.xlsx" and std_data
-    4. Pass the test if the two df-pairs are equal
-    """
-
-    # prepare paths
-    results_dir = tmp_path  # info["results_dir"] below
+def extract_dicts(results_dir):
     true_dir = "example data/25mm/Results/ID 15 - Run 3/"
     root_dir = "tests/test_data/dlc_data"
+
     # folderinfo
     folderinfo = {}
     folderinfo["root_dir"] = root_dir
@@ -33,6 +21,7 @@ def test_dlc_approval(tmp_path):
     folderinfo["postmouse_string"] = "_25mm"
     folderinfo["prerun_string"] = "run"
     folderinfo["postrun_string"] = "-6DLC"
+
     # base cfg
     cfg = {}
     cfg["sampling_rate"] = 100
@@ -74,29 +63,55 @@ def test_dlc_approval(tmp_path):
     info["run_num"] = 3
     info["name"] = "ID " + str(info["mouse_num"]) + " - Run " + str(info["run_num"])
     info["results_dir"] = os.path.join(results_dir, info["name"])
+    return true_dir, folderinfo, cfg, info
 
-    # .............................  2) RUN TEST  ......................................
 
-    # run
+# .............................  1) GLOBAL VARS  .......................................
+@pytest.mark.slow
+def test_dlc_approval_average_df(tmp_path):
+
+    results_dir = tmp_path
+    true_dir, folderinfo, cfg, info = extract_dicts(results_dir)
+
     autogaita_utils.try_to_run_gaita("DLC", info, folderinfo, cfg, False)
-    # load true dfs from xlsx files
+
     true_av_df = pd.read_excel(
         os.path.join(true_dir, "ID 15 - Run 3 - Average Stepcycle.xlsx")
     )
-    true_std_df = pd.read_excel(
-        os.path.join(true_dir, "ID 15 - Run 3 - Standard Devs. Stepcycle.xlsx")
-    )
+
     test_av_df = pd.read_excel(
         os.path.join(
             results_dir, "ID 15 - Run 3/ID 15 - Run 3 - Average Stepcycle.xlsx"
         )
     )
+    pdt.assert_frame_equal(test_av_df, true_av_df)
+
+
+@pytest.mark.slow
+def test_dlc_approval_std_df(tmp_path):
+    """
+    Approval Test of AutoGaitA DLC
+    ------------------------------
+    1. Run autogaita.dlc for ID 15 - Run 3 (with the cfg used there)
+    2. Load the "Average Stepcycles".xlsx file from the repo and compare for equivalence to average_data
+    3. Do the same for "Standard Devs. Stepcycle.xlsx" and std_data
+    4. Pass the test if the two df-pairs are equal
+    """
+
+    results_dir = tmp_path
+    true_dir, folderinfo, cfg, info = extract_dicts(results_dir)
+
+    autogaita_utils.try_to_run_gaita("DLC", info, folderinfo, cfg, False)
+
+    true_std_df = pd.read_excel(
+        os.path.join(true_dir, "ID 15 - Run 3 - Standard Devs. Stepcycle.xlsx")
+    )
+
     test_std_df = pd.read_excel(
         os.path.join(
             results_dir,
             "ID 15 - Run 3/ID 15 - Run 3 - Standard Devs. Stepcycle.xlsx",
         )
     )
-    # finally assert equivalence of df-pairs
-    pdt.assert_frame_equal(test_av_df, true_av_df)
+
     pdt.assert_frame_equal(test_std_df, true_std_df)
