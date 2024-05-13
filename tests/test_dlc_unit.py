@@ -1,4 +1,6 @@
 from autogaita.autogaita_dlc import compute_angle, add_angles, add_velocities
+from hypothesis import given
+import hypothesis.strategies as st
 import numpy as np
 import pandas as pd
 import pandas.testing as pdt
@@ -75,15 +77,10 @@ def test_dlc_angles(angle_x_y, lower_x_y, upper_x_y, expected_angle):
     assert step["angle Angle"].values == expected_angle
 
 
-cases = [
-    ((0, 0), (0, 0), (0, 0)),
-    ((10, 10), (10, 10), (10, 10))
-]  # fmt: skip
-@pytest.mark.parametrize("angle_x_y, lower_x_y, upper_x_y", cases)
+@given(x_y_coordinates = st.tuples(st.one_of(st.integers(), st.floats()), st.one_of(st.integers(), st.floats())))  # fmt: skip
 @pytest.mark.filterwarnings("ignore:invalid value encountered")
-def test_dlc_angles_is_nan_when_all_points_are_at_same_location(
-    angle_x_y, lower_x_y, upper_x_y
-):
+def test_dlc_angles_is_nan_when_all_points_are_at_same_location(x_y_coordinates):
+    angle_x_y = lower_x_y = upper_x_y = x_y_coordinates
     step = (
         pd.Series(
             {

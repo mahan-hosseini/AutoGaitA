@@ -5,3 +5,4 @@ dev/
 dist/
 autogaita.egg-info/
 venv/
+.hypothesis/

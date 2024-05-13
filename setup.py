@@ -31,7 +31,7 @@ setup(
     include_package_data=True,
     package_data={"": ["*.txt", "*.rst", "*.png", "*.icns", "*.ico"]},
     install_requires=install_requires,
-    extras_require={"dev": ["pytest"]},
+    extras_require={"dev": ["pytest", "hypothesis"]},
     license="GPLv3",
     url="https://github.com/mahan-hosseini/AutoGaitA/",
 )
