@@ -8,6 +8,8 @@ import math
 from threading import Thread
 from importlib import resources
 import platform
+import json
+import copy
 
 
 # %% global constants
@@ -19,10 +21,31 @@ MIN_GROUP_NUM = 2
 MAX_GROUP_NUM = 6
 STRING_VARS = ["group_names", "group_dirs", "results_dir"]
 FLOAT_VARS = ["stats_threshold"]
-LIST_VARS = ["stats_variables", "PCA_variables"]
+LIST_VARS = [
+    "stats_variables",  # stats/PCA variables are also TK_BOOL_VARS
+    "PCA_variables",  # but this will be handled within the extract_config function
+    "group_names",
+    "group_dirs",
+]
 INT_VARS = ["permutation_number", "number_of_PCs"]
+TK_BOOL_VARS = ["do_permtest", "do_anova", "save_3D_PCA_video", "plot_SE"]
+TK_STR_VARS = [
+    "anova_design",
+    "permutation_number",
+    "stats_threshold",
+    "which_leg",
+    "results_dir",
+]
+TK_INT_VARS = ["number_of_PCs"]
 NORM_SHEET_NAME = "Normalised Stepcycles"
 WINDOWS_TASKBAR_MAXHEIGHT = 72
+
+# To get the path of the autogaita folder I use __file__
+# which returns the path of the autogaita_group module imported above.
+# Removing the 18 letter long "autogaita_group.py" return the folder path
+autogaita_group_path = autogaita_group.__file__
+AUTOGAITA_FOLDER_PATH = autogaita_group_path[:-18]
+
 
 # %%...............................  MAIN PROGRAM ......................................
 
@@ -31,6 +54,19 @@ def group_gui():
     # ..................................................................................
     # .....................  root (intro) window initialisation  .......................
     # ..................................................................................
+    # Check for config file
+    config_file_path = os.path.join(AUTOGAITA_FOLDER_PATH, "group_gui_config.json")
+    if not os.path.isfile(config_file_path):
+        config_file_error_msg = (
+            "group_gui_config.json file not found in autogaita folder.\n"
+            "Confirm that the file exists and is named correctly.\n"
+            "If not, download it again from the GitHub repository."
+        )
+        tk.messagebox.showerror(
+            title="Config File Error", message=config_file_error_msg
+        )
+        exit()
+
     # CustomTkinter vars
     ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
     ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
@@ -198,16 +234,8 @@ def build_mainwindow(root, group_number, root_dimensions):
             font=("Britannic Bold", HEADER_FONT_SIZE),
         )
         cfgheader_label.grid(row=2, column=0, columnspan=2, pady=10, sticky="nsew")
-        # !!! only for easier testing - initial names & dirs
-        initial_names = ["", "", "", "", "", ""]
-        initial_dirs = [
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-        ]
+        # load group names and dirs from the config file
+        initial_names, initial_dirs = extract_group_names_and_dirs_from_json_file()
         # group names & dirs - variables
         group_names = [
             tk.StringVar(mainwindow, initial_names[g]) for g in range(group_number)
@@ -253,7 +281,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         # results dir
         results_dir = tk.StringVar(
             mainwindow,
-            "",
+            extract_results_dir_from_json_file(),
         )
         results_dir_string = "Where do you want group-results to be saved?"
         results_dir_label = ctk.CTkLabel(mainwindow, text=results_dir_string)
@@ -343,13 +371,24 @@ def build_mainwindow(root, group_number, root_dimensions):
             text="I am ready - define features!",
             fg_color=FG_COLOR,
             hover_color=HOVER_COLOR,
-            command=lambda: definefeatures_window(
-                mainwindow,
-                group_names,
-                group_dirs,
-                results_dir,
-                root,
-                root_dimensions,
+            command=lambda: (
+                update_config_file(
+                    # folderinfo variables passed as a dict
+                    {
+                        "group_names": group_names,
+                        "group_dirs": group_dirs,
+                        "results_dir": results_dir,
+                    },
+                    cfg,
+                ),
+                definefeatures_window(
+                    mainwindow,
+                    group_names,
+                    group_dirs,
+                    results_dir,
+                    root,
+                    root_dimensions,
+                ),
             ),
         )
         definefeatures_button.grid(
@@ -624,6 +663,15 @@ def definefeatures_window(
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
         command=lambda: (
+            update_config_file(
+                # folderinfo variables passed as a dict
+                {
+                    "group_names": group_names,
+                    "group_dirs": group_dirs,
+                    "results_dir": results_dir,
+                },
+                cfg,
+            ),
             build_donewindow(
                 group_names,
                 group_dirs,
@@ -698,6 +746,7 @@ def build_donewindow(
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
         command=lambda: (
+            update_config_file(folderinfo, cfg),
             run_analysis(folderinfo, cfg),
             featureswindow.destroy(),
             donewindow.destroy(),
@@ -938,6 +987,128 @@ def configure_the_icon(root):
     elif platform.system().startswith("win"):
         with resources.path("autogaita", "autogaita_icon.ico") as icon_path:
             root.iconbitmap(str(icon_path))
+
+
+def update_config_file(folderinfo, cfg):
+    """updates the group_gui_config file with this folderinfo and cfg parameters"""
+    # transform tkVars into normal strings and bools
+    output_dicts = [{"group_names": [], "group_dirs": [], "results_dir": ""}, {}]
+
+    for i in range(len(output_dicts)):
+        if i == 0:  # as the list index 0 refers to  folderinfo
+            # if the entries are not tk.Vars we need a deepcopy as the folderinfo variable will be altered otherwise,
+            # a shallow copy is not sufficient for this nested dict
+            if type(folderinfo["group_names"][0]) == str:
+                input_dict = copy.deepcopy(folderinfo)
+            # can only create deepcopy of non tk.StringVar type objects
+            else:
+                input_dict = folderinfo.copy()
+
+            for key in input_dict.keys():
+                # if entries in lists are not normal strings
+                # but tkinter vars they are transformed first
+                if (
+                    type(input_dict[key]) == list
+                    and type(input_dict[key][0]) == tk.StringVar
+                ):
+                    for list_idx in range(len(input_dict[key])):
+                        output_dicts[0][key].append(input_dict[key][list_idx].get())
+                elif type(input_dict[key]) == tk.StringVar:
+                    output_dicts[0][key] = input_dict[key].get()
+                else:
+                    output_dicts[0][key] = input_dict[key]
+            # the next if statement ensures that the names and dirs list always contains
+            # the max group number of entries
+            if len(output_dicts[0]["group_names"]) != MAX_GROUP_NUM:
+                for i in range(MAX_GROUP_NUM - len(input_dict["group_names"])):
+                    output_dicts[0]["group_names"].append("")
+                    output_dicts[0]["group_dirs"].append("")
+
+        elif i == 1:  # as the list index 1 refers to cfg
+            input_dict = cfg
+            for key in input_dict.keys():
+                if key in LIST_VARS:
+                    # if list of strings, initialise output empty list and get & append vals
+                    output_dicts[i][key] = []
+                    for list_idx in range(len(input_dict[key])):
+                        output_dicts[i][key].append(input_dict[key][list_idx].get())
+                else:
+                    output_dicts[i][key] = input_dict[key].get()
+
+    # merge the two configuration dictionaries
+    # 0 = folderinfo, 1 = cfg, see above
+    configs_list = [
+        output_dicts[0],
+        output_dicts[1],
+    ]
+    # write the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, "group_gui_config.json"), "w"
+    ) as config_json_file:
+        json.dump(configs_list, config_json_file, indent=4)
+
+
+def extract_cfg_from_json_file(root):
+    """loads the cfg dictionary from the config file"""
+    # load the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, "group_gui_config.json"), "r"
+    ) as config_json_file:
+        # config_json contains list with 0 -> result and 1 -> cfg data
+        last_runs_cfg = json.load(config_json_file)[1]
+
+    cfg = {}
+    # assign values to the cfg dict
+    for key in last_runs_cfg.keys():
+        if key in TK_BOOL_VARS:
+            cfg[key] = tk.BooleanVar(root, last_runs_cfg[key])
+        elif key in TK_STR_VARS:
+            if key in LIST_VARS:
+                cfg[key] = []
+                for entry in range(len(last_runs_cfg[key])):
+                    cfg[key].append(tk.StringVar(root, entry))
+            elif key in INT_VARS:
+                cfg[key] = tk.IntVar(root, last_runs_cfg[key])
+            else:
+                cfg[key] = tk.StringVar(root, last_runs_cfg[key])
+    return cfg
+
+
+def extract_group_names_and_dirs_from_json_file():
+    """loads the group names and dirs from the config file"""
+    # load the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, "group_gui_config.json"), "r"
+    ) as config_json_file:
+        # config_json contains list with 0 -> folderinfo and 1 -> cfg data
+        last_runs_folderinfo = json.load(config_json_file)[0]
+
+    group_names = []
+    group_dirs = []
+
+    for key in last_runs_folderinfo.keys():
+        if key == "group_names":
+            for entry in last_runs_folderinfo[key]:
+                group_names.append(entry)
+        if key == "group_dirs":
+            for entry in last_runs_folderinfo[key]:
+                group_dirs.append(entry)
+
+    return group_names, group_dirs
+
+
+def extract_results_dir_from_json_file():
+    """loads the results dir from the config file"""
+    # load the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, "group_gui_config.json"), "r"
+    ) as config_json_file:
+        # config_json contains list with 0 -> folderinfo and 1 -> cfg data
+        last_runs_folderinfo = json.load(config_json_file)[0]
+
+    results_dir = last_runs_folderinfo["results_dir"]
+
+    return results_dir
 
 
 # %% what happens if we hit run
