@@ -43,24 +43,28 @@ def test_dlc_height_normalisation_no_beam():
     pdt.assert_frame_equal(step, expected_step)
 
 
-def test_dlc_angles():
-    """Unit test of how angles are added"""
-    # note that np.array line initalises step's joint-coords according to:
-    # joint_angle = (0, 0)
-    # joint2 = (1, 0)
-    # joint3 = (0, 1)
-    expected_angle = 90
-    step = pd.DataFrame(
-        data=np.array([[0, 0, 1, 0, 0, 1]]),
-        columns=[
-            "angle x",
-            "angle y",
-            "lower x",
-            "lower y",
-            "upper x",
-            "upper y",
-        ],
+cases = [
+    ((0, 0), (1, 0), (0, 1), 90), 
+    ((0, 0), (1, 0), (0, 0.5), 90),
+    ((0, 0), (1, 0), (2, 0), 0)
+]  # fmt: skip
+@pytest.mark.parametrize("angle_x_y, lower_x_y, upper_x_y, expected_angle", cases)
+def test_dlc_angles(angle_x_y, lower_x_y, upper_x_y, expected_angle):
+    step = (
+        pd.Series(
+            {
+                "angle x": angle_x_y[0],
+                "angle y": angle_x_y[1],
+                "lower x": lower_x_y[0],
+                "lower y": lower_x_y[1],
+                "upper x": upper_x_y[0],
+                "upper y": upper_x_y[1],
+            }
+        )
+        .to_frame()
+        .T
     )
+
     cfg = {}
     cfg["angles"] = {
         "name": ["angle "],
@@ -70,11 +74,39 @@ def test_dlc_angles():
     step = add_angles(step, cfg)
     assert step["angle Angle"].values == expected_angle
 
-    # previous approach: testing compute_angles
-    # joint_angle = (0, 0)
-    # joint2 = (1, 0)
-    # joint3 = (0, 1)
-    # assert compute_angle(joint_angle, joint2, joint3) == expected_angle
+
+cases = [
+    ((0, 0), (0, 0), (0, 0)),
+    ((10, 10), (10, 10), (10, 10))
+]  # fmt: skip
+@pytest.mark.parametrize("angle_x_y, lower_x_y, upper_x_y", cases)
+@pytest.mark.filterwarnings("ignore:invalid value encountered")
+def test_dlc_angles_is_nan_when_all_points_are_at_same_location(
+    angle_x_y, lower_x_y, upper_x_y
+):
+    step = (
+        pd.Series(
+            {
+                "angle x": angle_x_y[0],
+                "angle y": angle_x_y[1],
+                "lower x": lower_x_y[0],
+                "lower y": lower_x_y[1],
+                "upper x": upper_x_y[0],
+                "upper y": upper_x_y[1],
+            }
+        )
+        .to_frame()
+        .T
+    )
+
+    cfg = {}
+    cfg["angles"] = {
+        "name": ["angle "],
+        "lower_joint": ["lower "],
+        "upper_joint": ["upper "],
+    }
+    step = add_angles(step, cfg)
+    assert step["angle Angle"].isna().all()
 
 
 def test_dlc_velocities():

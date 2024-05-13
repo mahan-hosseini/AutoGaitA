@@ -5,8 +5,10 @@ import filecmp
 import os
 import shutil
 import pdb
+import pytest
 
 
+@pytest.mark.slow
 def test_group_approval(tmp_path):
     """
     Approval Test of AutoGaitA Group

@@ -4,9 +4,11 @@ import pandas.testing as pdt
 import os
 import shutil
 import pdb
+import pytest
 
 
 # .............................  1) GLOBAL VARS  .......................................
+@pytest.mark.slow
 def test_dlc_approval(tmp_path):
     """
     Approval Test of AutoGaitA DLC

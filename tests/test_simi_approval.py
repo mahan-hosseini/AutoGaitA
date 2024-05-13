@@ -8,7 +8,7 @@ import pytest
 
 
 # .............................  1) GLOBAL VARS  .......................................
-# @pytest.mark.nodata  # https://docs.pytest.org/en/7.1.x/example/markers.html
+@pytest.mark.slow  # https://docs.pytest.org/en/7.1.x/example/markers.html
 def test_simi_approval(tmp_path):
     """
     Approval Test of AutoGaitA Simi
