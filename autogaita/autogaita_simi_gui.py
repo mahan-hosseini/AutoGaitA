@@ -37,7 +37,7 @@ TK_STR_VARS = [
     "joints",
     "angles",
 ]
-WINDOWS_TASKBAR_MAXHEIGHT = "72"
+WINDOWS_TASKBAR_MAXHEIGHT = 72
 
 # To get the path of the autogaita folder I use __file__
 # which returns the path of the autogaita_utils module imported above.
@@ -66,7 +66,7 @@ def simi_gui():
     # ..........................................................................
     # ......................  root window initialisation .......................
     # ..........................................................................
-        # Check for config file
+    # Check for config file
     config_file_path = os.path.join(AUTOGAITA_FOLDER_PATH, "simi_gui_config.json")
     if not os.path.isfile(config_file_path):
         config_file_error_msg = (
@@ -454,7 +454,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         command=lambda: (
             add_joint(joint_frame, "joints"),  # 2nd input = cfg's key
             update_config_file(results, cfg),
-        ),    
+        ),
     )
     add_joint_button.grid(
         row=2 + scrollable_rows,
