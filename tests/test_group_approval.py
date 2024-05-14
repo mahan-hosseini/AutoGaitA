@@ -7,29 +7,44 @@ import shutil
 import pdb
 import pytest
 
+# ...........................  GROUP APPROVAL TESTS STRUCTURE  .........................
+# 1. Run autogaita.group for example group (3 beams) data (with the cfg used there)
+#    store results in a temporary path using tmp_path input.
+# 2. Load the "Grand Average Stepcycles".xlsx & "Grand Standard Devs. Stepcycle.xlsx"
+#    files from the repo (TRUE PATH) - test for equivalence with TEST PATH
+# 3. Then test if PCA XLS file is equal
+# 4. Finally test if Stats.txt files are equal
 
-@pytest.mark.slow
-def test_group_approval(tmp_path):
-    """
-    Approval Test of AutoGaitA Group
-    --------------------------------
-    1. Run autogaita.group for example group (3 beams) data (with the cfg used there), store results in a temporary path using tmp_path input.
-    2. Load the "Grand Average Stepcycles".xlsx & "Grand Standard Devs. Stepcycle.xlsx" files from the repo (TRUE PATH) - test for equivalence with TEST PATH
-    3. Then test if PCA XLS file is equal
-    4. Finally test if Stats.txt files are equal
+# A Note
+# ------
+# We don't test the cluster extent test in an automated way.
+# We have results of simulations that ran for over a week in our preprint.
+# If the cluster extent test should change for some reason - re-run those simulations.
 
-    A Note
-    ------
-    We don't test the cluster extent test in an automated way.
-    We have results of simulations that ran for over a week in our preprint.
-    If the cluster extent test should change for some reason - re-run those simulations.
-    """
 
-    # .............................  0) PREPARATION  ...................................
-    # two test paths
-    test_dir = tmp_path
-    true_dir = "example data/group/"
-    # cfg
+# ...............................  PREPARE - THREE FIXTURES   ..........................
+
+
+@pytest.fixture
+def extract_true_dir():
+    return "example data/group/"
+
+
+@pytest.fixture
+def extract_folderinfo(tmp_path):
+    folderinfo = {}
+    folderinfo["group_names"] = ["5 mm", "12 mm", "25 mm"]
+    folderinfo["group_dirs"] = [
+        "example data/5mm/Results/",
+        "example data/12mm/Results/",
+        "example data/25mm/Results/",
+    ]
+    folderinfo["results_dir"] = tmp_path
+    return folderinfo
+
+
+@pytest.fixture
+def extract_cfg():
     cfg = {}
     cfg["do_permtest"] = False
     cfg["do_anova"] = True
@@ -53,33 +68,38 @@ def test_group_approval(tmp_path):
         "Hip Angle",
     ]
     cfg["stats_variables"] = cfg["PCA_variables"]
-    # folderinfo
-    folderinfo = {}
-    folderinfo["group_names"] = ["5 mm", "12 mm", "25 mm"]
-    folderinfo["group_dirs"] = [
-        "example data/5mm/Results/",
-        "example data/12mm/Results/",
-        "example data/25mm/Results/",
-    ]
-    folderinfo["results_dir"] = test_dir
+    return cfg
+
+
+# ..............................  RUN - ONE APPROVAL TEST  .............................
+
+
+@pytest.mark.filterwarnings("ignore:Epsilon values")
+@pytest.mark.slow
+def test_group_approval(extract_true_dir, extract_folderinfo, extract_cfg):
 
     # ...........................  1) RUN GROUP GAITA  .................................
-    autogaita_group.group(folderinfo, cfg)
+    autogaita_group.group(extract_folderinfo, extract_cfg)
 
     # ......................  2) TEST EQUIVALENCE OF GROUP DFs  ........................
     # load true dfs from xlsx files
     true_av_df = pd.read_excel(
-        os.path.join(true_dir, "25 mm - Grand Average Group Stepcycles.xlsx")
+        os.path.join(extract_true_dir, "25 mm - Grand Average Group Stepcycles.xlsx")
     )
     true_std_df = pd.read_excel(
-        os.path.join(true_dir, "25 mm - Grand Standard Deviation Group Stepcycles.xlsx")
+        os.path.join(
+            extract_true_dir, "25 mm - Grand Standard Deviation Group Stepcycles.xlsx"
+        )
     )
     test_av_df = pd.read_excel(
-        os.path.join(test_dir, "25 mm - Grand Average Group Stepcycles.xlsx")
+        os.path.join(
+            extract_folderinfo["results_dir"],
+            "25 mm - Grand Average Group Stepcycles.xlsx",
+        )
     )
     test_std_df = pd.read_excel(
         os.path.join(
-            test_dir,
+            extract_folderinfo["results_dir"],
             "25 mm - Grand Standard Deviation Group Stepcycles.xlsx",
         )
     )
@@ -88,13 +108,15 @@ def test_group_approval(tmp_path):
     pdt.assert_frame_equal(test_std_df, true_std_df)
 
     # .......................  3) TEST EQUIVALENCE OF PCA DF  ..........................
-    true_pca_df = pd.read_excel(os.path.join(true_dir, "PCA Info.xlsx"))
-    test_pca_df = pd.read_excel(os.path.join(test_dir, "PCA Info.xlsx"))
+    true_pca_df = pd.read_excel(os.path.join(extract_true_dir, "PCA Info.xlsx"))
+    test_pca_df = pd.read_excel(
+        os.path.join(extract_folderinfo["results_dir"], "PCA Info.xlsx")
+    )
     pdt.assert_frame_equal(test_pca_df, true_pca_df)
 
     # ......................  4) TEST EQUIVALENCE OF STATS.TXT  ........................
     shallow = False  # if True compares only the metadata, not the contents!
     match, mismatch, errors = filecmp.cmpfiles(
-        true_dir, test_dir, ["Stats.txt"], shallow
+        extract_true_dir, extract_folderinfo["results_dir"], ["Stats.txt"], shallow
     )
     assert match == ["Stats.txt"]
