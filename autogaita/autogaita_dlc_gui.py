@@ -14,6 +14,7 @@ FG_COLOR = "#789b73"  # grey green
 HEADER_TXT_COLOR = "#ffffff"  # white
 HEADER_FONT_SIZE = 20
 HOVER_COLOR = "#287c37"  # darkish green
+CONFIG_FILE_NAME = "dlc_gui_config.json"
 FLOAT_VARS = ["pixel_to_mm_ratio"]
 INT_VARS = [
     "sampling_rate",
@@ -52,13 +53,7 @@ TK_STR_VARS = [
     "y_sc_broken_threshold",
     "bin_num",
     "plot_joint_number",
-    "hind_joints",
-    "fore_joints",
-    "beam_col_left",
-    "beam_col_right",
-    "beam_hind_jointadd",
-    "beam_fore_jointadd",
-    "angles",
+    "results_dir",
 ]
 WINDOWS_TASKBAR_MAXHEIGHT = 72
 
@@ -89,7 +84,7 @@ def dlc_gui():
     # ......................  root window initialisation .......................
     # ..........................................................................
     # Check for config file
-    config_file_path = os.path.join(AUTOGAITA_FOLDER_PATH, "dlc_gui_config.json")
+    config_file_path = os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME)
     if not os.path.isfile(config_file_path):
         config_file_error_msg = (
             "dlc_gui_config.json file not found in autogaita folder.\n"
@@ -1394,7 +1389,7 @@ def update_config_file(results, cfg):
     configs_list = [output_dicts[0], output_dicts[1]]  # 0 = results, 1 = cfg, see above
     # write the configuration file
     with open(
-        os.path.join(AUTOGAITA_FOLDER_PATH, "dlc_gui_config.json"), "w"
+        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "w"
     ) as config_json_file:
         json.dump(configs_list, config_json_file, indent=4)
 
@@ -1403,7 +1398,7 @@ def extract_cfg_from_json_file(root):
     """loads the cfg dictionary from the config file"""
     # load the configuration file
     with open(
-        os.path.join(AUTOGAITA_FOLDER_PATH, "dlc_gui_config.json"), "r"
+        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "r"
     ) as config_json_file:
         # config_json contains list with 0 -> result and 1 -> cfg data
         last_runs_cfg = json.load(config_json_file)[1]
@@ -1413,19 +1408,18 @@ def extract_cfg_from_json_file(root):
     for key in last_runs_cfg.keys():
         if key in TK_BOOL_VARS:
             cfg[key] = tk.BooleanVar(root, last_runs_cfg[key])
-        elif key in TK_STR_VARS:
-            if key in LIST_VARS:
-                cfg[key] = []
-                for entry in range(len(last_runs_cfg[key])):
-                    cfg[key].append(tk.StringVar(root, entry))
-            elif key in DICT_VARS:
-                cfg[key] = {}
-                for subkey in last_runs_cfg[key]:
-                    cfg[key][subkey] = []
-                    for entry in last_runs_cfg[key][subkey]:
-                        cfg[key][subkey].append(tk.StringVar(root, entry))
-            else:
-                cfg[key] = tk.StringVar(root, last_runs_cfg[key])
+        elif key in LIST_VARS:
+            cfg[key] = []
+            for entry in range(len(last_runs_cfg[key])):
+                cfg[key].append(tk.StringVar(root, entry))
+        elif key in DICT_VARS:
+            cfg[key] = {}
+            for subkey in last_runs_cfg[key]:
+                cfg[key][subkey] = []
+                for entry in last_runs_cfg[key][subkey]:
+                    cfg[key][subkey].append(tk.StringVar(root, entry))
+        elif key in TK_STR_VARS:  # Intergers are also saved as strings
+            cfg[key] = tk.StringVar(root, last_runs_cfg[key])
     return cfg
 
 
@@ -1434,7 +1428,7 @@ def extract_results_from_json_file(runwindow, analysis):
 
     # load the configuration file
     with open(
-        os.path.join(AUTOGAITA_FOLDER_PATH, "dlc_gui_config.json"), "r"
+        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "r"
     ) as config_json_file:
         # config_json contains list with 0 -> result and 1 -> cfg data
         last_runs_results = json.load(config_json_file)[0]
