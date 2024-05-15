@@ -576,7 +576,12 @@ def definefeatures_window(
         row_counter = 1  # index rows at 1 for the top otherwise it breaks (dont ask)
         col_counter = 0
         for feature in feature_strings:
-            checkbox_vars[key][feature] = var = tk.BooleanVar()
+            # check wether a feature was used in the last run, if yes -> set it to true
+            if feature in cfg[key]:
+                checkbox_vars[key][feature] = var = tk.BooleanVar(value=True)
+            # else set it to false by default
+            else:
+                checkbox_vars[key][feature] = var = tk.BooleanVar()
             this_checkbox = ctk.CTkCheckBox(
                 frame,
                 text=feature,
@@ -1017,14 +1022,17 @@ def extract_cfg_from_json_file(root):
     for key in last_runs_cfg.keys():
         if key in TK_BOOL_VARS:
             cfg[key] = tk.BooleanVar(root, last_runs_cfg[key])
-        elif key in LIST_VARS:
-            cfg[key] = []
-            for entry in range(len(last_runs_cfg[key])):
-                cfg[key].append(tk.StringVar(root, entry))
         elif key in INT_VARS:
             cfg[key] = tk.IntVar(root, last_runs_cfg[key])
         elif key in TK_STR_VARS:
             cfg[key] = tk.StringVar(root, last_runs_cfg[key])
+        # PCA/stats_variable are not needed as tkStringVars
+        # see the ---PCA / STATS FEATURE FRAMES--- section for their usage
+        elif key in LIST_VARS:
+            cfg[key] = []
+            for entry in last_runs_cfg[key]:
+                cfg[key].append(entry)
+
     return cfg
 
 
