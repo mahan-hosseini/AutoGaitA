@@ -1913,7 +1913,7 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             else:
                 title_leg = which_leg
             ax.set_title(title_leg + " " + angle + " angle over average step cycle")
-        figure_file_string = " - angle over average step cycle"
+        figure_file_string = " - Angle over average step cycle"
         save_figures(f, results_dir, angle + figure_file_string)
         if dont_show_plots:
             plt.close(f)
@@ -2038,7 +2038,7 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 title_leg + " " + joint + " velocities over average step cycle"
             )
         figure_file_string = "- Velocities over average step cycle"
-        save_figures(f, results_dir, group_name + figure_file_string)
+        save_figures(f, results_dir, joint + figure_file_string)
         if dont_show_plots:
             plt.close(f)
 
