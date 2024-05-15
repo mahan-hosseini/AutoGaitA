@@ -947,7 +947,7 @@ def extract_cfg_from_json_file(root):
             cfg[key] = tk.BooleanVar(root, last_runs_cfg[key])
         elif key in LIST_VARS:
             cfg[key] = []
-            for entry in range(len(last_runs_cfg[key])):
+            for entry in last_runs_cfg[key]:
                 cfg[key].append(tk.StringVar(root, entry))
         elif key in DICT_VARS:
             cfg[key] = {}
