@@ -2065,7 +2065,7 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
         x = np.linspace(0, 100, bin_num)
         for angle in angles["name"]:
             if tracking_software == "DLC":
-                y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle")
+                y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle Velocity")
             elif tracking_software == "Simi":
                 # check for bodyside-specificity
                 feature = "Angle Velocity"
@@ -2103,7 +2103,7 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
         x = np.linspace(0, 100, bin_num)
         for g, group_name in enumerate(group_names):
             if tracking_software == "DLC":
-                y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle")
+                y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle Velocity")
             elif tracking_software == "Simi":
                 # check for bodyside-specificity
                 feature = "Angle Velocity"
