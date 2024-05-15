@@ -518,7 +518,6 @@ def definefeatures_window(
         feature_strings = tuple(
             df.filter(regex="(y$|Z$|Angle$|Velocity$|Acceleration$)").columns
         )
-        print(feature_strings)
     else:
         error_string = "Unable to find any Normalised SC sheet at " + some_groups_dir
         tk.messagebox.showerror(title="Group Directory Error!", message=error_string)
@@ -964,34 +963,9 @@ def update_config_file(folderinfo, cfg):
     """updates the group_gui_config file with this folderinfo and cfg parameters"""
     # transform tkVars into normal strings and bools
     output_dicts = [{"group_names": [], "group_dirs": [], "results_dir": ""}, {}]
-    print(cfg)
 
     for i in range(len(output_dicts)):
         if i == 0:  # as the list index 0 refers to  folderinfo
-            # # if the entries are not tk.Vars we need a deepcopy
-            # # as the folderinfo variable will be altered otherwise,
-            # # a shallow copy is not sufficient for this nested dict
-            # if type(folderinfo["group_names"][0]) == str:
-            #     input_dict = copy.deepcopy(folderinfo)
-            # # can only create deepcopy of non tk.StringVar type objects
-            # else:
-            #     input_dict = folderinfo.copy()
-
-            # for key in input_dict.keys():
-            #     # if entries in lists are not normal strings
-            #     # but tkinter vars they are transformed
-            #     if (
-            #         type(input_dict[key]) == list
-            #         and type(input_dict[key][0]) == tk.StringVar
-            #     ):
-            #         for list_idx in range(len(input_dict[key])):
-            #             output_dicts[0][key].append(input_dict[key][list_idx].get())
-            #     elif type(input_dict[key]) == tk.StringVar:
-            #         output_dicts[0][key] = input_dict[key].get()
-            #     # if not they are added to the output dict without get()
-            #     else:
-            #         output_dicts[0][key] = input_dict[key]
-
             # to not alter the initial folderinfo variable a deepcopy is used
             input_dict = copy.deepcopy(folderinfo)
             output_dicts[0] = input_dict
