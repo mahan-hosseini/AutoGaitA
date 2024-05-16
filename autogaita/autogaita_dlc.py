@@ -55,12 +55,12 @@ def dlc(info, folderinfo, cfg):
 
     # ................................  preparation  ...................................
     data = some_prep(info, folderinfo, cfg)
-    if data is None:
+    if not data:
         return
 
     # .........................  step-cycle extraction  ................................
     all_cycles = extract_stepcycles(data, info, folderinfo, cfg)
-    if all_cycles == None:
+    if not all_cycles:
         handle_issues("scs_invalid", info)
         return
 
@@ -727,8 +727,7 @@ def extract_stepcycles(data, info, folderinfo, cfg):
     next_mouse_idx = mouse_row  # search idx of first row of next mouse
 
     # ..............................  main xls read  ...................................
-    # if while is False, we arrived at the next mouse/end & dont update
-    # next_mouse_idx
+    # if while is False, we arrived at the next mouse/end & dont update next_mouse_idx
     # 3 conditions (continue if true):
     # 1) First row of this mouse
     # 2) None means a different run of this mouse or an empty row
@@ -950,7 +949,7 @@ def handle_issues(condition, info):
     elif condition == "no_scs":
         this_message = (
             "\n***********\n! WARNING !\n***********\n"
-            + "Skipped since no SCs in latency XLS!"
+            + "Skipped since no SCs in Annotation Table!"
         )
         print(this_message)
         write_issues_to_textfile(this_message, info)
@@ -958,7 +957,7 @@ def handle_issues(condition, info):
     elif condition == "no_mouse":
         this_message = (
             "\n***********\n! WARNING !\n***********\n"
-            + "Skipped since ID not in latency XLS!"
+            + "Skipped since ID not in Annotation Table!"
         )
         print(this_message)
         write_issues_to_textfile(this_message, info)
@@ -967,7 +966,7 @@ def handle_issues(condition, info):
         this_message = (
             "\n******************\n! CRITICAL ERROR !"
             + "\n******************\n"
-            + "Latency XLS Column names are wrong!\n"
+            + "Annotation Table's Column Names are wrong!\n"
             + "Check Instructions!"
         )
         print(this_message)
@@ -977,7 +976,7 @@ def handle_issues(condition, info):
         this_message = (
             "\n***********\n! WARNING !\n***********\n"
             + "Skipped since ID found more than once in "
-            + "latency XLS!"
+            + "Annotation Table!"
         )
         print(this_message)
         write_issues_to_textfile(this_message, info)
