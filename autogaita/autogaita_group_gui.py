@@ -23,8 +23,8 @@ CONFIG_FILE_NAME = "group_gui_config.json"
 STRING_VARS = ["group_names", "group_dirs", "results_dir"]
 FLOAT_VARS = ["stats_threshold"]
 LIST_VARS = [
-    "stats_variables",  # stats/PCA variables are also TK_BOOL_VARS
-    "PCA_variables",  # but this will be handled within the extract_config function
+    "stats_variables",  # stats/PCA variables are also TK_BOOL_VARS but this will be
+    "PCA_variables",  #  handled within the ---PCA / STATS FEATURE FRAMES--- part
 ]
 INT_VARS = ["permutation_number", "number_of_PCs"]
 TK_BOOL_VARS = ["do_permtest", "do_anova", "save_3D_PCA_video", "plot_SE"]
@@ -576,10 +576,12 @@ def definefeatures_window(
         row_counter = 1  # index rows at 1 for the top otherwise it breaks (dont ask)
         col_counter = 0
         for feature in feature_strings:
-            # check wether a feature was used in the last run, if yes -> set it to true
-            if feature in cfg[key]:
+            # check whether features of this run (feature in feature_strings) where
+            # also in the last run (cfg[key] = stats/PCA_variables list from config file)
+            # if yes then set the checkbox to true
+            if feature in cfg["last_runs_" + key]:
                 checkbox_vars[key][feature] = var = tk.BooleanVar(value=True)
-            # else set it to false by default
+            # else set it to false as by default
             else:
                 checkbox_vars[key][feature] = var = tk.BooleanVar()
             this_checkbox = ctk.CTkCheckBox(
@@ -859,7 +861,8 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
     for key in cfg.keys():
         if key in LIST_VARS:  # no get() needed - since these are lists already
             this_runs_cfg[key] = cfg[key]
-        else:
+            # elif is necessary as we want to exclude "last_runs_stats/PCA_variables"
+        elif any(key in vars for vars in (TK_STR_VARS, TK_BOOL_VARS, TK_INT_VARS)):
             this_runs_cfg[key] = cfg[key].get()
             # convert to numbers
             if key in FLOAT_VARS:
@@ -985,14 +988,14 @@ def update_config_file(folderinfo, cfg):
             input_dict = cfg
             for key in input_dict.keys():
                 if key in LIST_VARS:
-                    # if list of strings, initialise output empty list and get & append vals
+                    # if list of strings, initialise output empty list and append vals
                     output_dicts[i][key] = []
-                    for list_idx in range(len(input_dict[key])):
-                        if type(input_dict[key][list_idx]) == str:
-                            output_dicts[i][key].append(input_dict[key][list_idx])
-                        else:
-                            output_dicts[i][key].append(input_dict[key][list_idx].get())
-                else:
+                    for entry in input_dict[key]:
+                        output_dicts[i][key].append(input_dict[key])
+                # otherwise (if str, int or bool) get() and define
+                elif any(
+                    key in vars for vars in (TK_STR_VARS, TK_BOOL_VARS, TK_INT_VARS)
+                ):
                     output_dicts[i][key] = input_dict[key].get()
 
     # merge the two configuration dictionaries
@@ -1029,9 +1032,14 @@ def extract_cfg_from_json_file(root):
         # PCA/stats_variable are not needed as tkStringVars
         # see the ---PCA / STATS FEATURE FRAMES--- section for their usage
         elif key in LIST_VARS:
+            # creates an empty list for this runs variables
             cfg[key] = []
+            # and saves the stats/PCA_variables from the last run in a separate list
+            # note, this list will not be save to the config file as "last_runs_..._variables"
+            # in not in LIST_VARS
+            cfg["last_runs_" + key] = []
             for entry in last_runs_cfg[key]:
-                cfg[key].append(entry)
+                cfg["last_runs_" + key].append(entry)
 
     return cfg
 
