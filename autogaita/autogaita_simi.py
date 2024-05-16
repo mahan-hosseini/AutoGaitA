@@ -95,7 +95,7 @@ def simi(info, folderinfo, cfg):
     # ..........................  step-cycle extraction  ...............................
     all_cycles = extract_stepcycles(data, info, folderinfo, cfg)
     all_cycles = check_stepcycles(all_cycles, info)
-    if all_cycles == None:  # only None if both leg's SCs were None
+    if not all_cycles:  # only None if both leg's SCs were None
         return
 
     # ......  main analysis: y-flipping, features, df-creation & exports  ..............
