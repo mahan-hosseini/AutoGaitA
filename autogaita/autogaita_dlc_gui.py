@@ -238,9 +238,7 @@ def dlc_gui():
         text="I am done - close program",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
-        command=lambda: (
-            update_config_file(results, cfg),
-            root.after(1, root.destroy()),
+        command=lambda: (root.after(1, root.destroy()))
     )
     close_button.grid(row=10, column=0, pady=(10, 15), padx=30, sticky="nsew")
 
