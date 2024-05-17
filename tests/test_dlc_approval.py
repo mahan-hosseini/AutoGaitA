@@ -38,7 +38,7 @@ def extract_info(tmp_path):
 def extract_folderinfo():
     folderinfo = {}
     folderinfo["root_dir"] = "tests/test_data/dlc_data"
-    folderinfo["sctable_filename"] = "25mm.xlsx"  # has to be an excel file
+    folderinfo["sctable_filename"] = "correct_annotation_table.xlsx"
     folderinfo["data_string"] = "SIMINewOct"
     folderinfo["beam_string"] = "BeamTraining"
     folderinfo["premouse_string"] = "Mouse"

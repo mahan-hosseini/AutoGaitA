@@ -6,3 +6,4 @@ dist/
 autogaita.egg-info/
 venv/
 **/.hypothesis/
+.coverage
