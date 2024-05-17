@@ -238,7 +238,9 @@ def dlc_gui():
         text="I am done - close program",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
-        command=lambda: root.after(1, root.destroy()),
+        command=lambda: (
+            update_config_file(results, cfg),
+            root.after(1, root.destroy()),
     )
     close_button.grid(row=10, column=0, pady=(10, 15), padx=30, sticky="nsew")
 
@@ -1420,7 +1422,7 @@ def extract_cfg_from_json_file(root):
                 cfg[key][subkey] = []
                 for entry in last_runs_cfg[key][subkey]:
                     cfg[key][subkey].append(tk.StringVar(root, entry))
-        elif key in TK_STR_VARS:  # Intergers are also saved as strings
+        elif key in TK_STR_VARS:  # Integers are also saved as strings
             cfg[key] = tk.StringVar(root, last_runs_cfg[key])
     return cfg
 
