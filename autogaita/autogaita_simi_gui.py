@@ -18,6 +18,8 @@ CONFIG_FILE_NAME = "simi_gui_config.json"
 INT_VARS = ["sampling_rate", "bin_num", "plot_joint_number"]
 LIST_VARS = ["joints"]
 DICT_VARS = ["angles"]
+# TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file
+# (note that numbers are initialised as strings)
 TK_BOOL_VARS = [
     "analyse_singlerun",
     "dont_show_plots",

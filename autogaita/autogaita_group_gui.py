@@ -26,7 +26,9 @@ LIST_VARS = [
     "stats_variables",  # stats/PCA variables are also TK_BOOL_VARS but this will be
     "PCA_variables",  #  handled within the ---PCA / STATS FEATURE FRAMES--- part
 ]
-INT_VARS = ["permutation_number", "number_of_PCs"]
+INT_VARS = ["permutation_number", "number_of_PCs", "number_of_PCs"]
+# TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file
+# (note that numbers are initialised as strings)
 TK_BOOL_VARS = ["do_permtest", "do_anova", "save_3D_PCA_video", "plot_SE"]
 TK_STR_VARS = [
     "anova_design",
@@ -35,7 +37,7 @@ TK_STR_VARS = [
     "which_leg",
     "results_dir",
 ]
-TK_INT_VARS = ["number_of_PCs"]
+EXCLUDED_VARS_FROM_CFG_FILE = ["last_runs_stats_variables", "last_runs_PCA_variables"]
 NORM_SHEET_NAME = "Normalised Stepcycles"
 WINDOWS_TASKBAR_MAXHEIGHT = 72
 
@@ -840,6 +842,8 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
     # using string concatenation). If not just add a forward slash. In the beginning
     # of autogaita_group, we will convert os.sep to forward slashes if they should be
     # backward slashes (windows works with both)
+    # => Note this was changed and works with os.path.join() now...
+    # => NU: have another look @ this matter in GUI functions
     for key in folderinfo.keys():
         if key == "group_names":
             this_runs_folderinfo[key] = folderinfo[key]
@@ -862,7 +866,7 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
         if key in LIST_VARS:  # no get() needed - since these are lists already
             this_runs_cfg[key] = cfg[key]
             # elif is necessary as we want to exclude "last_runs_stats/PCA_variables"
-        elif any(key in vars for vars in (TK_STR_VARS, TK_BOOL_VARS, TK_INT_VARS)):
+        elif key not in EXCLUDED_VARS_FROM_CFG_FILE:
             this_runs_cfg[key] = cfg[key].get()
             # convert to numbers
             if key in FLOAT_VARS:
@@ -993,9 +997,7 @@ def update_config_file(folderinfo, cfg):
                     for entry in input_dict[key]:
                         output_dicts[i][key].append(input_dict[key])
                 # otherwise (if str, int or bool) get() and define
-                elif any(
-                    key in vars for vars in (TK_STR_VARS, TK_BOOL_VARS, TK_INT_VARS)
-                ):
+                elif key not in EXCLUDED_VARS_FROM_CFG_FILE:
                     output_dicts[i][key] = input_dict[key].get()
 
     # merge the two configuration dictionaries

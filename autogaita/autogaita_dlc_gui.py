@@ -34,6 +34,8 @@ LIST_VARS = [
     "beam_col_right",
 ]
 DICT_VARS = ["angles"]
+# TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file 
+# (note that numbers are initialised as strings)
 TK_BOOL_VARS = [
     "subtract_beam",
     "dont_show_plots",
