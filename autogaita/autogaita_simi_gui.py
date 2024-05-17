@@ -116,7 +116,7 @@ def simi_gui():
     # ==> the results dict is not global and will be passed from function to function
     #     like proper programmers do it (nice)
     global cfg  # global cfg variable
-    global results
+
     cfg = extract_cfg_from_json_file(root)
     results = extract_results_from_json_file(root)
 
