@@ -168,7 +168,13 @@ def test_dlc_angles_is_nan_when_all_points_are_at_same_location(x_y_coordinates)
 
 
 def test_dlc_velocities():
-    """Unit test of how velocities are added"""
+    """Unit test of how velocities are added
+    A Note
+    ------
+    If you ever consider testing if velocities are expected after flipping x-values using flip_mouse_body - DON'T!
+    => We only flip if gait direction is right=>left in the first place and thus: velocities are CORRECT and comparable to non-flipped left=>right videos.
+    => NU - write a test that confirms this formally
+    """
     data = {
         "Sample x": [0.0, 2.0, 4.0, 8.0, 8.0, 4.0, 2.0, 0.0, -2.0, -10.0],
         "Sample Angle": [-10.0, -8.0, -7.0, -4.0, 0.0, 4.0, 10.0, 20.0, 10.0, 0.0],
