@@ -13,7 +13,7 @@
     },
     {
         "sampling_rate": "",
-        "subtract_beam": true,
+        "subtract_beam": false,
         "dont_show_plots": false,
         "convert_to_mm": false,
         "pixel_to_mm_ratio": "",
