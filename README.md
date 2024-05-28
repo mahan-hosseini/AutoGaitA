@@ -1,9 +1,11 @@
 ![AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/autogaita_logo.png?raw=true)
 ![Repository Active](https://www.repostatus.org/badges/latest/active.svg)
-![PyPI - Version](https://img.shields.io/pypi/v/autogaita)
 [![Test AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/auto_test_gaita.yml/badge.svg)](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/auto_test_gaita.yml)
 ![Python](https://img.shields.io/badge/python-v3.10+-blue.svg)
-![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
+[![PyPI - Version](https://img.shields.io/pypi/v/autogaita)](https://pypi.org/project/autogaita/)
+![license: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)
+[![paper: biorxiv](https://img.shields.io/badge/paper-biorxiv-blue)](https://doi.org/10.1101/2024.04.14.589409) 
+
 ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
 # Automated Gait Analysis in Python 🐸
 
