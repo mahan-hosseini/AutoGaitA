@@ -1,4 +1,5 @@
 ![AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/autogaita_logo.png?raw=true)
+![Repository Active](https://www.repostatus.org/badges/latest/active.svg)
 ![PyPI - Version](https://img.shields.io/pypi/v/autogaita)
 [![Test AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/auto_test_gaita.yml/badge.svg)](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/auto_test_gaita.yml)
 ![Python](https://img.shields.io/badge/python-v3.10+-blue.svg)
