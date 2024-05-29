@@ -991,13 +991,15 @@ def update_config_file(folderinfo, cfg):
         elif i == 1:  # as the list index 1 refers to cfg
             input_dict = cfg
             for key in input_dict.keys():
-                if key in LIST_VARS:
+                if key in LIST_VARS:  # PCA or Stats variables
                     # if list of strings, initialise output empty list and append vals
                     output_dicts[i][key] = []
                     for entry in input_dict[key]:
-                        output_dicts[i][key].append(input_dict[key])
+                        output_dicts[i][key].append(entry)
                 # otherwise (if str, int or bool) get() and define
-                elif key not in EXCLUDED_VARS_FROM_CFG_FILE:
+                elif (
+                    key not in EXCLUDED_VARS_FROM_CFG_FILE
+                ):  # not PCS or Stats variables
                     output_dicts[i][key] = input_dict[key].get()
 
     # merge the two configuration dictionaries
