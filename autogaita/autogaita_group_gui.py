@@ -100,13 +100,6 @@ def group_gui():
     # ..................................................................................
     # .......................  root (intro) window population  .........................
     # ..................................................................................
-    # .......................  important - global cfg variable  ........................
-    # we have cfg be global so it can be modified by all widgets and frames. just prior
-    # to calling autogaita_group, we will copy its values to a temporary cfg var, so
-    # the values of the global variable are never used for running anything
-    # (see run_analysis)
-    global cfg
-    cfg = extract_cfg_from_json_file(root)
 
     # .................................  widgets  ......................................
     # welcome message
@@ -183,6 +176,13 @@ def build_mainwindow(root, group_number, root_dimensions):
         tk.messagebox.showerror(title="No Input", message=error_message)
         root.deiconify()
     else:
+        # .....................  important - global cfg variable  ......................
+        # we have cfg be global so it can be modified by all widgets and frames.
+        # just prior to calling autogaita_group, we will copy its values to a temporary # cfg var, so the values of the global variable are never used for running
+        # anything (see run_analysis)
+        global cfg
+        cfg = extract_cfg_from_json_file(root)
+
         # ........................  geometry & intro section  ..........................
         # geometry
         mainwindow = ctk.CTkToplevel(root)
@@ -727,6 +727,7 @@ def build_donewindow(
         command=lambda: (
             update_config_file(folderinfo, cfg),
             run_analysis(folderinfo, cfg),
+            mainwindow.destroy(),
             featureswindow.destroy(),
             donewindow.destroy(),
             root.deiconify(),
