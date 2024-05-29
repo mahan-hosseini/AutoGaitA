@@ -974,7 +974,10 @@ def extract_results_from_json_file(root):
 
     results = {}
     for key in last_runs_results.keys():
-        results[key] = tk.StringVar(root, last_runs_results[key])
+        if key in TK_STR_VARS:
+            results[key] = tk.StringVar(root, last_runs_results[key])
+        elif key in TK_BOOL_VARS:
+            results[key] = tk.BooleanVar(root, last_runs_results[key])
 
     return results
 
