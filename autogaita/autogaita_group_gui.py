@@ -999,7 +999,7 @@ def update_config_file(folderinfo, cfg):
                 # otherwise (if str, int or bool) get() and define
                 elif (
                     key not in EXCLUDED_VARS_FROM_CFG_FILE
-                ):  # not PCS or Stats variables
+                ):  # not PCA or Stats variables
                     output_dicts[i][key] = input_dict[key].get()
 
     # merge the two configuration dictionaries
