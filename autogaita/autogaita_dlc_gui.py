@@ -238,7 +238,12 @@ def dlc_gui():
         text="I am done - close program",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
-        command=lambda: (root.after(1, root.destroy()))
+        command=lambda: (
+            # results variable is only defined later in populate_run_window()
+            # therefore only cfg settings will be updated
+            update_config_file("results dict not defined yet", cfg),
+            root.after(1, root.destroy()),
+        ),
     )
     close_button.grid(row=10, column=0, pady=(10, 15), padx=30, sticky="nsew")
 
@@ -999,7 +1004,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
 
     # ..................... load results dict from config.....................
     # use the values in the config json file for the results dictionary
-    results = extract_results_from_json_file(runwindow, analysis)
+    results = extract_results_from_json_file(runwindow)
 
     # ........................  build the frame  ...............................
     if analysis == "single":
@@ -1363,7 +1368,14 @@ def update_config_file(results, cfg):
     output_dicts = [{}, {}]
     for i in range(len(output_dicts)):
         if i == 0:
-            input_dict = results
+            # in case update_config_file is called before results is defined
+            # as in the creation of the close_button in the dlc_gui() function
+            # the results dict of the last run is used and only cfg is updated
+            if results == "results dict not defined yet":
+                # runwindow = None as we dont need the tk.Vars to refer to a specific window
+                input_dict = extract_results_from_json_file(runwindow=None) 
+            else:
+                input_dict = results
         elif i == 1:
             input_dict = cfg
         for key in input_dict.keys():
@@ -1425,7 +1437,7 @@ def extract_cfg_from_json_file(root):
     return cfg
 
 
-def extract_results_from_json_file(runwindow, analysis):
+def extract_results_from_json_file(runwindow):
     """loads the results dictionary from the config file"""
 
     # load the configuration file
