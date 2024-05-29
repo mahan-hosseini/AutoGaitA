@@ -8,6 +8,8 @@ import math
 from threading import Thread
 from importlib import resources
 import platform
+import json
+import copy
 
 
 # %% global constants
@@ -17,12 +19,34 @@ HEADER_TXT_COLOR = "#ffffff"  # white
 HEADER_FONT_SIZE = 20
 MIN_GROUP_NUM = 2
 MAX_GROUP_NUM = 6
+CONFIG_FILE_NAME = "group_gui_config.json"
 STRING_VARS = ["group_names", "group_dirs", "results_dir"]
 FLOAT_VARS = ["stats_threshold"]
-LIST_VARS = ["stats_variables", "PCA_variables"]
-INT_VARS = ["permutation_number", "number_of_PCs"]
+LIST_VARS = [
+    "stats_variables",  # stats/PCA variables are also TK_BOOL_VARS but this will be
+    "PCA_variables",  #  handled within the ---PCA / STATS FEATURE FRAMES--- part
+]
+INT_VARS = ["permutation_number", "number_of_PCs", "number_of_PCs"]
+# TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file
+# (note that numbers are initialised as strings)
+TK_BOOL_VARS = ["do_permtest", "do_anova", "save_3D_PCA_video", "plot_SE"]
+TK_STR_VARS = [
+    "anova_design",
+    "permutation_number",
+    "stats_threshold",
+    "which_leg",
+    "results_dir",
+]
+EXCLUDED_VARS_FROM_CFG_FILE = ["last_runs_stats_variables", "last_runs_PCA_variables"]
 NORM_SHEET_NAME = "Normalised Stepcycles"
 WINDOWS_TASKBAR_MAXHEIGHT = 72
+
+# To get the path of the autogaita folder I use __file__
+# which returns the path of the autogaita_group module imported above.
+# Removing the 18 letter long "autogaita_group.py" return the folder path
+autogaita_group_path = autogaita_group.__file__
+AUTOGAITA_FOLDER_PATH = autogaita_group_path[:-18]
+
 
 # %%...............................  MAIN PROGRAM ......................................
 
@@ -31,6 +55,19 @@ def group_gui():
     # ..................................................................................
     # .....................  root (intro) window initialisation  .......................
     # ..................................................................................
+    # Check for config file
+    config_file_path = os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME)
+    if not os.path.isfile(config_file_path):
+        config_file_error_msg = (
+            "group_gui_config.json file not found in autogaita folder.\n"
+            "Confirm that the file exists and is named correctly.\n"
+            "If not, download it again from the GitHub repository."
+        )
+        tk.messagebox.showerror(
+            title="Config File Error", message=config_file_error_msg
+        )
+        exit()
+
     # CustomTkinter vars
     ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
     ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
@@ -63,24 +100,6 @@ def group_gui():
     # ..................................................................................
     # .......................  root (intro) window population  .........................
     # ..................................................................................
-    # .......................  important - global cfg variable  ........................
-    # we have cfg be global so it can be modified by all widgets and frames. just prior
-    # to calling autogaita_group, we will copy its values to a temporary cfg var, so
-    # the values of the global variable are never used for running anything
-    # (see run_analysis)
-    global cfg
-    cfg = {}
-    cfg["do_permtest"] = tk.BooleanVar(root, True)
-    cfg["do_anova"] = tk.BooleanVar(root, False)
-    cfg["anova_design"] = tk.StringVar(root, "")
-    cfg["permutation_number"] = tk.StringVar(root, "10000")
-    cfg["stats_threshold"] = tk.StringVar(root, "0.05")
-    cfg["which_leg"] = tk.StringVar(root, "right")
-    cfg["number_of_PCs"] = tk.IntVar(root, 3)
-    cfg["save_3D_PCA_video"] = tk.BooleanVar(root, False)
-    cfg["plot_SE"] = tk.BooleanVar(root, False)
-    cfg["stats_variables"] = []  # var cfgs are empty lists bc we'll append!
-    cfg["PCA_variables"] = []
 
     # .................................  widgets  ......................................
     # welcome message
@@ -157,6 +176,13 @@ def build_mainwindow(root, group_number, root_dimensions):
         tk.messagebox.showerror(title="No Input", message=error_message)
         root.deiconify()
     else:
+        # .....................  important - global cfg variable  ......................
+        # we have cfg be global so it can be modified by all widgets and frames.
+        # just prior to calling autogaita_group, we will copy its values to a temporary # cfg var, so the values of the global variable are never used for running
+        # anything (see run_analysis)
+        global cfg
+        cfg = extract_cfg_from_json_file(root)
+
         # ........................  geometry & intro section  ..........................
         # geometry
         mainwindow = ctk.CTkToplevel(root)
@@ -198,16 +224,8 @@ def build_mainwindow(root, group_number, root_dimensions):
             font=("Britannic Bold", HEADER_FONT_SIZE),
         )
         cfgheader_label.grid(row=2, column=0, columnspan=2, pady=10, sticky="nsew")
-        # !!! only for easier testing - initial names & dirs
-        initial_names = ["", "", "", "", "", ""]
-        initial_dirs = [
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-        ]
+        # load group names and dirs from the config file
+        initial_names, initial_dirs = extract_group_names_and_dirs_from_json_file()
         # group names & dirs - variables
         group_names = [
             tk.StringVar(mainwindow, initial_names[g]) for g in range(group_number)
@@ -253,7 +271,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         # results dir
         results_dir = tk.StringVar(
             mainwindow,
-            "",
+            extract_results_dir_from_json_file(),
         )
         results_dir_string = "Where do you want group-results to be saved?"
         results_dir_label = ctk.CTkLabel(mainwindow, text=results_dir_string)
@@ -343,13 +361,15 @@ def build_mainwindow(root, group_number, root_dimensions):
             text="I am ready - define features!",
             fg_color=FG_COLOR,
             hover_color=HOVER_COLOR,
-            command=lambda: definefeatures_window(
-                mainwindow,
-                group_names,
-                group_dirs,
-                results_dir,
-                root,
-                root_dimensions,
+            command=lambda: (
+                definefeatures_window(
+                    mainwindow,
+                    group_names,
+                    group_dirs,
+                    results_dir,
+                    root,
+                    root_dimensions,
+                ),
             ),
         )
         definefeatures_button.grid(
@@ -558,7 +578,14 @@ def definefeatures_window(
         row_counter = 1  # index rows at 1 for the top otherwise it breaks (dont ask)
         col_counter = 0
         for feature in feature_strings:
-            checkbox_vars[key][feature] = var = tk.BooleanVar()
+            # check whether features of this run (feature in feature_strings) where
+            # also in the last run (cfg[key] = stats/PCA_variables list from config file)
+            # if yes then set the checkbox to true
+            if feature in cfg["last_runs_" + key]:
+                checkbox_vars[key][feature] = var = tk.BooleanVar(value=True)
+            # else set it to false as by default
+            else:
+                checkbox_vars[key][feature] = var = tk.BooleanVar()
             this_checkbox = ctk.CTkCheckBox(
                 frame,
                 text=feature,
@@ -698,7 +725,9 @@ def build_donewindow(
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
         command=lambda: (
+            update_config_file(folderinfo, cfg),
             run_analysis(folderinfo, cfg),
+            mainwindow.destroy(),
             featureswindow.destroy(),
             donewindow.destroy(),
             root.deiconify(),
@@ -814,6 +843,8 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
     # using string concatenation). If not just add a forward slash. In the beginning
     # of autogaita_group, we will convert os.sep to forward slashes if they should be
     # backward slashes (windows works with both)
+    # => Note this was changed and works with os.path.join() now...
+    # => NU: have another look @ this matter in GUI functions
     for key in folderinfo.keys():
         if key == "group_names":
             this_runs_folderinfo[key] = folderinfo[key]
@@ -835,7 +866,8 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
     for key in cfg.keys():
         if key in LIST_VARS:  # no get() needed - since these are lists already
             this_runs_cfg[key] = cfg[key]
-        else:
+            # elif is necessary as we want to exclude "last_runs_stats/PCA_variables"
+        elif key not in EXCLUDED_VARS_FROM_CFG_FILE:
             this_runs_cfg[key] = cfg[key].get()
             # convert to numbers
             if key in FLOAT_VARS:
@@ -938,6 +970,120 @@ def configure_the_icon(root):
     elif platform.system().startswith("win"):
         with resources.path("autogaita", "autogaita_icon.ico") as icon_path:
             root.iconbitmap(str(icon_path))
+
+
+def update_config_file(folderinfo, cfg):
+    """updates the group_gui_config file with this folderinfo and cfg parameters"""
+    # transform tkVars into normal strings and bools
+    output_dicts = [{"group_names": [], "group_dirs": [], "results_dir": ""}, {}]
+
+    for i in range(len(output_dicts)):
+        if i == 0:  # as the list index 0 refers to  folderinfo
+            # to not alter the initial folderinfo variable a deepcopy is used
+            input_dict = copy.deepcopy(folderinfo)
+            output_dicts[0] = input_dict
+            # the next if statement ensures that the names and dirs list always contains
+            # the max group number of entries
+            if len(output_dicts[0]["group_names"]) != MAX_GROUP_NUM:
+                for i in range(MAX_GROUP_NUM - len(input_dict["group_names"])):
+                    output_dicts[0]["group_names"].append("")
+                    output_dicts[0]["group_dirs"].append("")
+
+        elif i == 1:  # as the list index 1 refers to cfg
+            input_dict = cfg
+            for key in input_dict.keys():
+                if key in LIST_VARS:  # PCA or Stats variables
+                    # if list of strings, initialise output empty list and append vals
+                    output_dicts[i][key] = []
+                    for entry in input_dict[key]:
+                        output_dicts[i][key].append(entry)
+                # otherwise (if str, int or bool) get() and define
+                elif (
+                    key not in EXCLUDED_VARS_FROM_CFG_FILE
+                ):  # not PCA or Stats variables
+                    output_dicts[i][key] = input_dict[key].get()
+
+    # merge the two configuration dictionaries
+    # 0 = folderinfo, 1 = cfg, see above
+    configs_list = [
+        output_dicts[0],
+        output_dicts[1],
+    ]
+    # write the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "w"
+    ) as config_json_file:
+        json.dump(configs_list, config_json_file, indent=4)
+
+
+def extract_cfg_from_json_file(root):
+    """loads the cfg dictionary from the config file"""
+    # load the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "r"
+    ) as config_json_file:
+        # config_json contains list with 0 -> result and 1 -> cfg data
+        last_runs_cfg = json.load(config_json_file)[1]
+
+    cfg = {}
+    # assign values to the cfg dict
+    for key in last_runs_cfg.keys():
+        if key in TK_BOOL_VARS:
+            cfg[key] = tk.BooleanVar(root, last_runs_cfg[key])
+        elif key in INT_VARS:
+            cfg[key] = tk.IntVar(root, last_runs_cfg[key])
+        elif key in TK_STR_VARS:
+            cfg[key] = tk.StringVar(root, last_runs_cfg[key])
+        # PCA/stats_variable are not needed as tkStringVars
+        # see the ---PCA / STATS FEATURE FRAMES--- section for their usage
+        elif key in LIST_VARS:
+            # creates an empty list for this runs variables
+            cfg[key] = []
+            # and saves the stats/PCA_variables from the last run in a separate list
+            # note, this list will not be save to the config file as "last_runs_..._variables"
+            # in not in LIST_VARS
+            cfg["last_runs_" + key] = []
+            for entry in last_runs_cfg[key]:
+                cfg["last_runs_" + key].append(entry)
+
+    return cfg
+
+
+def extract_group_names_and_dirs_from_json_file():
+    """loads the group names and dirs from the config file"""
+    # load the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "r"
+    ) as config_json_file:
+        # config_json contains list with 0 -> folderinfo and 1 -> cfg data
+        last_runs_folderinfo = json.load(config_json_file)[0]
+
+    group_names = []
+    group_dirs = []
+
+    for key in last_runs_folderinfo.keys():
+        if key == "group_names":
+            for entry in last_runs_folderinfo[key]:
+                group_names.append(entry)
+        if key == "group_dirs":
+            for entry in last_runs_folderinfo[key]:
+                group_dirs.append(entry)
+
+    return group_names, group_dirs
+
+
+def extract_results_dir_from_json_file():
+    """loads the results dir from the config file"""
+    # load the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "r"
+    ) as config_json_file:
+        # config_json contains list with 0 -> folderinfo and 1 -> cfg data
+        last_runs_folderinfo = json.load(config_json_file)[0]
+
+    results_dir = last_runs_folderinfo["results_dir"]
+
+    return results_dir
 
 
 # %% what happens if we hit run

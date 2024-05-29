@@ -6,6 +6,7 @@ import os
 from threading import Thread
 from importlib import resources
 import platform
+import json
 
 
 # %% global constants
@@ -13,10 +14,39 @@ FG_COLOR = "#c0737a"  # dusty rose
 HOVER_COLOR = "#b5485d"  # dark rose
 HEADER_TXT_COLOR = "#ffffff"  # white
 HEADER_FONT_SIZE = 20
+CONFIG_FILE_NAME = "simi_gui_config.json"
 INT_VARS = ["sampling_rate", "bin_num", "plot_joint_number"]
 LIST_VARS = ["joints"]
 DICT_VARS = ["angles"]
+# TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file
+# (note that numbers are initialised as strings)
+TK_BOOL_VARS = [
+    "analyse_singlerun",
+    "dont_show_plots",
+    "y_acceleration",
+    "angular_acceleration",
+    "plot_SE",
+    "normalise_height_at_SC_level",
+    "postname_flag",
+]
+TK_STR_VARS = [
+    "sampling_rate",
+    "bin_num",
+    "plot_joint_number",
+    "results_dir",
+    "name",
+    "root_dir",
+    "sctable_filename",
+    "postname_string",
+]
 WINDOWS_TASKBAR_MAXHEIGHT = 72
+
+# To get the path of the autogaita folder I use __file__
+# which returns the path of the autogaita_utils module imported above.
+# Removing the 18 letter long "autogaita_utils.py" return the folder path
+autogaita_utils_path = autogaita_utils.__file__
+AUTOGAITA_FOLDER_PATH = autogaita_utils_path[:-18]
+
 
 # %% An important Note
 # I am using a global variable called cfg because I need its info to be shared
@@ -38,6 +68,19 @@ def simi_gui():
     # ..........................................................................
     # ......................  root window initialisation .......................
     # ..........................................................................
+    # Check for config file
+    config_file_path = os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME)
+    if not os.path.isfile(config_file_path):
+        config_file_error_msg = (
+            "simi_gui_config.json file not found in autogaita folder.\n"
+            "Confirm that the file exists and is named correctly.\n"
+            "If not, download it again from the GitHub repository."
+        )
+        tk.messagebox.showerror(
+            title="Config File Error", message=config_file_error_msg
+        )
+        exit()
+
     # CustomTkinter vars
     ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
     ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
@@ -73,39 +116,9 @@ def simi_gui():
     # ==> the results dict is not global and will be passed from function to function
     #     like proper programmers do it (nice)
     global cfg  # global cfg variable
-    cfg = {}
-    cfg["analyse_singlerun"] = tk.BooleanVar(root, False)
-    cfg["sampling_rate"] = tk.StringVar(root, "")
-    cfg["dont_show_plots"] = tk.BooleanVar(root, False)
-    cfg["y_acceleration"] = tk.BooleanVar(root, True)
-    cfg["angular_acceleration"] = tk.BooleanVar(root, True)
-    cfg["bin_num"] = tk.StringVar(root, "25")
-    cfg["plot_joint_number"] = tk.StringVar(root, "3")
-    cfg["plot_SE"] = tk.BooleanVar(root, False)
-    cfg["normalise_height_at_SC_level"] = tk.BooleanVar(root, True)
-    cfg["results_dir"] = tk.StringVar(root, "")
-    results = {}  # local results variable
-    results["name"] = tk.StringVar(root, "")
-    results["root_dir"] = tk.StringVar(root, "")
-    results["sctable_filename"] = tk.StringVar(root, "")
-    results["postname_flag"] = tk.BooleanVar(root, False)
-    results["postname_string"] = tk.StringVar(root, "")
-    # joint columns
-    default_joints = ["Midfoot", "Ankle ", "Knee ", "Hip ", "Pelvis "]
-    cfg["joints"] = []
-    for joint in default_joints:
-        cfg["joints"].append(tk.StringVar(root, joint))
-    # angles
-    cfg["angles"] = {}
-    dict_of_defaults = {
-        "name": ["Ankle", "Knee", "Hip"],
-        "lower_joint": ["Midfoot", "Ankle", "Knee"],
-        "upper_joint": ["Knee", "Hip", "Pelvis"],
-    }
-    for key in dict_of_defaults:
-        cfg["angles"][key] = []
-        for joint in dict_of_defaults[key]:
-            cfg["angles"][key].append(tk.StringVar(root, joint))
+
+    cfg = extract_cfg_from_json_file(root)
+    results = extract_results_from_json_file(root)
 
     # .............................  top section  .......................................
     # welcome message
@@ -344,7 +357,10 @@ def simi_gui():
     run_button = ctk.CTkButton(
         root,
         text="I am ready - run analysis!",
-        command=lambda: donewindow(results, root, root_dimensions),
+        command=lambda: (
+            update_config_file(results, cfg),
+            donewindow(results, root, root_dimensions),
+        ),
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
     )
@@ -355,7 +371,10 @@ def simi_gui():
         text="I am done - close program",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
-        command=lambda: root.after(1, root.destroy()),
+        command=lambda: (
+            update_config_file(results, cfg),
+            root.after(1, root.destroy()),
+        ),
     )
     close_button.grid(row=19, column=1, sticky="nsew", padx=10, pady=(10, 5))
 
@@ -434,7 +453,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         text="Add joint",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
-        command=lambda: add_joint(joint_frame, "joints"),  # 2nd input = cfg's key
+        command=lambda: (add_joint(joint_frame, "joints")),  # 2nd input = cfg's key
     )
     add_joint_button.grid(
         row=2 + scrollable_rows,
@@ -495,7 +514,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         text="I am done, update cfg!",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
-        command=lambda: columnwindow.destroy(),
+        command=lambda: (columnwindow.destroy()),
     )
     columncfg_done_button.grid(
         row=3 + scrollable_rows,
@@ -873,6 +892,94 @@ def multirun_extract_info(folderinfo):
                         )
                     )
     return info
+
+
+def update_config_file(results, cfg):
+    """updates the simi_gui_config file with this runs parameters"""
+    # transform tkVars into normal strings and bools
+    output_dicts = [{}, {}]
+    for i in range(len(output_dicts)):
+        if i == 0:
+            input_dict = results
+        elif i == 1:
+            input_dict = cfg
+        for key in input_dict.keys():
+            if key in LIST_VARS:
+                # if list of strings, initialise output empty list and get & append vals
+                output_dicts[i][key] = []
+                for list_idx in range(len(input_dict[key])):
+                    output_dicts[i][key].append(input_dict[key][list_idx].get())
+            elif key in DICT_VARS:
+                # if dict of list of strings, initialise as empty dict and assign stuff
+                # key = "angles" or other DICT_VAR
+                # inner_key = "name" & "lower_ / upper_joint"
+                # list_idx = idx of list of strings of inner_key
+                output_dicts[i][key] = {}
+                for inner_key in input_dict[key]:
+                    output_dicts[i][key][inner_key] = []
+                    for list_idx in range(len(input_dict[key][inner_key])):
+                        output_dicts[i][key][inner_key].append(
+                            input_dict[key][inner_key][list_idx].get()
+                        )
+            else:
+                output_dicts[i][key] = input_dict[key].get()
+
+    # merge the two configuration dictionaries
+    configs_list = [output_dicts[0], output_dicts[1]]  # 0 = results, 1 = cfg, see above
+    # write the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "w"
+    ) as config_json_file:
+        json.dump(configs_list, config_json_file, indent=4)
+
+
+def extract_cfg_from_json_file(root):
+    """loads the cfg dictionary from the config file"""
+    # load the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "r"
+    ) as config_json_file:
+        # config_json contains list with 0 -> result and 1 -> cfg data
+        last_runs_cfg = json.load(config_json_file)[1]
+
+    cfg = {}
+    # assign values to the cfg dict
+    for key in last_runs_cfg.keys():
+        if key in TK_BOOL_VARS:
+            cfg[key] = tk.BooleanVar(root, last_runs_cfg[key])
+        elif key in LIST_VARS:
+            cfg[key] = []
+            for entry in last_runs_cfg[key]:
+                cfg[key].append(tk.StringVar(root, entry))
+        elif key in DICT_VARS:
+            cfg[key] = {}
+            for subkey in last_runs_cfg[key]:
+                cfg[key][subkey] = []
+                for entry in last_runs_cfg[key][subkey]:
+                    cfg[key][subkey].append(tk.StringVar(root, entry))
+        elif key in TK_STR_VARS:
+            cfg[key] = tk.StringVar(root, last_runs_cfg[key])
+    return cfg
+
+
+def extract_results_from_json_file(root):
+    """loads the results dictionary from the config file"""
+
+    # load the configuration file
+    with open(
+        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "r"
+    ) as config_json_file:
+        # config_json contains list with 0 -> result and 1 -> cfg data
+        last_runs_results = json.load(config_json_file)[0]
+
+    results = {}
+    for key in last_runs_results.keys():
+        if key in TK_STR_VARS:
+            results[key] = tk.StringVar(root, last_runs_results[key])
+        elif key in TK_BOOL_VARS:
+            results[key] = tk.BooleanVar(root, last_runs_results[key])
+
+    return results
 
 
 # %% what happens if we hit run
