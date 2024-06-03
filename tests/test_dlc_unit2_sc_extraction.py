@@ -238,6 +238,12 @@ def test_clean_cycles_3_cycle_order(all_cycles, extract_info):
     assert flat_cycles == sorted(flat_cycles)
 
 
+def test_clean_cycles_4_DLC_tracking(
+    extract_data_using_some_prep, extract_info, extract_cfg
+):
+    """STOPPED HERE: ADD SOME CYCLES AND CHECK!"""
+
+
 # ...............................  helper functions  ...................................
 def flatten_all_cycles(all_cycles):
     return [idx for cycle in all_cycles for idx in cycle]

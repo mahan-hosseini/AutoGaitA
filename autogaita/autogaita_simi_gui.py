@@ -28,6 +28,7 @@ TK_BOOL_VARS = [
     "plot_SE",
     "normalise_height_at_SC_level",
     "postname_flag",
+    "export_average_y",
 ]
 TK_STR_VARS = [
     "sampling_rate",
@@ -120,7 +121,7 @@ def simi_gui():
     cfg = extract_cfg_from_json_file(root)
     results = extract_results_from_json_file(root)
 
-    # .............................  top section  .......................................
+    # ............................  top section  .......................................
     # welcome message
     welcomestring = "Welcome to AutoGaitA Simi! Please read info below " + "carefully."
     welcomeheader_label = ctk.CTkLabel(
@@ -146,7 +147,7 @@ def simi_gui():
     introheader_label.grid(row=1, column=0, columnspan=2)
 
     # ..................................................................................
-    # ..........................  main configuration  ...................................
+    # .........................  main configuration  ...................................
     # ..................................................................................
     # config header
     cfgheader_label = ctk.CTkLabel(
@@ -159,7 +160,7 @@ def simi_gui():
     )
     cfgheader_label.grid(row=2, column=0, columnspan=2, sticky="nsew")
 
-    # .............................  left section  ......................................
+    # ............................  left section  ......................................
     # root directory
     rootdir_string = "Directory location of the folder containing the files to analyse"
     rootdir_label = ctk.CTkLabel(root, text=rootdir_string)
@@ -201,7 +202,7 @@ def simi_gui():
     )
     postname_entry.grid(row=9, column=0)
 
-    # .............................  right section  .....................................
+    # .............................  right section  ....................................
     # stepcycle latency XLS
     SCXLS_string = "Name of the Annotation Table Excel file"
     SCXLS_label = ctk.CTkLabel(root, text=SCXLS_string)
@@ -331,6 +332,20 @@ def simi_gui():
         fg_color=FG_COLOR,
     )
     height_normalisation_box.grid(row=14, column=1)
+    # export average y coordinates
+    export_average_y_string = (
+        "Export y-coordinate averages (include in Average Stepcycle.xlsx)"
+    )
+    export_average_y_box = ctk.CTkCheckBox(
+        root,
+        text=export_average_y_string,
+        variable=cfg["export_average_y"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+    )
+    export_average_y_box.grid(row=15, column=1)
     # column name information window
     column_info_string = "Customise joints and angles"
     column_info_button = ctk.CTkButton(

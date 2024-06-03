@@ -16,6 +16,7 @@
         "plot_joint_number": "3",
         "plot_SE": false,
         "normalise_height_at_SC_level": true,
+        "export_average_y": false,
         "results_dir": "",
         "joints": [
             "Midfoot",

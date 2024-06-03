@@ -34,7 +34,7 @@ LIST_VARS = [
     "beam_col_right",
 ]
 DICT_VARS = ["angles"]
-# TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file 
+# TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file
 # (note that numbers are initialised as strings)
 TK_BOOL_VARS = [
     "subtract_beam",
@@ -47,6 +47,7 @@ TK_BOOL_VARS = [
     "normalise_height_at_SC_level",
     "invert_y_axis",
     "flip_gait_direction",
+    "export_average_x",
 ]
 TK_STR_VARS = [
     "sampling_rate",
@@ -442,14 +443,28 @@ def build_cfg_window(root, cfg, root_dimensions):
         fg_color=FG_COLOR,
     )
     flip_gait_direction_box.grid(row=14, column=0)
+    # export average x coordinates
+    export_average_x_string = (
+        "Export x-coordinate averages (include in Average Stepcycles.xlsx)"
+    )
+    export_average_x_box = ctk.CTkCheckBox(
+        cfg_window,
+        text=export_average_x_string,
+        variable=cfg["export_average_x"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+    )
+    export_average_x_box.grid(row=15, column=0)
     # results dir
     results_dir_string = (
         "Save Results subfolders to directory location below instead of to data's"
     )
     results_dir_label = ctk.CTkLabel(cfg_window, text=results_dir_string, width=cfg_w)
-    results_dir_label.grid(row=15, column=0)
+    results_dir_label.grid(row=16, column=0)
     results_dir_entry = ctk.CTkEntry(cfg_window, textvariable=cfg["results_dir"])
-    results_dir_entry.grid(row=16, column=0)
+    results_dir_entry.grid(row=17, column=0)
     # column name information window
     column_info_string = "Customise joints and angles"
     column_info_button = ctk.CTkButton(
@@ -460,7 +475,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
     column_info_button.grid(
-        row=17, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=18, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -471,7 +486,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: cfg_window.destroy(),
     )
     adv_cfg_done_button.grid(
-        row=19, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=20, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # maximise widgets
     maximise_widgets(cfg_window)
@@ -1373,7 +1388,7 @@ def update_config_file(results, cfg):
             # the results dict of the last run is used and only cfg is updated
             if results == "results dict not defined yet":
                 # runwindow = None as we dont need the tk.Vars to refer to a specific window
-                input_dict = extract_results_from_json_file(runwindow=None) 
+                input_dict = extract_results_from_json_file(runwindow=None)
             else:
                 input_dict = results
         elif i == 1:

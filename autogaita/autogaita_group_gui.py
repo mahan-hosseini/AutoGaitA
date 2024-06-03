@@ -38,7 +38,7 @@ TK_STR_VARS = [
     "results_dir",
 ]
 EXCLUDED_VARS_FROM_CFG_FILE = ["last_runs_stats_variables", "last_runs_PCA_variables"]
-NORM_SHEET_NAME = "Normalised Stepcycles"
+AV_SHEET_NAME = "Average Stepcycle"
 WINDOWS_TASKBAR_MAXHEIGHT = 72
 
 # To get the path of the autogaita folder I use __file__
@@ -475,9 +475,11 @@ def definefeatures_window(
                 string for string, var in checkbox_vars[key].items() if var.get()
             ]
 
-    # .................  EXTRACT FEATURES FROM A NORMALISED SC XLS  ....................
+    # ...................  EXTRACT FEATURES FROM AN AVERAGE SC XLS  ....................
     # => First read the xls as df, extract columns that are meaningful after
-    #    normalisation, or throw errors if we don't manage to do so
+    #    averaging, or throw errors if we don't manage to do so
+    #    -- (note we extract from average xls since that automatically informs about
+    #        export_average_x/y vars!)
     df = None
     test_directories = []  # first see if all group dirs are valid paths
     for directory in group_dirs:
@@ -502,26 +504,28 @@ def definefeatures_window(
     for ID_dir in all_ID_dirs:
         some_IDs_dir = os.path.join(some_groups_dir, ID_dir)
         IDs_files = os.listdir(some_IDs_dir)
-        # next operator means we loop lazy - stop once we find it & return None if norm
+        # next operator means we loop lazy - stop once we find it & return None if av
         # sheet not in dir
-        norm_sheet_path = next(
-            (file for file in IDs_files if NORM_SHEET_NAME in file), None
+        av_sheet_path = next(
+            (file for file in IDs_files if AV_SHEET_NAME in file), None
         )
-        if norm_sheet_path:  # won't be true if no NORMXLS found
-            full_path = os.path.join(some_IDs_dir, norm_sheet_path)
-            if norm_sheet_path.endswith(".xlsx"):
+        if av_sheet_path:  # won't be true if no AVXLS found
+            full_path = os.path.join(some_IDs_dir, av_sheet_path)
+            if av_sheet_path.endswith(".xlsx"):
                 df = pd.read_excel(full_path)
                 break
-            elif norm_sheet_path.endswith(".csv"):
+            elif av_sheet_path.endswith(".csv"):
                 df = pd.read_csv(full_path)
                 break
     # select columns we want to provide as feature options using regular expressions
+    # => since it's on av sheet, x & Y will only be included if export_average_x/Y was
+    #    True @ first-level
     if df is not None:
         feature_strings = tuple(
-            df.filter(regex="(y$|Z$|Angle$|Velocity$|Acceleration$)").columns
+            df.filter(regex="(x$|y$|Y$|Z$|Angle$|Velocity$|Acceleration$)").columns
         )
     else:
-        error_string = "Unable to find any Normalised SC sheet at " + some_groups_dir
+        error_string = "Unable to find any Average SC sheet at " + some_groups_dir
         tk.messagebox.showerror(title="Group Directory Error!", message=error_string)
         print(error_string)
         print("Analysis did not run due to above errors. Fix them & re-try!")

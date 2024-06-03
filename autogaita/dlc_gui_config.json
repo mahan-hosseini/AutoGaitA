@@ -28,6 +28,7 @@
         "normalise_height_at_SC_level": false,
         "invert_y_axis": true,
         "flip_gait_direction": true,
+        "export_average_x": false,
         "results_dir": "",
         "hind_joints": [
             "Hind paw tao ",

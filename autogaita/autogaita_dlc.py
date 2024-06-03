@@ -225,6 +225,7 @@ def some_prep(info, folderinfo, cfg):
     beam_hind_jointadd = cfg["beam_hind_jointadd"]
     beam_fore_jointadd = cfg["beam_fore_jointadd"]
     direction_joint = cfg["direction_joint"]
+    export_average_x = cfg["export_average_x"]
     # store config json file @ group path
     # !!! NU - do this @ mouse path!
     group_path = results_dir.split(name)[0]
@@ -233,6 +234,7 @@ def some_prep(info, folderinfo, cfg):
         "sampling_rate": sampling_rate,
         "convert_to_mm": convert_to_mm,
         "normalise_height_at_SC_level": normalise_height_at_SC_level,
+        "export_average_x": export_average_x,
         "hind_joints": hind_joints,
         "fore_joints": fore_joints,
         "angles": angles,
@@ -1006,6 +1008,7 @@ def analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg):
     name = info["name"]
     results_dir = info["results_dir"]
     save_to_xls = cfg["save_to_xls"]
+    export_average_x = cfg["export_average_x"]
     bin_num = cfg["bin_num"]
     # do everything on a copy of the data df
     data_copy = data.copy()
@@ -1051,7 +1054,7 @@ def analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg):
             )
     # compute average & std data
     average_data, std_data = compute_average_and_std_data(
-        name, normalised_steps_data, bin_num
+        name, normalised_steps_data, bin_num, export_average_x
     )
     # save to results dict
     results = {}
@@ -1260,7 +1263,9 @@ def define_bins(triallength, bin_num):
 # ......................................................................................
 
 
-def compute_average_and_std_data(name, normalised_steps_data, bin_num):
+def compute_average_and_std_data(
+    name, normalised_steps_data, bin_num, export_average_x
+):
     """Export XLS tables that store all averages & std of y-coords & angles"""
     # initialise col of % of SC over time for plotting first
     percentages = [int(((s + 1) / bin_num) * 100) for s in range(bin_num)]
@@ -1272,12 +1277,20 @@ def compute_average_and_std_data(name, normalised_steps_data, bin_num):
     )
     sc_num = len(np.where(normalised_steps_data.index == 0)[0])
     for c, col in enumerate(normalised_steps_data.columns):
-        if (
-            (not col.endswith("x"))
-            & (not col.endswith("likelihood"))
-            & (col != TIME_COL)
-            & (col != "Flipped")
-        ):
+        if export_average_x:
+            condition = (
+                (not col.endswith("likelihood"))
+                & (col != TIME_COL)
+                & (col != "Flipped")
+            )
+        else:
+            condition = (
+                (not col.endswith("x"))
+                & (not col.endswith("likelihood"))
+                & (col != TIME_COL)
+                & (col != "Flipped")
+            )
+        if condition:
             this_data = np.zeros([bin_num, sc_num])
             for s in range(sc_num):
                 # with this_end it's bin_num & not bin_num -1 because iloc
