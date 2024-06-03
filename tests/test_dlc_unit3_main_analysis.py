@@ -60,6 +60,7 @@ def extract_cfg():
     cfg["plot_joint_number"] = 3
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
+    cfg["export_average_x"] = False
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",
