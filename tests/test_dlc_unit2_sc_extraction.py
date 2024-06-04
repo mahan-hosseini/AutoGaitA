@@ -242,7 +242,19 @@ def test_clean_cycles_3_cycle_order(all_cycles, extract_info):
 def test_clean_cycles_4_DLC_tracking(
     extract_data_using_some_prep, extract_info, extract_cfg
 ):
-    """STOPPED HERE: ADD SOME CYCLES AND CHECK!"""
+    """Note that we know that very early on (2-150) the mouse was not in the frame yet so DLC is broken and these SCs will be excluded. The other 3 of case 2 are the correcty SCs of this ID/run of which None should be excluded!"""
+    all_cycles_of_the_two_cases = (
+        [[2, 50], [52, 100], [102, 150]],
+        [[2, 50], [52, 100], [102, 150], [284, 317], [318, 359], [413, 441]],
+    )
+    expected_cycles = ([None], [[284, 317], [318, 359], [413, 441]])
+    for c, this_cases_all_cycles in enumerate(all_cycles_of_the_two_cases):
+        expected_cycles[c] == check_DLC_tracking(
+            extract_data_using_some_prep,
+            extract_info,
+            this_cases_all_cycles,
+            extract_cfg,
+        )
 
 
 # ...............................  helper functions  ...................................
