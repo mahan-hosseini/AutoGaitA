@@ -31,7 +31,7 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
 
 - Access the main user interface via `python -m autogaita`.
 
-- To update to a new release (see the panel on the right for the newest version) activate your virtual environment & enter `pip install autogaita -U`. 
+- To update to the latest release (see the *Releases* panel on the right for the current version) activate your virtual environment & enter `pip install autogaita -U`. 
 
 ## Tutorials and Examples
 
