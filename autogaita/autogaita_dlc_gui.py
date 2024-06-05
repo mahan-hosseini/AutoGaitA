@@ -1112,11 +1112,8 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         ),
     )
     finishbutton.grid(row=r + 17, column=0, rowspan=2, sticky="nsew", pady=5, padx=70)
-    # maximise widgets - do this manually (& only for rows) because it interferes with
-    # user_ready if called as a function for some reason
-    num_rows = runwindow.grid_size()[1]  # maximise rows
-    for row_idx in range(num_rows):
-        runwindow.grid_rowconfigure(row_idx, weight=1)
+    # maximise widgets
+    maximise_widgets(runwindow)
     # wait until user is ready before returning
     runwindow.wait_variable(user_ready)
     return results
