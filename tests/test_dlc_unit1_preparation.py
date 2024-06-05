@@ -59,6 +59,7 @@ def extract_cfg():
     cfg["plot_joint_number"] = 3
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
+    cfg["export_average_x"] = False
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",
@@ -79,4 +80,20 @@ def extract_cfg():
     return cfg
 
 
-# %%..............................  preparation  ...................................
+# %%..............................  preparation  .......................................
+def test_wrong_data_and_beam_strings(extract_info, extract_folderinfo, extract_cfg):
+    extract_folderinfo["beam_string"] = extract_folderinfo["data_string"]
+    some_prep(extract_info, extract_folderinfo, extract_cfg)
+    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
+        content = f.read()
+    assert "Your data & baseline (beam) identifiers ([G] in our" in content
+    
+
+def test_wrong_postmouse_string(extract_info, extract_folderinfo, extract_cfg):
+    extract_folderinfo["postmouse_string"] = "this_is_a_test"
+    some_prep(extract_info, extract_folderinfo, extract_cfg)
+    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
+        content = f.read()
+    assert "Unable to identify ANY RELEVANT FILES for" in content
+
+

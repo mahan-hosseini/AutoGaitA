@@ -128,8 +128,8 @@ def some_prep(info, folderinfo, cfg):
             "\n******************\n! CRITICAL ERROR !\n******************\n"
             + "Unable to identify ANY RELEVANT FILES for "
             + name
-            + "!\nThis is likely due to issues with pre/post-strings.. check "
-            + "capitalisation!"
+            + "!\nThis is likely due to issues with unique file name identifiers.. "
+            + "check capitalisation!"
         )
         write_issues_to_textfile(no_files_error, info)
         print(no_files_error)
@@ -139,6 +139,15 @@ def some_prep(info, folderinfo, cfg):
     datadf = pd.DataFrame(data=None)  # prep stuff for error handling
     datadf_duplicate_error = ""
     if subtract_beam:
+        if data_string == beam_string:
+            beam_and_data_string_error_message = (
+                        "\n******************\n! CRITICAL ERROR !\n******************\n"
+                        + "Your data & baseline (beam) identifiers ([G] in our " 
+                        + "file  naming convention) are identical. " 
+                        + "\nNote that they must be different! \nTry again"
+                    )
+            write_issues_to_textfile(beam_and_data_string_error_message, info)
+            return
         beamdf = pd.DataFrame(data=None)
         beamdf_duplicate_error = ""
     for filename in os.listdir(results_dir):  # import
@@ -402,7 +411,7 @@ def test_and_expand_cfg(data, cfg, info):
         return
     cfg["direction_joint"] = hind_joints[0]
 
-    # if subtracting beam, check that its colnames were valid.
+    # if subtracting beam, check identifier-strings & that beam colnames were valid.
     if cfg["subtract_beam"]:
         beam_col_error_message = (
             "\n******************\n! CRITICAL ERROR !\n******************\n"

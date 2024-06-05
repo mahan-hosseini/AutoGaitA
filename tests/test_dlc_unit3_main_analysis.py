@@ -209,11 +209,6 @@ def test_dlc_velocities():
         assert all(expected_values[key] == step[key])
 
 
-# %%..............................  plots  .........................................
-
-# %%..........................  print finish  ......................................
-
-
 # what happens if we hit run
 if __name__ == "__main__":
     test_dlc_velocities()
