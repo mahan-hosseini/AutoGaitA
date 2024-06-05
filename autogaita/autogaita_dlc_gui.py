@@ -243,7 +243,8 @@ def dlc_gui():
             # results variable is only defined later in populate_run_window()
             # therefore only cfg settings will be updated
             update_config_file("results dict not defined yet", cfg),
-            root.after(1, root.destroy()),
+            root.withdraw(),
+            root.after(5000, root.destroy),
         ),
     )
     close_button.grid(row=10, column=0, pady=(10, 15), padx=30, sticky="nsew")

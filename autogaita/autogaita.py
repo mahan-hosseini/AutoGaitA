@@ -110,6 +110,10 @@ def gui():
     for r in range(1, num_rows):
         root.grid_rowconfigure(r, weight=1)
 
+    # ................................  close button   ................................
+    # "quit" ensures that also the ghost_root is destroyed when the window is closed
+    root.protocol("WM_DELETE_WINDOW", root.quit)
+
     # ...................................  mainloop  ...................................
     root.mainloop()
 
