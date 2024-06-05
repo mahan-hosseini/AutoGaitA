@@ -1158,7 +1158,9 @@ def analyse_single_run(this_runs_results, this_runs_cfg):
     if this_runs_cfg["results_dir"]:
         info["results_dir"] = os.path.join(this_runs_cfg["results_dir"], info["name"])
     else:
-        info["results_dir"] = os.path.join(folderinfo["root_dir"], info["name"])
+        info["results_dir"] = os.path.join(
+            folderinfo["root_dir"], "Results", info["name"]
+        )
     # execute
     autogaita_utils.try_to_run_gaita("DLC", info, folderinfo, this_runs_cfg, False)
 

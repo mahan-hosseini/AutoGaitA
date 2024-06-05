@@ -92,6 +92,7 @@ def some_prep(info, folderinfo, cfg):
     normalise_height_at_SC_level = cfg["normalise_height_at_SC_level"]
     invert_y_axis = cfg["invert_y_axis"]
     flip_gait_direction = cfg["flip_gait_direction"]
+    export_average_x = cfg["export_average_x"]
 
     # .............................  move data  ........................................
     # => see if we can delete a previous runs results folder if existant. if not, it's a
@@ -225,7 +226,6 @@ def some_prep(info, folderinfo, cfg):
     beam_hind_jointadd = cfg["beam_hind_jointadd"]
     beam_fore_jointadd = cfg["beam_fore_jointadd"]
     direction_joint = cfg["direction_joint"]
-    export_average_x = cfg["export_average_x"]
     # store config json file @ group path
     # !!! NU - do this @ mouse path!
     group_path = results_dir.split(name)[0]
