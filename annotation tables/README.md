@@ -11,6 +11,9 @@ Users have to make sure that:
 	- 20th frame of a 180 Hz video: 20/180 = 0.111s (**important**: rounded to 3 decimals!)
 - For more detail, see [the corresponding section of our documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.ji1oyj9y1v1c)
 
+## A helpful tool
+Users working with ImageJ/FIJI are encouraged to use the lightweight and open-source [AnnotationTable-Plugin](https://github.com/luca-flemming/AnnotationTable-Plugin) developed by our contributor Luca Flemming. This plugin is easy to set up and simplifies the creation of Annotation Tables drastically by removing the necessity of noting down timestamps by hand. 
+
 ## Contents
 - DLC Annotation Table Template
 - DLC Annotation Table Example 
