@@ -77,7 +77,10 @@ Mahan Hosseini
 
 ## Contributors
 [Luca Flemming](https://github.com/luca-flemming) - Undergraduate Student
+
 [Nicholas del Grosso](https://github.com/nickdelgrosso) - RSE Advisor
 
 ## Contributing
-If you would like to contribute to the AutoGaitA toolbox, feel free to open a pull request or contact us at autogaita@fz-juelich.de! We are looking forward to your input and ideas 😊
+If you would like to contribute to the AutoGaitA toolbox, feel free to open a pull request or contact us at autogaita@fz-juelich.de! 
+
+We are looking forward to your input and ideas 😊
