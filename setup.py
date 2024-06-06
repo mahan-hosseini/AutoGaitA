@@ -24,7 +24,7 @@ if platform.system() == "Darwin":
 setup(
     name="autogaita",
     python_requires=">=3.10",
-    version="0.1.0",  # rc == release candidate (before release is finished)
+    version="0.1.0rc",  # rc == release candidate (before release is finished)
     author="Mahan Hosseini",
     description="Automatic Gait Analysis in Python",
     packages=["autogaita", "autogaita.batchrun_scripts"],
