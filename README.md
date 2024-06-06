@@ -73,7 +73,7 @@ AutoGaitA is licensed under [GPL v3.0](https://github.com/mahan-hosseini/AutoGai
 The AutoGaitA software is provided without warranty of any kind, express or implied, including, but not limited to, the implied warranty of fitness for a particular purpose.
 
 ## Authors
-Mahan Hosseini
+[Mahan Hosseini](https://github.com/mahan-hosseini)
 
 ## Contributors
 [Luca Flemming](https://github.com/luca-flemming) - Undergraduate Student
