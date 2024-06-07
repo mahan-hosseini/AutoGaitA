@@ -1,6 +1,8 @@
 from autogaita.autogaita_dlc import some_prep
-from hypothesis import given
-import hypothesis.strategies as st
+from autogaita.autogaita_dlc import (
+    move_data_to_folders, check_and_expand_cfg, check_and_fix_cfg_strings, flip_mouse_body, check_gait_direction
+    )
+from hypothesis import given, strategies as st, settings, HealthCheck
 import os
 import numpy as np
 import pandas as pd
@@ -81,6 +83,13 @@ def extract_cfg():
 
 
 # %%..............................  preparation  .......................................
+#                       AN IMPORTANT NOTE ON THESE UNIT TESTS!
+# Calling check_and_expand cfg outside of some_prep with the 
+# export_data_using_some_prep fixture leads to the cfg that is returned by 
+# check_and_expand to be None since the data var DOES NOT INCLUDE the beam!
+# => We thus set cfg["subtract_beam"] to False prior to calling it (see e.g.the
+#    plot_joint test)
+
 def test_wrong_data_and_beam_strings(extract_info, extract_folderinfo, extract_cfg):
     extract_folderinfo["beam_string"] = extract_folderinfo["data_string"]
     some_prep(extract_info, extract_folderinfo, extract_cfg)
@@ -97,3 +106,91 @@ def test_wrong_postmouse_string(extract_info, extract_folderinfo, extract_cfg):
     assert "Unable to identify ANY RELEVANT FILES for" in content
 
 
+def test_global_min_normalisation(extract_info, extract_folderinfo, extract_cfg):
+    extract_cfg["subtract_beam"] = False
+    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    y_cols = [c for c in data.columns if c.endswith(" y")]
+    assert data[y_cols].min().min() == 0
+
+
+def test_datas_indexing_and_time_column(extract_info, extract_folderinfo, extract_cfg):
+    for extract_cfg["sampling_rate"] in [50, 500, 5000]:
+        data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+        assert data["Time"].max() == ((len(data)-1) / (1 * extract_cfg["sampling_rate"]))
+
+
+def test_cols_we_added_to_data(extract_info, extract_folderinfo, extract_cfg):
+    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    assert (data.columns[0] == "Time") & (data.columns[1] == "Flipped")
+
+
+def test_move_csv_datafile_to_results_dir(extract_info, extract_folderinfo):
+    move_data_to_folders(extract_info, extract_folderinfo)
+    for file in os.listdir(extract_info["results_dir"]):
+        if file.endswith(".csv"):
+            assert ((extract_folderinfo["premouse_string"] in file) 
+                    & (extract_folderinfo["postmouse_string"] in file)
+                    & (extract_folderinfo["prerun_string"] in file)
+                    & (extract_folderinfo["postrun_string"] in file))
+
+
+def test_error_if_no_hindlimb_joints(extract_info, extract_folderinfo, extract_cfg):
+    extract_cfg["hind_joints"] = ["not_in_data"]
+    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    assert data is None
+
+
+def test_plot_joint_error(extract_data_using_some_prep, extract_cfg, extract_info):
+    extract_cfg["plot_joint_number"] = 2000
+    extract_cfg["subtract_beam"] = False
+    check_and_expand_cfg(extract_data_using_some_prep, extract_cfg, extract_info)
+    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
+        content = f.read()
+    assert "we can :)" in content
+    extract_cfg = check_and_expand_cfg(
+        extract_data_using_some_prep, extract_cfg, extract_info
+        )
+    assert extract_cfg["plot_joints"] == extract_cfg["hind_joints"]
+    extract_cfg["plot_joint_number"] = 2
+    extract_cfg = check_and_expand_cfg(
+        extract_data_using_some_prep, extract_cfg, extract_info
+        )
+    assert extract_cfg["plot_joints"] == extract_cfg["hind_joints"][:2]
+
+
+@given(test_list=st.lists(st.text(), min_size=1))
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_removal_of_wrong_strings_from_cfg_key(test_list, extract_data_using_some_prep, extract_cfg, extract_info):
+    cfg_key = "hind_joints"  # irrelevant since property testing
+    extract_cfg[cfg_key] = test_list
+    test_result = check_and_fix_cfg_strings(extract_data_using_some_prep, extract_cfg, cfg_key, extract_info)
+    assert not test_result  # empty list is falsey
+
+
+def test_flip_mouse_body(extract_data_using_some_prep, extract_info):
+    flipped_data = flip_mouse_body(extract_data_using_some_prep, extract_info)
+    for col in flipped_data.columns:
+        if col.endswith("x"):
+            flipped_test_data = flipped_data[col]
+            test_data = max(extract_data_using_some_prep.loc[:, col]) - extract_data_using_some_prep.loc[:, col]
+            flipped_test_data = flipped_test_data.astype(float)
+            pdt.assert_series_equal(test_data, flipped_test_data)
+
+
+def test_check_gait_direction(extract_data_using_some_prep, extract_cfg, extract_info):
+    direction_joint = extract_cfg["direction_joint"]
+    flip_gait_direction = True  # 1) test broken DLC data (empty)
+    broken_data = pd.DataFrame(data=None, columns=extract_data_using_some_prep.columns)
+    check_gait_direction(broken_data, direction_joint, flip_gait_direction, extract_info)
+    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
+        content = f.read()
+    assert "Unable to determine gait direction!" in content
+    flip_this_data = pd.DataFrame(data=None, columns=extract_data_using_some_prep.columns)  # 2) test data that has to be flipped
+    data_len = 20
+    flip_this_data[direction_joint + "likelihood"] = [0.99] * data_len
+    first_half = [10] * int((data_len / 2))
+    second_half = [-10] * int((data_len / 2))
+    x_coords = first_half + second_half
+    flip_this_data[direction_joint + "x"] = x_coords
+    flip_this_data = check_gait_direction(flip_this_data, direction_joint, flip_gait_direction, extract_info)
+    assert flip_this_data["Flipped"][0] == True

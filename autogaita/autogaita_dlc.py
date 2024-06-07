@@ -226,7 +226,7 @@ def some_prep(info, folderinfo, cfg):
     # IMPORTANT
     # ---------
     # MAIN TESTS OF USER-INPUT VALIDITY OCCUR HERE!
-    cfg = test_and_expand_cfg(data, cfg, info)
+    cfg = check_and_expand_cfg(data, cfg, info)
     if cfg is None:  # hind joints were empty
         return
     hind_joints = cfg["hind_joints"]
@@ -252,6 +252,23 @@ def some_prep(info, folderinfo, cfg):
     # note - using "w" will overwrite/truncate file, thus no need to remove it if exists
     with open(config_json_path, "w") as config_json_file:
         json.dump(config_vars_to_json, config_json_file, indent=4)
+    # a little test to see if columns make sense, i.e., same number of x/y/likelihood
+    x_col_count = len([c for c in data.columns if c.endswith(" x")])
+    y_col_count = len([c for c in data.columns if c.endswith(" y")])
+    likelihood_col_count = len([c for c in data.columns if c.endswith(" likelihood")])
+    if x_col_count == y_col_count == likelihood_col_count:
+        pass
+    else:
+        cols_are_weird_message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + "We detected an unequal number of columns ending with x, y or " 
+            + "likelihood!\nCounts were:\n"
+            + "x: " + str(x_col_count) + ", y: " + str(y_col_count) + ", likelihood: " 
+            + str(likelihood_col_count) + "!\n\n"
+            + "We continue with the analysis but we strongly suggest you have another " + "look at your dataset, this should not happen.\n"
+        )
+        print(cols_are_weird_message)
+        write_issues_to_textfile(cols_are_weird_message, info)
     # if wanted: fix that deeplabcut inverses y
     if invert_y_axis:
         for col in data.columns:
@@ -355,7 +372,7 @@ def move_data_to_folders(info, folderinfo):
                 write_issues_to_textfile(this_message, info)
 
 
-def test_and_expand_cfg(data, cfg, info):
+def check_and_expand_cfg(data, cfg, info):
     """Test some important cfg variables and add new ones based on them
 
     Procedure
