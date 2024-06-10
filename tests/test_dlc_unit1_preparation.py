@@ -171,8 +171,10 @@ def test_flip_mouse_body(extract_data_using_some_prep, extract_info):
     flipped_data = flip_mouse_body(extract_data_using_some_prep, extract_info)
     for col in flipped_data.columns:
         if col.endswith("x"):
-            flipped_test_data = flipped_data[col]
-            test_data = max(extract_data_using_some_prep.loc[:, col]) - extract_data_using_some_prep.loc[:, col]
+            flipped_test_data = flipped_data[col].copy()
+            # pytest.set_trace()
+            test_data = max(
+                extract_data_using_some_prep.loc[:, col]) - extract_data_using_some_prep.loc[:, col]
             flipped_test_data = flipped_test_data.astype(float)
             pdt.assert_series_equal(test_data, flipped_test_data)
 
@@ -185,12 +187,16 @@ def test_check_gait_direction(extract_data_using_some_prep, extract_cfg, extract
     with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
         content = f.read()
     assert "Unable to determine gait direction!" in content
-    flip_this_data = pd.DataFrame(data=None, columns=extract_data_using_some_prep.columns)  # 2) test data that has to be flipped
+    flip_this_data = pd.DataFrame(
+        data=None, columns=extract_data_using_some_prep.columns
+        )  # 2) test data that has to be flipped
     data_len = 20
     flip_this_data[direction_joint + "likelihood"] = [0.99] * data_len
     first_half = [10] * int((data_len / 2))
     second_half = [-10] * int((data_len / 2))
     x_coords = first_half + second_half
     flip_this_data[direction_joint + "x"] = x_coords
-    flip_this_data = check_gait_direction(flip_this_data, direction_joint, flip_gait_direction, extract_info)
+    flip_this_data = check_gait_direction(
+        flip_this_data, direction_joint, flip_gait_direction, extract_info
+        )
     assert flip_this_data["Flipped"][0] == True
