@@ -169,13 +169,32 @@ def test_removal_of_wrong_strings_from_cfg_key(test_list, extract_data_using_som
 
 def test_flip_mouse_body(extract_data_using_some_prep, extract_info):
     data = extract_data_using_some_prep
-    flipped_data = flip_mouse_body(data, extract_info)
+    flipped_data = extract_data_using_some_prep
+    test_data = data.copy()
+    # data = flip_mouse_body(extract_data_using_some_prep, extract_info)
+    # flipped_data = data.copy()
+    # test_data = data.copy()
+    print("data:")
+    print(data)
+    print("test_data:")
+    print(test_data)
+    print("flipped_data:")
+    print(flipped_data)
     for col in flipped_data.columns:
         if col.endswith("x"):
-            flipped_test_data = flipped_data[col]
-            test_data = max(data.loc[:, col]) - data.loc[:, col]
-            flipped_test_data = flipped_test_data.astype(float)
-            pdt.assert_series_equal(test_data, flipped_test_data)
+            flipped_test_series = flipped_data[col]
+            print(f"Processing column: {col}")
+            print("flipped_test_series:")
+            print(flipped_test_series)
+            # pytest.set_trace()
+            test_series = max(
+                data.loc[:, col]) - data.loc[:, col]
+            print("test_series:")
+            print(test_series)
+            flipped_test_series = flipped_test_series.astype(float)
+            print("flipped_test_series after conversion:")
+            print(flipped_test_series)
+            pdt.assert_series_equal(test_series, flipped_test_series)
 
 
 def test_check_gait_direction(extract_data_using_some_prep, extract_cfg, extract_info):
