@@ -168,7 +168,9 @@ def test_removal_of_wrong_strings_from_cfg_key(test_list, extract_data_using_som
 
 
 def test_flip_mouse_body(extract_data_using_some_prep, extract_info):
-    flipped_data = flip_mouse_body(extract_data_using_some_prep, extract_info)
+    data = flip_mouse_body(extract_data_using_some_prep, extract_info)
+    flipped_data = data.copy()
+    test_data = data.copy()
     print("flipped_data:")
     print(flipped_data)
     for col in flipped_data.columns:
