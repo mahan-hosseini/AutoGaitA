@@ -167,14 +167,16 @@ def test_removal_of_wrong_strings_from_cfg_key(test_list, extract_data_using_som
     assert not test_result  # empty list is falsey
 
 
-def test_flip_mouse_body(extract_data_using_some_prep, extract_info):
-    data = extract_data_using_some_prep
+def test_flip_mouse_body(extract_info, extract_folderinfo, extract_cfg):
+    extract_cfg["flip_gait_direction"] = False
+    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
     print("data:")
     print(data)
-    flipped_data = extract_data_using_some_prep
+    # flipped_data = extract_data_using_some_prep
+    flipped_data = data.copy()
     print("flipped_data pre flipping:")
     print(flipped_data)
-    flipped_data = flip_mouse_body(flipped_data, extract_info)
+    flipped_data = flip_mouse_body(data, extract_info)
     # flipped_data = data.copy()
     # test_data = data.copy()
     print("flipped_data post flipping:")
