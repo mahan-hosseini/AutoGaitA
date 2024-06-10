@@ -611,7 +611,7 @@ def flip_mouse_body(data, info):
     write_issues_to_textfile(message, info)
 
     # 1) Flip all rows in x columns only and subtract max from all vals
-    flipped_data = pd.DataFrame(data=None, columns=data.columns)
+    flipped_data = pd.DataFrame(flipped_data=None, columns=flipped_data.columns)
     for col in data.columns:
         if col.endswith("x"):
             flipped_data.loc[:, col] = max(data.loc[:, col]) - data.loc[:, col]
