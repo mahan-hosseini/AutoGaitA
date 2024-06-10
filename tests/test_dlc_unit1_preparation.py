@@ -169,31 +169,12 @@ def test_removal_of_wrong_strings_from_cfg_key(test_list, extract_data_using_som
 
 def test_flip_mouse_body(extract_data_using_some_prep, extract_info):
     data = extract_data_using_some_prep
-    flipped_data = extract_data_using_some_prep
-    test_data = data.copy()
-    # data = flip_mouse_body(extract_data_using_some_prep, extract_info)
-    # flipped_data = data.copy()
-    # test_data = data.copy()
-    print("data:")
-    print(data)
-    print("test_data:")
-    print(test_data)
-    print("flipped_data:")
-    print(flipped_data)
+    flipped_data = flip_mouse_body(data, extract_info)
     for col in flipped_data.columns:
         if col.endswith("x"):
-            flipped_test_data = flipped_data[col].copy()
-            print(f"Processing column: {col}")
-            print("flipped_test_data:")
-            print(flipped_test_data)
-            # pytest.set_trace()
-            test_data = max(
-                extract_data_using_some_prep.loc[:, col]) - extract_data_using_some_prep.loc[:, col]
-            print("test_data:")
-            print(test_data)
+            flipped_test_data = flipped_data[col]
+            test_data = max(data.loc[:, col]) - data.loc[:, col]
             flipped_test_data = flipped_test_data.astype(float)
-            print("flipped_test_data after conversion:")
-            print(flipped_test_data)
             pdt.assert_series_equal(test_data, flipped_test_data)
 
 
