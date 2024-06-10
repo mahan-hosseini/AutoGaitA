@@ -169,27 +169,27 @@ def test_removal_of_wrong_strings_from_cfg_key(test_list, extract_data_using_som
 
 def test_flip_mouse_body(extract_info, extract_folderinfo, extract_cfg):
     extract_cfg["flip_gait_direction"] = False
-    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    test_data = some_prep(extract_info, extract_folderinfo, extract_cfg)
     print("data:")
-    print(data)
+    print(test_data)
     # flipped_data = extract_data_using_some_prep
-    flipped_data = data.copy()
+    test_flipped_data = test_data.copy()
     print("flipped_data pre flipping:")
-    print(flipped_data)
-    flipped_data = flip_mouse_body(data, extract_info)
+    print(test_flipped_data)
+    test_flipped_data = flip_mouse_body(test_data, extract_info)
     # flipped_data = data.copy()
     # test_data = data.copy()
     print("flipped_data post flipping:")
-    print(flipped_data)
-    for col in flipped_data.columns:
+    print(test_flipped_data)
+    for col in test_flipped_data.columns:
         if col.endswith("x"):
-            flipped_test_series = flipped_data[col]
+            flipped_test_series = test_flipped_data[col]
             print(f"Processing column: {col}")
             print("flipped_test_series:")
             print(flipped_test_series)
             # pytest.set_trace()
             test_series = max(
-                data.loc[:, col]) - data.loc[:, col]
+                test_data.loc[:, col]) - test_data.loc[:, col]
             print("test_series:")
             print(test_series)
             flipped_test_series = flipped_test_series.astype(float)
