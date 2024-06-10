@@ -1190,7 +1190,7 @@ def multirun_run_a_single_dataset(idx, info, folderinfo, this_runs_cfg):
         )
     else:
         this_info["results_dir"] = os.path.join(
-            folderinfo["root_dir"], this_info["name"]
+            folderinfo["root_dir"], "Results", this_info["name"]
         )
     # important to only pass this_info to main script here (1 run at a time!)
     autogaita_utils.try_to_run_gaita("DLC", this_info, folderinfo, this_runs_cfg, True)
