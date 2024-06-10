@@ -171,6 +171,10 @@ def test_flip_mouse_body(extract_data_using_some_prep, extract_info):
     data = flip_mouse_body(extract_data_using_some_prep, extract_info)
     flipped_data = data.copy()
     test_data = data.copy()
+    print("data:")
+    print(data)
+    print("test_data:")
+    print(test_data)
     print("flipped_data:")
     print(flipped_data)
     for col in flipped_data.columns:
