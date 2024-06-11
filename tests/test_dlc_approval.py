@@ -21,13 +21,13 @@ import pytest
 
 @pytest.fixture
 def extract_true_dir():
-    return "example data/25mm/Results/ID 15 - Run 3/"
+    return "tests/test_data/dlc_data/true_data/"
 
 
 @pytest.fixture
 def extract_info(tmp_path):
     info = {}
-    info["mouse_num"] = 15
+    info["mouse_num"] = 12
     info["run_num"] = 3
     info["name"] = "ID " + str(info["mouse_num"]) + " - Run " + str(info["run_num"])
     info["results_dir"] = os.path.join(tmp_path, info["name"])
@@ -37,7 +37,7 @@ def extract_info(tmp_path):
 @pytest.fixture
 def extract_folderinfo():
     folderinfo = {}
-    folderinfo["root_dir"] = "tests/test_data/dlc_data"
+    folderinfo["root_dir"] = "tests/test_data/dlc_data/test_data/"
     folderinfo["sctable_filename"] = "correct_annotation_table.xlsx"
     folderinfo["data_string"] = "SIMINewOct"
     folderinfo["beam_string"] = "BeamTraining"
@@ -63,11 +63,11 @@ def extract_cfg():
     cfg["save_to_xls"] = True
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
-    cfg["normalise_height_at_SC_level"] = False
+    cfg["normalise_height_at_SC_level"] = True
     cfg["plot_joint_number"] = 3
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
-    cfg["export_average_x"] = False
+    cfg["export_average_x"] = True
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",
@@ -107,12 +107,12 @@ def test_dlc_approval_average_df(
         "DLC", extract_info, extract_folderinfo, extract_cfg, False
     )
     true_av_df = pd.read_excel(
-        os.path.join(extract_true_dir, "ID 15 - Run 3 - Average Stepcycle.xlsx")
+        os.path.join(extract_true_dir, "ID 12 - Run 3 - Average Stepcycle.xlsx")
     )
     test_av_df = pd.read_excel(
         os.path.join(
             extract_info["results_dir"],
-            "ID 15 - Run 3 - Average Stepcycle.xlsx",
+            "ID 12 - Run 3 - Average Stepcycle.xlsx",
         )
     )
     pdt.assert_frame_equal(test_av_df, true_av_df)
@@ -126,12 +126,12 @@ def test_dlc_approval_std_df(
         "DLC", extract_info, extract_folderinfo, extract_cfg, False
     )
     true_std_df = pd.read_excel(
-        os.path.join(extract_true_dir, "ID 15 - Run 3 - Standard Devs. Stepcycle.xlsx")
+        os.path.join(extract_true_dir, "ID 12 - Run 3 - Standard Devs. Stepcycle.xlsx")
     )
     test_std_df = pd.read_excel(
         os.path.join(
             extract_info["results_dir"],
-            "ID 15 - Run 3 - Standard Devs. Stepcycle.xlsx",
+            "ID 12 - Run 3 - Standard Devs. Stepcycle.xlsx",
         )
     )
     pdt.assert_frame_equal(test_std_df, true_std_df)
