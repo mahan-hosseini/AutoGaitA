@@ -30,5 +30,4 @@ jobs:
         python -m pip install .[dev]
     - name: Test with pytest
       run: |
-        pytest -k flip_mouse_
-#        pytest
+        pytest
