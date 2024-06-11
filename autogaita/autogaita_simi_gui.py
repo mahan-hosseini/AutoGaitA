@@ -388,7 +388,8 @@ def simi_gui():
         hover_color=HOVER_COLOR,
         command=lambda: (
             update_config_file(results, cfg),
-            root.after(1, root.destroy()),
+            root.withdraw(),
+            root.after(5000, root.destroy),
         ),
     )
     close_button.grid(row=19, column=1, sticky="nsew", padx=10, pady=(10, 5))
