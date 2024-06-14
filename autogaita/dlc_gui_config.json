@@ -1,0 +1,80 @@
+[
+    {
+        "mouse_num": "",
+        "run_num": "",
+        "root_dir": "",
+        "sctable_filename": "",
+        "data_string": "",
+        "beam_string": "",
+        "premouse_string": "",
+        "postmouse_string": "",
+        "prerun_string": "",
+        "postrun_string": ""
+    },
+    {
+        "sampling_rate": "",
+        "subtract_beam": false,
+        "dont_show_plots": false,
+        "convert_to_mm": false,
+        "pixel_to_mm_ratio": "",
+        "x_sc_broken_threshold": "200",
+        "y_sc_broken_threshold": "50",
+        "x_acceleration": true,
+        "angular_acceleration": true,
+        "save_to_xls": true,
+        "bin_num": "25",
+        "plot_joint_number": "3",
+        "plot_SE": false,
+        "normalise_height_at_SC_level": false,
+        "invert_y_axis": true,
+        "flip_gait_direction": true,
+        "export_average_x": false,
+        "results_dir": "",
+        "hind_joints": [
+            "Hind paw tao ",
+            "Ankle ",
+            "Knee ",
+            "Hip ",
+            "Iliac Crest "
+        ],
+        "fore_joints": [
+            "Front paw tao ",
+            "Wrist ",
+            "Elbow ",
+            "Lower Shoulder ",
+            "Upper Shoulder "
+        ],
+        "beam_col_left": [
+            "BeamLeft"
+        ],
+        "beam_col_right": [
+            "BeamRight"
+        ],
+        "beam_hind_jointadd": [
+            "Tail base ",
+            "Tail center ",
+            "Tail tip "
+        ],
+        "beam_fore_jointadd": [
+            "Nose ",
+            "Ear base "
+        ],
+        "angles": {
+            "name": [
+                "Ankle",
+                "Knee",
+                "Hip"
+            ],
+            "lower_joint": [
+                "Hind paw tao",
+                "Ankle",
+                "Knee"
+            ],
+            "upper_joint": [
+                "Knee",
+                "Hip",
+                "Iliac Crest"
+            ]
+        }
+    }
+]

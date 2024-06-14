@@ -1,0 +1,34 @@
+[
+    {
+        "group_names": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ],
+        "group_dirs": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ],
+        "results_dir": ""
+    },
+    {
+        "do_permtest": true,
+        "do_anova": false,
+        "anova_design": "",
+        "permutation_number": "10000",
+        "stats_threshold": "0.05",
+        "which_leg": "right",
+        "number_of_PCs": 3,
+        "save_3D_PCA_video": false,
+        "plot_SE": false,
+        "stats_variables": [],
+        "PCA_variables": []
+    }
+]
