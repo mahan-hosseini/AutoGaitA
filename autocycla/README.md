@@ -13,7 +13,7 @@ One of the main results our approach generates is a figure plotting the leg’s 
 
 |<img src=images/figure_1.png alt="figure 1" width="500" height="397">|
 |:--:|
-| ***Figure 1*: Analysis of one video in the sitting/hands-high condition; graph showing ankle, knee and hip angles throughout an average pedal cycle* |
+| ***Figure 1**: Analysis of one video in the sitting/hands-high condition; graph showing ankle, knee and hip angles throughout an average pedal cycle* |
 
 </div>
 
@@ -77,7 +77,7 @@ AutoGaitA Group generates various figures. Some of these figures are particularl
 
 |<img src=images/figure_3.png alt="figure 3" width="500" height="397">|
 |:--:|
-| *Figure 3: Analysis of one video in the sitting/hands-low condition; plot showing ankle, knee and hip angles throughout an average pedal cycle* |
+| ***Figure 3**: Analysis of one video in the sitting/hands-low condition; plot showing ankle, knee and hip angles throughout an average pedal cycle* |
 
 |<img src=images/figure_4.png alt="figure 4" width="500" height="397">|
 |:--:|
