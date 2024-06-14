@@ -39,6 +39,36 @@ TK_STR_VARS = [
     "root_dir",
     "sctable_filename",
     "postname_string",
+    "color_palette",
+]
+# For how the look like refer to https://r02b.github.io/seaborn_palettes/
+COLOR_PALETTES_LIST = [
+    "Set1",
+    "Set2",
+    "Set3",
+    "Dark2",
+    "Paired",
+    "Accent",  # qualitative palettes
+    "hls",
+    "husl",  # circular palettes
+    "rocket",
+    "mako",
+    "flare",
+    "crest",
+    "viridis",
+    "plasma",
+    "inferno",
+    "magma",
+    "cividis",  # Perceptually uniform palettes
+    "rocket_r",
+    "mako_r",
+    "flare_r",
+    "crest_r",
+    "viridis_r",
+    "plasma_r",
+    "inferno_r",
+    "magma_r",
+    "cividis_r",  # uniform palettes in reversed order
 ]
 WINDOWS_TASKBAR_MAXHEIGHT = 72
 
@@ -274,14 +304,27 @@ def simi_gui():
     plot_joint_num_label.grid(row=14, column=0)
     plot_joint_num_entry = ctk.CTkEntry(root, textvariable=cfg["plot_joint_number"])
     plot_joint_num_entry.grid(row=15, column=0)
+    # color palette
+    color_palette_string = "Choose the color palette for the result graphs"
+    color_palette_label = ctk.CTkLabel(root, text=color_palette_string)
+    color_palette_label.grid(row=16, column=0)
+    color_palette_entry = ctk.CTkOptionMenu(
+        root,
+        values=COLOR_PALETTES_LIST,
+        variable=cfg["color_palette"],
+        fg_color=FG_COLOR,
+        button_color=FG_COLOR,
+        button_hover_color=HOVER_COLOR,
+    )
+    color_palette_entry.grid(row=17, column=0)
     # results dir
     results_dir_string = (
         "Save Results subfolders to directory location below instead of to data's"
     )
     results_dir_label = ctk.CTkLabel(root, text=results_dir_string)
-    results_dir_label.grid(row=16, column=0)
+    results_dir_label.grid(row=18, column=0)
     results_dir_entry = ctk.CTkEntry(root, textvariable=cfg["results_dir"])
-    results_dir_entry.grid(row=17, column=0)
+    results_dir_entry.grid(row=19, column=0)
 
     # .............................  right section  ....................................
     # x acceleration

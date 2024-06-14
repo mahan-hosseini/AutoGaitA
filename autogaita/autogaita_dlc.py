@@ -9,6 +9,7 @@ import numpy as np
 import math
 import matplotlib
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 # %% constants
 plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
@@ -37,6 +38,7 @@ NORMALISED_XLS_FILENAME = " - Normalised Stepcycles"
 AVERAGE_XLS_FILENAME = " - Average Stepcycle"
 STD_XLS_FILENAME = " - Standard Devs. Stepcycle"
 SC_LAT_LEGEND_FONTSIZE = 7
+
 
 # %% main program
 
@@ -141,11 +143,11 @@ def some_prep(info, folderinfo, cfg):
     if subtract_beam:
         if data_string == beam_string:
             beam_and_data_string_error_message = (
-                        "\n******************\n! CRITICAL ERROR !\n******************\n"
-                        + "Your data & baseline (beam) identifiers ([G] in our " 
-                        + "file  naming convention) are identical. " 
-                        + "\nNote that they must be different! \nTry again"
-                    )
+                "\n******************\n! CRITICAL ERROR !\n******************\n"
+                + "Your data & baseline (beam) identifiers ([G] in our "
+                + "file  naming convention) are identical. "
+                + "\nNote that they must be different! \nTry again"
+            )
             write_issues_to_textfile(beam_and_data_string_error_message, info)
             return
         beamdf = pd.DataFrame(data=None)
@@ -261,7 +263,7 @@ def some_prep(info, folderinfo, cfg):
     else:
         cols_are_weird_message = (
             "\n***********\n! WARNING !\n***********\n"
-            + "We detected an unequal number of columns ending with x, y or " 
+            + "We detected an unequal number of columns ending with x, y or "
             + "likelihood!\nCounts were:\n"
             + "x: " + str(x_col_count) + ", y: " + str(y_col_count) + ", likelihood: " 
             + str(likelihood_col_count) + "!\n\n"
@@ -1475,7 +1477,7 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
     for j, joint in enumerate(plot_joints):  # joint loop (figures)
         f[j], ax[j] = plt.subplots(1, 1)
         ax[j].set_prop_cycle(
-            plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, sc_num)))
+            plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
         )
         if joint == "Hind paw tao ":
             ax[j].set_title(name + " - Foot")
@@ -1540,7 +1542,7 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
     for a, angle in enumerate(angles["name"]):  # angle loop (figures)
         f[a], ax[a] = plt.subplots(1, 1)
         ax[a].set_prop_cycle(
-            plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, sc_num)))
+            plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
         )
         ax[a].set_title(name + " - " + angle)
         ax[a].set_ylabel("Angle")
@@ -1571,7 +1573,7 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     # some prep
     sc_num = len(sc_idxs)
     f, ax = plt.subplots(1, 1)
-    color_cycle = plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, sc_num)))
+    color_cycle = plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
     ax.set_prop_cycle(color_cycle)
     time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
 
@@ -1633,7 +1635,7 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     # some prep
     sc_num = len(sc_idxs)
     f, ax = plt.subplots(1, 1)
-    color_cycle = plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, sc_num)))
+    color_cycle = plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
     ax.set_prop_cycle(color_cycle)
     time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
 
@@ -1696,7 +1698,7 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(hind_joints))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(hind_joints)))
     )
     x = np.linspace(0, 100, bin_num)
     for joint in hind_joints:  # joint loop (lines)
@@ -1735,7 +1737,9 @@ def plot_angles_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(angles["name"]))))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Joint angles over average step cycle")
@@ -1774,7 +1778,7 @@ def plot_x_velocities_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(hind_joints))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(hind_joints)))
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Joint velocities over average step cycle")
@@ -1819,7 +1823,9 @@ def plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(angles["name"]))))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Angular velocities over average step cycle")
@@ -1858,7 +1864,7 @@ def plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(hind_joints))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(hind_joints)))
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Joint accelerations over average step cycle")
@@ -1905,7 +1911,9 @@ def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(angles["name"]))))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Angular accelerations over average step cycle")

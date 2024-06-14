@@ -36,6 +36,36 @@ TK_STR_VARS = [
     "stats_threshold",
     "which_leg",
     "results_dir",
+    "color_palette",
+]
+# For how the look like refer to https://r02b.github.io/seaborn_palettes/
+COLOR_PALETTES_LIST = [
+    "Set1",
+    "Set2",
+    "Set3",
+    "Dark2",
+    "Paired",
+    "Accent",  # qualitative palettes
+    "hls",
+    "husl",  # circular palettes
+    "rocket",
+    "mako",
+    "flare",
+    "crest",
+    "viridis",
+    "plasma",
+    "inferno",
+    "magma",
+    "cividis",  # Perceptually uniform palettes
+    "rocket_r",
+    "mako_r",
+    "flare_r",
+    "crest_r",
+    "viridis_r",
+    "plasma_r",
+    "inferno_r",
+    "magma_r",
+    "cividis_r",  # uniform palettes in reversed order
 ]
 EXCLUDED_VARS_FROM_CFG_FILE = ["last_runs_stats_variables", "last_runs_PCA_variables"]
 AV_SHEET_NAME = "Average Stepcycle"
@@ -415,6 +445,20 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     number_of_PCs_entry = ctk.CTkEntry(cfgwindow, textvariable=cfg["number_of_PCs"])
     number_of_PCs_entry.grid(row=5, column=0)
 
+    # color palette
+    color_palette_string = "Choose the color palette for the result graphs"
+    color_palette_label = ctk.CTkLabel(cfgwindow, text=color_palette_string)
+    color_palette_label.grid(row=6, column=0)
+    color_palette_entry = ctk.CTkOptionMenu(
+        cfgwindow,
+        values=COLOR_PALETTES_LIST,
+        variable=cfg["color_palette"],
+        fg_color=FG_COLOR,
+        button_color=FG_COLOR,
+        button_hover_color=HOVER_COLOR,
+    )
+    color_palette_entry.grid(row=7, column=0)
+
     # plot SE
     plot_SE_string = "Plot standard error instead of standard deviation as error bars"
     plot_SE_box = ctk.CTkCheckBox(
@@ -426,7 +470,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
     )
-    plot_SE_box.grid(row=6, column=0)
+    plot_SE_box.grid(row=8, column=0)
 
     # save 3D PCA video
     save_PCA_video_string = "Save video of 3D PCA Scatterplot (requires ffmpeg!)"
@@ -439,7 +483,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
     )
-    save_PCA_video_checkbox.grid(row=7, column=0)
+    save_PCA_video_checkbox.grid(row=9, column=0)
 
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -449,7 +493,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         hover_color=HOVER_COLOR,
         command=lambda: cfgwindow.destroy(),
     )
-    adv_cfg_done_button.grid(row=8, column=0, sticky="nsew", pady=20, padx=80)
+    adv_cfg_done_button.grid(row=10, column=0, sticky="nsew", pady=20, padx=80)
 
     # maximise widgets to fit fullscreen
     maximise_widgets(cfgwindow)

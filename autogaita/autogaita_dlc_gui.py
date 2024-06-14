@@ -56,7 +56,37 @@ TK_STR_VARS = [
     "y_sc_broken_threshold",
     "bin_num",
     "plot_joint_number",
+    "color_palette",
     "results_dir",
+]
+# For how the look like refer to https://r02b.github.io/seaborn_palettes/
+COLOR_PALETTES_LIST = [
+    "Set1",
+    "Set2",
+    "Set3",
+    "Dark2",
+    "Paired",
+    "Accent",  # qualitative palettes
+    "hls",
+    "husl",  # circular palettes
+    "rocket",
+    "mako",
+    "flare",
+    "crest",
+    "viridis",
+    "plasma",
+    "inferno",
+    "magma",
+    "cividis",  # Perceptually uniform palettes
+    "rocket_r",
+    "mako_r",
+    "flare_r",
+    "crest_r",
+    "viridis_r",
+    "plasma_r",
+    "inferno_r",
+    "magma_r",
+    "cividis_r",  # uniform palettes in reversed order
 ]
 WINDOWS_TASKBAR_MAXHEIGHT = 72
 
@@ -458,14 +488,29 @@ def build_cfg_window(root, cfg, root_dimensions):
         fg_color=FG_COLOR,
     )
     export_average_x_box.grid(row=15, column=0)
+    # color palette
+    color_palette_string = "Choose the color palette for the result graphs"
+    color_palette_label = ctk.CTkLabel(
+        cfg_window, text=color_palette_string, width=cfg_w
+    )
+    color_palette_label.grid(row=16, column=0)
+    color_palette_entry = ctk.CTkOptionMenu(
+        cfg_window,
+        values=COLOR_PALETTES_LIST,
+        variable=cfg["color_palette"],
+        fg_color=FG_COLOR,
+        button_color=FG_COLOR,
+        button_hover_color=HOVER_COLOR,
+    )
+    color_palette_entry.grid(row=17, column=0)
     # results dir
     results_dir_string = (
         "Save Results subfolders to directory location below instead of to data's"
     )
     results_dir_label = ctk.CTkLabel(cfg_window, text=results_dir_string, width=cfg_w)
-    results_dir_label.grid(row=16, column=0)
+    results_dir_label.grid(row=18, column=0)
     results_dir_entry = ctk.CTkEntry(cfg_window, textvariable=cfg["results_dir"])
-    results_dir_entry.grid(row=17, column=0)
+    results_dir_entry.grid(row=19, column=0)
     # column name information window
     column_info_string = "Customise joints and angles"
     column_info_button = ctk.CTkButton(
@@ -476,7 +521,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
     column_info_button.grid(
-        row=18, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=20, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -487,7 +532,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: cfg_window.destroy(),
     )
     adv_cfg_done_button.grid(
-        row=20, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=22, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # maximise widgets
     maximise_widgets(cfg_window)

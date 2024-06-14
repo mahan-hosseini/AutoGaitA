@@ -15,6 +15,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation, FFMpegWriter
 from pingouin import sphericity, mixed_anova
 from scipy import stats
+import seaborn as sns
 
 # %% A note on cross species functionality
 # => This function supports cross species analyses, however the data must be obtained
@@ -201,16 +202,16 @@ def some_prep(folderinfo, cfg):
 
     # prepare some plotting color stuff
     cfg["group_color_cycler"] = plt.cycler(
-        "color", plt.cm.viridis(np.linspace(0, 1, len(group_names)))
+        "color", sns.color_palette(cfg["color_palette"], len(group_names))
     )
     cfg["group_color_dict"] = dict(
         zip(group_names, cfg["group_color_cycler"].by_key()["color"])
     )
     cfg["joint_color_cycler"] = plt.cycler(
-        "color", plt.cm.viridis(np.linspace(0, 1, len(joints)))
+        "color", sns.color_palette(cfg["color_palette"], len(joints))
     )
     cfg["angle_color_cycler"] = plt.cycler(
-        "color", plt.cm.viridis(np.linspace(0, 1, len(angles["name"])))
+        "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
     )
 
     return folderinfo, cfg

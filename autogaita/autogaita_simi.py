@@ -9,6 +9,7 @@ import math
 import matplotlib
 import matplotlib.pyplot as plt
 import warnings
+import seaborn as sns
 
 # %% constants
 # increase resolution of figures
@@ -1615,13 +1616,13 @@ def plot_joint_z_by_y(legname, all_steps_data, all_cycles, info, cfg):
             try:  # handle only 1 run in "stuff by y" plots
                 ax[j][r].set_prop_cycle(
                     plt.cycler(
-                        "color", plt.cm.viridis(np.linspace(0, 1, max_cycle_num))
+                        "color", sns.color_palette(cfg["color_palette"], max_cycle_num)
                     )
                 )
             except:
                 ax[j].set_prop_cycle(
                     plt.cycler(
-                        "color", plt.cm.viridis(np.linspace(0, 1, max_cycle_num))
+                        "color", sns.color_palette(cfg["color_palette"], max_cycle_num)
                     )
                 )
             # check for bodyside-specificity
@@ -1697,7 +1698,7 @@ def plot_angles_by_time(legname, all_steps_data, all_cycles, info, cfg):
         for run_cycles in all_cycles[legname]:  # run loop (color-cycler-reset)
             sc_num = len(run_cycles)
             ax[a].set_prop_cycle(
-                plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, max_cycle_num)))
+                plt.cycler("color", sns.color_palette(cfg["color_palette"], max_cycle_num))
             )
             # check for bodyside-specificity
             if angle + "Angle" in all_steps_data.columns:
@@ -1756,7 +1757,7 @@ def plot_stickdiagram(legname, all_steps_data, all_cycles, info, cfg):
         sharey=True,
         gridspec_kw={"hspace": 0},
     )
-    color_cycle = plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, max_cycle_num)))
+    color_cycle = plt.cycler("color", sns.color_palette(cfg["color_palette"], max_cycle_num))
 
     # plot
     for r, run_cycles in enumerate(all_cycles[legname]):  # run loop (axis)
@@ -1854,7 +1855,7 @@ def plot_joint_z_by_average_SC(legname, average_data, std_data, sc_num, info, cf
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(joints))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(joints)))
     )
     x = np.linspace(0, 100, bin_num)
     for joint in joints:  # joint loop (lines)
@@ -1893,7 +1894,7 @@ def plot_angles_by_average_SC(legname, average_data, std_data, sc_num, info, cfg
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(angles["name"]))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_xlabel("Percentage")
@@ -1937,7 +1938,7 @@ def plot_y_velocities_by_average_SC(legname, average_data, std_data, sc_num, inf
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(joints))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(joints)))
     )
     x = np.linspace(0, 100, bin_num)
     for joint in joints:  # joint loop (lines)
@@ -1980,7 +1981,7 @@ def plot_angular_velocities_by_average_SC(
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(angles["name"]))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
     )
     x = np.linspace(0, 100, bin_num)
     for angle in angles["name"]:  # angle loop (lines)
@@ -2023,7 +2024,7 @@ def plot_y_acceleration_by_average_SC(
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(joints))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(joints)))
     )
     x = np.linspace(0, 100, bin_num)
     for joint in joints:  # joint loop (lines)
@@ -2069,7 +2070,7 @@ def plot_angular_acceleration_by_average_SC(
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(angles["name"]))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
     )
     x = np.linspace(0, 100, bin_num)
     for angle in angles["name"]:  # angle loop (lines)
