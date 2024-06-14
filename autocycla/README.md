@@ -1,6 +1,6 @@
 # AutoCyclA – Automated Cycling Analysis with AutoGaitA
 
-Despite AutoGaitA being developed to facilitate and automate gait analyses after successful body posture tracking, we demonstrate with this project, AutoCyclA, that our toolbox can be adopted to any behaviour of interest as long as the kinematic features extracted in coordinate space are meaningful to the user (e.g. the 2D coordinates recorded from a lateral view of somebody cycling can generate angles of interest). This demonstration further serves as a broad manual for analysing any behaviour using AutoGaitA.
+Despite AutoGaitA being developed to facilitate and automate gait analyses after successful body posture tracking, we demonstrate with this project, AutoCyclA, that our toolbox can be adopted to any behaviour of interest as long as the kinematic features extracted in coordinate space are meaningful to the user (e.g. the 2D coordinates recorded from a lateral view of somebody cycling can generate angles of interest). This demonstration further serves as a broad manual for analysing any rhythmic behaviour using AutoGaitA.
 
 ## Aim
 
@@ -11,9 +11,9 @@ One of the main results our approach generates is a figure plotting the leg’s 
 
 <div align="center">
 
-|<img src=images/figure_1.png alt="figure 1" width="600" height="400">|
+|<img src=images/figure_1.png alt="figure 1" width="400" height="400">|
 |:--:|
-| *Figure 1: Analysis of one video in the sitting/hands-high condition; graph showing ankle, knee and hip angles throughout an average pedal cycle* |
+| ***Figure 1*: Analysis of one video in the sitting/hands-high condition; graph showing ankle, knee and hip angles throughout an average pedal cycle* |
 
 </div>
 
@@ -51,7 +51,7 @@ After the loss plateaued the network was evaluated and reached a train and test 
 
 |<img src=images/table_1.png alt="table 1" width="600" height="100">|
 |:--:|
-| *Table 1: Model evaluation results* |
+| ***Table 1**: Model evaluation results* |
 
 </div>
 
@@ -61,11 +61,10 @@ After this analysis a labeled video was additionally generated for visually insp
 
 <div align="center">
 
-|<img src=images/figure_2.png alt="figure 2" width="600" height="530">|
+|<img src=images/figure_2.png alt="figure 2" width="400" height="400">|
 |:--:|
-| *Figure 2: Illustration of cyclist with DLC-tracked joints. Each point represent an AI generated marker that is tracked throughout the entire video. Note that AutoCyclA's real videos are not provided to preserve privacy. Photo by <a href="https://unsplash.com/@cathus?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Garry Neesam</a> on <a href="https://unsplash.com/photos/timelapse-photography-of-man-riding-bicycle-XgWBNUsIvOE?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
-  * |
-
+| ***Figure 2**: Illustration of cyclist with DLC-tracked joints. Each point represent an AI generated marker that is tracked throughout the entire video. Note that AutoCyclA's real videos are not provided to preserve privacy*. Photo by <a href="https://unsplash.com/@cathus?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Garry Neesam</a> on <a href="https://unsplash.com/photos/timelapse-photography-of-man-riding-bicycle-XgWBNUsIvOE?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
+   
 </div>
 
 ### AutoGaitA
@@ -76,17 +75,17 @@ AutoGaitA Group generates various figures. Some of these figures are particularl
 
 <div align="center">
 
-|<img src=images/figure_3.png alt="figure 3" width="600" height="400">|
+|<img src=images/figure_3.png alt="figure 3" width="400" height="400">|
 |:--:|
 | *Figure 3: Analysis of one video in the sitting/hands-low condition; plot showing ankle, knee and hip angles throughout an average pedal cycle* |
 
-|<img src=images/figure_4.png alt="figure 4" width="600" height="400">|
+|<img src=images/figure_4.png alt="figure 4" width="400" height="400">|
 |:--:|
-| *Figure 4: Group comparison of three videos, sitting/hands-low, sitting/hands-high and standing; plot shows the hip angle throughout an average pedal cycle for each condition* |
+| ***Figure 4**: Group comparison of three videos, sitting/hands-low, sitting/hands-high and standing; plot shows the hip angle throughout an average pedal cycle for each condition* |
 
 </div>
 
-The “Average Stepcycle.xlsx” can further be used to get the precise angles for each time bin across the average pedal cycle.
+The “Average Stepcycle.xlsx” file can further be used to get the precise angles for each time bin across the average pedal cycle.
 
 ### Adjust, Analyse, Repeat
 
