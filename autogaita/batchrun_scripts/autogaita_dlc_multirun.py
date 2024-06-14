@@ -35,11 +35,11 @@ def dlc_multirun():
     cfg["save_to_xls"] = True
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
-    cfg["normalise_height_at_SC_level"] = False
+    cfg["normalise_height_at_SC_level"] = True
     cfg["plot_joint_number"] = 3
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
-    cfg["export_average_x"] = False
+    cfg["export_average_x"] = True
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",
@@ -53,9 +53,9 @@ def dlc_multirun():
     cfg["beam_hind_jointadd"] = ["Tail base ", "Tail center ", "Tail tip "]
     cfg["beam_fore_jointadd"] = ["Nose ", "Ear base "]
     cfg["angles"] = {
-        "name": ["Ankle", "Elbow"],
-        "lower_joint": ["Hind paw tao", "Wrist"],
-        "upper_joint": ["Knee", "Lower Shoulder"],
+        "name": ["Ankle ", "Knee ", "Hip "],
+        "lower_joint": ["Hind paw tao ", "Ankle ", "Knee "],
+        "upper_joint": ["Knee ", "Hip ", "Iliac Crest "],
     }
     # run a single gaita run for each entry of info
     info = extract_info(folderinfo)

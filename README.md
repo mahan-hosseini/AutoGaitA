@@ -64,6 +64,9 @@ By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for m
 - [Documentation - AutoGaitA DLC](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.20bg7b7ymt0b)
 - [Documentation - AutoGaitA Simi](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.uz61bpmua7qz)
 
+## Analysing other behaviours - AutoCyclA 🚴
+Even though AutoGaitA's main focus is to automate and standardise gait analyses, our toolbox can be used to automate the analyses of any rhythmic behaviour of interest. For a proof-of-principle demonstration and an introduction of the general workflow of such analyses, see *[AutoCyclA - Automated Cycling Analysis with AutoGaitA.](https://github.com/mahan-hosseini/AutoGaitA/tree/main/autocycla)*
+
 ## Reference
 If you use this code or data please [cite our preprint](https://www.biorxiv.org/content/10.1101/2024.04.14.589409v1).
 

@@ -265,9 +265,15 @@ def some_prep(info, folderinfo, cfg):
             "\n***********\n! WARNING !\n***********\n"
             + "We detected an unequal number of columns ending with x, y or "
             + "likelihood!\nCounts were:\n"
-            + "x: " + str(x_col_count) + ", y: " + str(y_col_count) + ", likelihood: " 
-            + str(likelihood_col_count) + "!\n\n"
-            + "We continue with the analysis but we strongly suggest you have another " + "look at your dataset, this should not happen.\n"
+            + "x: "
+            + str(x_col_count)
+            + ", y: "
+            + str(y_col_count)
+            + ", likelihood: "
+            + str(likelihood_col_count)
+            + "!\n\n"
+            + "We continue with the analysis but we strongly suggest you have another "
+            + "look at your dataset, this should not happen.\n"
         )
         print(cols_are_weird_message)
         write_issues_to_textfile(cols_are_weird_message, info)
@@ -613,12 +619,10 @@ def flip_mouse_body(data, info):
     write_issues_to_textfile(message, info)
 
     # 1) Flip all rows in x columns only and subtract max from all vals
-    flipped_data = pd.DataFrame(data=None, columns=data.columns)
-    for col in data.columns:
-        if col.endswith("x"):
-            flipped_data.loc[:, col] = max(data.loc[:, col]) - data.loc[:, col]
-        else:
-            flipped_data.loc[:, col] = data.loc[:, col]
+    flipped_data = data.copy()
+    x_cols = [col for col in flipped_data.columns if col.endswith(" x")]
+    for col in x_cols:
+        flipped_data[col] = max(flipped_data[col]) - flipped_data[col]
     return flipped_data
 
 
