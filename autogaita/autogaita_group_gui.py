@@ -29,7 +29,13 @@ LIST_VARS = [
 INT_VARS = ["permutation_number", "number_of_PCs", "number_of_PCs"]
 # TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file
 # (note that numbers are initialised as strings)
-TK_BOOL_VARS = ["do_permtest", "do_anova", "save_3D_PCA_video", "plot_SE"]
+TK_BOOL_VARS = [
+    "do_permtest",
+    "do_anova",
+    "save_3D_PCA_video",
+    "plot_SE",
+    "legend_outside",
+]
 TK_STR_VARS = [
     "anova_design",
     "permutation_number",
@@ -485,6 +491,19 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     )
     save_PCA_video_checkbox.grid(row=9, column=0)
 
+    # legend outside
+    legend_outside_string = "Move legend outside the plot"
+    legend_outside_checkbox = ctk.CTkCheckBox(
+        cfgwindow,
+        text=legend_outside_string,
+        variable=cfg["legend_outside"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+    )
+    legend_outside_checkbox.grid(row=10, column=0)
+
     # done button
     adv_cfg_done_button = ctk.CTkButton(
         cfgwindow,
@@ -493,7 +512,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         hover_color=HOVER_COLOR,
         command=lambda: cfgwindow.destroy(),
     )
-    adv_cfg_done_button.grid(row=10, column=0, sticky="nsew", pady=20, padx=80)
+    adv_cfg_done_button.grid(row=11, column=0, sticky="nsew", pady=20, padx=80)
 
     # maximise widgets to fit fullscreen
     maximise_widgets(cfgwindow)

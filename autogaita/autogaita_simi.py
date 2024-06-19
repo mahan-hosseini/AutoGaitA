@@ -1655,12 +1655,26 @@ def plot_joint_z_by_y(legname, all_steps_data, all_cycles, info, cfg):
                     ax[j].plot(this_y, this_z, label=this_label)
             # axis stuff
             try:
-                ax[j][r].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+                if cfg["legend_outside"] == True:
+                    ax[j][r].legend(
+                        fontsize=SC_LAT_LEGEND_FONTSIZE,
+                        loc="center left",
+                        bbox_to_anchor=(1, 0.5),
+                    )
+                elif cfg["legend_outside"] == False:
+                    ax[j][r].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
                 median_z_val = [round(np.median(ax[j][r].get_yticks()), 2)]
                 median_z_val_label = [str(median_z_val[0])]  # has to be of same len
                 ax[j][r].set_yticks(median_z_val, median_z_val_label)
             except:
-                ax[j].legend(fontsize=SC_LAT_LEGEND_FONTSIZE + 3)
+                if cfg["legend_outside"] == True:
+                    ax[j].legend(
+                        fontsize=SC_LAT_LEGEND_FONTSIZE + 3,
+                        loc="center left",
+                        bbox_to_anchor=(1, 0.5),
+                    )
+                elif cfg["legend_outside"] == False:
+                    ax[j].legend(fontsize=SC_LAT_LEGEND_FONTSIZE + 3)
                 median_z_val = [round(np.median(ax[j].get_yticks()), 2)]
                 median_z_val_label = [str(median_z_val[0])]  # has to be of same len
                 ax[j].set_yticks(median_z_val, median_z_val_label)
@@ -1698,7 +1712,9 @@ def plot_angles_by_time(legname, all_steps_data, all_cycles, info, cfg):
         for run_cycles in all_cycles[legname]:  # run loop (color-cycler-reset)
             sc_num = len(run_cycles)
             ax[a].set_prop_cycle(
-                plt.cycler("color", sns.color_palette(cfg["color_palette"], max_cycle_num))
+                plt.cycler(
+                    "color", sns.color_palette(cfg["color_palette"], max_cycle_num)
+                )
             )
             # check for bodyside-specificity
             if angle + "Angle" in all_steps_data.columns:
@@ -1757,7 +1773,9 @@ def plot_stickdiagram(legname, all_steps_data, all_cycles, info, cfg):
         sharey=True,
         gridspec_kw={"hspace": 0},
     )
-    color_cycle = plt.cycler("color", sns.color_palette(cfg["color_palette"], max_cycle_num))
+    color_cycle = plt.cycler(
+        "color", sns.color_palette(cfg["color_palette"], max_cycle_num)
+    )
 
     # plot
     for r, run_cycles in enumerate(all_cycles[legname]):  # run loop (axis)
@@ -1823,12 +1841,26 @@ def plot_stickdiagram(legname, all_steps_data, all_cycles, info, cfg):
                         ax.plot(this_ys, this_zs, color=this_color, lw=STICK_LINEWIDTH)
         # axis stuff
         try:
-            ax[r].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+            if cfg["legend_outside"] == True:
+                ax[r].legend(
+                    fontsize=SC_LAT_LEGEND_FONTSIZE,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0.5),
+                )
+            elif cfg["legend_outside"] == False:
+                ax[r].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
             median_z_val = [round(np.median(ax[r].get_yticks()), 2)]
             median_z_val_label = [str(median_z_val[0])]  # has to be of same len
             ax[r].set_yticks(median_z_val, median_z_val_label)
         except:
-            ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE + 3)
+            if cfg["legend_outside"] == True:
+                ax.legend(
+                    fontsize=SC_LAT_LEGEND_FONTSIZE + 3,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0.5),
+                )
+            elif cfg["legend_outside"] == False:
+                ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE + 3)
             median_z_val = [round(np.median(ax.get_yticks()), 2)]
             median_z_val_label = [str(median_z_val[0])]  # has to be of same len
             ax.set_yticks(median_z_val, median_z_val_label)
@@ -1868,7 +1900,11 @@ def plot_joint_z_by_average_SC(legname, average_data, std_data, sc_num, info, cf
             this_std = std_data.iloc[:, z_col]
         ax.plot(x, this_z, label=joint)
         ax.fill_between(x, this_z - this_std, this_z + this_std, alpha=0.2)
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     ax.set_xlabel("Percentage")
     ax.set_ylabel("z (m)")
     figure_file_string = (
@@ -1894,7 +1930,9 @@ def plot_angles_by_average_SC(legname, average_data, std_data, sc_num, info, cfg
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_xlabel("Percentage")
@@ -1912,7 +1950,11 @@ def plot_angles_by_average_SC(legname, average_data, std_data, sc_num, info, cfg
         ax.fill_between(
             x, this_angle_val - this_std, this_angle_val + this_std, alpha=0.2
         )
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     ax.set_ylim(ANGLE_PLOTS_YLIMITS)
     figure_file_string = (
         name + " - " + legname + " - Joint angles over average step cycle"
@@ -1952,7 +1994,11 @@ def plot_y_velocities_by_average_SC(legname, average_data, std_data, sc_num, inf
             this_std = std_data.iloc[:, y_col]
         ax.plot(x, this_y, label=joint)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     ax.set_xlabel("Percentage")
     ax.set_ylabel("Velocity (Y in m / " + str(int((1 / sampling_rate) * 1000)) + "ms)")
     figure_file_string = (
@@ -1981,7 +2027,9 @@ def plot_angular_velocities_by_average_SC(
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     for angle in angles["name"]:  # angle loop (lines)
@@ -1995,7 +2043,11 @@ def plot_angular_velocities_by_average_SC(
             this_std = std_data.iloc[:, y_col]
         ax.plot(x, this_y, label=angle)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     ax.set_xlabel("Percentage")
     ax.set_ylabel("Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + "ms)")
     figure_file_string = (
@@ -2037,7 +2089,11 @@ def plot_y_acceleration_by_average_SC(
             this_std = std_data.iloc[:, y_col]
         ax.plot(x, this_y, label=joint)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     ax.set_xlabel("Percentage")
     ax.set_ylabel(
         "Acceleration (Y in m / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
@@ -2070,7 +2126,9 @@ def plot_angular_acceleration_by_average_SC(
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     for angle in angles["name"]:  # angle loop (lines)
@@ -2083,7 +2141,11 @@ def plot_angular_acceleration_by_average_SC(
             this_std = std_data.iloc[:, y_col]
         ax.plot(x, this_y, label=angle)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     ax.set_xlabel("Percentage")
     ax.set_ylabel(
         "Acceleration (degree / " + str(int((1 / sampling_rate) * 1000)) + "ms)"

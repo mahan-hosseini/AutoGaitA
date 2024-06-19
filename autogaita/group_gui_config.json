@@ -29,6 +29,7 @@
         "save_3D_PCA_video": false,
         "plot_SE": false,
         "color_palette": "viridis",
+        "legend_outside": false,
         "stats_variables": [],
         "PCA_variables": []
     }
