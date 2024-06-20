@@ -1362,6 +1362,24 @@ def add_step_separators(dataframe, nanvector, numvector):
 
 
 # ..............................  master function  .............................
+
+# A note on updated colour cyclers after pull request that was merged 20.06.2024
+# => Using color palettes instead of colour maps as I had previously means that
+#    we cycle through neighbouring colours
+# => I initially implemented an "equally distant" approach.
+# => So for viridis and n=2 (e.g. if 2 groups) it would be purple and yellow
+#    (as far away as possible)
+# => Now it is dark blue and green
+# => Updated approach is aesthetically more pleasing IMO.
+# => However it does have the risk of not being able to tell the colours in
+#    some cases - e.g. if some accelerations are very overlapping.
+# => But - because users can in theses cases just choose a colour palette that
+#    in itself has categorical colours (Set1, Dark2, etc.) I still keep the new
+#    behaviour
+# => Nonetheless, in case you want to use the "old behaviour" at some point it
+#    would be coded as commented out in plot_joint_y_by_x
+
+
 def plot_results(info, results, folderinfo, cfg):
     """Plot results - y coords by x coords & average angles over SC %"""
     # unpack
@@ -1471,6 +1489,8 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
     convert_to_mm = cfg["convert_to_mm"]
     plot_joints = cfg["plot_joints"]
     sampling_rate = cfg["sampling_rate"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
 
     # some prep
     sc_num = len(sc_idxs)
@@ -1480,58 +1500,37 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
     # plot
     for j, joint in enumerate(plot_joints):  # joint loop (figures)
         f[j], ax[j] = plt.subplots(1, 1)
-        ax[j].set_prop_cycle(
-            plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
+        # What "Old" colormap approach would look like with seaborn
+        # this_map = sns.color_palette(cfg["color_palette"], as_cmap=True)
+        # ax[j].set_prop_cycle(plt.cycler("color", this_map(np.linspace(0, 1, sc_num))))
+        ax[j].set_prop_cycle(  # New color palette approach
+            plt.cycler("color", sns.color_palette(color_palette, sc_num))
         )
-        if joint == "Hind paw tao ":
-            ax[j].set_title(name + " - Foot")
-        else:
-            ax[j].set_title(name + " - " + joint)
+        ax[j].set_title(name + " - " + joint)
         x_col_idx = all_steps_data.columns.get_loc(joint + "x")
         y_col_idx = all_steps_data.columns.get_loc(joint + "y")
         time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
         for s in range(sc_num):
             this_x = all_steps_data.iloc[sc_idxs[s], x_col_idx]
             this_y = all_steps_data.iloc[sc_idxs[s], y_col_idx]
-            if sampling_rate <= 100:
-                float_precision = 2  # how many decimals we round to
-            else:
-                float_precision = 4
-            this_label = (
-                str(
-                    round(
-                        all_steps_data.iloc[sc_idxs[s][0], time_col_idx],
-                        float_precision,
-                    )
-                )
-                + "-"
-                + str(
-                    round(
-                        all_steps_data.iloc[sc_idxs[s][-1], time_col_idx],
-                        float_precision,
-                    )
-                )
-                + "s"
+            this_label = generate_sc_latency_label(
+                all_steps_data, sc_idxs[s], sampling_rate, time_col_idx
             )
             ax[j].plot(this_x, this_y, label=this_label)
         ax[j].set_xlabel("x (pixel)")  # will be overwritten if we convert
         ax[j].set_ylabel("y (pixel)")
         # legend adjustments
-        if cfg["legend_outside"] == True:
+        if legend_outside is True:
             ax[j].legend(
                 fontsize=SC_LAT_LEGEND_FONTSIZE,
                 loc="center left",
                 bbox_to_anchor=(1, 0.5),
             )
-        elif cfg["legend_outside"] == False:
+        elif legend_outside is False:
             ax[j].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
-
         if convert_to_mm:
             tickconvert_mm_to_cm(ax[j], "both")
-        if joint == "Hind paw tao ":
-            figure_file_string = " - Foot y by x coordinates"
-        else:
-            figure_file_string = " - " + joint + "y by x coordinates"
+        figure_file_string = " - " + joint + "y by x coordinates"
         save_figures(f[j], results_dir, name, figure_file_string)
         if dont_show_plots:
             plt.close(f[j])
@@ -1545,6 +1544,9 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
     results_dir = info["results_dir"]
     dont_show_plots = cfg["dont_show_plots"]
     angles = cfg["angles"]
+    sampling_rate = cfg["sampling_rate"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
 
     # some prep
     sc_num = len(sc_idxs)
@@ -1555,17 +1557,30 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
     for a, angle in enumerate(angles["name"]):  # angle loop (figures)
         f[a], ax[a] = plt.subplots(1, 1)
         ax[a].set_prop_cycle(
-            plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
+            plt.cycler("color", sns.color_palette(color_palette, sc_num))
         )
         ax[a].set_title(name + " - " + angle)
         ax[a].set_ylabel("Angle")
         ax[a].set_xlabel("Time (s)")
         x_col_idx = all_steps_data.columns.get_loc(TIME_COL)
         y_col_idx = all_steps_data.columns.get_loc(angle + "Angle")
+        time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
         for s in range(sc_num):
             this_x = all_steps_data.iloc[sc_idxs[s], x_col_idx]
             this_y = all_steps_data.iloc[sc_idxs[s], y_col_idx]
-            ax[a].plot(this_x, this_y)
+            this_label = generate_sc_latency_label(
+                all_steps_data, sc_idxs[s], sampling_rate, time_col_idx
+            )
+            ax[a].plot(this_x, this_y, label=this_label)
+        # legend adjustments
+        if legend_outside is True:
+            ax[a].legend(
+                fontsize=SC_LAT_LEGEND_FONTSIZE,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+            )
+        elif legend_outside is False:
+            ax[a].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
         figure_file_string = " - " + angle + "Angle by Time"
         save_figures(f[a], results_dir, name, figure_file_string)
         if dont_show_plots:
@@ -1582,11 +1597,13 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     convert_to_mm = cfg["convert_to_mm"]
     plot_joints = cfg["plot_joints"]
     sampling_rate = cfg["sampling_rate"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
 
     # some prep
     sc_num = len(sc_idxs)
     f, ax = plt.subplots(1, 1)
-    color_cycle = plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
+    color_cycle = plt.cycler("color", sns.color_palette(color_palette, sc_num))
     ax.set_prop_cycle(color_cycle)
     time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
 
@@ -1594,21 +1611,8 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     # => for timepoints from SC1 to SCend - plot(joint1x, joint1y)
     for s, this_color_dict in zip(range(sc_num), color_cycle):  # SC loop (colors)
         this_color = this_color_dict["color"][:3]
-        if sampling_rate <= 100:
-            float_precision = 2  # how many decimals we round to
-        else:
-            float_precision = 4
-        this_label = (
-            str(
-                round(all_steps_data.iloc[sc_idxs[s][0], time_col_idx], float_precision)
-            )
-            + "-"
-            + str(
-                round(
-                    all_steps_data.iloc[sc_idxs[s][-1], time_col_idx], float_precision
-                )
-            )
-            + "s"
+        this_label = generate_sc_latency_label(
+            all_steps_data, sc_idxs[s], sampling_rate, time_col_idx
         )
         for i in sc_idxs[s]:  # loop over timepoints of current SC
             this_xs = list()  # for each timepoint, define joints' xy coord new
@@ -1628,11 +1632,11 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     if convert_to_mm:
         tickconvert_mm_to_cm(ax, "both")
     # legend adjustments
-    if cfg["legend_outside"] == True:
+    if legend_outside is True:
         ax.legend(
             fontsize=SC_LAT_LEGEND_FONTSIZE, loc="center left", bbox_to_anchor=(1, 0.5)
         )
-    elif cfg["legend_outside"] == False:
+    elif legend_outside is False:
         ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
     figure_file_string = " - Hindlimb Stick Diagram"
     save_figures(f, results_dir, name, figure_file_string)
@@ -1650,32 +1654,21 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     convert_to_mm = cfg["convert_to_mm"]
     fore_joints = cfg["fore_joints"]
     sampling_rate = cfg["sampling_rate"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
 
     # some prep
     sc_num = len(sc_idxs)
     f, ax = plt.subplots(1, 1)
-    color_cycle = plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
+    color_cycle = plt.cycler("color", sns.color_palette(color_palette, sc_num))
     ax.set_prop_cycle(color_cycle)
     time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
 
     # plot
     for s, this_color in zip(range(sc_num), color_cycle):  # SC loop (colors)
         this_color = this_color["color"][:3]
-        if sampling_rate <= 100:
-            float_precision = 2  # how many decimals we round to
-        else:
-            float_precision = 4
-        this_label = (
-            str(
-                round(all_steps_data.iloc[sc_idxs[s][0], time_col_idx], float_precision)
-            )
-            + "-"
-            + str(
-                round(
-                    all_steps_data.iloc[sc_idxs[s][-1], time_col_idx], float_precision
-                )
-            )
-            + "s"
+        this_label = generate_sc_latency_label(
+            all_steps_data, sc_idxs[s], sampling_rate, time_col_idx
         )
         for i in sc_idxs[s]:
             this_xs = list()
@@ -1695,11 +1688,11 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     if convert_to_mm:
         tickconvert_mm_to_cm(ax, "both")
     # legend adjustments
-    if cfg["legend_outside"] == True:
+    if legend_outside is True:
         ax.legend(
             fontsize=SC_LAT_LEGEND_FONTSIZE, loc="center left", bbox_to_anchor=(1, 0.5)
         )
-    elif cfg["legend_outside"] == False:
+    elif legend_outside is False:
         ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
     figure_file_string = " - Forelimb Stick Diagram"
     save_figures(f, results_dir, name, figure_file_string)
@@ -1719,11 +1712,13 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg):
     plot_SE = cfg["plot_SE"]
     sc_num = cfg["sc_num"]
     hind_joints = cfg["hind_joints"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
 
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(hind_joints)))
+        plt.cycler("color", sns.color_palette(color_palette, len(hind_joints)))
     )
     x = np.linspace(0, 100, bin_num)
     for joint in hind_joints:  # joint loop (lines)
@@ -1736,9 +1731,9 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg):
         ax.plot(x, this_y, label=joint)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     # legend adjustments
-    if cfg["legend_outside"] == True:
+    if legend_outside is True:
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    elif cfg["legend_outside"] == False:
+    elif legend_outside is False:
         ax.legend()
     ax.set_title(name + " - Joint Y over average step cycle")
     ax.set_xlabel("Percentage")
@@ -1762,13 +1757,13 @@ def plot_angles_by_average_SC(average_data, std_data, info, cfg):
     plot_SE = cfg["plot_SE"]
     sc_num = cfg["sc_num"]
     angles = cfg["angles"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
 
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler(
-            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
-        )
+        plt.cycler("color", sns.color_palette(color_palette, len(angles["name"])))
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Joint angles over average step cycle")
@@ -1784,9 +1779,9 @@ def plot_angles_by_average_SC(average_data, std_data, info, cfg):
         ax.plot(x, this_y, label=angle)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     # legend adjustments
-    if cfg["legend_outside"] == True:
+    if legend_outside is True:
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    elif cfg["legend_outside"] == False:
+    elif legend_outside is False:
         ax.legend()
     figure_file_string = " - Joint angles over average step cycle"
     save_figures(f, results_dir, name, figure_file_string)
@@ -1807,11 +1802,13 @@ def plot_x_velocities_by_average_SC(average_data, std_data, info, cfg):
     plot_SE = cfg["plot_SE"]
     sc_num = cfg["sc_num"]
     hind_joints = cfg["hind_joints"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
 
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(hind_joints)))
+        plt.cycler("color", sns.color_palette(color_palette, len(hind_joints)))
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Joint velocities over average step cycle")
@@ -1825,9 +1822,9 @@ def plot_x_velocities_by_average_SC(average_data, std_data, info, cfg):
         ax.plot(x, this_y, label=joint)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     # legend adjustments
-    if cfg["legend_outside"] == True:
+    if legend_outside is True:
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    elif cfg["legend_outside"] == False:
+    elif legend_outside is False:
         ax.legend()
     ax.set_xlabel("Percentage")
     ax.set_ylabel(
@@ -1856,13 +1853,13 @@ def plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg):
     plot_SE = cfg["plot_SE"]
     sc_num = cfg["sc_num"]
     angles = cfg["angles"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
 
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler(
-            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
-        )
+        plt.cycler("color", sns.color_palette(color_palette, len(angles["name"])))
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Angular velocities over average step cycle")
@@ -1878,9 +1875,9 @@ def plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg):
         ax.plot(x, this_y, label=angle)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     # legend adjustments
-    if cfg["legend_outside"] == True:
+    if legend_outside is True:
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    elif cfg["legend_outside"] == False:
+    elif legend_outside is False:
         ax.legend()
     figure_file_string = " - Angular velocities over average step cycle"
     save_figures(f, results_dir, name, figure_file_string)
@@ -1901,11 +1898,13 @@ def plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg):
     plot_SE = cfg["plot_SE"]
     sc_num = cfg["sc_num"]
     hind_joints = cfg["hind_joints"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
 
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(hind_joints)))
+        plt.cycler("color", sns.color_palette(color_palette, len(hind_joints)))
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Joint accelerations over average step cycle")
@@ -1919,9 +1918,9 @@ def plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg):
         ax.plot(x, this_y, label=joint)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     # legend adjustments
-    if cfg["legend_outside"] == True:
+    if legend_outside is True:
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    elif cfg["legend_outside"] == False:
+    elif legend_outside is False:
         ax.legend()
     ax.set_xlabel("Percentage")
     ax.set_ylabel(
@@ -1952,13 +1951,13 @@ def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
     plot_SE = cfg["plot_SE"]
     sc_num = cfg["sc_num"]
     angles = cfg["angles"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
 
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler(
-            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
-        )
+        plt.cycler("color", sns.color_palette(color_palette, len(angles["name"])))
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Angular accelerations over average step cycle")
@@ -1976,9 +1975,9 @@ def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
         ax.plot(x, this_y, label=angle)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
     # legend adjustments
-    if cfg["legend_outside"] == True:
+    if legend_outside is True:
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    elif cfg["legend_outside"] == False:
+    elif legend_outside is False:
         ax.legend()
     figure_file_string = " - Angular acceleration over average step cycle"
     save_figures(f, results_dir, name, figure_file_string)
@@ -2018,6 +2017,30 @@ def tickconvert_mm_to_cm(axis, whichlabel):
             y_ticklabels.append(str(round(t / 10, 2)))
         axis.set_yticks(y_ticks, labels=y_ticklabels)
         axis.set_ylabel("y (cm)")
+
+
+def generate_sc_latency_label(all_steps_data, this_sc_idx, sampling_rate, time_col_idx):
+    if sampling_rate <= 100:
+        float_precision = 2  # how many decimals we round to
+    else:
+        float_precision = 4
+    this_label = (
+        str(
+            round(
+                all_steps_data.iloc[this_sc_idx[0], time_col_idx],
+                float_precision,
+            )
+        )
+        + "-"
+        + str(
+            round(
+                all_steps_data.iloc[this_sc_idx[-1], time_col_idx],
+                float_precision,
+            )
+        )
+        + "s"
+    )
+    return this_label
 
 
 # %% local functions 5 - print finish

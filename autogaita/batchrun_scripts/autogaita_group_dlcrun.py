@@ -27,11 +27,11 @@ def group_dlcrun():
     cfg["save_3D_PCA_video"] = False
     cfg["stats_threshold"] = 0.05
     cfg["plot_SE"] = False
+    cfg["color_palette"] = "viridis"
+    cfg["legend_outside"] = True
     cfg["which_leg"] = "left"
     cfg["anova_design"] = "Mixed ANOVA"
     cfg["permutation_number"] = 100
-    cfg["color_palette"] = "viridis"
-    cfg["legend_outside"] = False
     cfg["PCA_variables"] = ["Hind paw tao y", "Ankle y", "Knee y"]
     cfg["stats_variables"] = [
         # "Hind paw tao y",

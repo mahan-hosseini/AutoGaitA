@@ -306,7 +306,7 @@ def simi_gui():
     plot_joint_num_entry = ctk.CTkEntry(root, textvariable=cfg["plot_joint_number"])
     plot_joint_num_entry.grid(row=15, column=0)
     # color palette
-    color_palette_string = "Choose the color palette for the result graphs"
+    color_palette_string = "Choose figures' color palette"
     color_palette_label = ctk.CTkLabel(root, text=color_palette_string)
     color_palette_label.grid(row=16, column=0)
     color_palette_entry = ctk.CTkOptionMenu(
@@ -318,14 +318,18 @@ def simi_gui():
         button_hover_color=HOVER_COLOR,
     )
     color_palette_entry.grid(row=17, column=0)
-    # results dir
-    results_dir_string = (
-        "Save Results subfolders to directory location below instead of to data's"
+    # legend outside
+    legend_outside_string = "Plot legends outside of figures' panels"
+    legend_outside_checkbox = ctk.CTkCheckBox(
+        root,
+        text=legend_outside_string,
+        variable=cfg["legend_outside"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
     )
-    results_dir_label = ctk.CTkLabel(root, text=results_dir_string)
-    results_dir_label.grid(row=18, column=0)
-    results_dir_entry = ctk.CTkEntry(root, textvariable=cfg["results_dir"])
-    results_dir_entry.grid(row=19, column=0)
+    legend_outside_checkbox.grid(row=18, column=0)
 
     # .............................  right section  ....................................
     # x acceleration
@@ -390,18 +394,14 @@ def simi_gui():
         fg_color=FG_COLOR,
     )
     export_average_y_box.grid(row=15, column=1)
-    # legend outside
-    legend_outside_string = "Move legend outside the plot"
-    legend_outside_checkbox = ctk.CTkCheckBox(
-        root,
-        text=legend_outside_string,
-        variable=cfg["legend_outside"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
+    # results dir
+    results_dir_string = (
+        "Save Results subfolders to directory location below instead of to data's"
     )
-    legend_outside_checkbox.grid(row=16, column=1)
+    results_dir_label = ctk.CTkLabel(root, text=results_dir_string)
+    results_dir_label.grid(row=16, column=1)
+    results_dir_entry = ctk.CTkEntry(root, textvariable=cfg["results_dir"])
+    results_dir_entry.grid(row=17, column=1)
     # column name information window
     column_info_string = "Customise joints and angles"
     column_info_button = ctk.CTkButton(

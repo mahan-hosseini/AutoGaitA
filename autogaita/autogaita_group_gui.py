@@ -452,7 +452,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     number_of_PCs_entry.grid(row=5, column=0)
 
     # color palette
-    color_palette_string = "Choose the color palette for the result graphs"
+    color_palette_string = "Choose figures' color palette"
     color_palette_label = ctk.CTkLabel(cfgwindow, text=color_palette_string)
     color_palette_label.grid(row=6, column=0)
     color_palette_entry = ctk.CTkOptionMenu(
@@ -478,6 +478,19 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     )
     plot_SE_box.grid(row=8, column=0)
 
+    # legend outside
+    legend_outside_string = "Plot legends outside of figures' panels"
+    legend_outside_checkbox = ctk.CTkCheckBox(
+        cfgwindow,
+        text=legend_outside_string,
+        variable=cfg["legend_outside"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+    )
+    legend_outside_checkbox.grid(row=9, column=0)
+
     # save 3D PCA video
     save_PCA_video_string = "Save video of 3D PCA Scatterplot (requires ffmpeg!)"
     save_PCA_video_checkbox = ctk.CTkCheckBox(
@@ -489,20 +502,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
     )
-    save_PCA_video_checkbox.grid(row=9, column=0)
-
-    # legend outside
-    legend_outside_string = "Move legend outside the plot"
-    legend_outside_checkbox = ctk.CTkCheckBox(
-        cfgwindow,
-        text=legend_outside_string,
-        variable=cfg["legend_outside"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-    )
-    legend_outside_checkbox.grid(row=10, column=0)
+    save_PCA_video_checkbox.grid(row=10, column=0)
 
     # done button
     adv_cfg_done_button = ctk.CTkButton(

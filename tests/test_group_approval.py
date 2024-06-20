@@ -53,6 +53,8 @@ def extract_cfg():
     cfg["save_3D_PCA_video"] = False
     cfg["stats_threshold"] = 0.05
     cfg["plot_SE"] = False
+    cfg["color_palette"] = "viridis"
+    cfg["legend_outside"] = True
     cfg["which_leg"] = "left"
     cfg["anova_design"] = "RM ANOVA"
     cfg["permutation_number"] = 100

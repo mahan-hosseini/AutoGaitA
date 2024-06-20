@@ -1633,22 +1633,14 @@ def plot_joint_z_by_y(legname, all_steps_data, all_cycles, info, cfg):
                 y_col_string = transform_joint_and_leg_to_colname(joint, legname, "Y")
                 z_col_string = transform_joint_and_leg_to_colname(joint, legname, "Z")
             for s in range(sc_num):
+                this_sc_idx = run_cycles[s]
                 this_y = all_steps_data.loc[
-                    run_cycles[s][0] : run_cycles[s][1], y_col_string
+                    this_sc_idx[0] : this_sc_idx[1], y_col_string
                 ]
                 this_z = all_steps_data.loc[
-                    run_cycles[s][0] : run_cycles[s][1], z_col_string
+                    this_sc_idx[0] : this_sc_idx[1], z_col_string
                 ]
-                if sampling_rate <= 100:
-                    float_precision = 2  # how many decimals we round to
-                else:
-                    float_precision = 4
-                this_label = (
-                    str(round(run_cycles[s][0] / sampling_rate, float_precision))
-                    + "-"
-                    + str(round(run_cycles[s][1] / sampling_rate, float_precision))
-                    + "s"
-                )
+                this_label = generate_sc_latency_label(this_sc_idx, sampling_rate)
                 try:
                     ax[j][r].plot(this_y, this_z, label=this_label)
                 except:
@@ -1712,7 +1704,9 @@ def plot_angles_by_time(legname, all_steps_data, all_cycles, info, cfg):
         for run_cycles in all_cycles[legname]:  # run loop (color-cycler-reset)
             sc_num = len(run_cycles)
             ax[a].set_prop_cycle(
-                plt.cycler("color", sns.color_palette(cfg["color_palette"], max_cycle_num))
+                plt.cycler(
+                    "color", sns.color_palette(cfg["color_palette"], max_cycle_num)
+                )
             )
             # check for bodyside-specificity
             if angle + "Angle" in all_steps_data.columns:
@@ -1722,23 +1716,24 @@ def plot_angles_by_time(legname, all_steps_data, all_cycles, info, cfg):
                     angle, legname, "Angle"
                 )
             for s in range(sc_num):
+                this_sc_idx = run_cycles[s]
                 this_time = all_steps_data.loc[
-                    run_cycles[s][0] : run_cycles[s][1], DF_TIME_COL
+                    this_sc_idx[0] : this_sc_idx[1], DF_TIME_COL
                 ]
                 this_angle = all_steps_data.loc[
-                    run_cycles[s][0] : run_cycles[s][1], angle_col_string
+                    this_sc_idx[0] : this_sc_idx[1], angle_col_string
                 ]
-                if sampling_rate <= 100:
-                    float_precision = 2  # how many decimals we round to
-                else:
-                    float_precision = 4
-                this_label = (
-                    str(round(run_cycles[s][0] / sampling_rate, float_precision))
-                    + "-"
-                    + str(round(run_cycles[s][1] / sampling_rate, float_precision))
-                    + "s"
-                )
+                this_label = generate_sc_latency_label(this_sc_idx, sampling_rate)
                 ax[a].plot(this_time, this_angle, label=this_label)
+            # legend
+            if cfg["legend_outside"] == True:
+                ax[a].legend(
+                    fontsize=SC_LAT_LEGEND_FONTSIZE,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0.5),
+                )
+            elif cfg["legend_outside"] == False:
+                ax[a].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
         # figure stuff
         f[a].supxlabel("Time (s)")
         f[a].supylabel("Angle (degree)")
@@ -1771,7 +1766,9 @@ def plot_stickdiagram(legname, all_steps_data, all_cycles, info, cfg):
         sharey=True,
         gridspec_kw={"hspace": 0},
     )
-    color_cycle = plt.cycler("color", sns.color_palette(cfg["color_palette"], max_cycle_num))
+    color_cycle = plt.cycler(
+        "color", sns.color_palette(cfg["color_palette"], max_cycle_num)
+    )
 
     # plot
     for r, run_cycles in enumerate(all_cycles[legname]):  # run loop (axis)
@@ -1781,20 +1778,13 @@ def plot_stickdiagram(legname, all_steps_data, all_cycles, info, cfg):
         except:
             ax.set_prop_cycle(color_cycle)
         for c, this_color_dict in zip(range(this_sc_num), color_cycle):  # SC loop
-            cycle = run_cycles[c]
+            this_sc_idx = run_cycles[c]
             this_color = this_color_dict["color"][:3]
-            if sampling_rate <= 100:
-                float_precision = 2  # how many decimals we round to
-            else:
-                float_precision = 4
-            this_label = (
-                str(round(run_cycles[c][0] / sampling_rate, float_precision))
-                + "-"
-                + str(round(run_cycles[c][1] / sampling_rate, float_precision))
-                + "s"
-            )
+            this_label = generate_sc_latency_label(this_sc_idx, sampling_rate)
             # for tps from SC1 to SCend - plot(joint1x, joint1y)
-            for i in range(cycle[0], cycle[1] + 1):  # timepoint loop (of this SC)
+            for i in range(
+                this_sc_idx[0], this_sc_idx[1] + 1
+            ):  # timepoint loop (of this SC)
                 this_ys = list()  # for each timepoint, define joints' xy coord new
                 this_zs = list()
                 for joint in plot_joints:
@@ -1811,7 +1801,7 @@ def plot_stickdiagram(legname, all_steps_data, all_cycles, info, cfg):
                         )
                     this_ys.append(all_steps_data.loc[i, y_col_string])
                     this_zs.append(all_steps_data.loc[i, z_col_string])
-                if i == range(cycle[0], cycle[1] + 1)[0]:
+                if i == range(this_sc_idx[0], this_sc_idx[1] + 1)[0]:
                     try:
                         ax[r].plot(
                             this_ys,
@@ -1926,7 +1916,9 @@ def plot_angles_by_average_SC(legname, average_data, std_data, sc_num, info, cfg
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_xlabel("Percentage")
@@ -2021,7 +2013,9 @@ def plot_angular_velocities_by_average_SC(
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     for angle in angles["name"]:  # angle loop (lines)
@@ -2118,7 +2112,9 @@ def plot_angular_acceleration_by_average_SC(
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     for angle in angles["name"]:  # angle loop (lines)
@@ -2184,6 +2180,20 @@ def extract_feature_column(df, joint, legname, feature):
 def transform_joint_and_leg_to_colname(joint, legname, feature):
     """Transform a joint and leg name to Simi-column name"""
     return joint + ", " + legname + " " + feature
+
+
+def generate_sc_latency_label(this_sc_idx, sampling_rate):
+    if sampling_rate <= 100:
+        float_precision = 2  # how many decimals we round to
+    else:
+        float_precision = 4
+    this_label = (
+        str(round(this_sc_idx[0] / sampling_rate, float_precision))
+        + "-"
+        + str(round(this_sc_idx[1] / sampling_rate, float_precision))
+        + "s"
+    )
+    return this_label
 
 
 # %% local functions 5 - print finish

@@ -58,6 +58,8 @@ def extract_cfg():
     cfg["plot_SE"] = True
     cfg["normalise_height_at_SC_level"] = False
     cfg["plot_joint_number"] = 3
+    cfg["color_palette"] = "viridis"
+    cfg["legend_outside"] = True
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
     cfg["export_average_x"] = False

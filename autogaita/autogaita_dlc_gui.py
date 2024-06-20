@@ -490,7 +490,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     )
     export_average_x_box.grid(row=15, column=0)
     # color palette
-    color_palette_string = "Choose the color palette for the result graphs"
+    color_palette_string = "Choose figures' color palette"
     color_palette_label = ctk.CTkLabel(
         cfg_window, text=color_palette_string, width=cfg_w
     )
@@ -505,7 +505,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     )
     color_palette_entry.grid(row=17, column=0)
     # legend outside
-    legend_outside_string = "Move legend outside the plot"
+    legend_outside_string = "Plot legends outside of figures' panels"
     legend_outside_checkbox = ctk.CTkCheckBox(
         cfg_window,
         text=legend_outside_string,

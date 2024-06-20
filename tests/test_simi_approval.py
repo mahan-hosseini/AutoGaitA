@@ -51,6 +51,8 @@ def extract_cfg():
     cfg["plot_SE"] = True
     cfg["normalise_height_at_SC_level"] = True
     cfg["plot_joint_number"] = 7
+    cfg["legend_outside"] = True
+    cfg["color_palette"] = "viridis"
     cfg["export_average_y"] = False
     cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis "]
     cfg["angles"] = {

@@ -35,11 +35,11 @@ def dlc_singlerun():
     cfg["plot_SE"] = True
     cfg["normalise_height_at_SC_level"] = True
     cfg["plot_joint_number"] = 3
+    cfg["color_palette"] = "viridis"
+    cfg["legend_outside"] = True
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
     cfg["export_average_x"] = True
-    cfg["color_palette"] = "viridis"
-    cfg["legend_outside"] = False
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",
