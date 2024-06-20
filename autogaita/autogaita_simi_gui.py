@@ -29,6 +29,7 @@ TK_BOOL_VARS = [
     "normalise_height_at_SC_level",
     "postname_flag",
     "export_average_y",
+    "legend_outside",
 ]
 TK_STR_VARS = [
     "sampling_rate",
@@ -39,6 +40,36 @@ TK_STR_VARS = [
     "root_dir",
     "sctable_filename",
     "postname_string",
+    "color_palette",
+]
+# For how the look like refer to https://r02b.github.io/seaborn_palettes/
+COLOR_PALETTES_LIST = [
+    "Set1",
+    "Set2",
+    "Set3",
+    "Dark2",
+    "Paired",
+    "Accent",  # qualitative palettes
+    "hls",
+    "husl",  # circular palettes
+    "rocket",
+    "mako",
+    "flare",
+    "crest",
+    "viridis",
+    "plasma",
+    "inferno",
+    "magma",
+    "cividis",  # Perceptually uniform palettes
+    "rocket_r",
+    "mako_r",
+    "flare_r",
+    "crest_r",
+    "viridis_r",
+    "plasma_r",
+    "inferno_r",
+    "magma_r",
+    "cividis_r",  # uniform palettes in reversed order
 ]
 WINDOWS_TASKBAR_MAXHEIGHT = 72
 
@@ -274,14 +305,27 @@ def simi_gui():
     plot_joint_num_label.grid(row=14, column=0)
     plot_joint_num_entry = ctk.CTkEntry(root, textvariable=cfg["plot_joint_number"])
     plot_joint_num_entry.grid(row=15, column=0)
+    # color palette
+    color_palette_string = "Choose the color palette for the result graphs"
+    color_palette_label = ctk.CTkLabel(root, text=color_palette_string)
+    color_palette_label.grid(row=16, column=0)
+    color_palette_entry = ctk.CTkOptionMenu(
+        root,
+        values=COLOR_PALETTES_LIST,
+        variable=cfg["color_palette"],
+        fg_color=FG_COLOR,
+        button_color=FG_COLOR,
+        button_hover_color=HOVER_COLOR,
+    )
+    color_palette_entry.grid(row=17, column=0)
     # results dir
     results_dir_string = (
         "Save Results subfolders to directory location below instead of to data's"
     )
     results_dir_label = ctk.CTkLabel(root, text=results_dir_string)
-    results_dir_label.grid(row=16, column=0)
+    results_dir_label.grid(row=18, column=0)
     results_dir_entry = ctk.CTkEntry(root, textvariable=cfg["results_dir"])
-    results_dir_entry.grid(row=17, column=0)
+    results_dir_entry.grid(row=19, column=0)
 
     # .............................  right section  ....................................
     # x acceleration
@@ -346,6 +390,18 @@ def simi_gui():
         fg_color=FG_COLOR,
     )
     export_average_y_box.grid(row=15, column=1)
+    # legend outside
+    legend_outside_string = "Move legend outside the plot"
+    legend_outside_checkbox = ctk.CTkCheckBox(
+        root,
+        text=legend_outside_string,
+        variable=cfg["legend_outside"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+    )
+    legend_outside_checkbox.grid(row=16, column=1)
     # column name information window
     column_info_string = "Customise joints and angles"
     column_info_button = ctk.CTkButton(
@@ -356,7 +412,7 @@ def simi_gui():
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
     column_info_button.grid(
-        row=16, column=1, sticky="nsew", rowspan=2, padx=10, pady=10
+        row=18, column=1, sticky="nsew", rowspan=2, padx=10, pady=10
     )
     # .........................  run and done section  .................................
     # run button
@@ -368,7 +424,7 @@ def simi_gui():
         text_color=HEADER_TXT_COLOR,
         font=("Britannic Bold", HEADER_FONT_SIZE),
     )
-    runheader_label.grid(row=18, column=0, columnspan=2, sticky="nsew")
+    runheader_label.grid(row=20, column=0, columnspan=2, sticky="nsew")
     run_button = ctk.CTkButton(
         root,
         text="I am ready - run analysis!",
@@ -379,7 +435,7 @@ def simi_gui():
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
     )
-    run_button.grid(row=19, column=0, sticky="nsew", padx=10, pady=(10, 5))
+    run_button.grid(row=21, column=0, sticky="nsew", padx=10, pady=(10, 5))
     # close program button
     close_button = ctk.CTkButton(
         root,
@@ -392,7 +448,7 @@ def simi_gui():
             root.after(5000, root.destroy),
         ),
     )
-    close_button.grid(row=19, column=1, sticky="nsew", padx=10, pady=(10, 5))
+    close_button.grid(row=21, column=1, sticky="nsew", padx=10, pady=(10, 5))
 
     # maximise widgets
     maximise_widgets(root)

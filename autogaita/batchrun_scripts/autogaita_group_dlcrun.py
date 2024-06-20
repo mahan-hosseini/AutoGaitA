@@ -30,6 +30,8 @@ def group_dlcrun():
     cfg["which_leg"] = "left"
     cfg["anova_design"] = "Mixed ANOVA"
     cfg["permutation_number"] = 100
+    cfg["color_palette"] = "viridis"
+    cfg["legend_outside"] = False
     cfg["PCA_variables"] = ["Hind paw tao y", "Ankle y", "Knee y"]
     cfg["stats_variables"] = [
         # "Hind paw tao y",
