@@ -15,6 +15,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation, FFMpegWriter
 from pingouin import sphericity, mixed_anova
 from scipy import stats
+import seaborn as sns
 
 # %% A note on cross species functionality
 # => This function supports cross species analyses, however the data must be obtained
@@ -201,16 +202,16 @@ def some_prep(folderinfo, cfg):
 
     # prepare some plotting color stuff
     cfg["group_color_cycler"] = plt.cycler(
-        "color", plt.cm.viridis(np.linspace(0, 1, len(group_names)))
+        "color", sns.color_palette(cfg["color_palette"], len(group_names))
     )
     cfg["group_color_dict"] = dict(
         zip(group_names, cfg["group_color_cycler"].by_key()["color"])
     )
     cfg["joint_color_cycler"] = plt.cycler(
-        "color", plt.cm.viridis(np.linspace(0, 1, len(joints)))
+        "color", sns.color_palette(cfg["color_palette"], len(joints))
     )
     cfg["angle_color_cycler"] = plt.cycler(
-        "color", plt.cm.viridis(np.linspace(0, 1, len(angles["name"])))
+        "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
     )
 
     return folderinfo, cfg
@@ -1033,7 +1034,11 @@ def plot_PCA(PCA_df, PCA_info, folderinfo, cfg):
             ax_3d.scatter(
                 x, y, z, color=group_color_dict[group_name], s=60, label=group_name
             )
-    ax.legend(group_names)
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(group_names, loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend(group_names)
     ax.set_xlabel("PC 1")
     ax.set_ylabel("PC 2")
     ax.set_title(
@@ -1045,7 +1050,11 @@ def plot_PCA(PCA_df, PCA_info, folderinfo, cfg):
     )
     if number_of_PCs > 2:  # 3d scatterplot
         ax_3d.view_init(30, 125)
-        ax_3d.legend(group_names)
+        # legend adjustments
+        if cfg["legend_outside"] == True:
+            ax_3d.legend(group_names, loc="center right", bbox_to_anchor=(0, 0.5))
+        elif cfg["legend_outside"] == False:
+            ax_3d.legend(group_names)
         ax_3d.set_xlabel("PC 1")
         ax_3d.set_ylabel("PC 2")
         ax_3d.set_zlabel("PC 3")
@@ -1398,12 +1407,28 @@ def plot_permutation_test_results(
                 )
         # convert to cm (if needed) before plotting clusters
         if type(ax) == np.ndarray:
-            ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
+            # legend adjustments
+            if cfg["legend_outside"] == True:
+                ax[c].legend(
+                    fontsize=PERM_PLOT_LEGEND_SIZE,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0.5),
+                )
+            elif cfg["legend_outside"] == False:
+                ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
             if check_mouse_conversion(feature, cfg):
                 ytickconvert_mm_to_cm(ax[c])
                 ax[c].set_ylabel("")  # we use supylabel
         else:
-            ax.legend(fontsize=PERM_PLOT_LEGEND_SIZE + 4)
+            # legend adjustments
+            if cfg["legend_outside"] == True:
+                ax.legend(
+                    fontsize=PERM_PLOT_LEGEND_SIZE + 4,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0.5),
+                )
+            elif cfg["legend_outside"] == False:
+                ax.legend(fontsize=PERM_PLOT_LEGEND_SIZE + 4)
         # plot significant clusters
         # => note that clusters is a list of list with idxs between 0 & bin_num-1
         clusters = extract_all_clusters(trueobs_results_df, contrast)
@@ -1629,12 +1654,28 @@ def plot_multcomp_results(
                 )
         # convert to cm (if needed) before plotting clusters
         if type(ax) == np.ndarray:
-            ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
+            # legend adjustments
+            if cfg["legend_outside"] == True:
+                ax[c].legend(
+                    fontsize=PERM_PLOT_LEGEND_SIZE,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0.5),
+                )
+            elif cfg["legend_outside"] == False:
+                ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
             if check_mouse_conversion(feature, cfg):
                 ytickconvert_mm_to_cm(ax[c])
                 ax[c].set_ylabel("")  # we use supylabel
         else:
-            ax.legend(fontsize=PERM_PLOT_LEGEND_SIZE + 4)
+            # legend adjustments
+            if cfg["legend_outside"] == True:
+                ax.legend(
+                    fontsize=PERM_PLOT_LEGEND_SIZE + 4,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0.5),
+                )
+            elif cfg["legend_outside"] == False:
+                ax.legend(fontsize=PERM_PLOT_LEGEND_SIZE + 4)
         # plot significant clusters
         clusters = extract_multcomp_significance_clusters(
             multcomp_df, contrast, stats_threshold
@@ -1667,9 +1708,25 @@ def plot_multcomp_results(
                     zorder=0,
                 )
         if type(ax) == np.ndarray:
-            ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
+            # legend adjustments
+            if cfg["legend_outside"] == True:
+                ax[c].legend(
+                    fontsize=PERM_PLOT_LEGEND_SIZE,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0.5),
+                )
+            elif cfg["legend_outside"] == False:
+                ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
         else:
-            ax.legend(fontsize=PERM_PLOT_LEGEND_SIZE + 4)
+            # legend adjustments
+            if cfg["legend_outside"] == True:
+                ax.legend(
+                    fontsize=PERM_PLOT_LEGEND_SIZE + 4,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0.5),
+                )
+            elif cfg["legend_outside"] == False:
+                ax.legend(fontsize=PERM_PLOT_LEGEND_SIZE + 4)
     f.supxlabel("SC Percentage", fontsize=PERM_PLOT_SUPLABEL_SIZE, y=0.000001)
     if check_mouse_conversion(feature, cfg):
         f.supylabel(feature + " (cm)", fontsize=PERM_PLOT_SUPLABEL_SIZE, x=-0.02)
@@ -1773,7 +1830,12 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 std = g_std_dfs[g].iloc[:, y_col]
             ax.plot(x, y, label=joint)
             ax.fill_between(x, y - std, y + std, alpha=STD_ALPHA, lw=STD_LW)
-        ax.legend()
+
+        # legend adjustments
+        if cfg["legend_outside"] == True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif cfg["legend_outside"] == False:
+            ax.legend()
         ax.set_xlabel("Percentage")
         if tracking_software == "DLC":
             ax.set_title(group_name + " - Joint Y over average step cycle")
@@ -1811,7 +1873,11 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 std = g_std_dfs[g].iloc[:, y_col]
             ax.plot(x, y, label=group_name)
             ax.fill_between(x, y - std, y + std, alpha=STD_ALPHA, lw=STD_LW)
-        ax.legend()
+        # legend adjustments
+        if cfg["legend_outside"] == True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif cfg["legend_outside"] == False:
+            ax.legend()
         ax.set_xlabel("Percentage")
         if tracking_software == "DLC":
             ax.set_title(joint + "Y over average step cycle")
@@ -1869,7 +1935,11 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 std = g_std_dfs[g].iloc[:, y_col]
             ax.plot(x, y, label=angle)
             ax.fill_between(x, y - std, y + std, alpha=STD_ALPHA, lw=STD_LW)
-        ax.legend()
+        # legend adjustments
+        if cfg["legend_outside"] == True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif cfg["legend_outside"] == False:
+            ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel("Angle (degrees)")
         if tracking_software == "DLC":
@@ -1902,7 +1972,11 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 std = g_std_dfs[g].iloc[:, y_col]
             ax.plot(x, y, label=group_name)
             ax.fill_between(x, y - std, y + std, alpha=STD_ALPHA, lw=STD_LW)
-        ax.legend()
+        # legend adjustments
+        if cfg["legend_outside"] == True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif cfg["legend_outside"] == False:
+            ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel("Angle (degrees)")
         if tracking_software == "DLC":
@@ -1954,7 +2028,11 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 std = g_std_dfs[g].iloc[:, y_col]
             ax.plot(x, y, label=joint)
             ax.fill_between(x, y - std, y + std, alpha=0.2)
-        ax.legend()
+        # legend adjustments
+        if cfg["legend_outside"] == True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif cfg["legend_outside"] == False:
+            ax.legend()
         ax.set_xlabel("Percentage")
         if tracking_software == "DLC":
             if check_mouse_conversion("y", cfg):
@@ -2007,7 +2085,11 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
                 std = g_std_dfs[g].iloc[:, y_col]
             ax.plot(x, y, label=group_name)
             ax.fill_between(x, y - std, y + std, alpha=STD_ALPHA, lw=STD_LW)
-        ax.legend()
+        # legend adjustments
+        if cfg["legend_outside"] == True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif cfg["legend_outside"] == False:
+            ax.legend()
         ax.set_xlabel("Percentage")
         if tracking_software == "DLC":
             if check_mouse_conversion("y", cfg):
@@ -2077,7 +2159,11 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
                 std = g_std_dfs[g].iloc[:, y_col]
             ax.plot(x, y, label=angle)
             ax.fill_between(x, y - std, y + std, alpha=0.2)
-        ax.legend()
+        # legend adjustments
+        if cfg["legend_outside"] == True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif cfg["legend_outside"] == False:
+            ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel(
             "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
@@ -2115,7 +2201,11 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
                 std = g_std_dfs[g].iloc[:, y_col]
             ax.plot(x, y, label=group_name)
             ax.fill_between(x, y - std, y + std, alpha=STD_ALPHA, lw=STD_LW)
-        ax.legend()
+        # legend adjustments
+        if cfg["legend_outside"] == True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif cfg["legend_outside"] == False:
+            ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel(
             "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + "ms)"

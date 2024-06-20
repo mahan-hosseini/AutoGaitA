@@ -9,6 +9,7 @@ import numpy as np
 import math
 import matplotlib
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 # %% constants
 plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
@@ -37,6 +38,7 @@ NORMALISED_XLS_FILENAME = " - Normalised Stepcycles"
 AVERAGE_XLS_FILENAME = " - Average Stepcycle"
 STD_XLS_FILENAME = " - Standard Devs. Stepcycle"
 SC_LAT_LEGEND_FONTSIZE = 7
+
 
 # %% main program
 
@@ -1479,7 +1481,7 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
     for j, joint in enumerate(plot_joints):  # joint loop (figures)
         f[j], ax[j] = plt.subplots(1, 1)
         ax[j].set_prop_cycle(
-            plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, sc_num)))
+            plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
         )
         if joint == "Hind paw tao ":
             ax[j].set_title(name + " - Foot")
@@ -1514,7 +1516,16 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
             ax[j].plot(this_x, this_y, label=this_label)
         ax[j].set_xlabel("x (pixel)")  # will be overwritten if we convert
         ax[j].set_ylabel("y (pixel)")
-        ax[j].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+        # legend adjustments
+        if cfg["legend_outside"] == True:
+            ax[j].legend(
+                fontsize=SC_LAT_LEGEND_FONTSIZE,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+            )
+        elif cfg["legend_outside"] == False:
+            ax[j].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+
         if convert_to_mm:
             tickconvert_mm_to_cm(ax[j], "both")
         if joint == "Hind paw tao ":
@@ -1544,7 +1555,7 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
     for a, angle in enumerate(angles["name"]):  # angle loop (figures)
         f[a], ax[a] = plt.subplots(1, 1)
         ax[a].set_prop_cycle(
-            plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, sc_num)))
+            plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
         )
         ax[a].set_title(name + " - " + angle)
         ax[a].set_ylabel("Angle")
@@ -1575,7 +1586,7 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     # some prep
     sc_num = len(sc_idxs)
     f, ax = plt.subplots(1, 1)
-    color_cycle = plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, sc_num)))
+    color_cycle = plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
     ax.set_prop_cycle(color_cycle)
     time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
 
@@ -1616,7 +1627,13 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     ax.set_ylabel("y (pixel)")
     if convert_to_mm:
         tickconvert_mm_to_cm(ax, "both")
-    ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(
+            fontsize=SC_LAT_LEGEND_FONTSIZE, loc="center left", bbox_to_anchor=(1, 0.5)
+        )
+    elif cfg["legend_outside"] == False:
+        ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
     figure_file_string = " - Hindlimb Stick Diagram"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
@@ -1637,7 +1654,7 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     # some prep
     sc_num = len(sc_idxs)
     f, ax = plt.subplots(1, 1)
-    color_cycle = plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, sc_num)))
+    color_cycle = plt.cycler("color", sns.color_palette(cfg["color_palette"], sc_num))
     ax.set_prop_cycle(color_cycle)
     time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
 
@@ -1677,7 +1694,13 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     ax.set_ylabel("y (pixel)")
     if convert_to_mm:
         tickconvert_mm_to_cm(ax, "both")
-    ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(
+            fontsize=SC_LAT_LEGEND_FONTSIZE, loc="center left", bbox_to_anchor=(1, 0.5)
+        )
+    elif cfg["legend_outside"] == False:
+        ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
     figure_file_string = " - Forelimb Stick Diagram"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
@@ -1700,7 +1723,7 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(hind_joints))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(hind_joints)))
     )
     x = np.linspace(0, 100, bin_num)
     for joint in hind_joints:  # joint loop (lines)
@@ -1712,7 +1735,11 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg):
             this_std = std_data.iloc[:, y_col_idx]
         ax.plot(x, this_y, label=joint)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     ax.set_title(name + " - Joint Y over average step cycle")
     ax.set_xlabel("Percentage")
     ax.set_ylabel("y (pixel)")
@@ -1739,7 +1766,9 @@ def plot_angles_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(angles["name"]))))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Joint angles over average step cycle")
@@ -1754,7 +1783,11 @@ def plot_angles_by_average_SC(average_data, std_data, info, cfg):
             this_std = std_data.iloc[:, y_col_idx]
         ax.plot(x, this_y, label=angle)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     figure_file_string = " - Joint angles over average step cycle"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
@@ -1778,7 +1811,7 @@ def plot_x_velocities_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(hind_joints))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(hind_joints)))
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Joint velocities over average step cycle")
@@ -1791,7 +1824,11 @@ def plot_x_velocities_by_average_SC(average_data, std_data, info, cfg):
             this_std = std_data.iloc[:, y_col_idx]
         ax.plot(x, this_y, label=joint)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     ax.set_xlabel("Percentage")
     ax.set_ylabel(
         "Velocity (x in pixel / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
@@ -1823,7 +1860,9 @@ def plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(angles["name"]))))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Angular velocities over average step cycle")
@@ -1838,7 +1877,11 @@ def plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg):
             this_std = std_data.iloc[:, y_col_idx]
         ax.plot(x, this_y, label=angle)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     figure_file_string = " - Angular velocities over average step cycle"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
@@ -1862,7 +1905,7 @@ def plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(hind_joints))))
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(hind_joints)))
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Joint accelerations over average step cycle")
@@ -1875,7 +1918,11 @@ def plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg):
             this_std = std_data.iloc[:, y_col_idx]
         ax.plot(x, this_y, label=joint)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     ax.set_xlabel("Percentage")
     ax.set_ylabel(
         "Acceleration (x in pixel / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
@@ -1909,7 +1956,9 @@ def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, len(angles["name"]))))
+        plt.cycler(
+            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        )
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_title(name + " - Angular accelerations over average step cycle")
@@ -1926,7 +1975,11 @@ def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
             this_std = std_data.iloc[:, y_col_idx]
         ax.plot(x, this_y, label=angle)
         ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
-    ax.legend()
+    # legend adjustments
+    if cfg["legend_outside"] == True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif cfg["legend_outside"] == False:
+        ax.legend()
     figure_file_string = " - Angular acceleration over average step cycle"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:

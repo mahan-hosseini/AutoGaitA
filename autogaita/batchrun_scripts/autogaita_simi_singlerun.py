@@ -25,6 +25,8 @@ def simi_singlerun():
     cfg["normalise_height_at_SC_level"] = True
     cfg["plot_joint_number"] = 7
     cfg["export_average_y"] = False
+    cfg["color_palette"] = "viridis"
+    cfg["legend_outside"] = False
     cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis", "Shoulder", "Neck"]
     cfg["angles"] = {
         "name": ["Ankle", "Knee"],
