@@ -7,6 +7,7 @@ install_requires = [
     "customtkinter>=5.2",
     "pandas>=2.0",
     "numpy>=1.24",
+    "seaborn>=0.13",
     "matplotlib>=3.7",
     "scikit-learn>=1.2",
     "pingouin>=0.5",
