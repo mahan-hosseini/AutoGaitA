@@ -24,12 +24,12 @@ if platform.system() == "Darwin":
 setup(
     name="autogaita",
     python_requires=">=3.10",
-    version="0.1.0rc",  # rc == release candidate (before release is finished)
+    version="0.1.1rc",  # rc == release candidate (before release is finished)
     author="Mahan Hosseini",
     description="Automatic Gait Analysis in Python",
     packages=["autogaita", "autogaita.batchrun_scripts"],
     include_package_data=True,
-    package_data={"": ["*.txt", "*.rst", "*.png", "*.icns", "*.ico"]},
+    package_data={"": ["*.txt", "*.rst", "*.png", "*.icns", "*.ico", "*.json"]},
     install_requires=install_requires,
     extras_require={"dev": ["pytest", "hypothesis"]},
     license="GPLv3",
