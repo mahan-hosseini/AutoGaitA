@@ -1712,9 +1712,7 @@ def plot_angles_by_time(legname, all_steps_data, all_cycles, info, cfg):
         for run_cycles in all_cycles[legname]:  # run loop (color-cycler-reset)
             sc_num = len(run_cycles)
             ax[a].set_prop_cycle(
-                plt.cycler(
-                    "color", sns.color_palette(cfg["color_palette"], max_cycle_num)
-                )
+                plt.cycler("color", sns.color_palette(cfg["color_palette"], max_cycle_num))
             )
             # check for bodyside-specificity
             if angle + "Angle" in all_steps_data.columns:
@@ -1773,9 +1771,7 @@ def plot_stickdiagram(legname, all_steps_data, all_cycles, info, cfg):
         sharey=True,
         gridspec_kw={"hspace": 0},
     )
-    color_cycle = plt.cycler(
-        "color", sns.color_palette(cfg["color_palette"], max_cycle_num)
-    )
+    color_cycle = plt.cycler("color", sns.color_palette(cfg["color_palette"], max_cycle_num))
 
     # plot
     for r, run_cycles in enumerate(all_cycles[legname]):  # run loop (axis)
@@ -1930,9 +1926,7 @@ def plot_angles_by_average_SC(legname, average_data, std_data, sc_num, info, cfg
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler(
-            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
-        )
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
     )
     x = np.linspace(0, 100, bin_num)
     ax.set_xlabel("Percentage")
@@ -2027,9 +2021,7 @@ def plot_angular_velocities_by_average_SC(
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler(
-            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
-        )
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
     )
     x = np.linspace(0, 100, bin_num)
     for angle in angles["name"]:  # angle loop (lines)
@@ -2126,9 +2118,7 @@ def plot_angular_acceleration_by_average_SC(
     # plot
     f, ax = plt.subplots(1, 1)
     ax.set_prop_cycle(
-        plt.cycler(
-            "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
-        )
+        plt.cycler("color", sns.color_palette(cfg["color_palette"], len(angles["name"])))
     )
     x = np.linspace(0, 100, bin_num)
     for angle in angles["name"]:  # angle loop (lines)
