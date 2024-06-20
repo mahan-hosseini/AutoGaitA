@@ -48,6 +48,7 @@ TK_BOOL_VARS = [
     "invert_y_axis",
     "flip_gait_direction",
     "export_average_x",
+    "legend_outside",
 ]
 TK_STR_VARS = [
     "sampling_rate",
@@ -503,14 +504,26 @@ def build_cfg_window(root, cfg, root_dimensions):
         button_hover_color=HOVER_COLOR,
     )
     color_palette_entry.grid(row=17, column=0)
+    # legend outside
+    legend_outside_string = "Move legend outside the plot"
+    legend_outside_checkbox = ctk.CTkCheckBox(
+        cfg_window,
+        text=legend_outside_string,
+        variable=cfg["legend_outside"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+    )
+    legend_outside_checkbox.grid(row=18, column=0)
     # results dir
     results_dir_string = (
         "Save Results subfolders to directory location below instead of to data's"
     )
     results_dir_label = ctk.CTkLabel(cfg_window, text=results_dir_string, width=cfg_w)
-    results_dir_label.grid(row=18, column=0)
+    results_dir_label.grid(row=19, column=0)
     results_dir_entry = ctk.CTkEntry(cfg_window, textvariable=cfg["results_dir"])
-    results_dir_entry.grid(row=19, column=0)
+    results_dir_entry.grid(row=20, column=0)
     # column name information window
     column_info_string = "Customise joints and angles"
     column_info_button = ctk.CTkButton(
@@ -521,7 +534,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
     column_info_button.grid(
-        row=20, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=21, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -532,7 +545,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         command=lambda: cfg_window.destroy(),
     )
     adv_cfg_done_button.grid(
-        row=22, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=23, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # maximise widgets
     maximise_widgets(cfg_window)

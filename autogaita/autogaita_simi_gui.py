@@ -29,6 +29,7 @@ TK_BOOL_VARS = [
     "normalise_height_at_SC_level",
     "postname_flag",
     "export_average_y",
+    "legend_outside",
 ]
 TK_STR_VARS = [
     "sampling_rate",
@@ -389,6 +390,18 @@ def simi_gui():
         fg_color=FG_COLOR,
     )
     export_average_y_box.grid(row=15, column=1)
+    # legend outside
+    legend_outside_string = "Move legend outside the plot"
+    legend_outside_checkbox = ctk.CTkCheckBox(
+        root,
+        text=legend_outside_string,
+        variable=cfg["legend_outside"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+    )
+    legend_outside_checkbox.grid(row=16, column=1)
     # column name information window
     column_info_string = "Customise joints and angles"
     column_info_button = ctk.CTkButton(
@@ -399,7 +412,7 @@ def simi_gui():
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
     column_info_button.grid(
-        row=16, column=1, sticky="nsew", rowspan=2, padx=10, pady=10
+        row=18, column=1, sticky="nsew", rowspan=2, padx=10, pady=10
     )
     # .........................  run and done section  .................................
     # run button
@@ -411,7 +424,7 @@ def simi_gui():
         text_color=HEADER_TXT_COLOR,
         font=("Britannic Bold", HEADER_FONT_SIZE),
     )
-    runheader_label.grid(row=18, column=0, columnspan=2, sticky="nsew")
+    runheader_label.grid(row=20, column=0, columnspan=2, sticky="nsew")
     run_button = ctk.CTkButton(
         root,
         text="I am ready - run analysis!",
@@ -422,7 +435,7 @@ def simi_gui():
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
     )
-    run_button.grid(row=19, column=0, sticky="nsew", padx=10, pady=(10, 5))
+    run_button.grid(row=21, column=0, sticky="nsew", padx=10, pady=(10, 5))
     # close program button
     close_button = ctk.CTkButton(
         root,
@@ -435,7 +448,7 @@ def simi_gui():
             root.after(5000, root.destroy),
         ),
     )
-    close_button.grid(row=19, column=1, sticky="nsew", padx=10, pady=(10, 5))
+    close_button.grid(row=21, column=1, sticky="nsew", padx=10, pady=(10, 5))
 
     # maximise widgets
     maximise_widgets(root)
