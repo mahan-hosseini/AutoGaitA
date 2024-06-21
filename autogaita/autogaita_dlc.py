@@ -10,7 +10,6 @@ import math
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pdb
 
 # %% constants
 plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
@@ -350,7 +349,6 @@ def move_data_to_folders(info, folderinfo):
                 candidate_postrun_string,
                 results_dir,
             )
-            pdb.set_trace()
             if found_it:  # if our search was successful, stop searching and continue
                 break
 
