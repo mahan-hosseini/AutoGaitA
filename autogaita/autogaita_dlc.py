@@ -10,6 +10,7 @@ import math
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pdb
 
 # %% constants
 plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
@@ -334,19 +335,40 @@ def some_prep(info, folderinfo, cfg):
 def move_data_to_folders(info, folderinfo):
     """Find files, copy data, video, beamdata & beamvideo to new results_dir"""
     # unpack
+    results_dir = info["results_dir"]
+    postmouse_string = folderinfo["postmouse_string"]
+    postrun_string = folderinfo["postrun_string"]
+    os.makedirs(results_dir)  # important to do this outside of loop!
+    # check if user inputted "_" & "-" for postmouse & postrun strings - if not do it
+    # for them
+    for candidate_postmouse_string in [postmouse_string, "_" + postmouse_string]:
+        for candidate_postrun_string in [postrun_string, "-" + postrun_string]:
+            found_it = check_this_filename_configuration(
+                info,
+                folderinfo,
+                candidate_postmouse_string,
+                candidate_postrun_string,
+                results_dir,
+            )
+            pdb.set_trace()
+            if found_it:  # if our search was successful, stop searching and continue
+                break
+
+
+def check_this_filename_configuration(
+    info, folderinfo, postmouse_string, postrun_string, results_dir
+):
+    # unpack
     name = info["name"]
     mouse_num = info["mouse_num"]
     run_num = info["run_num"]
-    results_dir = info["results_dir"]
     root_dir = folderinfo["root_dir"]
     data_string = folderinfo["data_string"]
     beam_string = folderinfo["beam_string"]
     premouse_string = folderinfo["premouse_string"]
-    postmouse_string = folderinfo["postmouse_string"]
     prerun_string = folderinfo["prerun_string"]
-    postrun_string = folderinfo["postrun_string"]
-    os.makedirs(results_dir)  # important to do this outside of loop!
     whichvideo = ""  # initialise
+    found_it = False
     for filename in os.listdir(root_dir):
         # the following condition is True for data & beam csv
         if (
@@ -354,6 +376,7 @@ def move_data_to_folders(info, folderinfo):
             and (prerun_string + str(run_num) + postrun_string in filename)
             and (filename.endswith(".csv"))
         ):
+            found_it = True
             # Copy the Excel file to the new subfolder
             shutil.copy2(
                 os.path.join(root_dir, filename), os.path.join(results_dir, filename)
@@ -378,6 +401,7 @@ def move_data_to_folders(info, folderinfo):
                 )
                 print(this_message)
                 write_issues_to_textfile(this_message, info)
+    return found_it
 
 
 def check_and_expand_cfg(data, cfg, info):

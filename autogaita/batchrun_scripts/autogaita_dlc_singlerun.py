@@ -16,9 +16,9 @@ def dlc_singlerun():
     folderinfo["data_string"] = "SIMINewOct"
     folderinfo["beam_string"] = "BeamTraining"
     folderinfo["premouse_string"] = "Mouse"
-    folderinfo["postmouse_string"] = "_25mm"
+    folderinfo["postmouse_string"] = "25mm"
     folderinfo["prerun_string"] = "run"
-    folderinfo["postrun_string"] = "-6DLC"
+    folderinfo["postrun_string"] = "6DLC"
     # cfg
     cfg = {}
     cfg["sampling_rate"] = 100  # base cfg
