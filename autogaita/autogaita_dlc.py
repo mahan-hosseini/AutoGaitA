@@ -9,6 +9,9 @@ import numpy as np
 import math
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import tkinter as tk
+import customtkinter as ctk
 import seaborn as sns
 
 # %% constants
@@ -54,6 +57,9 @@ def dlc(info, folderinfo, cfg):
     4) step cycle normalisation, dataframe creation & XLS-exportation
     5) plots
     """
+    # .............. initiate plot panel class and build loading screen ................
+    plot_panel_instance = PlotPanel()
+    plot_panel_instance.build_plot_panel_loading_screen()
 
     # ................................  preparation  ...................................
     data = some_prep(info, folderinfo, cfg)
@@ -70,7 +76,7 @@ def dlc(info, folderinfo, cfg):
     results = analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg)
 
     # ................................  plots  .........................................
-    plot_results(info, results, folderinfo, cfg)
+    plot_results(info, results, folderinfo, cfg, plot_panel_instance)
 
     # ............................  print finish  ......................................
     print_finish(info, cfg)
@@ -1402,7 +1408,7 @@ def add_step_separators(dataframe, nanvector, numvector):
 #    would be coded as commented out in plot_joint_y_by_x
 
 
-def plot_results(info, results, folderinfo, cfg):
+def plot_results(info, results, folderinfo, cfg, plot_panel_instance):
     """Plot results - y coords by x coords & average angles over SC %"""
     # unpack
     fore_joints = cfg["fore_joints"]
@@ -1421,41 +1427,57 @@ def plot_results(info, results, folderinfo, cfg):
     cfg["sc_num"] = len(sc_idxs)  # add number of scs for plotting SE if wanted
 
     # .........................1 - y coords by x coords.................................
-    plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg)
+    plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
 
     # ...............................2 - angles by time.................................
     if angles["name"]:
-        plot_angles_by_time(all_steps_data, sc_idxs, info, cfg)
+        plot_angles_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
 
     # ..........................3 - hindlimb stick diagram..............................
-    plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg)
+    plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
 
     # ...........................4 - forelimb stick diagram.............................
     if fore_joints:
-        plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg)
+        plot_forelimb_stickdiagram(
+            all_steps_data, sc_idxs, info, cfg, plot_panel_instance
+        )
 
     # .....................5 - average joints' y over SC percentage.....................
-    plot_joint_y_by_average_SC(average_data, std_data, info, cfg)
+    plot_joint_y_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance)
 
     # ........................6 - average angles over SC percentage.....................
     if angles["name"]:
-        plot_angles_by_average_SC(average_data, std_data, info, cfg)
+        plot_angles_by_average_SC(
+            average_data, std_data, info, cfg, plot_panel_instance
+        )
 
     # .................7 - average x velocities over SC percentage......................
-    plot_x_velocities_by_average_SC(average_data, std_data, info, cfg)
+    plot_x_velocities_by_average_SC(
+        average_data, std_data, info, cfg, plot_panel_instance
+    )
 
     # ..............8 - average angular velocities over SC percentage...................
     if angles["name"]:
-        plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg)
+        plot_angular_velocities_by_average_SC(
+            average_data, std_data, info, cfg, plot_panel_instance
+        )
 
     # ............optional - 9 - average x acceleration over SC percentage..............
     if x_acceleration:
-        plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg)
+        plot_x_acceleration_by_average_SC(
+            average_data, std_data, info, cfg, plot_panel_instance
+        )
 
     # .........optional - 10 - average angular acceleration over SC percentage..........
     if angles["name"]:
         if angular_acceleration:
-            plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg)
+            plot_angular_acceleration_by_average_SC(
+                average_data, std_data, info, cfg, plot_panel_instance
+            )
+
+    # Destroy loading screen and build plot panel with all figures
+    plot_panel_instance.destroy_plot_panel_loading_screen()
+    plot_panel_instance.build_plot_panel()
 
 
 # ..................................  inner functions  .................................
@@ -1501,7 +1523,7 @@ def extract_sc_idxs(all_steps_data):
     return sc_idxs
 
 
-def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
+def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
     """1 - Plot joints' y coordinates as a function of their x for each SC"""
 
     # unpack
@@ -1557,8 +1579,10 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
         if dont_show_plots:
             plt.close(f[j])
 
+        plot_panel_instance.figures.append(f[j])
 
-def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
+
+def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
     """2 - Plot joints' angles as a function of time for each SC"""
 
     # unpack
@@ -1608,8 +1632,10 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
         if dont_show_plots:
             plt.close(f[a])
 
+        plot_panel_instance.figures.append(f[a])
 
-def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
+
+def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
     """3 - Plot a stick diagram of the hindlimb"""
 
     # unpack
@@ -1665,8 +1691,10 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+    plot_panel_instance.figures.append(f)
 
-def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
+
+def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
     """4 - Plot a stick diagram of the forelimb (for hindlimb stepcycles)"""
 
     # unpack
@@ -1721,8 +1749,10 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+    plot_panel_instance.figures.append(f)
 
-def plot_joint_y_by_average_SC(average_data, std_data, info, cfg):
+
+def plot_joint_y_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance):
     """5 - Plot joints' y as a function of average SC's percentage"""
 
     # unpack
@@ -1767,8 +1797,10 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+    plot_panel_instance.figures.append(f)
 
-def plot_angles_by_average_SC(average_data, std_data, info, cfg):
+
+def plot_angles_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance):
     """6 - Plot Angles as a function of average SC's percentage"""
 
     # unpack
@@ -1810,8 +1842,12 @@ def plot_angles_by_average_SC(average_data, std_data, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+    plot_panel_instance.figures.append(f)
 
-def plot_x_velocities_by_average_SC(average_data, std_data, info, cfg):
+
+def plot_x_velocities_by_average_SC(
+    average_data, std_data, info, cfg, plot_panel_instance
+):
     """7 - Plot x velocities as a function of average SC's percentage"""
 
     # unpack
@@ -1862,8 +1898,12 @@ def plot_x_velocities_by_average_SC(average_data, std_data, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+    plot_panel_instance.figures.append(f)
 
-def plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg):
+
+def plot_angular_velocities_by_average_SC(
+    average_data, std_data, info, cfg, plot_panel_instance
+):
     """8 - Plot angular velocities as a function of average SC's percentage"""
 
     # unpack
@@ -1906,8 +1946,12 @@ def plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+    plot_panel_instance.figures.append(f)
 
-def plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg):
+
+def plot_x_acceleration_by_average_SC(
+    average_data, std_data, info, cfg, plot_panel_instance
+):
     """9 - (optional) Plot x acceleration as a function of average SC's percentage"""
 
     # unpack
@@ -1958,8 +2002,12 @@ def plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+    plot_panel_instance.figures.append(f)
 
-def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
+
+def plot_angular_acceleration_by_average_SC(
+    average_data, std_data, info, cfg, plot_panel_instance
+):
     """10 - (optional) Plot angular acceleration as a function of average SC's
     percentage
     """
@@ -2005,6 +2053,8 @@ def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
+
+    plot_panel_instance.figures.append(f)
 
 
 def save_figures(figure, results_dir, name, figure_file_string):
@@ -2063,6 +2113,129 @@ def generate_sc_latency_label(all_steps_data, this_sc_idx, sampling_rate, time_c
         + "s"
     )
     return this_label
+
+
+class PlotPanel:
+    def __init__(self):
+        self.figures = []
+        self.current_fig_index = 0
+
+    # .........................  loading screen  ................................
+    def build_plot_panel_loading_screen(self):
+        """Builds a loading screen that is shown while plots are generated"""
+        # Build window
+        self.loading_screen = ctk.CTkToplevel()
+        self.loading_screen.title("Loading...")
+        self.loading_screen.geometry("300x300")
+        self.loading_label_strings = [
+            "Plots are generated, please wait.",
+            "Plots are generated, please wait..",
+            "Plots are generated, please wait...",
+        ]
+        self.loading_label = ctk.CTkLabel(
+            self.loading_screen, text=self.loading_label_strings[0]
+        )
+        self.loading_label.pack(pady=130, padx=40, anchor="w")
+
+        # Animate the text
+        self.animate(counter=1)
+
+    # Cycle through loading labels to animate the loading screen
+    def animate(self, counter):
+        self.loading_label.configure(text=self.loading_label_strings[counter])
+        self.loading_screen.after(
+            500, self.animate, (counter + 1) % len(self.loading_label_strings)
+        )
+
+    def destroy_plot_panel_loading_screen(self):
+        self.loading_screen.destroy()
+
+    # .........................  plot panel   ................................
+    def build_plot_panel(self):
+        """Creates the window/"panel" in which the plots are shown"""
+        # Set up of the plotpanel
+        ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
+        ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
+        self.plotwindow = ctk.CTkToplevel()
+        self.plotwindow.title("AutoGaitA Plot Panel")
+
+        # Set size to 50% of screen
+        screen_width = self.plotwindow.winfo_screenwidth()
+        window_width = int(screen_width * 0.5)
+        # 0.75 to gain a ration of 1.333 (that of matplotlib figures) and 1.05 for toolbar + buttons
+        window_height = window_width * 0.75 * 1.05
+        self.plotwindow.geometry(f"{window_width}x{window_height}")
+
+        # Adjust figures for the plot panel
+        for fig in self.figures:
+            # dpi adjusted to increase visibilty/readability
+            fig.set_dpi(100)
+            # right margin adjusted to display the legend properly
+            fig.subplots_adjust(right=0.88)
+
+        # Initialize the plot panel with the first figure
+        self.plot_panel = FigureCanvasTkAgg(
+            self.figures[self.current_fig_index], master=self.plotwindow
+        )
+        self.plot_panel.get_tk_widget().grid(
+            row=0, column=0, padx=10, pady=10, sticky="nsew"
+        )
+
+        # Create toolbar frame and place it in the middle row
+        self.toolbar_frame = tk.Frame(self.plotwindow)
+        self.toolbar_frame.grid(row=1, column=0, sticky="ew")
+
+        self.toolbar = NavigationToolbar2Tk(self.plot_panel, self.toolbar_frame)
+        self.toolbar.update()
+
+        # Create navigation buttons frame
+        self.button_frame = tk.Frame(self.plotwindow)
+        self.button_frame.grid(row=2, column=0, sticky="ew")
+
+        self.prev_button = ctk.CTkButton(
+            self.button_frame, text="<< Previous", command=self.show_previous
+        )
+        self.next_button = ctk.CTkButton(
+            self.button_frame, text="Next >>", command=self.show_next
+        )
+        self.prev_button.grid(row=0, column=0, sticky="ew")
+        self.next_button.grid(row=0, column=1, sticky="ew")
+
+        self.button_frame.grid_columnconfigure(0, weight=1)
+        self.button_frame.grid_columnconfigure(1, weight=1)
+
+        # Configure grid layout
+        self.plotwindow.grid_rowconfigure(0, weight=1)
+        self.plotwindow.grid_rowconfigure(1, weight=0)
+        self.plotwindow.grid_rowconfigure(2, weight=0)
+        self.plotwindow.grid_columnconfigure(0, weight=1)
+
+    def show_previous(self):
+        if self.current_fig_index > 0:
+            self.current_fig_index -= 1
+            self.update_plot_and_toolbar()
+
+    def show_next(self):
+        if self.current_fig_index < len(self.figures) - 1:
+            self.current_fig_index += 1
+            self.update_plot_and_toolbar()
+
+    def update_plot_and_toolbar(self):
+        # Clear the current plot panel
+        self.plot_panel.get_tk_widget().grid_forget()
+
+        # Update the plot panel with the new figure
+        self.plot_panel = FigureCanvasTkAgg(
+            self.figures[self.current_fig_index], master=self.plotwindow
+        )
+        self.plot_panel.get_tk_widget().grid(row=0, column=0, sticky="nsew")
+        self.plot_panel.draw()
+
+        # Destroy toolbar and create a new one
+        # (This has to be done, otherwise the toolbar won't function for a new plot)
+        self.toolbar.destroy()
+        self.toolbar = NavigationToolbar2Tk(self.plot_panel, self.toolbar_frame)
+        self.toolbar.update()
 
 
 # %% local functions 5 - print finish
