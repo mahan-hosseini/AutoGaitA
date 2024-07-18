@@ -237,7 +237,7 @@ def dlc_gui():
     )
     subtract_beam_checkbox.grid(row=6, column=0)
     # plot plots to python
-    showplots_string = "Don't show plots in Python (save only)"
+    showplots_string = "Don't show plots in GUI (save only)"
     showplots_checkbox = ctk.CTkCheckBox(
         root,
         text=showplots_string,

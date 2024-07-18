@@ -15,6 +15,10 @@ import customtkinter as ctk
 import seaborn as sns
 
 # %% constants
+matplotlib.use("agg")
+# Agg is a non-interactive backend for plotting that can only write to files
+# this is used to generate and save the plot figures
+# later a tkinter backend (FigureCanvasTkAgg) is used for the plot panel
 plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
 DIRECTION_DLC_THRESHOLD = 0.95  # DLC confidence used for direction-detection
 TIME_COL = "Time"
@@ -58,8 +62,15 @@ def dlc(info, folderinfo, cfg):
     5) plots
     """
     # .............. initiate plot panel class and build loading screen ................
+    # create class instance independently of "dont_show_plots" to not break the code
     plot_panel_instance = PlotPanel()
-    plot_panel_instance.build_plot_panel_loading_screen()
+
+    if cfg["dont_show_plots"] is True:
+        pass  # going on without building the loading screen
+
+    elif cfg["dont_show_plots"] is False:  # -> show plot panel
+        # build loading screen
+        plot_panel_instance.build_plot_panel_loading_screen()
 
     # ................................  preparation  ...................................
     data = some_prep(info, folderinfo, cfg)
@@ -486,14 +497,6 @@ def check_and_expand_cfg(data, cfg, info):
             write_issues_to_textfile(beam_col_error_message, info)
             print(beam_col_error_message)
             return
-
-    # dont show plots
-    # !!! If users should complain that they dont get figures but they should, it might
-    #     be because these lines wrongly determine user to be in non-interactive mode
-    #     while they are not!
-    if not hasattr(sys, "ps1") and not sys.flags.interactive:
-        cfg["dont_show_plots"] = True
-        matplotlib.use("agg")
 
     # never normalise @ SC level if user subtracted a beam
     if cfg["subtract_beam"]:
@@ -1475,9 +1478,14 @@ def plot_results(info, results, folderinfo, cfg, plot_panel_instance):
                 average_data, std_data, info, cfg, plot_panel_instance
             )
 
-    # Destroy loading screen and build plot panel with all figures
-    plot_panel_instance.destroy_plot_panel_loading_screen()
-    plot_panel_instance.build_plot_panel()
+    # ........................optional - 11 - build plot panel..........................
+    print("paramter", cfg["dont_show_plots"])
+    if cfg["dont_show_plots"] is True:
+        pass  # going on without building the plot window
+    elif cfg["dont_show_plots"] is False:  # -> show plot panel
+        # Destroy loading screen and build plot panel with all figures
+        plot_panel_instance.destroy_plot_panel_loading_screen()
+        plot_panel_instance.build_plot_panel()
 
 
 # ..................................  inner functions  .................................
@@ -1579,7 +1587,9 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
         if dont_show_plots:
             plt.close(f[j])
 
-        plot_panel_instance.figures.append(f[j])
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f[j])
 
 
 def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
@@ -1632,7 +1642,9 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
         if dont_show_plots:
             plt.close(f[a])
 
-        plot_panel_instance.figures.append(f[a])
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f[a])
 
 
 def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
@@ -1691,7 +1703,9 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
     if dont_show_plots:
         plt.close(f)
 
-    plot_panel_instance.figures.append(f)
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
@@ -1749,7 +1763,9 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
     if dont_show_plots:
         plt.close(f)
 
-    plot_panel_instance.figures.append(f)
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def plot_joint_y_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance):
@@ -1797,7 +1813,9 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg, plot_panel_ins
     if dont_show_plots:
         plt.close(f)
 
-    plot_panel_instance.figures.append(f)
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def plot_angles_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance):
@@ -1842,7 +1860,9 @@ def plot_angles_by_average_SC(average_data, std_data, info, cfg, plot_panel_inst
     if dont_show_plots:
         plt.close(f)
 
-    plot_panel_instance.figures.append(f)
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def plot_x_velocities_by_average_SC(
@@ -1898,7 +1918,9 @@ def plot_x_velocities_by_average_SC(
     if dont_show_plots:
         plt.close(f)
 
-    plot_panel_instance.figures.append(f)
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def plot_angular_velocities_by_average_SC(
@@ -1946,7 +1968,9 @@ def plot_angular_velocities_by_average_SC(
     if dont_show_plots:
         plt.close(f)
 
-    plot_panel_instance.figures.append(f)
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def plot_x_acceleration_by_average_SC(
@@ -2002,7 +2026,9 @@ def plot_x_acceleration_by_average_SC(
     if dont_show_plots:
         plt.close(f)
 
-    plot_panel_instance.figures.append(f)
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def plot_angular_acceleration_by_average_SC(
@@ -2054,7 +2080,9 @@ def plot_angular_acceleration_by_average_SC(
     if dont_show_plots:
         plt.close(f)
 
-    plot_panel_instance.figures.append(f)
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def save_figures(figure, results_dir, name, figure_file_string):
@@ -2170,13 +2198,15 @@ class PlotPanel:
         for fig in self.figures:
             # dpi adjusted to increase visibilty/readability
             fig.set_dpi(100)
-            # right margin adjusted to display the legend properly
-            fig.subplots_adjust(right=0.88)
+            # to adjust margins within the figure
+            # in case there are a lot of steps in one run (-> the legend is super long)
+            # the figure won't be displayed properly.
+            fig.set_constrained_layout(True)
 
         # Initialize the plot panel with the first figure
         self.plot_panel = FigureCanvasTkAgg(
             self.figures[self.current_fig_index], master=self.plotwindow
-        )
+        )  # index used for buttons
         self.plot_panel.get_tk_widget().grid(
             row=0, column=0, padx=10, pady=10, sticky="nsew"
         )
@@ -2243,12 +2273,6 @@ class PlotPanel:
 
 def print_finish(info, cfg):
     """Print that we finished this program"""
-    # unpack
-    dont_show_plots = cfg["dont_show_plots"]
-
-    if dont_show_plots:
-        plt.pause(1)  # so we ensure that plots are plotted to python before print
-
     print("\n***************************************************")
     print("* GAITA FINISHED - RESULTS WERE SAVED HERE:       *")
     print("* " + info["results_dir"] + " *")
