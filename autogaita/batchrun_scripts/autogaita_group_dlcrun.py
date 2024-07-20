@@ -29,6 +29,7 @@ def group_dlcrun():
     cfg["plot_SE"] = False
     cfg["color_palette"] = "viridis"
     cfg["legend_outside"] = True
+    cfg["dont_show_plots"] = False
     cfg["which_leg"] = "left"
     cfg["anova_design"] = "Mixed ANOVA"
     cfg["permutation_number"] = 100

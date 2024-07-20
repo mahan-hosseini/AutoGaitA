@@ -282,7 +282,7 @@ def simi_gui():
 
     # .............................  left section  .....................................
     # plot plots to python
-    showplots_string = "Don't show plots in Python (save only)"
+    showplots_string = "Don't show plots in GUI (save only)"
     showplots_checkbox = ctk.CTkCheckBox(
         root,
         text=showplots_string,

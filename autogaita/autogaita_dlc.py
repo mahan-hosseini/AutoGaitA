@@ -1479,7 +1479,6 @@ def plot_results(info, results, folderinfo, cfg, plot_panel_instance):
             )
 
     # ........................optional - 11 - build plot panel..........................
-    print("paramter", cfg["dont_show_plots"])
     if cfg["dont_show_plots"] is True:
         pass  # going on without building the plot window
     elif cfg["dont_show_plots"] is False:  # -> show plot panel
@@ -2185,7 +2184,9 @@ class PlotPanel:
         ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
         ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
         self.plotwindow = ctk.CTkToplevel()
-        self.plotwindow.title("AutoGaitA Plot Panel")
+        self.plotwindow.title(
+            f"AutoGaitA Plot Panel {self.current_fig_index+1}/{len(self.figures)}"
+        )
 
         # Set size to 50% of screen
         screen_width = self.plotwindow.winfo_screenwidth()
@@ -2266,6 +2267,11 @@ class PlotPanel:
         self.toolbar.destroy()
         self.toolbar = NavigationToolbar2Tk(self.plot_panel, self.toolbar_frame)
         self.toolbar.update()
+
+        # Update title
+        self.plotwindow.title(
+            f"AutoGaitA Plot Panel {self.current_fig_index+1}/{len(self.figures)}"
+        )
 
 
 # %% local functions 5 - print finish
