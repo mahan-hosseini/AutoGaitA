@@ -170,7 +170,7 @@ def some_prep(folderinfo, cfg):
     # see if there's a config json file and add to cfg dict
     for g_idx, group_dir in enumerate(group_dirs):
         with open(
-            os.path.join(group_dir + CONFIG_JSON_FILENAME), "r"
+            os.path.join(group_dir, CONFIG_JSON_FILENAME), "r"
         ) as config_json_file:
             config_vars_from_json = json.load(config_json_file)
             for key in config_vars_from_json.keys():
@@ -1520,6 +1520,9 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
         interaction_effect_pval = ANOVA_result["p-unc"][2]
     else:
         interaction_effect_pval = ANOVA_result["p-GG-corr"][2]
+        # NU - understand why its nan sometimes. For now use uncorrected int pval
+        if np.isnan(interaction_effect_pval):
+            interaction_effect_pval = ANOVA_result["p-unc"][2]
     if interaction_effect_pval < 0.05:  # if interaction effect is sig, do multcomps
         multcomp_df = multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg)
         save_stats_results_to_text(
