@@ -1404,6 +1404,7 @@ def prepare_folderinfo(this_runs_results):
 def extract_info(folderinfo):
     """Prepare a dict of lists that include unique name/mouse/run infos"""
     info = {"name": [], "mouse_num": [], "run_num": []}
+    postrun_string = folderinfo["postrun_string"]
     for filename in os.listdir(folderinfo["root_dir"]):
         # make sure we don't get wrong files
         if (
@@ -1411,15 +1412,51 @@ def extract_info(folderinfo):
             & (folderinfo["prerun_string"] in filename)
             & (filename.endswith(".csv"))
         ):
-            # we can use COUNT vars as we do here, since we start @ 0 and do
-            # not include the last index (so if counts=2, idx=[0:2]=include
-            # 0&1 only!)
-            this_mouse_num = find_number(
-                filename, folderinfo["premouse_string"], folderinfo["postmouse_string"]
-            )
-            this_run_num = find_number(
-                filename, folderinfo["prerun_string"], folderinfo["postrun_string"]
-            )
+            # ID number - fill in "_" for user if needed & throw error & stop if issues
+            this_mouse_num = False
+            for candidate_postmouse_string in [
+                folderinfo["postmouse_string"],
+                "_" + folderinfo["postmouse_string"],
+            ]:
+                try:
+                    this_mouse_num = find_number(
+                        filename,
+                        folderinfo["premouse_string"],
+                        candidate_postmouse_string,
+                    )
+                except:
+                    pass
+            if this_mouse_num is False:
+                no_ID_num_found_msg = (
+                    "Unable to extract ID numbers from file identifiers! "
+                    + "Check unique subject [B] and unique task [C] identifiers"
+                )
+                tk.messagebox.showerror(
+                    title="No ID number found!", message=no_ID_num_found_msg
+                )
+                return
+            # Do the same for run number
+            this_run_num = False
+            for candidate_postrun_string in [
+                folderinfo["postrun_string"],
+                "-" + folderinfo["postrun_string"],
+            ]:
+                try:
+                    this_run_num = find_number(
+                        filename, folderinfo["prerun_string"], candidate_postrun_string
+                    )
+                except:
+                    pass
+            if this_run_num is False:
+                no_run_num_found_msg = (
+                    "Unable to extract trial numbers from file identifiers! "
+                    + "Check unique trial [D] and unique camera [E] identifiers"
+                )
+                tk.messagebox.showerror(
+                    title="No Trial number found!", message=no_ID_num_found_msg
+                )
+                return
+            # if we found both an ID and a run number, create this_name & add to dict
             this_name = "ID " + str(this_mouse_num) + " - Run " + str(this_run_num)
             if this_name not in info["name"]:  # no data/beam duplicates here
                 info["name"].append(this_name)

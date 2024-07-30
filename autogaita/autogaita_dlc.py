@@ -2185,7 +2185,7 @@ class PlotPanel:
         ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
         self.plotwindow = ctk.CTkToplevel()
         self.plotwindow.title(
-            f"AutoGaitA Plot Panel {self.current_fig_index+1}/{len(self.figures)}"
+            f"AutoGaitA Figure {self.current_fig_index+1}/{len(self.figures)}"
         )
 
         # Set size to 50% of screen

@@ -1603,13 +1603,13 @@ def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
                     plot_panel_instance,
                 )
 
-        # ........................optional - 10 - build plot panel..........................
-        if cfg["dont_show_plots"] is True:
-            pass  # going on without building the plot window
-        elif cfg["dont_show_plots"] is False:  # -> show plot panel
-            # Destroy loading screen and build plot panel with all figures
-            plot_panel_instance.destroy_plot_panel_loading_screen()
-            plot_panel_instance.build_plot_panel()
+    # ........................optional - 10 - build plot panel..........................
+    if cfg["dont_show_plots"] is True:
+        pass  # going on without building the plot window
+    elif cfg["dont_show_plots"] is False:  # -> show plot panel
+        # Destroy loading screen and build plot panel with all figures
+        plot_panel_instance.destroy_plot_panel_loading_screen()
+        plot_panel_instance.build_plot_panel()
 
 
 # ................................  inner functions  ...................................
@@ -1701,12 +1701,18 @@ def plot_joint_z_by_y(
                 median_z_val = [round(np.median(ax[j].get_yticks()), 2)]
                 median_z_val_label = [str(median_z_val[0])]  # has to be of same len
                 ax[j].set_yticks(median_z_val, median_z_val_label)
+            # title
+            figure_file_string = (
+                name + " - " + legname + " - " + joint + " z by y coordinates"
+            )
+            try:
+                ax[j][0].set_title(figure_file_string)
+            except:
+                ax[j].set_title(figure_file_string)
         # figure stuff
         f[j].supxlabel("y (m)")
         f[j].supylabel("z (m)")
-        figure_string = name + " - " + legname + " - " + joint + " z by y coordinates"
-        f[j].suptitle(figure_string, y=0.925)
-        save_figures(f[j], results_dir, figure_string)
+        save_figures(f[j], results_dir, figure_file_string)
         if dont_show_plots:
             plt.close(f[j])
 
@@ -1771,12 +1777,15 @@ def plot_angles_by_time(
                 )
             elif legend_outside is False:
                 ax[a].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+            # title
+            figure_file_string = (
+                name + " - " + legname + " - " + angle + " angle by time"
+            )
+            ax[a].set_title(figure_file_string)
         # figure stuff
         f[a].supxlabel("Time (s)")
         f[a].supylabel("Angle (degree)")
-        figure_string = name + " - " + legname + " - " + angle + " angle by time"
-        f[a].suptitle(figure_string, y=0.925)
-        save_figures(f[a], results_dir, figure_string)
+        save_figures(f[a], results_dir, figure_file_string)
         if dont_show_plots:
             plt.close(f[a])
 
@@ -1893,10 +1902,14 @@ def plot_stickdiagram(
             median_z_val = [round(np.median(ax.get_yticks()), 2)]
             median_z_val_label = [str(median_z_val[0])]  # has to be of same len
             ax.set_yticks(median_z_val, median_z_val_label)
+        # title
+        figure_file_string = name + " - " + legname + " - Stick Diagram"
+        try:
+            ax[0].set_title(figure_file_string)
+        except:
+            ax.set_title(figure_file_string)
     f.supxlabel("y (m)")
     f.supylabel("z (m)")
-    figure_file_string = name + " - " + legname + " - Stick Diagram"
-    f.suptitle(figure_file_string, y=0.925)
     save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -2322,7 +2335,7 @@ class PlotPanel:
         ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
         self.plotwindow = ctk.CTkToplevel()
         self.plotwindow.title(
-            f"AutoGaitA Plot Panel {self.current_fig_index+1}/{len(self.figures)}"
+            f"AutoGaitA Figure {self.current_fig_index+1}/{len(self.figures)}"
         )
 
         # Set size to 50% of screen
