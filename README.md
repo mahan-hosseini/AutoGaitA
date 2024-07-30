@@ -70,9 +70,9 @@ Even though AutoGaitA's main focus is to automate and standardise gait analyses,
 ## Updating AutoGaitA
 It is strongly recommended that AutoGaitA is kept up to date since new features and important bugfixes are provided regularly. 
 
-AutoGaitA's cfg files and dictionaries sometimes change as a result, which means that previously generated first-level *Results* folders cannot always be analysed with AutoGaitA Group after an update. 
+AutoGaitA's cfg files and dictionaries sometimes change as a result, which means that previously generated first-level *Results* folders cannot always be analysed with AutoGaitA Group after an update. In such cases, it is recommended to re-run first-level analyses. 
 
-In such cases, first-level analyses either have to be re-run or cfg-files have to be changed manually. The latter holds true for custom scripts as well. Please see the [AutoGaitA Changelog](https://github.com/mahan-hosseini/AutoGaitA/releases) for each version's cfg-changes.
+We document each version's cfg-changes in [AutoGaitA Releases](https://github.com/mahan-hosseini/AutoGaitA/releases), which is particularly relevant for users wrapping custom scripts around AutoGaitA's functions.
 
 ## Reference
 If you use this code or data please [cite our preprint](https://www.biorxiv.org/content/10.1101/2024.04.14.589409v1).
