@@ -1453,7 +1453,7 @@ def plot_permutation_test_results(
             elif legend_outside is False:
                 ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
             if check_mouse_conversion(feature, cfg):
-                ytickconvert_mm_to_cm(ax[c])
+                ytickconvert_mm_to_cm(feature, ax[c])
                 ax[c].set_ylabel("")  # we use supylabel
         else:
             # legend adjustments
@@ -1713,7 +1713,7 @@ def plot_multcomp_results(
             elif legend_outside is False:
                 ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
             if check_mouse_conversion(feature, cfg):
-                ytickconvert_mm_to_cm(ax[c])
+                ytickconvert_mm_to_cm(feature, ax[c])
                 ax[c].set_ylabel("")  # we use supylabel
         else:
             # legend adjustments
@@ -1825,30 +1825,45 @@ def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance):
 
     # unpack
     angles = cfg["angles"]
+    tracking_software = cfg["tracking_software"]
+    # prep
+    plot_horizontal_coord = False
 
     # ........................1 - y coords over average SC..............................
     plot_joint_y_by_average_SC(
         g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
     )
 
-    # ........................2 - angles over average SC................................
+    # .......................2 - x coords over average SC (optional)....................
+    if tracking_software == "DLC":
+        if cfg["analyse_average_x"] is True:
+            plot_horizontal_coord = True
+    elif tracking_software == "Simi":
+        if cfg["analyse_average_y"] is True:
+            plot_horizontal_coord = True
+    if plot_horizontal_coord:
+        plot_joint_x_by_average_SC(
+            g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+        )
+
+    # ........................3 - angles over average SC................................
     if angles["name"]:
         plot_angles_by_average_SC(
             g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
         )
 
-    # .................3 - average x velocities over SC percentage......................
+    # .................4 - average x velocities over SC percentage......................
     plot_x_velocities_by_average_SC(
         g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
     )
 
-    # ..............4 - average angular velocities over SC percentage...................
+    # ..............5 - average angular velocities over SC percentage...................
     if angles["name"]:
         plot_angular_velocities_by_average_SC(
             g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
         )
 
-    # ........................optional - 5 - build plot panel..........................
+    # ........................optional - 6 - build plot panel..........................
     if cfg["dont_show_plots"] is True:
         pass  # going on without building the plot window
     elif cfg["dont_show_plots"] is False:  # -> show plot panel
@@ -1860,7 +1875,7 @@ def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance):
 def plot_joint_y_by_average_SC(
     g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
 ):
-    """1 - Plot joints' y as a function of average SC's percentage"""
+    """1 - Plot joints' y/Z as a function of average SC's percentage"""
 
     # unpack
     group_names = folderinfo["group_names"]
@@ -1904,7 +1919,7 @@ def plot_joint_y_by_average_SC(
         if tracking_software == "DLC":
             ax.set_title(group_name + " - Joint Y over average step cycle")
             if check_mouse_conversion("y", cfg):
-                ytickconvert_mm_to_cm(ax)
+                ytickconvert_mm_to_cm("y", ax)
             else:
                 ax.set_ylabel("y (pixel)")
             figure_file_string = " - Joint y-coord.s over average step cycle"
@@ -1949,7 +1964,7 @@ def plot_joint_y_by_average_SC(
         if tracking_software == "DLC":
             ax.set_title(joint + "Y over average step cycle")
             if check_mouse_conversion("y", cfg):
-                ytickconvert_mm_to_cm(ax)
+                ytickconvert_mm_to_cm("y", ax)
             else:
                 ax.set_ylabel("y (pixel)")
             figure_file_string = "- Y-coord.s over average step cycle"
@@ -1963,6 +1978,120 @@ def plot_joint_y_by_average_SC(
             ax.set_title(title_leg + " " + joint + " Z over average step cycle")
             ax.set_ylabel("Z")
             figure_file_string = "- Z-coord.s over average step cycle"
+        save_figures(f, results_dir, joint + figure_file_string)
+        plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
+
+
+def plot_joint_x_by_average_SC(
+    g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+):
+    """2 - Plot joints' x/Y as a function of average SC's percentage"""
+
+    # unpack
+    group_names = folderinfo["group_names"]
+    results_dir = folderinfo["results_dir"]
+    bin_num = cfg["bin_num"]
+    joint_color_cycler = cfg["joint_color_cycler"]
+    group_color_cycler = cfg["group_color_cycler"]
+    which_leg = cfg["which_leg"]
+    plot_SE = cfg["plot_SE"]
+    tracking_software = cfg["tracking_software"]
+    joints = cfg["joints"]
+    dont_show_plots = cfg["dont_show_plots"]
+    legend_outside = cfg["legend_outside"]
+
+    # A - lines = joints & figures = groups
+    for g, group_name in enumerate(group_names):
+        f, ax = plt.subplots(1, 1)
+        ax.set_prop_cycle(joint_color_cycler)
+        x = np.linspace(0, 100, bin_num)
+        for joint in joints:
+            if tracking_software == "DLC":
+                y_col = g_avg_dfs[g].columns.get_loc(joint + "x")
+            elif tracking_software == "Simi":
+                # check for bodyside-specificity
+                feature = "Y"
+                y_col = extract_feature_column(g_avg_dfs[g], joint, which_leg, feature)
+            y = g_avg_dfs[g].iloc[:, y_col]  # average & stddata share colnames
+            if plot_SE:
+                std = g_std_dfs[g].iloc[:, y_col] / np.sqrt(g_std_dfs[g]["N"][0])
+            else:
+                std = g_std_dfs[g].iloc[:, y_col]
+            ax.plot(x, y, label=joint)
+            ax.fill_between(x, y - std, y + std, alpha=STD_ALPHA, lw=STD_LW)
+
+        # legend adjustments
+        if legend_outside is True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif legend_outside is False:
+            ax.legend()
+        ax.set_xlabel("Percentage")
+        if tracking_software == "DLC":
+            ax.set_title(group_name + " - Joint X over average step cycle")
+            if check_mouse_conversion("x", cfg):
+                ytickconvert_mm_to_cm("x", ax)
+            else:
+                ax.set_ylabel("x (pixel)")
+            figure_file_string = " - Joint x-coord.s over average step cycle"
+        elif tracking_software == "Simi":
+            ax.set_title(
+                group_name + " - " + which_leg + " Joint Y over average step cycle"
+            )
+            ax.set_ylabel("Y")
+            figure_file_string = " - Joint Y-coord.s over average step cycle"
+        save_figures(f, results_dir, group_name + figure_file_string)
+        plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
+
+    # B - lines = groups & figures = joints
+    for j, joint in enumerate(joints):
+        f, ax = plt.subplots(1, 1)
+        ax.set_prop_cycle(group_color_cycler)
+        x = np.linspace(0, 100, bin_num)
+        for g, group_name in enumerate(group_names):
+            if tracking_software == "DLC":
+                y_col = g_avg_dfs[g].columns.get_loc(joint + "x")
+            elif tracking_software == "Simi":
+                # check for bodyside-specificity
+                feature = "Y"
+                y_col = extract_feature_column(g_avg_dfs[g], joint, which_leg, feature)
+            y = g_avg_dfs[g].iloc[:, y_col]  # average & stddata share colnames
+            if plot_SE:
+                std = g_std_dfs[g].iloc[:, y_col] / np.sqrt(g_std_dfs[g]["N"][0])
+            else:
+                std = g_std_dfs[g].iloc[:, y_col]
+            ax.plot(x, y, label=group_name)
+            ax.fill_between(x, y - std, y + std, alpha=STD_ALPHA, lw=STD_LW)
+        # legend adjustments
+        if legend_outside is True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif legend_outside is False:
+            ax.legend()
+        ax.set_xlabel("Percentage")
+        if tracking_software == "DLC":
+            ax.set_title(joint + "X over average step cycle")
+            if check_mouse_conversion("x", cfg):
+                ytickconvert_mm_to_cm("x", ax)
+            else:
+                ax.set_ylabel("x (pixel)")
+            figure_file_string = "- X-coord.s over average step cycle"
+        elif tracking_software == "Simi":
+            # do title_leg thingy only for B plots, because here we have separate
+            # figures for joints / angles (in A plots just throw leg into title)
+            if joint + "Y" in g_avg_dfs[g].columns:
+                title_leg = ""
+            else:
+                title_leg = which_leg
+            ax.set_title(title_leg + " " + joint + " Y over average step cycle")
+            ax.set_ylabel("Y")
+            figure_file_string = "- Y-coord.s over average step cycle"
         save_figures(f, results_dir, joint + figure_file_string)
         plt.close(f)
 
@@ -2117,9 +2246,9 @@ def plot_x_velocities_by_average_SC(
             ax.legend()
         ax.set_xlabel("Percentage")
         if tracking_software == "DLC":
-            if check_mouse_conversion("y", cfg):
-                ytickconvert_mm_to_cm(ax)
-                ax.set_ylabel(
+            if check_mouse_conversion("x", cfg):
+                ytickconvert_mm_to_cm("x", ax)
+                ax.set_ylabel(  # overwriting convert-funcs ylabel
                     "Velocity (x in cm / "
                     + str(int((1 / sampling_rate) * 1000))
                     + " ms)"
@@ -2177,8 +2306,8 @@ def plot_x_velocities_by_average_SC(
             ax.legend()
         ax.set_xlabel("Percentage")
         if tracking_software == "DLC":
-            if check_mouse_conversion("y", cfg):
-                ytickconvert_mm_to_cm(ax)
+            if check_mouse_conversion("x", cfg):
+                ytickconvert_mm_to_cm("x", ax)
                 ax.set_ylabel(
                     "Velocity (x in cm / "
                     + str(int((1 / sampling_rate) * 1000))
@@ -2342,14 +2471,14 @@ def save_figures(figure, results_dir, figure_file_string):
     )
 
 
-def ytickconvert_mm_to_cm(axis):
+def ytickconvert_mm_to_cm(feature, axis):
     """Convert axis y-ticks from mm (of data) to cm"""
     y_ticks = axis.get_yticks()
     y_ticklabels = []
     for t in y_ticks:
         y_ticklabels.append(str(round(t / 10, 2)))
     axis.set_yticks(y_ticks, labels=y_ticklabels)
-    axis.set_ylabel("y (cm)")
+    axis.set_ylabel(feature + " (cm)")
 
 
 def extract_feature_column(df, joint, legname, feature):
@@ -2442,14 +2571,18 @@ def write_issues_to_textfile(message, results_dir):
 
 
 def check_mouse_conversion(feature, cfg):
-    """For mouse plots: check if we have to convert mm to cm (for plotting y only)"""
+    """For mouse plots: check if we have to convert mm to cm (for plotting x or y)"""
     if "convert_to_mm" not in cfg.keys():
         return False
     else:
         if cfg["convert_to_mm"] is False:
             return False
         else:
-            if feature == "y":
+            if (
+                feature.endswith(" x")
+                | feature.endswith(" y")
+                | (feature in ["x", "y"])
+            ):
                 return True
 
 
