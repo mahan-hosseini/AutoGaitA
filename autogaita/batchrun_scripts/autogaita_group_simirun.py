@@ -33,6 +33,7 @@ def group_simirun():
         cfg["plot_SE"] = False
         cfg["color_palette"] = "viridis"
         cfg["legend_outside"] = True
+        cfg["dont_show_plots"] = False
         cfg["anova_design"] = "Mixed ANOVA"
         cfg["PCA_variables"] = [
             "Midfoot, " + cfg["which_leg"] + " Z",

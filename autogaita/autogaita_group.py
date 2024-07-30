@@ -13,6 +13,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation, FFMpegWriter
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import tkinter as tk
+import customtkinter as ctk
 from pingouin import sphericity, mixed_anova
 from scipy import stats
 import seaborn as sns
@@ -30,7 +33,12 @@ import seaborn as sns
 
 
 # %% constants
-
+# SET PLT BACKEND
+matplotlib.use("agg")
+# Agg is a non-interactive backend for plotting that can only write to files
+# this is used to generate and save the plot figures
+# later a tkinter backend (FigureCanvasTkAgg) is used for the plot panel
+# increase resolution of figures
 # INCREASE RESOLUTION OF FIGURES
 plt.rcParams["figure.dpi"] = 300
 
@@ -93,8 +101,18 @@ def group(folderinfo, cfg):
     7) perform the RM-/Mixed-ANOVA
     8) plots
     """
+    # .............. initiate plot panel class and build loading screen ................
+    # create class instance independently of "dont_show_plots" to not break the code
+    plot_panel_instance = PlotPanel()
 
-    # ..............................  print finish  ....................................
+    if cfg["dont_show_plots"] is True:
+        pass  # going on without building the loading screen
+
+    elif cfg["dont_show_plots"] is False:  # -> show plot panel
+        # build loading screen
+        plot_panel_instance.build_plot_panel_loading_screen()
+
+    # ..............................  print start  ....................................
     print_start(folderinfo, cfg)
 
     # ..................................  unpack  ......................................
@@ -111,7 +129,7 @@ def group(folderinfo, cfg):
 
     # ...................................  PCA  ........................................
     if cfg["PCA_variables"]:  # empty lists are falsey!
-        PCA_on_a_limb(avg_dfs, folderinfo, cfg)
+        PCA_on_a_limb(avg_dfs, folderinfo, cfg, plot_panel_instance)
 
     # ..............................  prepare statistics  ..............................
     stats_df = create_stats_df(avg_dfs, folderinfo, cfg)
@@ -121,7 +139,13 @@ def group(folderinfo, cfg):
         if cfg["do_permtest"]:
             for stats_var in cfg["stats_variables"]:
                 cluster_extent_test(
-                    stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg
+                    stats_df,
+                    g_avg_dfs,
+                    g_std_dfs,
+                    stats_var,
+                    folderinfo,
+                    cfg,
+                    plot_panel_instance,
                 )
 
         # ..................................  ANOVA  ...................................
@@ -132,7 +156,7 @@ def group(folderinfo, cfg):
                 )
 
     # ..................................  plots  .......................................
-    plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg)
+    plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance)
 
     # ..............................  print finish  ....................................
     print_finish(folderinfo)
@@ -312,26 +336,6 @@ def extract_cfg_vars(folderinfo, cfg):
                 + "just don't choose any variables for it."
             )
             cfg["number_of_PCs"] = 2  # make sure to update in cfg dict
-
-    # ..............................  dont show plots  .................................
-    # => in group gaita is always dependent on user system
-    # !!! THIS DOES NOT PLOT ANYTHING BUT I HAD TO DO IT LIKE THIS OTHERWISE IT CRASHES
-    # !!! If users should complain that they dont get figures but they should, it might
-    #     be because these lines wrongly determine user to be in non-interactive mode
-    #     while they are not!
-    # if not hasattr(sys, "ps1") and not sys.flags.interactive:
-    #     cfg["dont_show_plots"] = True
-    #     matplotlib.use("agg")
-    # else:
-    #     cfg["dont_show_plots"] = False
-    # !!! UPDATE FOR PYTHON MODULE
-    # ==> I just always set this to True to not show plots because otherwise weird
-    #     things happened with grouprun_ functions
-    # ==> .agg is used because otherwise we get a warning for f,ax=plt.subplots()
-    # ==> Not sure why this is different for our first-level GUIs but I'll just try
-    #     to implement a window for showing plots using GUI
-    matplotlib.use("agg")
-    cfg["dont_show_plots"] = True
 
     return cfg
 
@@ -895,7 +899,7 @@ def grand_avg_and_std(avg_dfs, folderinfo, cfg):
 # %% ...........................  local functions #4 - PCA  ............................
 
 
-def PCA_on_a_limb(avg_dfs, folderinfo, cfg):
+def PCA_on_a_limb(avg_dfs, folderinfo, cfg, plot_panel_instance):
     """PCA on joint y values of a limb (mouse: hindlimb, humans: leg of interest)"""
 
     # print info
@@ -907,7 +911,7 @@ def PCA_on_a_limb(avg_dfs, folderinfo, cfg):
     # save PCA info to xlsx file
     PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg)
     # plot the scatterplot
-    plot_PCA(PCA_df, PCA_info, folderinfo, cfg)
+    plot_PCA(PCA_df, PCA_info, folderinfo, cfg, plot_panel_instance)
 
 
 def PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg):
@@ -1004,7 +1008,7 @@ def run_PCA(PCA_df, features, cfg):
     return PCA_df, PCA_info
 
 
-def plot_PCA(PCA_df, PCA_info, folderinfo, cfg):
+def plot_PCA(PCA_df, PCA_info, folderinfo, cfg, plot_panel_instance):
     """Plot a scatterplot and colour based on group name"""
 
     # unpack
@@ -1070,18 +1074,17 @@ def plot_PCA(PCA_df, PCA_info, folderinfo, cfg):
             + "%"
         )
     save_figures(f, results_dir, "PCA Scatterplot")
-    if dont_show_plots:
-        plt.close(f)
-    else:
-        plt.show()
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
     # 3d scatterplot image file
     if number_of_PCs > 2:
         save_figures(f_3d, results_dir, "PCA 3D Scatterplot")
-        if dont_show_plots:
-            plt.close(f_3d)
-        else:
-            plt.show()
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
         # 3d scatterplot rotating video file
         if save_3D_PCA_video:
@@ -1135,7 +1138,9 @@ def create_stats_df(avg_dfs, folderinfo, cfg):
 
 
 # ...............................  main function  ......................................
-def cluster_extent_test(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
+def cluster_extent_test(
+    stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg, plot_panel_instance
+):
     """Main function running a cluster-extent permutation test of N contrasts for a
     given dependent variable
     """
@@ -1183,7 +1188,13 @@ def cluster_extent_test(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, c
     )
     # plot results
     plot_permutation_test_results(
-        g_avg_dfs, g_std_dfs, trueobs_results_df, stats_var, folderinfo, cfg
+        g_avg_dfs,
+        g_std_dfs,
+        trueobs_results_df,
+        stats_var,
+        folderinfo,
+        cfg,
+        plot_panel_instance,
     )
 
 
@@ -1346,7 +1357,13 @@ def test_trueobs_clusters(
 
 # ...................................  plot results  ...................................
 def plot_permutation_test_results(
-    g_avg_dfs, g_std_dfs, trueobs_results_df, stats_var, folderinfo, cfg
+    g_avg_dfs,
+    g_std_dfs,
+    trueobs_results_df,
+    stats_var,
+    folderinfo,
+    cfg,
+    plot_panel_instance,
 ):
     """Plot a Nx1 or N/2x2 figure of our contrasts' permutation test results."""
 
@@ -1469,10 +1486,11 @@ def plot_permutation_test_results(
     figure_file_string = stats_var + " - Cluster-extent Test"
     f.suptitle(figure_file_string, fontsize=PERM_PLOT_SUPLABEL_SIZE, y=0.993)
     save_figures(f, results_dir, figure_file_string)
-    if dont_show_plots:
-        plt.close(f)
-    else:
-        plt.show()
+
+    plt.close(f)
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def extract_all_clusters(trueobs_results_df, contrast):
@@ -1499,7 +1517,9 @@ def extract_all_clusters(trueobs_results_df, contrast):
 # %% .................  local functions #7 - 2-way RM/Mixed-ANOVA  .....................
 
 
-def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
+def twoway_RMANOVA(
+    stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg, plot_panel_instance
+):
     """Perform a two-way RM-ANOVA with the factors group (between or within) & SC
     percentage (within) on a given dependent variable
     """
@@ -1529,7 +1549,13 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
             multcomp_df, stats_var, anova_design, folderinfo, cfg
         )
         plot_multcomp_results(
-            g_avg_dfs, g_std_dfs, multcomp_df, stats_var, folderinfo, cfg
+            g_avg_dfs,
+            g_std_dfs,
+            multcomp_df,
+            stats_var,
+            folderinfo,
+            cfg,
+            plot_panel_instance,
         )
     else:  # if interaction effect not sig, inform user that we didn't perform Tukey's!
         nonsig_multcomp_df = pd.DataFrame()
@@ -1600,7 +1626,7 @@ def run_ANOVA(stats_df, stats_var, cfg):
 
 # ...................................  plot results  ...................................
 def plot_multcomp_results(
-    g_avg_dfs, g_std_dfs, multcomp_df, stats_var, folderinfo, cfg
+    g_avg_dfs, g_std_dfs, multcomp_df, stats_var, folderinfo, cfg, plot_panel_instance
 ):
     """Plot an Nx1 figure of N contrasts' multiple comparison results."""
 
@@ -1745,10 +1771,11 @@ def plot_multcomp_results(
         y=0.993,
     )
     save_figures(f, results_dir, figure_file_string)
-    if dont_show_plots:
-        plt.close(f)
-    else:
-        plt.show()
+
+    plt.close(f)
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def extract_multcomp_significance_clusters(multcomp_df, contrast, stats_threshold):
@@ -1776,7 +1803,7 @@ def extract_multcomp_significance_clusters(multcomp_df, contrast, stats_threshol
 # %% ..........................  local functions #8 - plots  ...........................
 
 
-def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg):
+def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance):
     """Plot results - main function (inner functions loop over groups)"""
 
     # unpack
@@ -1784,25 +1811,39 @@ def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg):
     angles = cfg["angles"]
 
     # ........................1 - y coords over average SC..............................
-    plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
+    plot_joint_y_by_average_SC(
+        g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+    )
 
     # ........................2 - angles over average SC................................
     if angles["name"]:
-        plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
+        plot_angles_by_average_SC(
+            g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+        )
 
     # .................3 - average x velocities over SC percentage......................
-    plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
+    plot_x_velocities_by_average_SC(
+        g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+    )
 
     # ..............4 - average angular velocities over SC percentage...................
     if angles["name"]:
-        plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
+        plot_angular_velocities_by_average_SC(
+            g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+        )
 
-    # plot stuff if wanted
-    if dont_show_plots is False:
-        plt.show()
+    # ........................optional - 5 - build plot panel..........................
+    if cfg["dont_show_plots"] is True:
+        pass  # going on without building the plot window
+    elif cfg["dont_show_plots"] is False:  # -> show plot panel
+        # Destroy loading screen and build plot panel with all figures
+        plot_panel_instance.destroy_plot_panel_loading_screen()
+        plot_panel_instance.build_plot_panel()
 
 
-def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
+def plot_joint_y_by_average_SC(
+    g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+):
     """1 - Plot joints' y as a function of average SC's percentage"""
 
     # unpack
@@ -1858,8 +1899,11 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.set_ylabel("Z")
             figure_file_string = " - Joint Z-coord.s over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+        plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
     # B - lines = groups & figures = joints
     for j, joint in enumerate(joints):
@@ -1904,11 +1948,16 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.set_ylabel("Z")
             figure_file_string = "- Z-coord.s over average step cycle"
         save_figures(f, results_dir, joint + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+        plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
 
-def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
+def plot_angles_by_average_SC(
+    g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+):
     """2 - Plot Angles as a function of average SC's percentage"""
 
     # unpack
@@ -1958,8 +2007,11 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             )
         figure_file_string = " - Joint angles over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+        plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
     # B - lines = groups & figures = angles
     for a, angle in enumerate(angles["name"]):
@@ -1997,11 +2049,16 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.set_title(title_leg + " " + angle + " angle over average step cycle")
         figure_file_string = " - Angle over average step cycle"
         save_figures(f, results_dir, angle + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+        plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
 
-def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
+def plot_x_velocities_by_average_SC(
+    g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+):
     """3 - Plot x velocities as a function of average SC's percentage"""
 
     # unpack
@@ -2072,8 +2129,11 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             )
         figure_file_string = " - Joint velocities over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+        plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
     # B - lines = groups & figures = joints
     for j, joint in enumerate(joints):
@@ -2130,11 +2190,16 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             )
         figure_file_string = "- Velocities over average step cycle"
         save_figures(f, results_dir, joint + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+        plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
 
-def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
+def plot_angular_velocities_by_average_SC(
+    g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+):
     """4 - Plot angular velocities as a function of average SC's percentage"""
     # unpack
     group_names = folderinfo["group_names"]
@@ -2189,8 +2254,11 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
             )
         figure_file_string = " - Angular velocities over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+        plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
     # B - lines = groups & figures = joints
     for a, angle in enumerate(angles["name"]):
@@ -2235,8 +2303,11 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
             )
         figure_file_string = " - Angular Velocities over average step cycle"
         save_figures(f, results_dir, angle + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+        plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
 
 def save_figures(figure, results_dir, figure_file_string):
@@ -2488,6 +2559,138 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
     stats_textfile = os.path.join(results_dir, STATS_TXT_FILENAME)
     with open(stats_textfile, "a") as f:
         f.write(message)
+
+
+class PlotPanel:
+    def __init__(self):
+        self.figures = []
+        self.current_fig_index = 0
+
+    # .........................  loading screen  ................................
+    def build_plot_panel_loading_screen(self):
+        """Builds a loading screen that is shown while plots are generated"""
+        # Build window
+        self.loading_screen = ctk.CTkToplevel()
+        self.loading_screen.title("Loading...")
+        self.loading_screen.geometry("300x300")
+        self.loading_label_strings = [
+            "Plots are generated, please wait.",
+            "Plots are generated, please wait..",
+            "Plots are generated, please wait...",
+        ]
+        self.loading_label = ctk.CTkLabel(
+            self.loading_screen, text=self.loading_label_strings[0]
+        )
+        self.loading_label.pack(pady=130, padx=40, anchor="w")
+
+        # Animate the text
+        self.animate(counter=1)
+
+    # Cycle through loading labels to animate the loading screen
+    def animate(self, counter):
+        self.loading_label.configure(text=self.loading_label_strings[counter])
+        self.loading_screen.after(
+            500, self.animate, (counter + 1) % len(self.loading_label_strings)
+        )
+
+    def destroy_plot_panel_loading_screen(self):
+        self.loading_screen.destroy()
+
+    # .........................  plot panel   ................................
+    def build_plot_panel(self):
+        """Creates the window/"panel" in which the plots are shown"""
+        # Set up of the plotpanel
+        ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
+        ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
+        self.plotwindow = ctk.CTkToplevel()
+        self.plotwindow.title(
+            f"AutoGaitA Plot Panel {self.current_fig_index+1}/{len(self.figures)}"
+        )
+
+        # Set size to 50% of screen
+        screen_width = self.plotwindow.winfo_screenwidth()
+        window_width = int(screen_width * 0.5)
+        # 0.75 to gain a ration of 1.333 (that of matplotlib figures) and 1.05 for toolbar + buttons
+        window_height = window_width * 0.75 * 1.05
+        self.plotwindow.geometry(f"{window_width}x{window_height}")
+
+        # Adjust figures for the plot panel
+        for fig in self.figures:
+            # dpi adjusted to increase visibilty/readability
+            fig.set_dpi(100)
+            # to adjust margins within the figure
+            # in case there are a lot of steps in one run (-> the legend is super long)
+            # the figure won't be displayed properly.
+            # fig.set_constrained_layout(True)
+
+        # Initialize the plot panel with the first figure
+        self.plot_panel = FigureCanvasTkAgg(
+            self.figures[self.current_fig_index], master=self.plotwindow
+        )  # index used for buttons
+        self.plot_panel.get_tk_widget().grid(
+            row=0, column=0, padx=10, pady=10, sticky="nsew"
+        )
+
+        # Create toolbar frame and place it in the middle row
+        self.toolbar_frame = tk.Frame(self.plotwindow)
+        self.toolbar_frame.grid(row=1, column=0, sticky="ew")
+
+        self.toolbar = NavigationToolbar2Tk(self.plot_panel, self.toolbar_frame)
+        self.toolbar.update()
+
+        # Create navigation buttons frame
+        self.button_frame = tk.Frame(self.plotwindow)
+        self.button_frame.grid(row=2, column=0, sticky="ew")
+
+        self.prev_button = ctk.CTkButton(
+            self.button_frame, text="<< Previous", command=self.show_previous
+        )
+        self.next_button = ctk.CTkButton(
+            self.button_frame, text="Next >>", command=self.show_next
+        )
+        self.prev_button.grid(row=0, column=0, sticky="ew")
+        self.next_button.grid(row=0, column=1, sticky="ew")
+
+        self.button_frame.grid_columnconfigure(0, weight=1)
+        self.button_frame.grid_columnconfigure(1, weight=1)
+
+        # Configure grid layout
+        self.plotwindow.grid_rowconfigure(0, weight=1)
+        self.plotwindow.grid_rowconfigure(1, weight=0)
+        self.plotwindow.grid_rowconfigure(2, weight=0)
+        self.plotwindow.grid_columnconfigure(0, weight=1)
+
+    def show_previous(self):
+        if self.current_fig_index > 0:
+            self.current_fig_index -= 1
+            self.update_plot_and_toolbar()
+
+    def show_next(self):
+        if self.current_fig_index < len(self.figures) - 1:
+            self.current_fig_index += 1
+            self.update_plot_and_toolbar()
+
+    def update_plot_and_toolbar(self):
+        # Clear the current plot panel
+        self.plot_panel.get_tk_widget().grid_forget()
+
+        # Update the plot panel with the new figure
+        self.plot_panel = FigureCanvasTkAgg(
+            self.figures[self.current_fig_index], master=self.plotwindow
+        )
+        self.plot_panel.get_tk_widget().grid(row=0, column=0, sticky="nsew")
+        self.plot_panel.draw()
+
+        # Destroy toolbar and create a new one
+        # (This has to be done, otherwise the toolbar won't function for a new plot)
+        self.toolbar.destroy()
+        self.toolbar = NavigationToolbar2Tk(self.plot_panel, self.toolbar_frame)
+        self.toolbar.update()
+
+        # Update title
+        self.plotwindow.title(
+            f"AutoGaitA Plot Panel {self.current_fig_index+1}/{len(self.figures)}"
+        )
 
 
 # %% what happens if we just hit run
