@@ -47,7 +47,7 @@ TK_BOOL_VARS = [
     "normalise_height_at_SC_level",
     "invert_y_axis",
     "flip_gait_direction",
-    "export_average_x",
+    "analyse_average_x",
     "legend_outside",
 ]
 TK_STR_VARS = [
@@ -476,19 +476,19 @@ def build_cfg_window(root, cfg, root_dimensions):
     )
     flip_gait_direction_box.grid(row=14, column=0)
     # export average x coordinates
-    export_average_x_string = (
-        "Export x-coordinate averages (include in Average Stepcycles.xlsx)"
+    analyse_average_x_string = (
+        "Analyse x-coordinate averages"
     )
-    export_average_x_box = ctk.CTkCheckBox(
+    analyse_average_x_box = ctk.CTkCheckBox(
         cfg_window,
-        text=export_average_x_string,
-        variable=cfg["export_average_x"],
+        text=analyse_average_x_string,
+        variable=cfg["analyse_average_x"],
         onvalue=True,
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
     )
-    export_average_x_box.grid(row=15, column=0)
+    analyse_average_x_box.grid(row=15, column=0)
     # color palette
     color_palette_string = "Choose figures' color palette"
     color_palette_label = ctk.CTkLabel(

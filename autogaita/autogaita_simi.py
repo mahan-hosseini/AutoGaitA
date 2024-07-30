@@ -138,7 +138,7 @@ def some_prep(info, folderinfo, cfg):
     postname_string = folderinfo["postname_string"]
     sampling_rate = cfg["sampling_rate"]
     normalise_height_at_SC_level = cfg["normalise_height_at_SC_level"]
-    export_average_y = cfg["export_average_y"]
+    analyse_average_y = cfg["analyse_average_y"]
 
     # .............................  move data  ........................................
     # => see if we can delete a previous runs results folder if existant. if not, it's a
@@ -225,7 +225,7 @@ def some_prep(info, folderinfo, cfg):
         "normalise_height_at_SC_level": normalise_height_at_SC_level,
         "joints": joints,
         "angles": angles,
-        "export_average_y": export_average_y,
+        "analyse_average_y": analyse_average_y,
         "tracking_software": "Simi",
     }
     # note - using "w" will overwrite/truncate file, thus no need to remove it if exists
@@ -960,7 +960,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
     name = info["name"]
     results_dir = info["results_dir"]
     bin_num = cfg["bin_num"]
-    export_average_y = cfg["export_average_y"]
+    analyse_average_y = cfg["analyse_average_y"]
     # do everything on a copy of the data df
     data_copy = data.copy()
     # for exports, we don't need all_cycles to be separated for runs
@@ -1060,7 +1060,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
         )
         # 2) create and save average_ and std_data
         average_data[l_idx], std_data[l_idx] = compute_average_and_std_data(
-            normalised_steps_data[l_idx], bin_num, export_average_y
+            normalised_steps_data[l_idx], bin_num, analyse_average_y
         )
     # ................................  after leg-loop  ................................
     # 1) create "both" sheets for all our data-formats (added to -1 idx of df_list)
@@ -1403,12 +1403,12 @@ def combine_legs(dataframe_list, combination_procedure):
     return dataframe_list
 
 
-def compute_average_and_std_data(normalised_steps_data, bin_num, export_average_y):
+def compute_average_and_std_data(normalised_steps_data, bin_num, analyse_average_y):
     """Export XLS tables that store all averages & std of y-coords & angles"""
     # initialise data & columns of average & std dataframes (fill vals in loop)
     initialisation_data = [[int(((s + 1) / bin_num) * 100) for s in range(bin_num)]]
     initialisation_columns = [DF_SCPERCENTAGE_COL]
-    if export_average_y:
+    if analyse_average_y:
         cols_to_include = [
             c
             for c in normalised_steps_data.columns

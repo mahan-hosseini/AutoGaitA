@@ -505,7 +505,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     )
     save_PCA_video_checkbox.grid(row=10, column=0)
 
-      # dont show plots
+    # dont show plots
     dont_show_plots_string = "Don't show plots in GUI (save only)"
     dont_show_plots_checkbox = ctk.CTkCheckBox(
         cfgwindow,

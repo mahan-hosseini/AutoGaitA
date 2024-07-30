@@ -19,6 +19,7 @@ import customtkinter as ctk
 from pingouin import sphericity, mixed_anova
 from scipy import stats
 import seaborn as sns
+import pdb
 
 # %% A note on cross species functionality
 # => This function supports cross species analyses, however the data must be obtained
@@ -34,12 +35,12 @@ import seaborn as sns
 
 # %% constants
 # SET PLT BACKEND
-matplotlib.use("agg")
 # Agg is a non-interactive backend for plotting that can only write to files
 # this is used to generate and save the plot figures
 # later a tkinter backend (FigureCanvasTkAgg) is used for the plot panel
+matplotlib.use("agg")
+
 # increase resolution of figures
-# INCREASE RESOLUTION OF FIGURES
 plt.rcParams["figure.dpi"] = 300
 
 # Issues & stats results are stored in these textfiles (config json from mouseanalysis)
@@ -152,7 +153,13 @@ def group(folderinfo, cfg):
         if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
             for stats_var in cfg["stats_variables"]:
                 twoway_RMANOVA(
-                    stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg
+                    stats_df,
+                    g_avg_dfs,
+                    g_std_dfs,
+                    stats_var,
+                    folderinfo,
+                    cfg,
+                    plot_panel_instance,
                 )
 
     # ..................................  plots  .......................................
@@ -701,6 +708,10 @@ def avg_and_std(dfs, folderinfo, cfg):
     one_bin_in_sc_percent = cfg["one_bin_in_sc_percent"]
     save_to_xls = cfg["save_to_xls"]
     tracking_software = cfg["tracking_software"]
+    if tracking_software == "DLC":
+        analyse_average_x = cfg["analyse_average_x"]
+    elif tracking_software == "Simi":
+        analyse_average_y = cfg["analyse_average_y"]
 
     # preparation, initialise avg/std dfs & colnames
     avg_dfs = [pd.DataFrame(data=None)] * len(group_names)
@@ -712,13 +723,19 @@ def avg_and_std(dfs, folderinfo, cfg):
         if tracking_software == "DLC":
             cols_to_exclude = [ID_COL, "Run", "Stepcycle", "Flipped", "Time"]
             for col in dfs[g].columns:
-                if (col.endswith("x")) | (col.endswith("likelihood")):
+                if col.endswith("likelihood"):
                     cols_to_exclude.append(col)
+                if analyse_average_x is False:
+                    if col.endswith(" x"):
+                        cols_to_exclude.append(col)
         elif tracking_software == "Simi":
             cols_to_exclude = [ID_COL, "Leg", "Stepcycle", "Time"]
             for col in dfs[g].columns:
-                if (col.endswith("X")) | (col.endswith("Y")):
+                if col.endswith("X"):
                     cols_to_exclude.append(col)
+                if analyse_average_y is False:
+                    if col.endswith("Y"):
+                        cols_to_exclude.append(col)
         this_df = dfs[g]
         IDs = pd.unique(this_df[ID_COL])
         IDs = IDs[~pd.isnull(IDs)]  # get rid of nan separator values
@@ -1807,7 +1824,6 @@ def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance):
     """Plot results - main function (inner functions loop over groups)"""
 
     # unpack
-    dont_show_plots = cfg["dont_show_plots"]
     angles = cfg["angles"]
 
     # ........................1 - y coords over average SC..............................
@@ -2040,7 +2056,7 @@ def plot_angles_by_average_SC(
         ax.set_xlabel("Percentage")
         ax.set_ylabel("Angle (degrees)")
         if tracking_software == "DLC":
-            ax.set_title(angle + " angle over average step cycle")
+            ax.set_title(angle + "angle over average step cycle")
         elif tracking_software == "Simi":
             if angle + "Angle" in g_avg_dfs[g].columns:
                 title_leg = ""
@@ -2106,20 +2122,20 @@ def plot_x_velocities_by_average_SC(
                 ax.set_ylabel(
                     "Velocity (x in cm / "
                     + str(int((1 / sampling_rate) * 1000))
-                    + "ms)"
+                    + " ms)"
                 )
             else:
                 ax.set_ylabel(
                     "Velocity (x in pixels / "
                     + str(int((1 / sampling_rate) * 1000))
-                    + "ms)"
+                    + " ms)"
                 )
             ax.set_title(group_name + " - Joint velocities over average step cycle")
         elif tracking_software == "Simi":
             ax.set_ylabel(
                 "Velocity (Y in (your_units) / "
                 + str(int((1 / sampling_rate) * 1000))
-                + "ms)"
+                + " ms)"
             )
             ax.set_title(
                 group_name
@@ -2166,20 +2182,20 @@ def plot_x_velocities_by_average_SC(
                 ax.set_ylabel(
                     "Velocity (x in cm / "
                     + str(int((1 / sampling_rate) * 1000))
-                    + "ms)"
+                    + " ms)"
                 )
             else:
                 ax.set_ylabel(
                     "Velocity (x in pixels / "
                     + str(int((1 / sampling_rate) * 1000))
-                    + "ms)"
+                    + " ms)"
                 )
             ax.set_title(joint + "velocities over average step cycle")
         elif tracking_software == "Simi":
             ax.set_ylabel(
                 "Velocity (Y in (your_units) / "
                 + str(int((1 / sampling_rate) * 1000))
-                + "ms)"
+                + " ms)"
             )
             if joint + "Velocity" in g_avg_dfs[g].columns:
                 title_leg = ""
@@ -2241,7 +2257,7 @@ def plot_angular_velocities_by_average_SC(
             ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel(
-            "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
+            "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + " ms)"
         )
         if tracking_software == "DLC":
             ax.set_title(group_name + " - Angular velocities over average step cycle")
@@ -2286,10 +2302,10 @@ def plot_angular_velocities_by_average_SC(
             ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel(
-            "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
+            "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + " ms)"
         )
         if tracking_software == "DLC":
-            ax.set_title(angle + " - Angular velocities over average step cycle")
+            ax.set_title(angle + "- Angular velocities over average step cycle")
         elif tracking_software == "Simi":
             if angle + "Angle" in g_avg_dfs[g].columns:
                 title_leg = ""
@@ -2604,7 +2620,7 @@ class PlotPanel:
         ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
         self.plotwindow = ctk.CTkToplevel()
         self.plotwindow.title(
-            f"AutoGaitA Plot Panel {self.current_fig_index+1}/{len(self.figures)}"
+            f"AutoGaitA Figure {self.current_fig_index+1}/{len(self.figures)}"
         )
 
         # Set size to 50% of screen

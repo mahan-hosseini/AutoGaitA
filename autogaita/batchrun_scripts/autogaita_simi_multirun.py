@@ -29,7 +29,7 @@ def simi_multirun():
     cfg["plot_joint_number"] = 7
     cfg["color_palette"] = "viridis"
     cfg["legend_outside"] = True
-    cfg["export_average_y"] = False
+    cfg["analyse_average_y"] = False
     cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis", "Shoulder", "Neck"]
     cfg["angles"] = {
         "name": ["Ankle", "Knee"],
