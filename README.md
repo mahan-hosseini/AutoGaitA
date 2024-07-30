@@ -67,6 +67,10 @@ By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for m
 ## Analysing other behaviours - AutoCyclA 🚴
 Even though AutoGaitA's main focus is to automate and standardise gait analyses, our toolbox can be used to automate the analyses of any rhythmic behaviour of interest. For a proof-of-principle demonstration and an introduction of the general workflow of such analyses, see **[AutoCyclA - Automated Cycling Analysis with AutoGaitA.](https://github.com/mahan-hosseini/AutoGaitA/tree/main/autocycla)**
 
+## Updating AutoGaitA
+It is strongly recommended that AutoGaitA is kept up to date since new features and important bugfixes are provided regularly. 
+As a result, AutoGaitA's cfg files and dictionaries change regularly, too. It is therefore likely that first-level *Results* folders cannot be analysed with AutoGaitA Group after an update. In such cases, first-level analyses either have to be re-run or cfg-files have to be changed manually. The latter holds true for custom scripts as well. Please see the changelog (in the *Releases* panel on the right side of this page) for each version's cfg-changes.
+
 ## Reference
 If you use this code or data please [cite our preprint](https://www.biorxiv.org/content/10.1101/2024.04.14.589409v1).
 
