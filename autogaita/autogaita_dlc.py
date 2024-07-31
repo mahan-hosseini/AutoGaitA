@@ -1424,6 +1424,7 @@ def plot_results(info, results, folderinfo, cfg, plot_panel_instance):
     std_data = results["std_data"]
     x_acceleration = cfg["x_acceleration"]
     angular_acceleration = cfg["angular_acceleration"]
+    analyse_average_x = cfg["analyse_average_x"]
     dont_show_plots = cfg["dont_show_plots"]
     if dont_show_plots:
         plt.switch_backend("Agg")
@@ -1435,53 +1436,63 @@ def plot_results(info, results, folderinfo, cfg, plot_panel_instance):
     # .........................1 - y coords by x coords.................................
     plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
 
-    # ...............................2 - angles by time.................................
+    # .....................2 - x coords by time (optional!).............................
+    if analyse_average_x:
+        plot_x_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
+
+    # ...............................3 - angles by time.................................
     if angles["name"]:
         plot_angles_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
 
-    # ..........................3 - hindlimb stick diagram..............................
+    # ..........................4 - hindlimb stick diagram..............................
     plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
 
-    # ...........................4 - forelimb stick diagram.............................
+    # ...........................5 - forelimb stick diagram.............................
     if fore_joints:
         plot_forelimb_stickdiagram(
             all_steps_data, sc_idxs, info, cfg, plot_panel_instance
         )
 
-    # .....................5 - average joints' y over SC percentage.....................
+    # .....................6 - average joints' y over SC percentage.....................
     plot_joint_y_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance)
 
-    # ........................6 - average angles over SC percentage.....................
+    # ...............7 - average joints' x over SC percentage (optional!)...............
+    if analyse_average_x:
+        plot_joint_x_by_average_SC(
+            average_data, std_data, info, cfg, plot_panel_instance
+        )
+
+    # ........................8 - average angles over SC percentage.....................
     if angles["name"]:
         plot_angles_by_average_SC(
             average_data, std_data, info, cfg, plot_panel_instance
         )
 
-    # .................7 - average x velocities over SC percentage......................
+    # .................9 - average x velocities over SC percentage......................
     plot_x_velocities_by_average_SC(
         average_data, std_data, info, cfg, plot_panel_instance
     )
 
-    # ..............8 - average angular velocities over SC percentage...................
+    # .............10 - average angular velocities over SC percentage...................
     if angles["name"]:
         plot_angular_velocities_by_average_SC(
             average_data, std_data, info, cfg, plot_panel_instance
         )
 
-    # ............optional - 9 - average x acceleration over SC percentage..............
+    # ............optional - 11 - average x acceleration over SC percentage.............
     if x_acceleration:
         plot_x_acceleration_by_average_SC(
             average_data, std_data, info, cfg, plot_panel_instance
         )
 
-    # .........optional - 10 - average angular acceleration over SC percentage..........
+    # .........optional - 12 - average angular acceleration over SC percentage..........
     if angles["name"]:
         if angular_acceleration:
             plot_angular_acceleration_by_average_SC(
                 average_data, std_data, info, cfg, plot_panel_instance
             )
 
-    # ........................optional - 11 - build plot panel..........................
+    # ........................optional - 13 - build plot panel..........................
     if cfg["dont_show_plots"] is True:
         pass  # going on without building the plot window
     elif cfg["dont_show_plots"] is False:  # -> show plot panel
@@ -1560,7 +1571,7 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
         ax[j].set_prop_cycle(  # New color palette approach
             plt.cycler("color", sns.color_palette(color_palette, sc_num))
         )
-        ax[j].set_title(name + " - " + joint)
+        ax[j].set_title(name + " - " + joint + "Y")
         x_col_idx = all_steps_data.columns.get_loc(joint + "x")
         y_col_idx = all_steps_data.columns.get_loc(joint + "y")
         time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
@@ -1571,8 +1582,6 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
                 all_steps_data, sc_idxs[s], sampling_rate, time_col_idx
             )
             ax[j].plot(this_x, this_y, label=this_label)
-        ax[j].set_xlabel("x (pixel)")  # will be overwritten if we convert
-        ax[j].set_ylabel("y (pixel)")
         # legend adjustments
         if legend_outside is True:
             ax[j].legend(
@@ -1582,9 +1591,75 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
             )
         elif legend_outside is False:
             ax[j].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+        # labels & conversion
+        ax[j].set_xlabel("x")  # will be used by conversion func if we convert
+        ax[j].set_ylabel("y")
         if convert_to_mm:
             tickconvert_mm_to_cm(ax[j], "both")
-        figure_file_string = " - " + joint + "y by x coordinates"
+        else:
+            ax[j].set_xlabel("x (pixels)")
+            ax[j].set_ylabel("y (pixels)")
+        figure_file_string = " - " + joint + "Y by X coordinates"
+        save_figures(f[j], results_dir, name, figure_file_string)
+        if dont_show_plots:
+            plt.close(f[j])
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f[j])
+
+
+def plot_x_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
+    """2 - Plot joints' x coordinates as a function of time for each SC (optional)"""
+
+    # unpack
+    name = info["name"]
+    results_dir = info["results_dir"]
+    dont_show_plots = cfg["dont_show_plots"]
+    convert_to_mm = cfg["convert_to_mm"]
+    plot_joints = cfg["plot_joints"]
+    sampling_rate = cfg["sampling_rate"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
+
+    # some prep
+    sc_num = len(sc_idxs)
+    f = [[] for _ in range(len(plot_joints))]
+    ax = [[] for _ in range(len(plot_joints))]
+
+    # plot
+    for j, joint in enumerate(plot_joints):  # joint loop (figures)
+        f[j], ax[j] = plt.subplots(1, 1)
+        ax[j].set_prop_cycle(
+            plt.cycler("color", sns.color_palette(color_palette, sc_num))
+        )
+        ax[j].set_title(name + " - " + joint + "X")
+        time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
+        x_col_idx = all_steps_data.columns.get_loc(joint + "x")
+        for s in range(sc_num):
+            this_x = all_steps_data.iloc[sc_idxs[s], time_col_idx]
+            this_y = all_steps_data.iloc[sc_idxs[s], x_col_idx]
+            this_label = generate_sc_latency_label(
+                all_steps_data, sc_idxs[s], sampling_rate, time_col_idx
+            )
+            ax[j].plot(this_x, this_y, label=this_label)
+        # legend adjustments
+        if legend_outside is True:
+            ax[j].legend(
+                fontsize=SC_LAT_LEGEND_FONTSIZE,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+            )
+        elif legend_outside is False:
+            ax[j].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+        # labels & conversion
+        ax[j].set_xlabel("Time (s)")  # will be used by conversion func if we convert
+        ax[j].set_ylabel("x")
+        if convert_to_mm:
+            tickconvert_mm_to_cm(ax[j], "y")
+        else:
+            ax[j].set_ylabel("x (pixels)")
+        figure_file_string = " - " + joint + "X coordinate by Time"
         save_figures(f[j], results_dir, name, figure_file_string)
         if dont_show_plots:
             plt.close(f[j])
@@ -1595,7 +1670,7 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
 
 
 def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
-    """2 - Plot joints' angles as a function of time for each SC"""
+    """3 - Plot joints' angles as a function of time for each SC"""
 
     # unpack
     name = info["name"]
@@ -1617,7 +1692,7 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
         ax[a].set_prop_cycle(
             plt.cycler("color", sns.color_palette(color_palette, sc_num))
         )
-        ax[a].set_title(name + " - " + angle)
+        ax[a].set_title(name + " - " + angle + "Angle")
         ax[a].set_ylabel("Angle")
         ax[a].set_xlabel("Time (s)")
         x_col_idx = all_steps_data.columns.get_loc(TIME_COL)
@@ -1650,7 +1725,7 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
 
 
 def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
-    """3 - Plot a stick diagram of the hindlimb"""
+    """4 - Plot a stick diagram of the hindlimb"""
 
     # unpack
     name = info["name"]
@@ -1689,10 +1764,6 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
             else:
                 ax.plot(this_xs, this_ys, color=this_color)
     ax.set_title(name + " - Hindlimb Stick Diagram")
-    ax.set_xlabel("x (pixel)")
-    ax.set_ylabel("y (pixel)")
-    if convert_to_mm:
-        tickconvert_mm_to_cm(ax, "both")
     # legend adjustments
     if legend_outside is True:
         ax.legend(
@@ -1700,6 +1771,14 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
         )
     elif legend_outside is False:
         ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+    # labels & conversion
+    ax.set_xlabel("x")  # will be used by conversion func if we convert
+    ax.set_ylabel("y")
+    if convert_to_mm:
+        tickconvert_mm_to_cm(ax, "both")
+    else:
+        ax.set_xlabel("x (pixels)")
+        ax.set_ylabel("y (pixels)")
     figure_file_string = " - Hindlimb Stick Diagram"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
@@ -1711,7 +1790,7 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
 
 
 def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
-    """4 - Plot a stick diagram of the forelimb (for hindlimb stepcycles)"""
+    """5 - Plot a stick diagram of the forelimb (for hindlimb stepcycles)"""
 
     # unpack
     name = info["name"]
@@ -1749,8 +1828,6 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
             else:
                 ax.plot(this_xs, this_ys, color=this_color)
     ax.set_title(name + " - Forelimb Stick Diagram")
-    ax.set_xlabel("x (pixel)")
-    ax.set_ylabel("y (pixel)")
     if convert_to_mm:
         tickconvert_mm_to_cm(ax, "both")
     # legend adjustments
@@ -1760,6 +1837,14 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
         )
     elif legend_outside is False:
         ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+    # labels & conversion
+    ax.set_xlabel("x")  # will be used by conversion func if we convert
+    ax.set_ylabel("y")
+    if convert_to_mm:
+        tickconvert_mm_to_cm(ax, "both")
+    else:
+        ax.set_xlabel("x (pixels)")
+        ax.set_ylabel("y (pixels)")
     figure_file_string = " - Forelimb Stick Diagram"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
@@ -1771,7 +1856,7 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
 
 
 def plot_joint_y_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance):
-    """5 - Plot joints' y as a function of average SC's percentage"""
+    """6 - Plot joints' y as a function of average SC's percentage"""
 
     # unpack
     name = info["name"]
@@ -1806,11 +1891,67 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg, plot_panel_ins
     elif legend_outside is False:
         ax.legend()
     ax.set_title(name + " - Joint Y over average step cycle")
+    # labels & conversion
     ax.set_xlabel("Percentage")
-    ax.set_ylabel("y (pixel)")
+    ax.set_ylabel("y")  # used by conversion func
     if convert_to_mm:
         tickconvert_mm_to_cm(ax, "y")
-    figure_file_string = " - Joint y-coord.s over average step cycle"
+    else:
+        ax.set_ylabel("y (pixels)")
+    figure_file_string = " - Joint Y-coord.s over average step cycle"
+    save_figures(f, results_dir, name, figure_file_string)
+    if dont_show_plots:
+        plt.close(f)
+
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
+
+
+def plot_joint_x_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance):
+    """7 - Plot joints' x as a function of average SC's percentage"""
+
+    # unpack
+    name = info["name"]
+    results_dir = info["results_dir"]
+    dont_show_plots = cfg["dont_show_plots"]
+    convert_to_mm = cfg["convert_to_mm"]
+    bin_num = cfg["bin_num"]
+    plot_SE = cfg["plot_SE"]
+    sc_num = cfg["sc_num"]
+    hind_joints = cfg["hind_joints"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
+
+    # plot
+    f, ax = plt.subplots(1, 1)
+    ax.set_prop_cycle(
+        plt.cycler("color", sns.color_palette(color_palette, len(hind_joints)))
+    )
+    x = np.linspace(0, 100, bin_num)
+    for joint in hind_joints:  # joint loop (lines)
+        x_col_idx = average_data.columns.get_loc(joint + "x")
+        this_y = average_data.iloc[:, x_col_idx]  # average & std_data share colnames
+        if plot_SE:
+            this_std = std_data.iloc[:, x_col_idx] / np.sqrt(sc_num)
+        else:
+            this_std = std_data.iloc[:, x_col_idx]
+        ax.plot(x, this_y, label=joint)
+        ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
+    # legend adjustments
+    if legend_outside is True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif legend_outside is False:
+        ax.legend()
+    ax.set_title(name + " - Joint X over average step cycle")
+    # labels & conversion
+    ax.set_xlabel("Percentage")
+    ax.set_ylabel("x")  # used by conversion func
+    if convert_to_mm:
+        tickconvert_mm_to_cm(ax, "y")
+    else:
+        ax.set_ylabel("x (pixels)")
+    figure_file_string = " - Joint X-coord.s over average step cycle"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1821,7 +1962,7 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg, plot_panel_ins
 
 
 def plot_angles_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance):
-    """6 - Plot Angles as a function of average SC's percentage"""
+    """8 - Plot Angles as a function of average SC's percentage"""
 
     # unpack
     name = info["name"]
@@ -1870,7 +2011,7 @@ def plot_angles_by_average_SC(average_data, std_data, info, cfg, plot_panel_inst
 def plot_x_velocities_by_average_SC(
     average_data, std_data, info, cfg, plot_panel_instance
 ):
-    """7 - Plot x velocities as a function of average SC's percentage"""
+    """9 - Plot x velocities as a function of average SC's percentage"""
 
     # unpack
     name = info["name"]
@@ -1928,7 +2069,7 @@ def plot_x_velocities_by_average_SC(
 def plot_angular_velocities_by_average_SC(
     average_data, std_data, info, cfg, plot_panel_instance
 ):
-    """8 - Plot angular velocities as a function of average SC's percentage"""
+    """10 - Plot angular velocities as a function of average SC's percentage"""
 
     # unpack
     name = info["name"]
@@ -1978,7 +2119,7 @@ def plot_angular_velocities_by_average_SC(
 def plot_x_acceleration_by_average_SC(
     average_data, std_data, info, cfg, plot_panel_instance
 ):
-    """9 - (optional) Plot x acceleration as a function of average SC's percentage"""
+    """11 - (optional) Plot x acceleration as a function of average SC's percentage"""
 
     # unpack
     name = info["name"]
@@ -2036,7 +2177,7 @@ def plot_x_acceleration_by_average_SC(
 def plot_angular_acceleration_by_average_SC(
     average_data, std_data, info, cfg, plot_panel_instance
 ):
-    """10 - (optional) Plot angular acceleration as a function of average SC's
+    """12 - (optional) Plot angular acceleration as a function of average SC's
     percentage
     """
 
@@ -2105,20 +2246,22 @@ def save_figures(figure, results_dir, name, figure_file_string):
 
 def tickconvert_mm_to_cm(axis, whichlabel):
     """Convert axis-ticks from mm (of data) to cm"""
-    if whichlabel == "both":
+    if (whichlabel == "both") | (whichlabel == "x"):
         x_ticks = axis.get_xticks()
         x_ticklabels = []
         for t in x_ticks:
             x_ticklabels.append(str(round(t / 10, 2)))
         axis.set_xticks(x_ticks, labels=x_ticklabels)
-        axis.set_xlabel("x (cm)")
+        old_xlabel = axis.get_xlabel()
+        axis.set_xlabel(old_xlabel + " (cm)")
     if (whichlabel == "both") | (whichlabel == "y"):
         y_ticks = axis.get_yticks()
         y_ticklabels = []
         for t in y_ticks:
             y_ticklabels.append(str(round(t / 10, 2)))
         axis.set_yticks(y_ticks, labels=y_ticklabels)
-        axis.set_ylabel("y (cm)")
+        old_ylabel = axis.get_ylabel()
+        axis.set_ylabel(old_ylabel + " (cm)")
 
 
 def generate_sc_latency_label(all_steps_data, this_sc_idx, sampling_rate, time_col_idx):
