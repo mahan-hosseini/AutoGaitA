@@ -44,7 +44,10 @@ ORIGINAL_XLS_FILENAME = " - Original Stepcycles"  # filenames of sheet exports
 NORMALISED_XLS_FILENAME = " - Normalised Stepcycles"
 AVERAGE_XLS_FILENAME = " - Average Stepcycle"
 STD_XLS_FILENAME = " - Standard Devs. Stepcycle"
-SC_LAT_LEGEND_FONTSIZE = 7
+SC_LAT_LEGEND_FONTSIZE = 8
+# PLOT GUI COLORS
+FG_COLOR = "#789b73"  # grey green
+HOVER_COLOR = "#287c37"  # darkish green
 
 
 # %% main program
@@ -2199,9 +2202,9 @@ class PlotPanel:
         for fig in self.figures:
             # dpi adjusted to increase visibilty/readability
             fig.set_dpi(100)
-            # to adjust margins within the figure
-            # in case there are a lot of steps in one run (-> the legend is super long)
-            # the figure won't be displayed properly.
+            # constrained layout to adjust margins within the figure
+            # => note: in case there are a lot of steps in one run (-> the legend is
+            #          super long) the figure won't be displayed properly.
             fig.set_constrained_layout(True)
 
         # Initialize the plot panel with the first figure
@@ -2224,10 +2227,18 @@ class PlotPanel:
         self.button_frame.grid(row=2, column=0, sticky="ew")
 
         self.prev_button = ctk.CTkButton(
-            self.button_frame, text="<< Previous", command=self.show_previous
+            self.button_frame,
+            text="<< Previous",
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+            command=self.show_previous,
         )
         self.next_button = ctk.CTkButton(
-            self.button_frame, text="Next >>", command=self.show_next
+            self.button_frame,
+            text="Next >>",
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+            command=self.show_next,
         )
         self.prev_button.grid(row=0, column=0, sticky="ew")
         self.next_button.grid(row=0, column=1, sticky="ew")

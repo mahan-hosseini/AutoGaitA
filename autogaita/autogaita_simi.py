@@ -57,10 +57,12 @@ DF_SCPERCENTAGE_COL = "SC Percentages"
 EXCLUDED_COLS_IN_AV_STD_DFS = [DF_TIME_COL, DF_LEG_COL]
 REORDER_COLS_IN_STEP_NORMDATA = [DF_TIME_COL, DF_LEG_COL]
 # plot stuff
-SC_LAT_LEGEND_FONTSIZE = 4
+SC_LAT_LEGEND_FONTSIZE = 6
 ANGLE_PLOTS_YLIMITS = [80, 190]
 STICK_LINEWIDTH = 0.5
-
+# Plot GUI colors
+FG_COLOR = "#c0737a"  # dusty rose
+HOVER_COLOR = "#b5485d"  # dark rose
 
 # %%
 # ......................................................................................
@@ -2349,9 +2351,9 @@ class PlotPanel:
         for fig in self.figures:
             # dpi adjusted to increase visibilty/readability
             fig.set_dpi(100)
-            # to adjust margins within the figure
-            # in case there are a lot of steps in one run (-> the legend is super long)
-            # the figure won't be displayed properly.
+            # constrained layout to adjust margins within the figure
+            # => note: in case there are a lot of steps in one run (-> the legend is
+            #          super long) the figure won't be displayed properly.
             fig.set_constrained_layout(True)
 
         # Initialize the plot panel with the first figure
@@ -2374,10 +2376,18 @@ class PlotPanel:
         self.button_frame.grid(row=2, column=0, sticky="ew")
 
         self.prev_button = ctk.CTkButton(
-            self.button_frame, text="<< Previous", command=self.show_previous
+            self.button_frame,
+            text="<< Previous",
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+            command=self.show_previous,
         )
         self.next_button = ctk.CTkButton(
-            self.button_frame, text="Next >>", command=self.show_next
+            self.button_frame,
+            text="Next >>",
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+            command=self.show_next,
         )
         self.prev_button.grid(row=0, column=0, sticky="ew")
         self.next_button.grid(row=0, column=1, sticky="ew")

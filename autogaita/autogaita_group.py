@@ -84,6 +84,10 @@ BOX_ALPHA = 0.1
 STD_ALPHA = 0.2  # std boxes around means
 STD_LW = 0
 
+# PLOT GUI COLORS
+FG_COLOR = "#5a7d9a"  # steel blue
+HOVER_COLOR = "#8ab8fe"  # carolina blue
+
 
 # %% main
 
@@ -1396,11 +1400,10 @@ def plot_permutation_test_results(
     legend_outside = cfg["legend_outside"]
 
     if len(contrasts) > 3:  # if we have 4 groups or more, N/2x2 subplot layout
-        f, ax = plt.subplots(int(round(len(contrasts) / 2)), 2)
+        f, ax = plt.subplots(int(round(len(contrasts) / 2)), 2, layout="constrained")
         ax = ax.ravel()
     else:
-        f, ax = plt.subplots(len(contrasts), 1)
-    plt.tight_layout()
+        f, ax = plt.subplots(len(contrasts), 1, layout="constrained")
     x = np.linspace(0, 100, bin_num)
     for c, contrast in enumerate(contrasts):
         # prepare group strings and (importantly!) index of current groups from _NAMES
@@ -1495,13 +1498,13 @@ def plot_permutation_test_results(
                     lw=STD_LW,
                     zorder=0,
                 )
-    f.supxlabel("SC Percentage", fontsize=PERM_PLOT_SUPLABEL_SIZE, y=0.000001)
+    f.supxlabel("Percentage", fontsize=PERM_PLOT_SUPLABEL_SIZE)
     if check_mouse_conversion(feature, cfg):
-        f.supylabel(feature + " (cm)", fontsize=PERM_PLOT_SUPLABEL_SIZE, x=-0.02)
+        f.supylabel(feature + " (cm)", fontsize=PERM_PLOT_SUPLABEL_SIZE)
     else:
-        f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE, x=-0.02)
+        f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE)
     figure_file_string = stats_var + " - Cluster-extent Test"
-    f.suptitle(figure_file_string, fontsize=PERM_PLOT_SUPLABEL_SIZE, y=0.993)
+    f.suptitle(figure_file_string, fontsize=PERM_PLOT_SUPLABEL_SIZE)
     save_figures(f, results_dir, figure_file_string)
 
     plt.close(f)
@@ -1659,8 +1662,7 @@ def plot_multcomp_results(
     dont_show_plots = cfg["dont_show_plots"]
     legend_outside = cfg["legend_outside"]
 
-    f, ax = plt.subplots(len(contrasts), 1)
-    plt.tight_layout()
+    f, ax = plt.subplots(len(contrasts), 1, layout="constrained")
     x = np.linspace(0, 100, bin_num)
     for c, contrast in enumerate(contrasts):
         # prepare group strings and (importantly!) index of current groups from _NAMES
@@ -1776,16 +1778,15 @@ def plot_multcomp_results(
                 )
             elif legend_outside is False:
                 ax.legend(fontsize=PERM_PLOT_LEGEND_SIZE + 4)
-    f.supxlabel("SC Percentage", fontsize=PERM_PLOT_SUPLABEL_SIZE, y=0.000001)
+    f.supxlabel("Percentage", fontsize=PERM_PLOT_SUPLABEL_SIZE)
     if check_mouse_conversion(feature, cfg):
-        f.supylabel(feature + " (cm)", fontsize=PERM_PLOT_SUPLABEL_SIZE, x=-0.02)
+        f.supylabel(feature + " (cm)", fontsize=PERM_PLOT_SUPLABEL_SIZE)
     else:
-        f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE, x=-0.02)
+        f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE)
     figure_file_string = stats_var + " - Tukey's Multiple Comparison Test"
     f.suptitle(
         figure_file_string,
         fontsize=PERM_PLOT_SUPLABEL_SIZE,
-        y=0.993,
     )
     save_figures(f, results_dir, figure_file_string)
 
@@ -2767,10 +2768,10 @@ class PlotPanel:
         for fig in self.figures:
             # dpi adjusted to increase visibilty/readability
             fig.set_dpi(100)
-            # to adjust margins within the figure
-            # in case there are a lot of steps in one run (-> the legend is super long)
-            # the figure won't be displayed properly.
-            # fig.set_constrained_layout(True)
+            # constrained layout to adjust margins within the figure
+            # => note: in case there are a lot of steps in one run (-> the legend is
+            #          super long) the figure won't be displayed properly.
+            fig.set_constrained_layout(True)
 
         # Initialize the plot panel with the first figure
         self.plot_panel = FigureCanvasTkAgg(
@@ -2792,10 +2793,18 @@ class PlotPanel:
         self.button_frame.grid(row=2, column=0, sticky="ew")
 
         self.prev_button = ctk.CTkButton(
-            self.button_frame, text="<< Previous", command=self.show_previous
+            self.button_frame,
+            text="<< Previous",
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+            command=self.show_previous,
         )
         self.next_button = ctk.CTkButton(
-            self.button_frame, text="Next >>", command=self.show_next
+            self.button_frame,
+            text="Next >>",
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+            command=self.show_next,
         )
         self.prev_button.grid(row=0, column=0, sticky="ew")
         self.next_button.grid(row=0, column=1, sticky="ew")
