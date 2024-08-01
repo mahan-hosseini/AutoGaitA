@@ -10,12 +10,8 @@ def dlc_singlerun():
     """
     # folderinfo
     folderinfo = {}
-    if os.getenv("GITHUB_ACTIONS"):
-        folderinfo["root_dir"] = "tests/test_data/dlc_data/test_data/"
-        folderinfo["sctable_filename"] = "correct_annotation_table.xlsx"
-    else:
-        folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/"
-        folderinfo["sctable_filename"] = "25mm.xlsx"
+    folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/"
+    folderinfo["sctable_filename"] = "25mm.xlsx"
     folderinfo["results_dir"] = ""
     folderinfo["data_string"] = "SIMINewOct"
     folderinfo["beam_string"] = "BeamTraining"
@@ -27,10 +23,7 @@ def dlc_singlerun():
     cfg = {}
     cfg["sampling_rate"] = 100  # base cfg
     cfg["subtract_beam"] = True
-    if os.getenv("GITHUB_ACTIONS"):
-        cfg["dont_show_plots"] = True
-    else:
-        cfg["dont_show_plots"] = False
+    cfg["dont_show_plots"] = False
     cfg["convert_to_mm"] = True
     cfg["pixel_to_mm_ratio"] = 3.76
     cfg["x_sc_broken_threshold"] = 200  # optional cfg
@@ -75,6 +68,11 @@ def dlc_singlerun():
         info["results_dir"] = os.path.join(
             folderinfo["root_dir"], "Results", info["name"]
         )
+    # github actions stuff for testing this script
+    if os.getenv("GITHUB_ACTIONS"):
+        folderinfo["root_dir"] = "tests/test_data/dlc_data/test_data/"
+        folderinfo["sctable_filename"] = "correct_annotation_table.xlsx"
+        cfg["dont_show_plots"] = True
     # run
     autogaita_utils.try_to_run_gaita("DLC", info, folderinfo, cfg, False)
 

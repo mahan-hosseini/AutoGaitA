@@ -10,7 +10,7 @@ from pathlib import Path
 
 # ..............................  PREPARE - THREE FIXTURES   ...........................
 
-dlc_test_file = "tests/test_data/dlc_data/test_data/Results/Average Stepcycle.xlsx"
+dlc_test_file = "tests/test_data/dlc_data/test_data/Results/ID 12 - Run 3/ID 12 - Run 3 - Average Stepcycle.xlsx"
 
 if os.getenv("GITHUB_ACTIONS"):
     autogaita.dlc_singlerun()
