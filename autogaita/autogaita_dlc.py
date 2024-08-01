@@ -84,7 +84,8 @@ def dlc(info, folderinfo, cfg):
     all_cycles = extract_stepcycles(data, info, folderinfo, cfg)
     if not all_cycles:
         handle_issues("scs_invalid", info)
-        plot_panel_instance.destroy_plot_panel()
+        if cfg["dont_show_plots"] is False:  # otherwise stuck at loading
+            plot_panel_instance.destroy_plot_panel()
         return
 
     # .........  main analysis: sc-lvl y-norm, features, df-creation & export ..........

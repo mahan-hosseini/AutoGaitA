@@ -116,7 +116,8 @@ def simi(info, folderinfo, cfg):
     all_cycles = extract_stepcycles(data, info, folderinfo, cfg)
     all_cycles = check_stepcycles(all_cycles, info)
     if not all_cycles:  # only None if both leg's SCs were None
-        plot_panel_instance.destroy_plot_panel()
+        if cfg["dont_show_plots"] is False:  # otherwise stuck at loading
+            plot_panel_instance.destroy_plot_panel()
         return
 
     # ......  main analysis: y-flipping, features, df-creation & exports  ..............
