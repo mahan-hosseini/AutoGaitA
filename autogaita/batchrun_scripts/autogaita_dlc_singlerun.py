@@ -68,12 +68,6 @@ def dlc_singlerun():
         info["results_dir"] = os.path.join(
             folderinfo["root_dir"], "Results", info["name"]
         )
-    # github actions stuff for testing this script
-    if os.getenv("GITHUB_ACTIONS"):
-        folderinfo["root_dir"] = "tests/test_data/dlc_data/test_data/"
-        folderinfo["results_dir"] = folderinfo["root_dir"]
-        folderinfo["sctable_filename"] = "correct_annotation_table.xlsx"
-        cfg["dont_show_plots"] = True
     # run
     autogaita_utils.try_to_run_gaita("DLC", info, folderinfo, cfg, False)
 
