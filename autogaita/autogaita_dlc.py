@@ -84,6 +84,7 @@ def dlc(info, folderinfo, cfg):
     all_cycles = extract_stepcycles(data, info, folderinfo, cfg)
     if not all_cycles:
         handle_issues("scs_invalid", info)
+        plot_panel_instance.destroy_plot_panel()
         return
 
     # .........  main analysis: sc-lvl y-norm, features, df-creation & export ..........
@@ -2431,6 +2432,10 @@ class PlotPanel:
         self.plotwindow.title(
             f"AutoGaitA Plot Panel {self.current_fig_index+1}/{len(self.figures)}"
         )
+
+    def destroy_plot_panel(self):
+        # Needed if no SCs after checks
+        self.loading_screen.destroy()
 
 
 # %% local functions 5 - print finish

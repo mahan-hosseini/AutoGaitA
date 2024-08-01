@@ -116,6 +116,7 @@ def simi(info, folderinfo, cfg):
     all_cycles = extract_stepcycles(data, info, folderinfo, cfg)
     all_cycles = check_stepcycles(all_cycles, info)
     if not all_cycles:  # only None if both leg's SCs were None
+        plot_panel_instance.destroy_plot_panel()
         return
 
     # ......  main analysis: y-flipping, features, df-creation & exports  ..............
@@ -2601,6 +2602,10 @@ class PlotPanel:
         self.plotwindow.title(
             f"AutoGaitA Plot Panel {self.current_fig_index+1}/{len(self.figures)}"
         )
+
+    def destroy_plot_panel(self):
+        # Needed if no SCs after checks
+        self.loading_screen.destroy()
 
 
 # %% local functions 5 - print finish
