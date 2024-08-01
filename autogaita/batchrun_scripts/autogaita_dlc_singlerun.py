@@ -10,9 +10,13 @@ def dlc_singlerun():
     """
     # folderinfo
     folderinfo = {}
-    folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/"
+    if os.getenv("GITHUB_ACTIONS"):
+        folderinfo["root_dir"] = "tests/test_data/dlc_data/test_data/"
+        folderinfo["sctable_filename"] = "correct_annotation_table.xlsx"
+    else:
+        folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/"
+        folderinfo["sctable_filename"] = "25mm.xlsx"
     folderinfo["results_dir"] = ""
-    folderinfo["sctable_filename"] = "25mm.xlsx"
     folderinfo["data_string"] = "SIMINewOct"
     folderinfo["beam_string"] = "BeamTraining"
     folderinfo["premouse_string"] = "Mouse"
@@ -23,7 +27,10 @@ def dlc_singlerun():
     cfg = {}
     cfg["sampling_rate"] = 100  # base cfg
     cfg["subtract_beam"] = True
-    cfg["dont_show_plots"] = False
+    if os.getenv("GITHUB_ACTIONS"):
+        cfg["dont_show_plots"] = True
+    else:
+        cfg["dont_show_plots"] = False
     cfg["convert_to_mm"] = True
     cfg["pixel_to_mm_ratio"] = 3.76
     cfg["x_sc_broken_threshold"] = 200  # optional cfg
