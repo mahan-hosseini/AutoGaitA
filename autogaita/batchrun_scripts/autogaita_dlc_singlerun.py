@@ -71,6 +71,7 @@ def dlc_singlerun():
     # github actions stuff for testing this script
     if os.getenv("GITHUB_ACTIONS"):
         folderinfo["root_dir"] = "tests/test_data/dlc_data/test_data/"
+        folderinfo["results_dir"] = folderinfo["root_dir"]
         folderinfo["sctable_filename"] = "correct_annotation_table.xlsx"
         cfg["dont_show_plots"] = True
     # run
