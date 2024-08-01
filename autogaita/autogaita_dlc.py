@@ -1443,6 +1443,9 @@ def plot_results(info, results, folderinfo, cfg, plot_panel_instance):
     # ...............................3 - angles by time.................................
     if angles["name"]:
         plot_angles_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
+    # regularly closing figures to save memory
+    # => no problem to do this since we pass figure-vars to save-functions and PlotPanel
+    plt.close("all")
 
     # ..........................4 - hindlimb stick diagram..............................
     plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
@@ -1461,6 +1464,7 @@ def plot_results(info, results, folderinfo, cfg, plot_panel_instance):
         plot_joint_x_by_average_SC(
             average_data, std_data, info, cfg, plot_panel_instance
         )
+    plt.close("all")
 
     # ........................8 - average angles over SC percentage.....................
     if angles["name"]:
@@ -1491,6 +1495,7 @@ def plot_results(info, results, folderinfo, cfg, plot_panel_instance):
             plot_angular_acceleration_by_average_SC(
                 average_data, std_data, info, cfg, plot_panel_instance
             )
+    plt.close("all")
 
     # ........................optional - 13 - build plot panel..........................
     if cfg["dont_show_plots"] is True:

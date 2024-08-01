@@ -1562,6 +1562,9 @@ def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
             plot_angles_by_time(
                 legname, all_steps_data, all_cycles, info, cfg, plot_panel_instance
             )
+        # regularly closing figures to save memory
+        # => no problem to do this since we pass figure-vars to save-functions and Panel
+        plt.close("all")
 
         # ............................  4 - stick diagram  .............................
         plot_stickdiagram(
@@ -1583,6 +1586,7 @@ def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
             plot_angles_by_average_SC(
                 legname, average_data, std_data, sc_num, info, cfg, plot_panel_instance
             )
+        plt.close("all")
 
         # .............  7 - average y velocities over SC percentage   .................
         plot_y_velocities_by_average_SC(
@@ -1613,6 +1617,7 @@ def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
                     cfg,
                     plot_panel_instance,
                 )
+        plt.close("all")
 
     # ........................optional - 11 - build plot panel..........................
     if cfg["dont_show_plots"] is True:

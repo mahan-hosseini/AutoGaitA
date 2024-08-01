@@ -135,6 +135,7 @@ def group(folderinfo, cfg):
     # ...................................  PCA  ........................................
     if cfg["PCA_variables"]:  # empty lists are falsey!
         PCA_on_a_limb(avg_dfs, folderinfo, cfg, plot_panel_instance)
+    plt.close("all")  # OK since all figures passed to save-funcs & PlotPanel
 
     # ..............................  prepare statistics  ..............................
     stats_df = create_stats_df(avg_dfs, folderinfo, cfg)
@@ -152,6 +153,7 @@ def group(folderinfo, cfg):
                     cfg,
                     plot_panel_instance,
                 )
+        plt.close("all")
 
         # ..................................  ANOVA  ...................................
         if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
@@ -165,9 +167,11 @@ def group(folderinfo, cfg):
                     cfg,
                     plot_panel_instance,
                 )
+        plt.close("all")
 
     # ..................................  plots  .......................................
     plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance)
+    plt.close("all")
 
     # ..............................  print finish  ....................................
     print_finish(folderinfo)
@@ -1124,7 +1128,6 @@ def plot_PCA(PCA_df, PCA_info, folderinfo, cfg, plot_panel_instance):
             )
             writervideo = FFMpegWriter(fps=30)  # save to m4 using ffmpeg writer
             anim.save(results_dir + "PCA 3D Scatterplot.mp4", writer=writervideo)
-            plt.close()
 
 
 # %% ................  local functions #5 - prepare statistics  ........................
@@ -1507,7 +1510,6 @@ def plot_permutation_test_results(
     f.suptitle(figure_file_string, fontsize=PERM_PLOT_SUPLABEL_SIZE)
     save_figures(f, results_dir, figure_file_string)
 
-    plt.close(f)
     # add figure to plot panel figures list
     if dont_show_plots is False:  # -> show plot panel
         plot_panel_instance.figures.append(f)
@@ -1790,7 +1792,6 @@ def plot_multcomp_results(
     )
     save_figures(f, results_dir, figure_file_string)
 
-    plt.close(f)
     # add figure to plot panel figures list
     if dont_show_plots is False:  # -> show plot panel
         plot_panel_instance.figures.append(f)
@@ -1931,7 +1932,6 @@ def plot_joint_y_by_average_SC(
             ax.set_ylabel("Z")
             figure_file_string = " - Joint Z-coord.s over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        plt.close(f)
 
         # add figure to plot panel figures list
         if dont_show_plots is False:  # -> show plot panel
@@ -1980,7 +1980,6 @@ def plot_joint_y_by_average_SC(
             ax.set_ylabel("Z")
             figure_file_string = "- Z-coord.s over average step cycle"
         save_figures(f, results_dir, joint + figure_file_string)
-        plt.close(f)
 
         # add figure to plot panel figures list
         if dont_show_plots is False:  # -> show plot panel
@@ -2045,7 +2044,6 @@ def plot_joint_x_by_average_SC(
             ax.set_ylabel("Y")
             figure_file_string = " - Joint Y-coord.s over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        plt.close(f)
 
         # add figure to plot panel figures list
         if dont_show_plots is False:  # -> show plot panel
@@ -2094,7 +2092,6 @@ def plot_joint_x_by_average_SC(
             ax.set_ylabel("Y")
             figure_file_string = "- Y-coord.s over average step cycle"
         save_figures(f, results_dir, joint + figure_file_string)
-        plt.close(f)
 
         # add figure to plot panel figures list
         if dont_show_plots is False:  # -> show plot panel
@@ -2153,7 +2150,6 @@ def plot_angles_by_average_SC(
             )
         figure_file_string = " - Joint angles over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        plt.close(f)
 
         # add figure to plot panel figures list
         if dont_show_plots is False:  # -> show plot panel
@@ -2195,7 +2191,6 @@ def plot_angles_by_average_SC(
             ax.set_title(title_leg + " " + angle + " angle over average step cycle")
         figure_file_string = " - Angle over average step cycle"
         save_figures(f, results_dir, angle + figure_file_string)
-        plt.close(f)
 
         # add figure to plot panel figures list
         if dont_show_plots is False:  # -> show plot panel
@@ -2275,7 +2270,6 @@ def plot_x_velocities_by_average_SC(
             )
         figure_file_string = " - Joint velocities over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        plt.close(f)
 
         # add figure to plot panel figures list
         if dont_show_plots is False:  # -> show plot panel
@@ -2336,7 +2330,6 @@ def plot_x_velocities_by_average_SC(
             )
         figure_file_string = "- Velocities over average step cycle"
         save_figures(f, results_dir, joint + figure_file_string)
-        plt.close(f)
 
         # add figure to plot panel figures list
         if dont_show_plots is False:  # -> show plot panel
@@ -2400,7 +2393,6 @@ def plot_angular_velocities_by_average_SC(
             )
         figure_file_string = " - Angular velocities over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        plt.close(f)
 
         # add figure to plot panel figures list
         if dont_show_plots is False:  # -> show plot panel
@@ -2449,7 +2441,6 @@ def plot_angular_velocities_by_average_SC(
             )
         figure_file_string = " - Angular Velocities over average step cycle"
         save_figures(f, results_dir, angle + figure_file_string)
-        plt.close(f)
 
         # add figure to plot panel figures list
         if dont_show_plots is False:  # -> show plot panel
