@@ -1500,9 +1500,9 @@ def plot_results(info, results, folderinfo, cfg, plot_panel_instance):
     plt.close("all")
 
     # ........................optional - 13 - build plot panel..........................
-    if cfg["dont_show_plots"] is True:
+    if dont_show_plots is True:
         pass  # going on without building the plot window
-    elif cfg["dont_show_plots"] is False:  # -> show plot panel
+    elif dont_show_plots is False:  # -> show plot panel
         # Destroy loading screen and build plot panel with all figures
         plot_panel_instance.destroy_plot_panel_loading_screen()
         plot_panel_instance.build_plot_panel()

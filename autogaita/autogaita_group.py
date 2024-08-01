@@ -171,7 +171,6 @@ def group(folderinfo, cfg):
 
     # ..................................  plots  .......................................
     plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance)
-    plt.close("all")
 
     # ..............................  print finish  ....................................
     print_finish(folderinfo)
@@ -1835,6 +1834,7 @@ def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance):
     plot_joint_y_by_average_SC(
         g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
     )
+    plt.close("all")
 
     # .......................2 - x coords over average SC (optional)....................
     if tracking_software == "DLC":
@@ -1847,23 +1847,27 @@ def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance):
         plot_joint_x_by_average_SC(
             g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
         )
+        plt.close("all")
 
     # ........................3 - angles over average SC................................
     if angles["name"]:
         plot_angles_by_average_SC(
             g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
         )
+        plt.close("all")
 
     # .................4 - average x velocities over SC percentage......................
     plot_x_velocities_by_average_SC(
         g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
     )
+    plt.close("all")
 
     # ..............5 - average angular velocities over SC percentage...................
     if angles["name"]:
         plot_angular_velocities_by_average_SC(
             g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
         )
+        plt.close("all")
 
     # ........................optional - 6 - build plot panel..........................
     if cfg["dont_show_plots"] is True:

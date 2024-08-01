@@ -1541,6 +1541,10 @@ def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
     angles = cfg["angles"]
     y_acceleration = cfg["y_acceleration"]
     angular_acceleration = cfg["angular_acceleration"]
+    analyse_average_y = cfg["analyse_average_y"]
+    dont_show_plots = cfg["dont_show_plots"]
+    if dont_show_plots:
+        plt.switch_backend("Agg")
 
     # unpack - output specific vars (results to be plotted)
     for legname in LEGS:  # !!! NU - output...
@@ -1555,9 +1559,10 @@ def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
         )
 
         # ........................  2 - y coords by time  ..............................
-        plot_joint_y_by_time(
-            legname, all_steps_data, all_cycles, info, cfg, plot_panel_instance
-        )
+        if analyse_average_y:
+            plot_joint_y_by_time(
+                legname, all_steps_data, all_cycles, info, cfg, plot_panel_instance
+            )
 
         # ..................  3 - angle by time for each SC  ...........................
         if angles["name"]:
@@ -1579,9 +1584,10 @@ def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
         )
 
         # .................  5 - average 5-joints' y over SC percentage  ...............
-        plot_joint_y_by_average_SC(
-            legname, average_data, std_data, sc_num, info, cfg, plot_panel_instance
-        )
+        if analyse_average_y:
+            plot_joint_y_by_average_SC(
+                legname, average_data, std_data, sc_num, info, cfg, plot_panel_instance
+            )
 
         # ...................  6 - average angles over SC percentage  ..................
         if angles["name"]:
@@ -1622,9 +1628,9 @@ def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
         plt.close("all")
 
     # ........................optional - 11 - build plot panel..........................
-    if cfg["dont_show_plots"] is True:
+    if dont_show_plots is True:
         pass  # going on without building the plot window
-    elif cfg["dont_show_plots"] is False:  # -> show plot panel
+    elif dont_show_plots is False:  # -> show plot panel
         # Destroy loading screen and build plot panel with all figures
         plot_panel_instance.destroy_plot_panel_loading_screen()
         plot_panel_instance.build_plot_panel()
