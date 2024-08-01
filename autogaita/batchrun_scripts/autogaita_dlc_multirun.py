@@ -95,16 +95,39 @@ def extract_info(folderinfo):
     postrun_string = folderinfo["postrun_string"]
     info = {"name": [], "mouse_num": [], "run_num": []}
     for filename in os.listdir(folderinfo["root_dir"]):
+        # make sure we don't get wrong files
         if (
-            (premouse_string in filename)  # make sure we don't get wrong files
+            (premouse_string in filename)
             & (prerun_string in filename)
             & (filename.endswith(".csv"))
         ):
-            # we can use COUNT vars as we do here, since we start @ 0 and do
-            # not include the last index (so if counts=2, idx=[0:2]=include
-            # 0&1 only!)
-            this_mouse_num = find_number(filename, premouse_string, postmouse_string)
-            this_run_num = find_number(filename, prerun_string, postrun_string)
+            # ID number - fill in "_" for user if needed
+            this_mouse_num = False
+            for candidate_postmouse_string in [
+                postmouse_string,
+                "_" + postmouse_string,
+            ]:
+                try:
+                    this_mouse_num = find_number(
+                        filename,
+                        premouse_string,
+                        candidate_postmouse_string,
+                    )
+                except:
+                    pass
+            # Do the same for run number
+            this_run_num = False
+            for candidate_postrun_string in [
+                postrun_string,
+                "-" + postrun_string,
+            ]:
+                try:
+                    this_run_num = find_number(
+                        filename, prerun_string, candidate_postrun_string
+                    )
+                except:
+                    pass
+            # if we found both an ID and a run number, create this_name & add to dict
             this_name = "ID " + str(this_mouse_num) + " - Run " + str(this_run_num)
             if this_name not in info["name"]:  # no data/beam duplicates here
                 info["name"].append(this_name)
