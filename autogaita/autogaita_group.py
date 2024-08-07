@@ -19,7 +19,7 @@ import customtkinter as ctk
 from pingouin import sphericity, mixed_anova
 from scipy import stats
 import seaborn as sns
-import pdb
+import warnings
 
 # %% A note on cross species functionality
 # => This function supports cross species analyses, however the data must be obtained
@@ -609,7 +609,17 @@ def import_and_combine_dfs(
                 group_df = df_copy.iloc[sc_idxs[sc]]
             else:
                 nanvector = df_copy.loc[[1]]
-                nanvector[:] = np.nan
+                # new for pandas 2.2.2 - change all cols to floats so its compatible
+                # with np.nan concatenation (does this break anything?)
+                # => 07.08. - Leaving this for when I have unit tests for simi & group
+                # => Not sure it'll work well like this I feel like it will take more
+                #    than just changing the dtype
+                # => For now ignoring warnings so users don't get annoyed (and because
+                #    dtype incompatibility doesn't matter too much for us)
+                # nanvector = nanvector.astype(float)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    nanvector[:] = np.nan
                 group_df = pd.concat([group_df, nanvector], axis=0)
                 group_df = pd.concat([group_df, df_copy.iloc[sc_idxs[sc]]], axis=0)
     # if there was no valid sheet file for this name, we are returning group_df without

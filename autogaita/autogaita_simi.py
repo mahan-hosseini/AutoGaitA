@@ -1384,7 +1384,12 @@ def combine_legs(dataframe_list, combination_procedure):
         nanvector.index = [SEPARATOR_IDX]
         nanvector[:] = np.nan
         # concatenation (similar separators as between stepcycles)
-        dataframe_list[-1] = pd.concat([dataframe_list[0], nanvector], axis=0)  # list0!
+        # ignoring warnings here temporarily
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            dataframe_list[-1] = pd.concat(
+                [dataframe_list[0], nanvector], axis=0
+            )  # list0!
         dataframe_list[-1] = pd.concat([dataframe_list[-1], infovector], axis=0)  # -1 !
         dataframe_list[-1] = pd.concat([dataframe_list[-1], nanvector], axis=0)
         dataframe_list[-1] = pd.concat([dataframe_list[-1], dataframe_list[1]], axis=0)
