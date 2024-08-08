@@ -54,6 +54,7 @@ def extract_cfg():
     cfg["stats_threshold"] = 0.05
     cfg["plot_SE"] = False
     cfg["color_palette"] = "viridis"
+    cfg["dont_show_plots"] = True
     cfg["legend_outside"] = True
     cfg["which_leg"] = "left"
     cfg["anova_design"] = "RM ANOVA"

@@ -31,7 +31,7 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
 
 - Access the main user interface via `python -m autogaita`.
 
-- To update to the latest release (see the *Releases* panel on the right for the current version) activate your virtual environment & enter `pip install autogaita -U`. 
+- To update to the latest release (see the *Releases* panel on the right for the latest release) activate the virtual environment and: `pip install autogaita -U`. 
 
 ## Tutorials and Examples
 
@@ -66,6 +66,13 @@ By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for m
 
 ## Analysing other behaviours - AutoCyclA 🚴
 Even though AutoGaitA's main focus is to automate and standardise gait analyses, our toolbox can be used to automate the analyses of any rhythmic behaviour of interest. For a proof-of-principle demonstration and an introduction of the general workflow of such analyses, see **[AutoCyclA - Automated Cycling Analysis with AutoGaitA.](https://github.com/mahan-hosseini/AutoGaitA/tree/main/autocycla)**
+
+## Updating AutoGaitA
+It is strongly recommended that AutoGaitA is kept up to date since new features and important bugfixes are provided regularly. 
+
+AutoGaitA's cfg files and dictionaries sometimes change as a result, which means that previously generated first-level *Results* folders cannot always be analysed with AutoGaitA Group after an update. In such cases, it is recommended to re-run first-level analyses. 
+
+We document each version's cfg-changes in [AutoGaitA Releases](https://github.com/mahan-hosseini/AutoGaitA/releases), which is particularly relevant for users wrapping custom scripts around AutoGaitA's functions.
 
 ## Reference
 If you use this code or data please [cite our preprint](https://www.biorxiv.org/content/10.1101/2024.04.14.589409v1).

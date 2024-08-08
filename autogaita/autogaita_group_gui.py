@@ -35,6 +35,7 @@ TK_BOOL_VARS = [
     "save_3D_PCA_video",
     "plot_SE",
     "legend_outside",
+    "dont_show_plots",
 ]
 TK_STR_VARS = [
     "anova_design",
@@ -504,6 +505,19 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     )
     save_PCA_video_checkbox.grid(row=10, column=0)
 
+    # dont show plots
+    dont_show_plots_string = "Don't show plots in GUI (save only)"
+    dont_show_plots_checkbox = ctk.CTkCheckBox(
+        cfgwindow,
+        text=dont_show_plots_string,
+        variable=cfg["dont_show_plots"],
+        onvalue=True,
+        offvalue=False,
+        fg_color=FG_COLOR,
+        hover_color=HOVER_COLOR,
+    )
+    dont_show_plots_checkbox.grid(row=11, column=0)
+
     # done button
     adv_cfg_done_button = ctk.CTkButton(
         cfgwindow,
@@ -512,7 +526,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         hover_color=HOVER_COLOR,
         command=lambda: cfgwindow.destroy(),
     )
-    adv_cfg_done_button.grid(row=11, column=0, sticky="nsew", pady=20, padx=80)
+    adv_cfg_done_button.grid(row=12, column=0, sticky="nsew", pady=20, padx=80)
 
     # maximise widgets to fit fullscreen
     maximise_widgets(cfgwindow)

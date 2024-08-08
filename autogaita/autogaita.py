@@ -8,7 +8,7 @@ import platform
 
 # %% global constants
 TXT_COLOR = "#ffffff"  # white
-FONT_SIZE = 20
+FONT_SIZE = 35
 DLC_FG_COLOR = "#789b73"  # grey green
 DLC_HOVER_COLOR = "#287c37"  # darkish green
 SIMI_FG_COLOR = "#c0737a"  # dusty rose

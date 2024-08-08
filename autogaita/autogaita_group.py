@@ -13,9 +13,13 @@ import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation, FFMpegWriter
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import tkinter as tk
+import customtkinter as ctk
 from pingouin import sphericity, mixed_anova
 from scipy import stats
 import seaborn as sns
+import warnings
 
 # %% A note on cross species functionality
 # => This function supports cross species analyses, however the data must be obtained
@@ -30,8 +34,13 @@ import seaborn as sns
 
 
 # %% constants
+# SET PLT BACKEND
+# Agg is a non-interactive backend for plotting that can only write to files
+# this is used to generate and save the plot figures
+# later a tkinter backend (FigureCanvasTkAgg) is used for the plot panel
+matplotlib.use("agg")
 
-# INCREASE RESOLUTION OF FIGURES
+# increase resolution of figures
 plt.rcParams["figure.dpi"] = 300
 
 # Issues & stats results are stored in these textfiles (config json from mouseanalysis)
@@ -75,6 +84,10 @@ BOX_ALPHA = 0.1
 STD_ALPHA = 0.2  # std boxes around means
 STD_LW = 0
 
+# PLOT GUI COLORS
+FG_COLOR = "#5a7d9a"  # steel blue
+HOVER_COLOR = "#8ab8fe"  # carolina blue
+
 
 # %% main
 
@@ -93,8 +106,18 @@ def group(folderinfo, cfg):
     7) perform the RM-/Mixed-ANOVA
     8) plots
     """
+    # .............. initiate plot panel class and build loading screen ................
+    # create class instance independently of "dont_show_plots" to not break the code
+    plot_panel_instance = PlotPanel()
 
-    # ..............................  print finish  ....................................
+    if cfg["dont_show_plots"] is True:
+        pass  # going on without building the loading screen
+
+    elif cfg["dont_show_plots"] is False:  # -> show plot panel
+        # build loading screen
+        plot_panel_instance.build_plot_panel_loading_screen()
+
+    # ..............................  print start  ....................................
     print_start(folderinfo, cfg)
 
     # ..................................  unpack  ......................................
@@ -111,7 +134,8 @@ def group(folderinfo, cfg):
 
     # ...................................  PCA  ........................................
     if cfg["PCA_variables"]:  # empty lists are falsey!
-        PCA_on_a_limb(avg_dfs, folderinfo, cfg)
+        PCA_on_a_limb(avg_dfs, folderinfo, cfg, plot_panel_instance)
+    plt.close("all")  # OK since all figures passed to save-funcs & PlotPanel
 
     # ..............................  prepare statistics  ..............................
     stats_df = create_stats_df(avg_dfs, folderinfo, cfg)
@@ -121,18 +145,34 @@ def group(folderinfo, cfg):
         if cfg["do_permtest"]:
             for stats_var in cfg["stats_variables"]:
                 cluster_extent_test(
-                    stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg
+                    stats_df,
+                    g_avg_dfs,
+                    g_std_dfs,
+                    stats_var,
+                    folderinfo,
+                    cfg,
+                    plot_panel_instance,
                 )
+        plt.close("all")
 
         # ..................................  ANOVA  ...................................
         if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
-            for stats_var in cfg["stats_variables"]:
-                twoway_RMANOVA(
-                    stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg
-                )
+            anova_sanity = anova_design_sanity_check(stats_df, folderinfo, cfg)
+            if anova_sanity:
+                for stats_var in cfg["stats_variables"]:
+                    twoway_RMANOVA(
+                        stats_df,
+                        g_avg_dfs,
+                        g_std_dfs,
+                        stats_var,
+                        folderinfo,
+                        cfg,
+                        plot_panel_instance,
+                    )
+        plt.close("all")
 
     # ..................................  plots  .......................................
-    plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg)
+    plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance)
 
     # ..............................  print finish  ....................................
     print_finish(folderinfo)
@@ -170,7 +210,7 @@ def some_prep(folderinfo, cfg):
     # see if there's a config json file and add to cfg dict
     for g_idx, group_dir in enumerate(group_dirs):
         with open(
-            os.path.join(group_dir + CONFIG_JSON_FILENAME), "r"
+            os.path.join(group_dir, CONFIG_JSON_FILENAME), "r"
         ) as config_json_file:
             config_vars_from_json = json.load(config_json_file)
             for key in config_vars_from_json.keys():
@@ -276,7 +316,7 @@ def extract_cfg_vars(folderinfo, cfg):
         # test that at least 1 folder has valid results for all groups
         if not valid_results_folders:
             no_valid_results_error = (
-                "\n***********\n! ERROR !\n***********\n"
+                "\n*********\n! ERROR !\n*********\n"
                 + "No valid results folder found for "
                 + group_names[g]
                 + "\nFix & re-run!"
@@ -292,7 +332,7 @@ def extract_cfg_vars(folderinfo, cfg):
             PCA_variable_num = len(cfg["PCA_variables"])
             PCA_variables_str = "\n".join(cfg["PCA_variables"])
             PCA_error_message = (
-                "\n***********\n! ERROR !\n***********\n"
+                "\n*********\n! ERROR !\n*********\n"
                 + "\nPCA Configuration invalid, number of input features cannot exceed "
                 + "number of principal components to compute!\n"
                 + str(PCA_variable_num)
@@ -312,26 +352,6 @@ def extract_cfg_vars(folderinfo, cfg):
                 + "just don't choose any variables for it."
             )
             cfg["number_of_PCs"] = 2  # make sure to update in cfg dict
-
-    # ..............................  dont show plots  .................................
-    # => in group gaita is always dependent on user system
-    # !!! THIS DOES NOT PLOT ANYTHING BUT I HAD TO DO IT LIKE THIS OTHERWISE IT CRASHES
-    # !!! If users should complain that they dont get figures but they should, it might
-    #     be because these lines wrongly determine user to be in non-interactive mode
-    #     while they are not!
-    # if not hasattr(sys, "ps1") and not sys.flags.interactive:
-    #     cfg["dont_show_plots"] = True
-    #     matplotlib.use("agg")
-    # else:
-    #     cfg["dont_show_plots"] = False
-    # !!! UPDATE FOR PYTHON MODULE
-    # ==> I just always set this to True to not show plots because otherwise weird
-    #     things happened with grouprun_ functions
-    # ==> .agg is used because otherwise we get a warning for f,ax=plt.subplots()
-    # ==> Not sure why this is different for our first-level GUIs but I'll just try
-    #     to implement a window for showing plots using GUI
-    matplotlib.use("agg")
-    cfg["dont_show_plots"] = True
 
     return cfg
 
@@ -472,7 +492,7 @@ def bin_num_error_helper_function(dfs, g, group_names, sc_breaks, results_dir, b
     """Handle this error in a separate function for readability"""
     id_col_idx = dfs[g].columns.get_loc(ID_COL)
     message = (
-        "\n***********\n! ERROR !\n***********\n"
+        "\n*********\n! ERROR !\n*********\n"
         + "\nSC Normalisation bin number mismatch for:"
         + "\nGroup: "
         + group_names[g]
@@ -496,7 +516,7 @@ def test_PCA_and_stats_variables(df, group_name, name, results_dir, cfg):
             ]
             missing_PCA_variables_str = "\n".join(missing_PCA_variables)
             PCA_variable_mismatch_message = (
-                "\n***********\n! ERROR !\n***********\n"
+                "\n*********\n! ERROR !\n*********\n"
                 + "\nNot all features you asked us to analyse WITH PCA were present in "
                 + "the dataset of:\n"
                 + group_name
@@ -516,7 +536,7 @@ def test_PCA_and_stats_variables(df, group_name, name, results_dir, cfg):
             ]
             missing_stats_variables_str = "\n".join(missing_stats_variables)
             stats_variable_mismatch_message = (
-                "\n***********\n! ERROR !\n***********\n"
+                "\n*********\n! ERROR !\n*********\n"
                 + "\nNot all features you asked us to analyse STATISTICALLY were "
                 + "present in the dataset of:\n"
                 + group_name
@@ -591,7 +611,17 @@ def import_and_combine_dfs(
                 group_df = df_copy.iloc[sc_idxs[sc]]
             else:
                 nanvector = df_copy.loc[[1]]
-                nanvector[:] = np.nan
+                # new for pandas 2.2.2 - change all cols to floats so its compatible
+                # with np.nan concatenation (does this break anything?)
+                # => 07.08. - Leaving this for when I have unit tests for simi & group
+                # => Not sure it'll work well like this I feel like it will take more
+                #    than just changing the dtype
+                # => For now ignoring warnings so users don't get annoyed (and because
+                #    dtype incompatibility doesn't matter too much for us)
+                # nanvector = nanvector.astype(float)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    nanvector[:] = np.nan
                 group_df = pd.concat([group_df, nanvector], axis=0)
                 group_df = pd.concat([group_df, df_copy.iloc[sc_idxs[sc]]], axis=0)
     # if there was no valid sheet file for this name, we are returning group_df without
@@ -697,6 +727,10 @@ def avg_and_std(dfs, folderinfo, cfg):
     one_bin_in_sc_percent = cfg["one_bin_in_sc_percent"]
     save_to_xls = cfg["save_to_xls"]
     tracking_software = cfg["tracking_software"]
+    if tracking_software == "DLC":
+        analyse_average_x = cfg["analyse_average_x"]
+    elif tracking_software == "Simi":
+        analyse_average_y = cfg["analyse_average_y"]
 
     # preparation, initialise avg/std dfs & colnames
     avg_dfs = [pd.DataFrame(data=None)] * len(group_names)
@@ -713,8 +747,11 @@ def avg_and_std(dfs, folderinfo, cfg):
         elif tracking_software == "Simi":
             cols_to_exclude = [ID_COL, "Leg", "Stepcycle", "Time"]
             for col in dfs[g].columns:
-                if (col.endswith("X")) | (col.endswith("Y")):
+                if col.endswith("X"):
                     cols_to_exclude.append(col)
+                if analyse_average_y is False:
+                    if col.endswith("Y"):
+                        cols_to_exclude.append(col)
         this_df = dfs[g]
         IDs = pd.unique(this_df[ID_COL])
         IDs = IDs[~pd.isnull(IDs)]  # get rid of nan separator values
@@ -895,7 +932,7 @@ def grand_avg_and_std(avg_dfs, folderinfo, cfg):
 # %% ...........................  local functions #4 - PCA  ............................
 
 
-def PCA_on_a_limb(avg_dfs, folderinfo, cfg):
+def PCA_on_a_limb(avg_dfs, folderinfo, cfg, plot_panel_instance):
     """PCA on joint y values of a limb (mouse: hindlimb, humans: leg of interest)"""
 
     # print info
@@ -907,7 +944,7 @@ def PCA_on_a_limb(avg_dfs, folderinfo, cfg):
     # save PCA info to xlsx file
     PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg)
     # plot the scatterplot
-    plot_PCA(PCA_df, PCA_info, folderinfo, cfg)
+    plot_PCA(PCA_df, PCA_info, folderinfo, cfg, plot_panel_instance)
 
 
 def PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg):
@@ -1005,7 +1042,7 @@ def run_PCA(PCA_df, features, cfg):
     return PCA_df, PCA_info
 
 
-def plot_PCA(PCA_df, PCA_info, folderinfo, cfg):
+def plot_PCA(PCA_df, PCA_info, folderinfo, cfg, plot_panel_instance):
     """Plot a scatterplot and colour based on group name"""
 
     # unpack
@@ -1071,18 +1108,17 @@ def plot_PCA(PCA_df, PCA_info, folderinfo, cfg):
             + "%"
         )
     save_figures(f, results_dir, "PCA Scatterplot")
-    if dont_show_plots:
-        plt.close(f)
-    else:
-        plt.show()
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
     # 3d scatterplot image file
     if number_of_PCs > 2:
         save_figures(f_3d, results_dir, "PCA 3D Scatterplot")
-        if dont_show_plots:
-            plt.close(f_3d)
-        else:
-            plt.show()
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
         # 3d scatterplot rotating video file
         if save_3D_PCA_video:
@@ -1101,7 +1137,6 @@ def plot_PCA(PCA_df, PCA_info, folderinfo, cfg):
             )
             writervideo = FFMpegWriter(fps=30)  # save to m4 using ffmpeg writer
             anim.save(results_dir + "PCA 3D Scatterplot.mp4", writer=writervideo)
-            plt.close()
 
 
 # %% ................  local functions #5 - prepare statistics  ........................
@@ -1136,7 +1171,9 @@ def create_stats_df(avg_dfs, folderinfo, cfg):
 
 
 # ...............................  main function  ......................................
-def cluster_extent_test(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
+def cluster_extent_test(
+    stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg, plot_panel_instance
+):
     """Main function running a cluster-extent permutation test of N contrasts for a
     given dependent variable
     """
@@ -1184,7 +1221,13 @@ def cluster_extent_test(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, c
     )
     # plot results
     plot_permutation_test_results(
-        g_avg_dfs, g_std_dfs, trueobs_results_df, stats_var, folderinfo, cfg
+        g_avg_dfs,
+        g_std_dfs,
+        trueobs_results_df,
+        stats_var,
+        folderinfo,
+        cfg,
+        plot_panel_instance,
     )
 
 
@@ -1347,7 +1390,13 @@ def test_trueobs_clusters(
 
 # ...................................  plot results  ...................................
 def plot_permutation_test_results(
-    g_avg_dfs, g_std_dfs, trueobs_results_df, stats_var, folderinfo, cfg
+    g_avg_dfs,
+    g_std_dfs,
+    trueobs_results_df,
+    stats_var,
+    folderinfo,
+    cfg,
+    plot_panel_instance,
 ):
     """Plot a Nx1 or N/2x2 figure of our contrasts' permutation test results."""
 
@@ -1363,11 +1412,10 @@ def plot_permutation_test_results(
     legend_outside = cfg["legend_outside"]
 
     if len(contrasts) > 3:  # if we have 4 groups or more, N/2x2 subplot layout
-        f, ax = plt.subplots(int(round(len(contrasts) / 2)), 2)
+        f, ax = plt.subplots(int(round(len(contrasts) / 2)), 2, layout="constrained")
         ax = ax.ravel()
     else:
-        f, ax = plt.subplots(len(contrasts), 1)
-    plt.tight_layout()
+        f, ax = plt.subplots(len(contrasts), 1, layout="constrained")
     x = np.linspace(0, 100, bin_num)
     for c, contrast in enumerate(contrasts):
         # prepare group strings and (importantly!) index of current groups from _NAMES
@@ -1420,7 +1468,7 @@ def plot_permutation_test_results(
             elif legend_outside is False:
                 ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
             if check_mouse_conversion(feature, cfg):
-                ytickconvert_mm_to_cm(ax[c])
+                ytickconvert_mm_to_cm(feature, ax[c])
                 ax[c].set_ylabel("")  # we use supylabel
         else:
             # legend adjustments
@@ -1462,18 +1510,18 @@ def plot_permutation_test_results(
                     lw=STD_LW,
                     zorder=0,
                 )
-    f.supxlabel("SC Percentage", fontsize=PERM_PLOT_SUPLABEL_SIZE, y=0.000001)
+    f.supxlabel("Percentage", fontsize=PERM_PLOT_SUPLABEL_SIZE)
     if check_mouse_conversion(feature, cfg):
-        f.supylabel(feature + " (cm)", fontsize=PERM_PLOT_SUPLABEL_SIZE, x=-0.02)
+        f.supylabel(feature + " (cm)", fontsize=PERM_PLOT_SUPLABEL_SIZE)
     else:
-        f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE, x=-0.02)
+        f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE)
     figure_file_string = stats_var + " - Cluster-extent Test"
-    f.suptitle(figure_file_string, fontsize=PERM_PLOT_SUPLABEL_SIZE, y=0.993)
+    f.suptitle(figure_file_string, fontsize=PERM_PLOT_SUPLABEL_SIZE)
     save_figures(f, results_dir, figure_file_string)
-    if dont_show_plots:
-        plt.close(f)
-    else:
-        plt.show()
+
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def extract_all_clusters(trueobs_results_df, contrast):
@@ -1500,7 +1548,79 @@ def extract_all_clusters(trueobs_results_df, contrast):
 # %% .................  local functions #7 - 2-way RM/Mixed-ANOVA  .....................
 
 
-def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
+# ...............................  sanity check . ......................................
+def anova_design_sanity_check(stats_df, folderinfo, cfg):
+    """Sanity check the anova_design input of the user based on stats_df's IDs"""
+
+    # unpack
+    anova_design = cfg["anova_design"]
+    results_dir = folderinfo["results_dir"]
+
+    # get IDs for each group to check if they are unique
+    group_IDs = stats_df.groupby("Group")["ID"].unique()
+    ID_list = []
+    for this_groups_IDs in group_IDs:
+        for ID in this_groups_IDs:
+            ID_list.append(ID)
+    ID_list = [str(IDs) for IDs in ID_list]
+    unique_ID_list = list(set(ID_list))
+
+    # Mixed ANOVA - no duplicate IDs across groups!
+    if anova_design == "Mixed ANOVA":
+        if len(ID_list) == len(unique_ID_list):  # check passed
+            return True
+        else:
+            mixed_anova_error_message = (
+                "\n*********\n! ERROR !\n*********\n"
+                + "\nANOVA design seems wrong - skipping ANOVA!"
+                + "\nMixed ANOVA requires unique IDs across groups & we found "
+                + "duplicates!"
+                + "\n\nIDs were:\n"
+                + str(group_IDs)
+            )
+            print(mixed_anova_error_message)
+            write_issues_to_textfile(mixed_anova_error_message, results_dir)
+            return False
+    # RM ANOVA - IDs in each group must be the same!
+    elif anova_design == "RM ANOVA":
+        if len(ID_list) != len(unique_ID_list):  # check passed
+            # Bonus - inform user about which IDs were valid (have data)
+            # ==> based on pingouin's approach of removing all IDs that do not have
+            #     data in all conditions (see https://pingouin-stats.org/build/
+            #     html/generated/pingouin.rm_anova.html under "Missing values...")
+            valid_IDs = []
+            group_number = len(group_IDs.index)
+            for ID in unique_ID_list:
+                ID_count = ID_list.count(ID)
+                if ID_count == group_number:
+                    valid_IDs.append(ID)
+            rm_anova_info_message = (
+                "\n********\n! INFO !\n********\n"
+                + "\nFollowing IDs with valid data in all conditions after first-level "
+                + "analyses will be included in RM ANOVA:\n\n"
+                + str(valid_IDs)
+            )
+            print(rm_anova_info_message)
+            write_issues_to_textfile(rm_anova_info_message, results_dir)
+            return True
+        else:
+            rm_anova_error_message = (
+                "\n*********\n! ERROR !\n*********\n"
+                + "\nANOVA design seems wrong - skipping ANOVA!"
+                + "\nRM ANOVA requires IDs to be present in all groups & we found "
+                + "only unique IDs!"
+                + "\n\nIDs were:\n"
+                + str(group_IDs)
+            )
+            print(rm_anova_error_message)
+            write_issues_to_textfile(rm_anova_error_message, results_dir)
+            return False
+
+
+# ...............................  main function  ......................................
+def twoway_RMANOVA(
+    stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg, plot_panel_instance
+):
     """Perform a two-way RM-ANOVA with the factors group (between or within) & SC
     percentage (within) on a given dependent variable
     """
@@ -1510,10 +1630,10 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
 
     # run the (fully) RM or Mixed ANOVA
     ANOVA_result = run_ANOVA(stats_df, stats_var, cfg)
+
     # check if sphericity is given to see if p vals have to be GG corrected
     # => even though this is done automatically for mixed anovas, you always get the GG
-    #    col in results of rm anovas so we have to test it ourselves and can not (as
-    #    done in an earlier version of gaita, have "if GG-col is there")
+    #    col in results of rm anovas so we have to test it ourselves
     sphericity_flag = sphericity(
         stats_df, dv=stats_var, within=SC_PERCENTAGE_COL, subject=ID_COL
     )[0]
@@ -1521,13 +1641,22 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
         interaction_effect_pval = ANOVA_result["p-unc"][2]
     else:
         interaction_effect_pval = ANOVA_result["p-GG-corr"][2]
+        # NU - understand why its nan sometimes. For now use uncorrected int pval
+        if np.isnan(interaction_effect_pval):
+            interaction_effect_pval = ANOVA_result["p-unc"][2]
     if interaction_effect_pval < 0.05:  # if interaction effect is sig, do multcomps
         multcomp_df = multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg)
         save_stats_results_to_text(
             multcomp_df, stats_var, anova_design, folderinfo, cfg
         )
         plot_multcomp_results(
-            g_avg_dfs, g_std_dfs, multcomp_df, stats_var, folderinfo, cfg
+            g_avg_dfs,
+            g_std_dfs,
+            multcomp_df,
+            stats_var,
+            folderinfo,
+            cfg,
+            plot_panel_instance,
         )
     else:  # if interaction effect not sig, inform user that we didn't perform Tukey's!
         nonsig_multcomp_df = pd.DataFrame()
@@ -1536,6 +1665,7 @@ def twoway_RMANOVA(stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg):
         )
 
 
+# .............................  multiple comparison test  .............................
 def multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg):
     """Perform multiple comparison test if the ANOVA's interaction was significant.
     Do a separate multcomp test for each SC % bin."""
@@ -1580,6 +1710,7 @@ def multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg):
     return multcomp_df
 
 
+# ..............................  main ANOVA  computation  .............................
 def run_ANOVA(stats_df, stats_var, cfg):
     """Run the RM-ANOVA using pingouin"""
 
@@ -1598,7 +1729,7 @@ def run_ANOVA(stats_df, stats_var, cfg):
 
 # ...................................  plot results  ...................................
 def plot_multcomp_results(
-    g_avg_dfs, g_std_dfs, multcomp_df, stats_var, folderinfo, cfg
+    g_avg_dfs, g_std_dfs, multcomp_df, stats_var, folderinfo, cfg, plot_panel_instance
 ):
     """Plot an Nx1 figure of N contrasts' multiple comparison results."""
 
@@ -1614,8 +1745,7 @@ def plot_multcomp_results(
     dont_show_plots = cfg["dont_show_plots"]
     legend_outside = cfg["legend_outside"]
 
-    f, ax = plt.subplots(len(contrasts), 1)
-    plt.tight_layout()
+    f, ax = plt.subplots(len(contrasts), 1, layout="constrained")
     x = np.linspace(0, 100, bin_num)
     for c, contrast in enumerate(contrasts):
         # prepare group strings and (importantly!) index of current groups from _NAMES
@@ -1668,7 +1798,7 @@ def plot_multcomp_results(
             elif legend_outside is False:
                 ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
             if check_mouse_conversion(feature, cfg):
-                ytickconvert_mm_to_cm(ax[c])
+                ytickconvert_mm_to_cm(feature, ax[c])
                 ax[c].set_ylabel("")  # we use supylabel
         else:
             # legend adjustments
@@ -1731,22 +1861,21 @@ def plot_multcomp_results(
                 )
             elif legend_outside is False:
                 ax.legend(fontsize=PERM_PLOT_LEGEND_SIZE + 4)
-    f.supxlabel("SC Percentage", fontsize=PERM_PLOT_SUPLABEL_SIZE, y=0.000001)
+    f.supxlabel("Percentage", fontsize=PERM_PLOT_SUPLABEL_SIZE)
     if check_mouse_conversion(feature, cfg):
-        f.supylabel(feature + " (cm)", fontsize=PERM_PLOT_SUPLABEL_SIZE, x=-0.02)
+        f.supylabel(feature + " (cm)", fontsize=PERM_PLOT_SUPLABEL_SIZE)
     else:
-        f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE, x=-0.02)
+        f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE)
     figure_file_string = stats_var + " - Tukey's Multiple Comparison Test"
     f.suptitle(
         figure_file_string,
         fontsize=PERM_PLOT_SUPLABEL_SIZE,
-        y=0.993,
     )
     save_figures(f, results_dir, figure_file_string)
-    if dont_show_plots:
-        plt.close(f)
-    else:
-        plt.show()
+
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def extract_multcomp_significance_clusters(multcomp_df, contrast, stats_threshold):
@@ -1774,34 +1903,67 @@ def extract_multcomp_significance_clusters(multcomp_df, contrast, stats_threshol
 # %% ..........................  local functions #8 - plots  ...........................
 
 
-def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg):
+def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance):
     """Plot results - main function (inner functions loop over groups)"""
 
     # unpack
-    dont_show_plots = cfg["dont_show_plots"]
     angles = cfg["angles"]
+    tracking_software = cfg["tracking_software"]
+    # prep
+    plot_horizontal_coord = False
 
     # ........................1 - y coords over average SC..............................
-    plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
+    plot_joint_y_by_average_SC(
+        g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+    )
+    plt.close("all")
 
-    # ........................2 - angles over average SC................................
+    # .......................2 - x coords over average SC (optional)....................
+    if tracking_software == "DLC":
+        if cfg["analyse_average_x"] is True:
+            plot_horizontal_coord = True
+    elif tracking_software == "Simi":
+        if cfg["analyse_average_y"] is True:
+            plot_horizontal_coord = True
+    if plot_horizontal_coord:
+        plot_joint_x_by_average_SC(
+            g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+        )
+        plt.close("all")
+
+    # ........................3 - angles over average SC................................
     if angles["name"]:
-        plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
+        plot_angles_by_average_SC(
+            g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+        )
+        plt.close("all")
 
-    # .................3 - average x velocities over SC percentage......................
-    plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
+    # .................4 - average x velocities over SC percentage......................
+    plot_x_velocities_by_average_SC(
+        g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+    )
+    plt.close("all")
 
-    # ..............4 - average angular velocities over SC percentage...................
+    # ..............5 - average angular velocities over SC percentage...................
     if angles["name"]:
-        plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
+        plot_angular_velocities_by_average_SC(
+            g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+        )
+        plt.close("all")
 
-    # plot stuff if wanted
-    if dont_show_plots is False:
-        plt.show()
+    # ........................optional - 6 - build plot panel..........................
+    if cfg["dont_show_plots"] is True:
+        pass  # going on without building the plot window
+    elif cfg["dont_show_plots"] is False:  # -> show plot panel
+        # Destroy loading screen and build plot panel with all figures
+        plot_panel_instance.destroy_plot_panel_loading_screen()
+        plot_panel_instance.build_plot_panel()
 
 
-def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
-    """1 - Plot joints' y as a function of average SC's percentage"""
+def plot_joint_y_by_average_SC(
+    g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+):
+    """1 - Plot joints' y/Z as a function of average SC's percentage"""
 
     # unpack
     group_names = folderinfo["group_names"]
@@ -1845,7 +2007,7 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
         if tracking_software == "DLC":
             ax.set_title(group_name + " - Joint Y over average step cycle")
             if check_mouse_conversion("y", cfg):
-                ytickconvert_mm_to_cm(ax)
+                ytickconvert_mm_to_cm("y", ax)
             else:
                 ax.set_ylabel("y (pixel)")
             figure_file_string = " - Joint y-coord.s over average step cycle"
@@ -1856,8 +2018,10 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.set_ylabel("Z")
             figure_file_string = " - Joint Z-coord.s over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
     # B - lines = groups & figures = joints
     for j, joint in enumerate(joints):
@@ -1887,7 +2051,7 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
         if tracking_software == "DLC":
             ax.set_title(joint + "Y over average step cycle")
             if check_mouse_conversion("y", cfg):
-                ytickconvert_mm_to_cm(ax)
+                ytickconvert_mm_to_cm("y", ax)
             else:
                 ax.set_ylabel("y (pixel)")
             figure_file_string = "- Y-coord.s over average step cycle"
@@ -1902,11 +2066,127 @@ def plot_joint_y_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.set_ylabel("Z")
             figure_file_string = "- Z-coord.s over average step cycle"
         save_figures(f, results_dir, joint + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
 
-def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
+def plot_joint_x_by_average_SC(
+    g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+):
+    """2 - Plot joints' x/Y as a function of average SC's percentage"""
+
+    # unpack
+    group_names = folderinfo["group_names"]
+    results_dir = folderinfo["results_dir"]
+    bin_num = cfg["bin_num"]
+    joint_color_cycler = cfg["joint_color_cycler"]
+    group_color_cycler = cfg["group_color_cycler"]
+    which_leg = cfg["which_leg"]
+    plot_SE = cfg["plot_SE"]
+    tracking_software = cfg["tracking_software"]
+    joints = cfg["joints"]
+    dont_show_plots = cfg["dont_show_plots"]
+    legend_outside = cfg["legend_outside"]
+
+    # A - lines = joints & figures = groups
+    for g, group_name in enumerate(group_names):
+        f, ax = plt.subplots(1, 1)
+        ax.set_prop_cycle(joint_color_cycler)
+        x = np.linspace(0, 100, bin_num)
+        for joint in joints:
+            if tracking_software == "DLC":
+                y_col = g_avg_dfs[g].columns.get_loc(joint + "x")
+            elif tracking_software == "Simi":
+                # check for bodyside-specificity
+                feature = "Y"
+                y_col = extract_feature_column(g_avg_dfs[g], joint, which_leg, feature)
+            y = g_avg_dfs[g].iloc[:, y_col]  # average & stddata share colnames
+            if plot_SE:
+                std = g_std_dfs[g].iloc[:, y_col] / np.sqrt(g_std_dfs[g]["N"][0])
+            else:
+                std = g_std_dfs[g].iloc[:, y_col]
+            ax.plot(x, y, label=joint)
+            ax.fill_between(x, y - std, y + std, alpha=STD_ALPHA, lw=STD_LW)
+
+        # legend adjustments
+        if legend_outside is True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif legend_outside is False:
+            ax.legend()
+        ax.set_xlabel("Percentage")
+        if tracking_software == "DLC":
+            ax.set_title(group_name + " - Joint X over average step cycle")
+            if check_mouse_conversion("x", cfg):
+                ytickconvert_mm_to_cm("x", ax)
+            else:
+                ax.set_ylabel("x (pixel)")
+            figure_file_string = " - Joint x-coord.s over average step cycle"
+        elif tracking_software == "Simi":
+            ax.set_title(
+                group_name + " - " + which_leg + " Joint Y over average step cycle"
+            )
+            ax.set_ylabel("Y")
+            figure_file_string = " - Joint Y-coord.s over average step cycle"
+        save_figures(f, results_dir, group_name + figure_file_string)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
+
+    # B - lines = groups & figures = joints
+    for j, joint in enumerate(joints):
+        f, ax = plt.subplots(1, 1)
+        ax.set_prop_cycle(group_color_cycler)
+        x = np.linspace(0, 100, bin_num)
+        for g, group_name in enumerate(group_names):
+            if tracking_software == "DLC":
+                y_col = g_avg_dfs[g].columns.get_loc(joint + "x")
+            elif tracking_software == "Simi":
+                # check for bodyside-specificity
+                feature = "Y"
+                y_col = extract_feature_column(g_avg_dfs[g], joint, which_leg, feature)
+            y = g_avg_dfs[g].iloc[:, y_col]  # average & stddata share colnames
+            if plot_SE:
+                std = g_std_dfs[g].iloc[:, y_col] / np.sqrt(g_std_dfs[g]["N"][0])
+            else:
+                std = g_std_dfs[g].iloc[:, y_col]
+            ax.plot(x, y, label=group_name)
+            ax.fill_between(x, y - std, y + std, alpha=STD_ALPHA, lw=STD_LW)
+        # legend adjustments
+        if legend_outside is True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        elif legend_outside is False:
+            ax.legend()
+        ax.set_xlabel("Percentage")
+        if tracking_software == "DLC":
+            ax.set_title(joint + "X over average step cycle")
+            if check_mouse_conversion("x", cfg):
+                ytickconvert_mm_to_cm("x", ax)
+            else:
+                ax.set_ylabel("x (pixel)")
+            figure_file_string = "- X-coord.s over average step cycle"
+        elif tracking_software == "Simi":
+            # do title_leg thingy only for B plots, because here we have separate
+            # figures for joints / angles (in A plots just throw leg into title)
+            if joint + "Y" in g_avg_dfs[g].columns:
+                title_leg = ""
+            else:
+                title_leg = which_leg
+            ax.set_title(title_leg + " " + joint + " Y over average step cycle")
+            ax.set_ylabel("Y")
+            figure_file_string = "- Y-coord.s over average step cycle"
+        save_figures(f, results_dir, joint + figure_file_string)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
+
+
+def plot_angles_by_average_SC(
+    g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+):
     """2 - Plot Angles as a function of average SC's percentage"""
 
     # unpack
@@ -1956,8 +2236,10 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             )
         figure_file_string = " - Joint angles over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
     # B - lines = groups & figures = angles
     for a, angle in enumerate(angles["name"]):
@@ -1986,7 +2268,7 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
         ax.set_xlabel("Percentage")
         ax.set_ylabel("Angle (degrees)")
         if tracking_software == "DLC":
-            ax.set_title(angle + " angle over average step cycle")
+            ax.set_title(angle + "angle over average step cycle")
         elif tracking_software == "Simi":
             if angle + "Angle" in g_avg_dfs[g].columns:
                 title_leg = ""
@@ -1995,11 +2277,15 @@ def plot_angles_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.set_title(title_leg + " " + angle + " angle over average step cycle")
         figure_file_string = " - Angle over average step cycle"
         save_figures(f, results_dir, angle + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
 
-def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
+def plot_x_velocities_by_average_SC(
+    g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+):
     """3 - Plot x velocities as a function of average SC's percentage"""
 
     # unpack
@@ -2042,25 +2328,25 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.legend()
         ax.set_xlabel("Percentage")
         if tracking_software == "DLC":
-            if check_mouse_conversion("y", cfg):
-                ytickconvert_mm_to_cm(ax)
-                ax.set_ylabel(
+            if check_mouse_conversion("x", cfg):
+                ytickconvert_mm_to_cm("x", ax)
+                ax.set_ylabel(  # overwriting convert-funcs ylabel
                     "Velocity (x in cm / "
                     + str(int((1 / sampling_rate) * 1000))
-                    + "ms)"
+                    + " ms)"
                 )
             else:
                 ax.set_ylabel(
                     "Velocity (x in pixels / "
                     + str(int((1 / sampling_rate) * 1000))
-                    + "ms)"
+                    + " ms)"
                 )
             ax.set_title(group_name + " - Joint velocities over average step cycle")
         elif tracking_software == "Simi":
             ax.set_ylabel(
                 "Velocity (Y in (your_units) / "
                 + str(int((1 / sampling_rate) * 1000))
-                + "ms)"
+                + " ms)"
             )
             ax.set_title(
                 group_name
@@ -2070,8 +2356,10 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             )
         figure_file_string = " - Joint velocities over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
     # B - lines = groups & figures = joints
     for j, joint in enumerate(joints):
@@ -2099,25 +2387,25 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             ax.legend()
         ax.set_xlabel("Percentage")
         if tracking_software == "DLC":
-            if check_mouse_conversion("y", cfg):
-                ytickconvert_mm_to_cm(ax)
+            if check_mouse_conversion("x", cfg):
+                ytickconvert_mm_to_cm("x", ax)
                 ax.set_ylabel(
                     "Velocity (x in cm / "
                     + str(int((1 / sampling_rate) * 1000))
-                    + "ms)"
+                    + " ms)"
                 )
             else:
                 ax.set_ylabel(
                     "Velocity (x in pixels / "
                     + str(int((1 / sampling_rate) * 1000))
-                    + "ms)"
+                    + " ms)"
                 )
             ax.set_title(joint + "velocities over average step cycle")
         elif tracking_software == "Simi":
             ax.set_ylabel(
                 "Velocity (Y in (your_units) / "
                 + str(int((1 / sampling_rate) * 1000))
-                + "ms)"
+                + " ms)"
             )
             if joint + "Velocity" in g_avg_dfs[g].columns:
                 title_leg = ""
@@ -2128,11 +2416,15 @@ def plot_x_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
             )
         figure_file_string = "- Velocities over average step cycle"
         save_figures(f, results_dir, joint + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
 
-def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg):
+def plot_angular_velocities_by_average_SC(
+    g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance
+):
     """4 - Plot angular velocities as a function of average SC's percentage"""
     # unpack
     group_names = folderinfo["group_names"]
@@ -2174,7 +2466,7 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
             ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel(
-            "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
+            "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + " ms)"
         )
         if tracking_software == "DLC":
             ax.set_title(group_name + " - Angular velocities over average step cycle")
@@ -2187,8 +2479,10 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
             )
         figure_file_string = " - Angular velocities over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
     # B - lines = groups & figures = joints
     for a, angle in enumerate(angles["name"]):
@@ -2216,10 +2510,10 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
             ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel(
-            "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
+            "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + " ms)"
         )
         if tracking_software == "DLC":
-            ax.set_title(angle + " - Angular velocities over average step cycle")
+            ax.set_title(angle + "- Angular velocities over average step cycle")
         elif tracking_software == "Simi":
             if angle + "Angle" in g_avg_dfs[g].columns:
                 title_leg = ""
@@ -2233,8 +2527,10 @@ def plot_angular_velocities_by_average_SC(g_avg_dfs, g_std_dfs, folderinfo, cfg)
             )
         figure_file_string = " - Angular Velocities over average step cycle"
         save_figures(f, results_dir, angle + figure_file_string)
-        if dont_show_plots:
-            plt.close(f)
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f)
 
 
 def save_figures(figure, results_dir, figure_file_string):
@@ -2253,14 +2549,14 @@ def save_figures(figure, results_dir, figure_file_string):
     )
 
 
-def ytickconvert_mm_to_cm(axis):
+def ytickconvert_mm_to_cm(feature, axis):
     """Convert axis y-ticks from mm (of data) to cm"""
     y_ticks = axis.get_yticks()
     y_ticklabels = []
     for t in y_ticks:
         y_ticklabels.append(str(round(t / 10, 2)))
     axis.set_yticks(y_ticks, labels=y_ticklabels)
-    axis.set_ylabel("y (cm)")
+    axis.set_ylabel(feature + " (cm)")
 
 
 def extract_feature_column(df, joint, legname, feature):
@@ -2353,14 +2649,18 @@ def write_issues_to_textfile(message, results_dir):
 
 
 def check_mouse_conversion(feature, cfg):
-    """For mouse plots: check if we have to convert mm to cm (for plotting y only)"""
+    """For mouse plots: check if we have to convert mm to cm (for plotting x or y)"""
     if "convert_to_mm" not in cfg.keys():
         return False
     else:
         if cfg["convert_to_mm"] is False:
             return False
         else:
-            if feature == "y":
+            if (
+                feature.endswith(" x")
+                | feature.endswith(" y")
+                | (feature in ["x", "y"])
+            ):
                 return True
 
 
@@ -2486,6 +2786,146 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
     stats_textfile = os.path.join(results_dir, STATS_TXT_FILENAME)
     with open(stats_textfile, "a") as f:
         f.write(message)
+
+
+class PlotPanel:
+    def __init__(self):
+        self.figures = []
+        self.current_fig_index = 0
+
+    # .........................  loading screen  ................................
+    def build_plot_panel_loading_screen(self):
+        """Builds a loading screen that is shown while plots are generated"""
+        # Build window
+        self.loading_screen = ctk.CTkToplevel()
+        self.loading_screen.title("Loading...")
+        self.loading_screen.geometry("300x300")
+        self.loading_label_strings = [
+            "Plots are generated, please wait.",
+            "Plots are generated, please wait..",
+            "Plots are generated, please wait...",
+        ]
+        self.loading_label = ctk.CTkLabel(
+            self.loading_screen, text=self.loading_label_strings[0]
+        )
+        self.loading_label.pack(pady=130, padx=40, anchor="w")
+
+        # Animate the text
+        self.animate(counter=1)
+
+    # Cycle through loading labels to animate the loading screen
+    def animate(self, counter):
+        self.loading_label.configure(text=self.loading_label_strings[counter])
+        self.loading_screen.after(
+            500, self.animate, (counter + 1) % len(self.loading_label_strings)
+        )
+
+    def destroy_plot_panel_loading_screen(self):
+        self.loading_screen.destroy()
+
+    # .........................  plot panel   ................................
+    def build_plot_panel(self):
+        """Creates the window/"panel" in which the plots are shown"""
+        # Set up of the plotpanel
+        ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
+        ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
+        self.plotwindow = ctk.CTkToplevel()
+        self.plotwindow.title(
+            f"AutoGaitA Figure {self.current_fig_index+1}/{len(self.figures)}"
+        )
+
+        # Set size to 50% of screen
+        screen_width = self.plotwindow.winfo_screenwidth()
+        window_width = int(screen_width * 0.5)
+        # 0.75 to gain a ration of 1.333 (that of matplotlib figures) and 1.05 for toolbar + buttons
+        window_height = window_width * 0.75 * 1.05
+        self.plotwindow.geometry(f"{window_width}x{window_height}")
+
+        # Adjust figures for the plot panel
+        for fig in self.figures:
+            # dpi adjusted to increase visibilty/readability
+            fig.set_dpi(100)
+            # constrained layout to adjust margins within the figure
+            # => note: in case there are a lot of steps in one run (-> the legend is
+            #          super long) the figure won't be displayed properly.
+            fig.set_constrained_layout(True)
+
+        # Initialize the plot panel with the first figure
+        self.plot_panel = FigureCanvasTkAgg(
+            self.figures[self.current_fig_index], master=self.plotwindow
+        )  # index used for buttons
+        self.plot_panel.get_tk_widget().grid(
+            row=0, column=0, padx=10, pady=10, sticky="nsew"
+        )
+
+        # Create toolbar frame and place it in the middle row
+        self.toolbar_frame = tk.Frame(self.plotwindow)
+        self.toolbar_frame.grid(row=1, column=0, sticky="ew")
+
+        self.toolbar = NavigationToolbar2Tk(self.plot_panel, self.toolbar_frame)
+        self.toolbar.update()
+
+        # Create navigation buttons frame
+        self.button_frame = tk.Frame(self.plotwindow)
+        self.button_frame.grid(row=2, column=0, sticky="ew")
+
+        self.prev_button = ctk.CTkButton(
+            self.button_frame,
+            text="<< Previous",
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+            command=self.show_previous,
+        )
+        self.next_button = ctk.CTkButton(
+            self.button_frame,
+            text="Next >>",
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+            command=self.show_next,
+        )
+        self.prev_button.grid(row=0, column=0, sticky="ew")
+        self.next_button.grid(row=0, column=1, sticky="ew")
+
+        self.button_frame.grid_columnconfigure(0, weight=1)
+        self.button_frame.grid_columnconfigure(1, weight=1)
+
+        # Configure grid layout
+        self.plotwindow.grid_rowconfigure(0, weight=1)
+        self.plotwindow.grid_rowconfigure(1, weight=0)
+        self.plotwindow.grid_rowconfigure(2, weight=0)
+        self.plotwindow.grid_columnconfigure(0, weight=1)
+
+    def show_previous(self):
+        if self.current_fig_index > 0:
+            self.current_fig_index -= 1
+            self.update_plot_and_toolbar()
+
+    def show_next(self):
+        if self.current_fig_index < len(self.figures) - 1:
+            self.current_fig_index += 1
+            self.update_plot_and_toolbar()
+
+    def update_plot_and_toolbar(self):
+        # Clear the current plot panel
+        self.plot_panel.get_tk_widget().grid_forget()
+
+        # Update the plot panel with the new figure
+        self.plot_panel = FigureCanvasTkAgg(
+            self.figures[self.current_fig_index], master=self.plotwindow
+        )
+        self.plot_panel.get_tk_widget().grid(row=0, column=0, sticky="nsew")
+        self.plot_panel.draw()
+
+        # Destroy toolbar and create a new one
+        # (This has to be done, otherwise the toolbar won't function for a new plot)
+        self.toolbar.destroy()
+        self.toolbar = NavigationToolbar2Tk(self.plot_panel, self.toolbar_frame)
+        self.toolbar.update()
+
+        # Update title
+        self.plotwindow.title(
+            f"AutoGaitA Plot Panel {self.current_fig_index+1}/{len(self.figures)}"
+        )
 
 
 # %% what happens if we just hit run

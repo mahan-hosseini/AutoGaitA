@@ -9,10 +9,17 @@ import numpy as np
 import math
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import tkinter as tk
+import customtkinter as ctk
 import seaborn as sns
 import IPython
 
 # %% constants
+matplotlib.use("agg")
+# Agg is a non-interactive backend for plotting that can only write to files
+# this is used to generate and save the plot figures
+# later a tkinter backend (FigureCanvasTkAgg) is used for the plot panel
 plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
 DIRECTION_DLC_THRESHOLD = 0.95  # DLC confidence used for direction-detection
 TIME_COL = "Time"
@@ -38,7 +45,10 @@ ORIGINAL_XLS_FILENAME = " - Original Stepcycles"  # filenames of sheet exports
 NORMALISED_XLS_FILENAME = " - Normalised Stepcycles"
 AVERAGE_XLS_FILENAME = " - Average Stepcycle"
 STD_XLS_FILENAME = " - Standard Devs. Stepcycle"
-SC_LAT_LEGEND_FONTSIZE = 7
+SC_LAT_LEGEND_FONTSIZE = 8
+# PLOT GUI COLORS
+FG_COLOR = "#789b73"  # grey green
+HOVER_COLOR = "#287c37"  # darkish green
 
 
 # %% main program
@@ -55,6 +65,16 @@ def dlc(info, folderinfo, cfg):
     4) step cycle normalisation, dataframe creation & XLS-exportation
     5) plots
     """
+    # .............. initiate plot panel class and build loading screen ................
+    # create class instance independently of "dont_show_plots" to not break the code
+    plot_panel_instance = PlotPanel()
+
+    if cfg["dont_show_plots"] is True:
+        pass  # going on without building the loading screen
+
+    elif cfg["dont_show_plots"] is False:  # -> show plot panel
+        # build loading screen
+        plot_panel_instance.build_plot_panel_loading_screen()
 
     # ................................  preparation  ...................................
     data = some_prep(info, folderinfo, cfg)
@@ -65,13 +85,15 @@ def dlc(info, folderinfo, cfg):
     all_cycles = extract_stepcycles(data, info, folderinfo, cfg)
     if not all_cycles:
         handle_issues("scs_invalid", info)
+        if cfg["dont_show_plots"] is False:  # otherwise stuck at loading
+            plot_panel_instance.destroy_plot_panel()
         return
 
     # .........  main analysis: sc-lvl y-norm, features, df-creation & export ..........
     results = analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg)
 
     # ................................  plots  .........................................
-    plot_results(info, results, folderinfo, cfg)
+    plot_results(info, results, folderinfo, cfg, plot_panel_instance)
 
     # ............................  print finish  ......................................
     print_finish(info, cfg)
@@ -95,7 +117,7 @@ def some_prep(info, folderinfo, cfg):
     normalise_height_at_SC_level = cfg["normalise_height_at_SC_level"]
     invert_y_axis = cfg["invert_y_axis"]
     flip_gait_direction = cfg["flip_gait_direction"]
-    export_average_x = cfg["export_average_x"]
+    analyse_average_x = cfg["analyse_average_x"]
 
     # .............................  move data  ........................................
     # => see if we can delete a previous runs results folder if existant. if not, it's a
@@ -246,7 +268,7 @@ def some_prep(info, folderinfo, cfg):
         "sampling_rate": sampling_rate,
         "convert_to_mm": convert_to_mm,
         "normalise_height_at_SC_level": normalise_height_at_SC_level,
-        "export_average_x": export_average_x,
+        "analyse_average_x": analyse_average_x,
         "hind_joints": hind_joints,
         "fore_joints": fore_joints,
         "angles": angles,
@@ -315,14 +337,9 @@ def some_prep(info, folderinfo, cfg):
         for joint in list(set(fore_joints + beam_fore_jointadd)):
             data[joint + "y"] = data[joint + "y"] - data[beam_col_right + "y"]
         data.drop(columns=list(beamdf.columns), inplace=True)  # beam not needed anymore
-    # add Time and round based on sampling rate
+    # add Time
     data[TIME_COL] = data.index * (1 / sampling_rate)
-    # if sampling_rate <= 100:
-    #     data[TIME_COL] = round(data[TIME_COL], 2)
-    # elif 100 < sampling_rate <= 1000:
-    #     data[TIME_COL] = round(data[TIME_COL], 3)
-    # else:
-    #     data[TIME_COL] = round(data[TIME_COL], 4)
+
     # reorder the columns we added
     cols = [TIME_COL, "Flipped"]
     data = data[cols + [c for c in data.columns if c not in cols]]
@@ -481,14 +498,6 @@ def check_and_expand_cfg(data, cfg, info):
             write_issues_to_textfile(beam_col_error_message, info)
             print(beam_col_error_message)
             return
-
-    # dont show plots
-    # !!! If users should complain that they dont get figures but they should, it might
-    #     be because these lines wrongly determine user to be in non-interactive mode
-    #     while they are not!
-    if not hasattr(sys, "ps1") and not sys.flags.interactive:
-        cfg["dont_show_plots"] = True
-        matplotlib.use("agg")
 
     # never normalise @ SC level if user subtracted a beam
     if cfg["subtract_beam"]:
@@ -849,16 +858,7 @@ def extract_stepcycles(data, info, folderinfo, cfg):
         # extract the SC times
         start_in_s = float(SCdf.iloc[info_row, start_col].values[0])
         end_in_s = float(SCdf.iloc[info_row, end_col].values[0])
-        # if sampling_rate <= 100:
-        #     float_precision = 2  # how many decimals we round to
-        # elif 100 < sampling_rate <= 1000:
-        #     float_precision = 3
-        # else:
-        #     float_precision = 4
-        # start_in_s = round(start_in_s, float_precision)
-        # end_in_s = round(end_in_s, float_precision)
 
-        ##########avoid rounding with closest function
         try:
             all_cycles[s][0] = int(start_in_s*sampling_rate)
             all_cycles[s][1] = int(end_in_s*sampling_rate)
@@ -1065,7 +1065,7 @@ def analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg):
     name = info["name"]
     results_dir = info["results_dir"]
     save_to_xls = cfg["save_to_xls"]
-    export_average_x = cfg["export_average_x"]
+    analyse_average_x = cfg["analyse_average_x"]
     bin_num = cfg["bin_num"]
     # do everything on a copy of the data df
     data_copy = data.copy()
@@ -1111,7 +1111,7 @@ def analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg):
             )
     # compute average & std data
     average_data, std_data = compute_average_and_std_data(
-        name, normalised_steps_data, bin_num, export_average_x
+        name, normalised_steps_data, bin_num, analyse_average_x
     )
 
     # save to results dict
@@ -1322,7 +1322,8 @@ def define_bins(triallength, bin_num):
 
 
 def compute_average_and_std_data(
-    name, normalised_steps_data, bin_num, export_average_x):
+    name, normalised_steps_data, bin_num, analyse_average_x
+):
     """Export XLS tables that store all averages & std of y-coords & angles"""
     # initialise col of % of SC over time for plotting first
     percentages = [int(((s + 1) / bin_num) * 100) for s in range(bin_num)]
@@ -1334,7 +1335,7 @@ def compute_average_and_std_data(
     )
     sc_num = len(np.where(normalised_steps_data.index == 0)[0])
     for c, col in enumerate(normalised_steps_data.columns):
-        if export_average_x:
+        if analyse_average_x:
             condition = (
                 (not col.endswith("likelihood"))
                 & (col != TIME_COL)
@@ -1405,7 +1406,7 @@ def add_step_separators(dataframe, nanvector, numvector):
 #    would be coded as commented out in plot_joint_y_by_x
 
 
-def plot_results(info, results, folderinfo, cfg):
+def plot_results(info, results, folderinfo, cfg, plot_panel_instance):
     """Plot results - y coords by x coords & average angles over SC %"""
     # unpack
     fore_joints = cfg["fore_joints"]
@@ -1415,6 +1416,7 @@ def plot_results(info, results, folderinfo, cfg):
     std_data = results["std_data"]
     x_acceleration = cfg["x_acceleration"]
     angular_acceleration = cfg["angular_acceleration"]
+    analyse_average_x = cfg["analyse_average_x"]
     dont_show_plots = cfg["dont_show_plots"]
     if dont_show_plots:
         plt.switch_backend("Agg")
@@ -1424,41 +1426,79 @@ def plot_results(info, results, folderinfo, cfg):
     cfg["sc_num"] = len(sc_idxs)  # add number of scs for plotting SE if wanted
 
     # .........................1 - y coords by x coords.................................
-    plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg)
+    plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
 
-    # ...............................2 - angles by time.................................
+    # .....................2 - x coords by time (optional!).............................
+    if analyse_average_x:
+        plot_x_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
+
+    # ...............................3 - angles by time.................................
     if angles["name"]:
-        plot_angles_by_time(all_steps_data, sc_idxs, info, cfg)
+        plot_angles_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
+    # regularly closing figures to save memory
+    # => no problem to do this since we pass figure-vars to save-functions and PlotPanel
+    plt.close("all")
 
-    # ..........................3 - hindlimb stick diagram..............................
-    plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg)
+    # ..........................4 - hindlimb stick diagram..............................
+    plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance)
 
-    # ...........................4 - forelimb stick diagram.............................
+    # ...........................5 - forelimb stick diagram.............................
     if fore_joints:
-        plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg)
+        plot_forelimb_stickdiagram(
+            all_steps_data, sc_idxs, info, cfg, plot_panel_instance
+        )
 
-    # .....................5 - average joints' y over SC percentage.....................
-    plot_joint_y_by_average_SC(average_data, std_data, info, cfg)
+    # .....................6 - average joints' y over SC percentage.....................
+    plot_joint_y_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance)
 
-    # ........................6 - average angles over SC percentage.....................
+    # ...............7 - average joints' x over SC percentage (optional!)...............
+    if analyse_average_x:
+        plot_joint_x_by_average_SC(
+            average_data, std_data, info, cfg, plot_panel_instance
+        )
+    plt.close("all")
+
+    # ........................8 - average angles over SC percentage.....................
     if angles["name"]:
-        plot_angles_by_average_SC(average_data, std_data, info, cfg)
+        plot_angles_by_average_SC(
+            average_data, std_data, info, cfg, plot_panel_instance
+        )
 
-    # .................7 - average x velocities over SC percentage......................
-    plot_x_velocities_by_average_SC(average_data, std_data, info, cfg)
+    # .................9 - average x velocities over SC percentage......................
+    plot_x_velocities_by_average_SC(
+        average_data, std_data, info, cfg, plot_panel_instance
+    )
 
-    # ..............8 - average angular velocities over SC percentage...................
+    # .............10 - average angular velocities over SC percentage...................
     if angles["name"]:
-        plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg)
+        plot_angular_velocities_by_average_SC(
+            average_data, std_data, info, cfg, plot_panel_instance
+        )
 
-    # ............optional - 9 - average x acceleration over SC percentage..............
+    # ............optional - 11 - average x acceleration over SC percentage.............
     if x_acceleration:
-        plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg)
+        plot_x_acceleration_by_average_SC(
+            average_data, std_data, info, cfg, plot_panel_instance
+        )
 
-    # .........optional - 10 - average angular acceleration over SC percentage..........
+    # .........optional - 12 - average angular acceleration over SC percentage..........
     if angles["name"]:
         if angular_acceleration:
-            plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg)
+            plot_angular_acceleration_by_average_SC(
+                average_data, std_data, info, cfg, plot_panel_instance
+            )
+    plt.close("all")
+
+    # ........................optional - 13 - build plot panel..........................
+    if dont_show_plots is True:
+        pass  # going on without building the plot window
+    elif dont_show_plots is False:  # -> show plot panel
+        # Destroy loading screen and build plot panel with all figures
+        plot_panel_instance.destroy_plot_panel_loading_screen()
+        plot_panel_instance.build_plot_panel()
+
+     #...................I added this one 11 - joint x over SC percentage ..............
+    plot_joint_x_by_average_SC(average_data, std_data, info, cfg)
 
      #...................I added this one 11 - joint x over SC percentage ..............
     plot_joint_x_by_average_SC(average_data, std_data, info, cfg)
@@ -1507,7 +1547,7 @@ def extract_sc_idxs(all_steps_data):
     return sc_idxs
 
 
-def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
+def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
     """1 - Plot joints' y coordinates as a function of their x for each SC"""
 
     # unpack
@@ -1534,7 +1574,7 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
         ax[j].set_prop_cycle(  # New color palette approach
             plt.cycler("color", sns.color_palette(color_palette, sc_num))
         )
-        ax[j].set_title(name + " - " + joint)
+        ax[j].set_title(name + " - " + joint + "Y")
         x_col_idx = all_steps_data.columns.get_loc(joint + "x")
         y_col_idx = all_steps_data.columns.get_loc(joint + "y")
         time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
@@ -1545,8 +1585,6 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
                 all_steps_data, sc_idxs[s], sampling_rate, time_col_idx
             )
             ax[j].plot(this_x, this_y, label=this_label)
-        ax[j].set_xlabel("x (pixel)")  # will be overwritten if we convert
-        ax[j].set_ylabel("y (pixel)")
         # legend adjustments
         if legend_outside is True:
             ax[j].legend(
@@ -1556,16 +1594,86 @@ def plot_joint_y_by_x(all_steps_data, sc_idxs, info, cfg):
             )
         elif legend_outside is False:
             ax[j].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+        # labels & conversion
+        ax[j].set_xlabel("x")  # will be used by conversion func if we convert
+        ax[j].set_ylabel("y")
         if convert_to_mm:
             tickconvert_mm_to_cm(ax[j], "both")
-        figure_file_string = " - " + joint + "y by x coordinates"
+        else:
+            ax[j].set_xlabel("x (pixels)")
+            ax[j].set_ylabel("y (pixels)")
+        figure_file_string = " - " + joint + "Y by X coordinates"
         save_figures(f[j], results_dir, name, figure_file_string)
         if dont_show_plots:
             plt.close(f[j])
 
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f[j])
 
-def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
-    """2 - Plot joints' angles as a function of time for each SC"""
+
+def plot_x_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
+    """2 - Plot joints' x coordinates as a function of time for each SC (optional)"""
+
+    # unpack
+    name = info["name"]
+    results_dir = info["results_dir"]
+    dont_show_plots = cfg["dont_show_plots"]
+    convert_to_mm = cfg["convert_to_mm"]
+    plot_joints = cfg["plot_joints"]
+    sampling_rate = cfg["sampling_rate"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
+
+    # some prep
+    sc_num = len(sc_idxs)
+    f = [[] for _ in range(len(plot_joints))]
+    ax = [[] for _ in range(len(plot_joints))]
+
+    # plot
+    for j, joint in enumerate(plot_joints):  # joint loop (figures)
+        f[j], ax[j] = plt.subplots(1, 1)
+        ax[j].set_prop_cycle(
+            plt.cycler("color", sns.color_palette(color_palette, sc_num))
+        )
+        ax[j].set_title(name + " - " + joint + "X")
+        time_col_idx = all_steps_data.columns.get_loc(TIME_COL)
+        x_col_idx = all_steps_data.columns.get_loc(joint + "x")
+        for s in range(sc_num):
+            this_x = all_steps_data.iloc[sc_idxs[s], time_col_idx]
+            this_y = all_steps_data.iloc[sc_idxs[s], x_col_idx]
+            this_label = generate_sc_latency_label(
+                all_steps_data, sc_idxs[s], sampling_rate, time_col_idx
+            )
+            ax[j].plot(this_x, this_y, label=this_label)
+        # legend adjustments
+        if legend_outside is True:
+            ax[j].legend(
+                fontsize=SC_LAT_LEGEND_FONTSIZE,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+            )
+        elif legend_outside is False:
+            ax[j].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+        # labels & conversion
+        ax[j].set_xlabel("Time (s)")  # will be used by conversion func if we convert
+        ax[j].set_ylabel("x")
+        if convert_to_mm:
+            tickconvert_mm_to_cm(ax[j], "y")
+        else:
+            ax[j].set_ylabel("x (pixels)")
+        figure_file_string = " - " + joint + "X coordinate by Time"
+        save_figures(f[j], results_dir, name, figure_file_string)
+        if dont_show_plots:
+            plt.close(f[j])
+
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f[j])
+
+
+def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
+    """3 - Plot joints' angles as a function of time for each SC"""
 
     # unpack
     name = info["name"]
@@ -1587,7 +1695,7 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
         ax[a].set_prop_cycle(
             plt.cycler("color", sns.color_palette(color_palette, sc_num))
         )
-        ax[a].set_title(name + " - " + angle)
+        ax[a].set_title(name + " - " + angle + "Angle")
         ax[a].set_ylabel("Angle")
         ax[a].set_xlabel("Time (s)")
         x_col_idx = all_steps_data.columns.get_loc(TIME_COL)
@@ -1614,9 +1722,13 @@ def plot_angles_by_time(all_steps_data, sc_idxs, info, cfg):
         if dont_show_plots:
             plt.close(f[a])
 
+        # add figure to plot panel figures list
+        if dont_show_plots is False:  # -> show plot panel
+            plot_panel_instance.figures.append(f[a])
 
-def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
-    """3 - Plot a stick diagram of the hindlimb"""
+
+def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
+    """4 - Plot a stick diagram of the hindlimb"""
 
     # unpack
     name = info["name"]
@@ -1655,10 +1767,6 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
             else:
                 ax.plot(this_xs, this_ys, color=this_color)
     ax.set_title(name + " - Hindlimb Stick Diagram")
-    ax.set_xlabel("x (pixel)")
-    ax.set_ylabel("y (pixel)")
-    if convert_to_mm:
-        tickconvert_mm_to_cm(ax, "both")
     # legend adjustments
     if legend_outside is True:
         ax.legend(
@@ -1666,14 +1774,26 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
         )
     elif legend_outside is False:
         ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+    # labels & conversion
+    ax.set_xlabel("x")  # will be used by conversion func if we convert
+    ax.set_ylabel("y")
+    if convert_to_mm:
+        tickconvert_mm_to_cm(ax, "both")
+    else:
+        ax.set_xlabel("x (pixels)")
+        ax.set_ylabel("y (pixels)")
     figure_file_string = " - Hindlimb Stick Diagram"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
-def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
-    """4 - Plot a stick diagram of the forelimb (for hindlimb stepcycles)"""
+
+def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_instance):
+    """5 - Plot a stick diagram of the forelimb (for hindlimb stepcycles)"""
 
     # unpack
     name = info["name"]
@@ -1711,8 +1831,6 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
             else:
                 ax.plot(this_xs, this_ys, color=this_color)
     ax.set_title(name + " - Forelimb Stick Diagram")
-    ax.set_xlabel("x (pixel)")
-    ax.set_ylabel("y (pixel)")
     if convert_to_mm:
         tickconvert_mm_to_cm(ax, "both")
     # legend adjustments
@@ -1722,14 +1840,26 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg):
         )
     elif legend_outside is False:
         ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
+    # labels & conversion
+    ax.set_xlabel("x")  # will be used by conversion func if we convert
+    ax.set_ylabel("y")
+    if convert_to_mm:
+        tickconvert_mm_to_cm(ax, "both")
+    else:
+        ax.set_xlabel("x (pixels)")
+        ax.set_ylabel("y (pixels)")
     figure_file_string = " - Forelimb Stick Diagram"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
-def plot_joint_y_by_average_SC(average_data, std_data, info, cfg):
-    """5 - Plot joints' y as a function of average SC's percentage"""
+
+def plot_joint_y_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance):
+    """6 - Plot joints' y as a function of average SC's percentage"""
 
     # unpack
     name = info["name"]
@@ -1764,18 +1894,78 @@ def plot_joint_y_by_average_SC(average_data, std_data, info, cfg):
     elif legend_outside is False:
         ax.legend()
     ax.set_title(name + " - Joint Y over average step cycle")
+    # labels & conversion
     ax.set_xlabel("Percentage")
-    ax.set_ylabel("y (pixel)")
+    ax.set_ylabel("y")  # used by conversion func
     if convert_to_mm:
         tickconvert_mm_to_cm(ax, "y")
-    figure_file_string = " - Joint y-coord.s over average step cycle"
+    else:
+        ax.set_ylabel("y (pixels)")
+    figure_file_string = " - Joint Y-coord.s over average step cycle"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
 
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
-def plot_angles_by_average_SC(average_data, std_data, info, cfg):
-    """6 - Plot Angles as a function of average SC's percentage"""
+
+def plot_joint_x_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance):
+    """7 - Plot joints' x as a function of average SC's percentage"""
+
+    # unpack
+    name = info["name"]
+    results_dir = info["results_dir"]
+    dont_show_plots = cfg["dont_show_plots"]
+    convert_to_mm = cfg["convert_to_mm"]
+    bin_num = cfg["bin_num"]
+    plot_SE = cfg["plot_SE"]
+    sc_num = cfg["sc_num"]
+    hind_joints = cfg["hind_joints"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
+
+    # plot
+    f, ax = plt.subplots(1, 1)
+    ax.set_prop_cycle(
+        plt.cycler("color", sns.color_palette(color_palette, len(hind_joints)))
+    )
+    x = np.linspace(0, 100, bin_num)
+    for joint in hind_joints:  # joint loop (lines)
+        x_col_idx = average_data.columns.get_loc(joint + "x")
+        this_y = average_data.iloc[:, x_col_idx]  # average & std_data share colnames
+        if plot_SE:
+            this_std = std_data.iloc[:, x_col_idx] / np.sqrt(sc_num)
+        else:
+            this_std = std_data.iloc[:, x_col_idx]
+        ax.plot(x, this_y, label=joint)
+        ax.fill_between(x, this_y - this_std, this_y + this_std, alpha=0.2)
+    # legend adjustments
+    if legend_outside is True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif legend_outside is False:
+        ax.legend()
+    ax.set_title(name + " - Joint X over average step cycle")
+    # labels & conversion
+    ax.set_xlabel("Percentage")
+    ax.set_ylabel("x")  # used by conversion func
+    if convert_to_mm:
+        tickconvert_mm_to_cm(ax, "y")
+    else:
+        ax.set_ylabel("x (pixels)")
+    figure_file_string = " - Joint X-coord.s over average step cycle"
+    save_figures(f, results_dir, name, figure_file_string)
+    if dont_show_plots:
+        plt.close(f)
+
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
+
+
+def plot_angles_by_average_SC(average_data, std_data, info, cfg, plot_panel_instance):
+    """8 - Plot Angles as a function of average SC's percentage"""
 
     # unpack
     name = info["name"]
@@ -1816,9 +2006,15 @@ def plot_angles_by_average_SC(average_data, std_data, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
-def plot_x_velocities_by_average_SC(average_data, std_data, info, cfg):
-    """7 - Plot x velocities as a function of average SC's percentage"""
+
+def plot_x_velocities_by_average_SC(
+    average_data, std_data, info, cfg, plot_panel_instance
+):
+    """9 - Plot x velocities as a function of average SC's percentage"""
 
     # unpack
     name = info["name"]
@@ -1868,9 +2064,15 @@ def plot_x_velocities_by_average_SC(average_data, std_data, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
-def plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg):
-    """8 - Plot angular velocities as a function of average SC's percentage"""
+
+def plot_angular_velocities_by_average_SC(
+    average_data, std_data, info, cfg, plot_panel_instance
+):
+    """10 - Plot angular velocities as a function of average SC's percentage"""
 
     # unpack
     name = info["name"]
@@ -1912,9 +2114,15 @@ def plot_angular_velocities_by_average_SC(average_data, std_data, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
-def plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg):
-    """9 - (optional) Plot x acceleration as a function of average SC's percentage"""
+
+def plot_x_acceleration_by_average_SC(
+    average_data, std_data, info, cfg, plot_panel_instance
+):
+    """11 - (optional) Plot x acceleration as a function of average SC's percentage"""
 
     # unpack
     name = info["name"]
@@ -1964,9 +2172,15 @@ def plot_x_acceleration_by_average_SC(average_data, std_data, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
-def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
-    """10 - (optional) Plot angular acceleration as a function of average SC's
+
+def plot_angular_acceleration_by_average_SC(
+    average_data, std_data, info, cfg, plot_panel_instance
+):
+    """12 - (optional) Plot angular acceleration as a function of average SC's
     percentage
     """
 
@@ -2011,6 +2225,10 @@ def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
+
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 def plot_joint_x_by_average_SC(average_data, std_data, info, cfg):
     """5 - Plot joints' x as a function of average SC's percentage"""
@@ -2075,20 +2293,22 @@ def save_figures(figure, results_dir, name, figure_file_string):
 
 def tickconvert_mm_to_cm(axis, whichlabel):
     """Convert axis-ticks from mm (of data) to cm"""
-    if whichlabel == "both":
+    if (whichlabel == "both") | (whichlabel == "x"):
         x_ticks = axis.get_xticks()
         x_ticklabels = []
         for t in x_ticks:
             x_ticklabels.append(str(round(t / 10, 2)))
         axis.set_xticks(x_ticks, labels=x_ticklabels)
-        axis.set_xlabel("x (cm)")
+        old_xlabel = axis.get_xlabel()
+        axis.set_xlabel(old_xlabel + " (cm)")
     if (whichlabel == "both") | (whichlabel == "y"):
         y_ticks = axis.get_yticks()
         y_ticklabels = []
         for t in y_ticks:
             y_ticklabels.append(str(round(t / 10, 2)))
         axis.set_yticks(y_ticks, labels=y_ticklabels)
-        axis.set_ylabel("y (cm)")
+        old_ylabel = axis.get_ylabel()
+        axis.set_ylabel(old_ylabel + " (cm)")
 
 
 def generate_sc_latency_label(all_steps_data, this_sc_idx, sampling_rate, time_col_idx):
@@ -2115,17 +2335,155 @@ def generate_sc_latency_label(all_steps_data, this_sc_idx, sampling_rate, time_c
     return this_label
 
 
+class PlotPanel:
+    def __init__(self):
+        self.figures = []
+        self.current_fig_index = 0
+
+    # .........................  loading screen  ................................
+    def build_plot_panel_loading_screen(self):
+        """Builds a loading screen that is shown while plots are generated"""
+        # Build window
+        self.loading_screen = ctk.CTkToplevel()
+        self.loading_screen.title("Loading...")
+        self.loading_screen.geometry("300x300")
+        self.loading_label_strings = [
+            "Plots are generated, please wait.",
+            "Plots are generated, please wait..",
+            "Plots are generated, please wait...",
+        ]
+        self.loading_label = ctk.CTkLabel(
+            self.loading_screen, text=self.loading_label_strings[0]
+        )
+        self.loading_label.pack(pady=130, padx=40, anchor="w")
+
+        # Animate the text
+        self.animate(counter=1)
+
+    # Cycle through loading labels to animate the loading screen
+    def animate(self, counter):
+        self.loading_label.configure(text=self.loading_label_strings[counter])
+        self.loading_screen.after(
+            500, self.animate, (counter + 1) % len(self.loading_label_strings)
+        )
+
+    def destroy_plot_panel_loading_screen(self):
+        self.loading_screen.destroy()
+
+    # .........................  plot panel   ................................
+    def build_plot_panel(self):
+        """Creates the window/"panel" in which the plots are shown"""
+        # Set up of the plotpanel
+        ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
+        ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
+        self.plotwindow = ctk.CTkToplevel()
+        self.plotwindow.title(
+            f"AutoGaitA Figure {self.current_fig_index+1}/{len(self.figures)}"
+        )
+
+        # Set size to 50% of screen
+        screen_width = self.plotwindow.winfo_screenwidth()
+        window_width = int(screen_width * 0.5)
+        # 0.75 to gain a ration of 1.333 (that of matplotlib figures) and 1.05 for toolbar + buttons
+        window_height = window_width * 0.75 * 1.05
+        self.plotwindow.geometry(f"{window_width}x{window_height}")
+
+        # Adjust figures for the plot panel
+        for fig in self.figures:
+            # dpi adjusted to increase visibilty/readability
+            fig.set_dpi(100)
+            # constrained layout to adjust margins within the figure
+            # => note: in case there are a lot of steps in one run (-> the legend is
+            #          super long) the figure won't be displayed properly.
+            fig.set_constrained_layout(True)
+
+        # Initialize the plot panel with the first figure
+        self.plot_panel = FigureCanvasTkAgg(
+            self.figures[self.current_fig_index], master=self.plotwindow
+        )  # index used for buttons
+        self.plot_panel.get_tk_widget().grid(
+            row=0, column=0, padx=10, pady=10, sticky="nsew"
+        )
+
+        # Create toolbar frame and place it in the middle row
+        self.toolbar_frame = tk.Frame(self.plotwindow)
+        self.toolbar_frame.grid(row=1, column=0, sticky="ew")
+
+        self.toolbar = NavigationToolbar2Tk(self.plot_panel, self.toolbar_frame)
+        self.toolbar.update()
+
+        # Create navigation buttons frame
+        self.button_frame = tk.Frame(self.plotwindow)
+        self.button_frame.grid(row=2, column=0, sticky="ew")
+
+        self.prev_button = ctk.CTkButton(
+            self.button_frame,
+            text="<< Previous",
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+            command=self.show_previous,
+        )
+        self.next_button = ctk.CTkButton(
+            self.button_frame,
+            text="Next >>",
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+            command=self.show_next,
+        )
+        self.prev_button.grid(row=0, column=0, sticky="ew")
+        self.next_button.grid(row=0, column=1, sticky="ew")
+
+        self.button_frame.grid_columnconfigure(0, weight=1)
+        self.button_frame.grid_columnconfigure(1, weight=1)
+
+        # Configure grid layout
+        self.plotwindow.grid_rowconfigure(0, weight=1)
+        self.plotwindow.grid_rowconfigure(1, weight=0)
+        self.plotwindow.grid_rowconfigure(2, weight=0)
+        self.plotwindow.grid_columnconfigure(0, weight=1)
+
+    def show_previous(self):
+        if self.current_fig_index > 0:
+            self.current_fig_index -= 1
+            self.update_plot_and_toolbar()
+
+    def show_next(self):
+        if self.current_fig_index < len(self.figures) - 1:
+            self.current_fig_index += 1
+            self.update_plot_and_toolbar()
+
+    def update_plot_and_toolbar(self):
+        # Clear the current plot panel
+        self.plot_panel.get_tk_widget().grid_forget()
+
+        # Update the plot panel with the new figure
+        self.plot_panel = FigureCanvasTkAgg(
+            self.figures[self.current_fig_index], master=self.plotwindow
+        )
+        self.plot_panel.get_tk_widget().grid(row=0, column=0, sticky="nsew")
+        self.plot_panel.draw()
+
+        # Destroy toolbar and create a new one
+        # (This has to be done, otherwise the toolbar won't function for a new plot)
+        self.toolbar.destroy()
+        self.toolbar = NavigationToolbar2Tk(self.plot_panel, self.toolbar_frame)
+        self.toolbar.update()
+
+        # Update title
+        self.plotwindow.title(
+            f"AutoGaitA Plot Panel {self.current_fig_index+1}/{len(self.figures)}"
+        )
+
+    def destroy_plot_panel(self):
+        # Needed if no SCs after checks
+        self.loading_screen.destroy()
+
+
 # %% local functions 5 - print finish
 
 
 def print_finish(info, cfg):
     """Print that we finished this program"""
-    # unpack
-    dont_show_plots = cfg["dont_show_plots"]
-
-    if dont_show_plots:
-        plt.pause(1)  # so we ensure that plots are plotted to python before print
-
     print("\n***************************************************")
     print("* GAITA FINISHED - RESULTS WERE SAVED HERE:       *")
     print("* " + info["results_dir"] + " *")

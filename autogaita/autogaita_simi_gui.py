@@ -28,7 +28,7 @@ TK_BOOL_VARS = [
     "plot_SE",
     "normalise_height_at_SC_level",
     "postname_flag",
-    "export_average_y",
+    "analyse_average_y",
     "legend_outside",
 ]
 TK_STR_VARS = [
@@ -282,7 +282,7 @@ def simi_gui():
 
     # .............................  left section  .....................................
     # plot plots to python
-    showplots_string = "Don't show plots in Python (save only)"
+    showplots_string = "Don't show plots in GUI (save only)"
     showplots_checkbox = ctk.CTkCheckBox(
         root,
         text=showplots_string,
@@ -381,19 +381,17 @@ def simi_gui():
     )
     height_normalisation_box.grid(row=14, column=1)
     # export average y coordinates
-    export_average_y_string = (
-        "Export y-coordinate averages (include in Average Stepcycle.xlsx)"
-    )
-    export_average_y_box = ctk.CTkCheckBox(
+    analyse_average_y_string = "Analyse y-coordinate averages"
+    analyse_average_y_box = ctk.CTkCheckBox(
         root,
-        text=export_average_y_string,
-        variable=cfg["export_average_y"],
+        text=analyse_average_y_string,
+        variable=cfg["analyse_average_y"],
         onvalue=True,
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
     )
-    export_average_y_box.grid(row=15, column=1)
+    analyse_average_y_box.grid(row=15, column=1)
     # results dir
     results_dir_string = (
         "Save Results subfolders to directory location below instead of to data's"

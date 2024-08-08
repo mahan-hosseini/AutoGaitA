@@ -11,8 +11,8 @@ def dlc_singlerun():
     # folderinfo
     folderinfo = {}
     folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/"
-    folderinfo["results_dir"] = ""
     folderinfo["sctable_filename"] = "25mm.xlsx"
+    folderinfo["results_dir"] = ""
     folderinfo["data_string"] = "SIMINewOct"
     folderinfo["beam_string"] = "BeamTraining"
     folderinfo["premouse_string"] = "Mouse"
@@ -39,7 +39,7 @@ def dlc_singlerun():
     cfg["legend_outside"] = True
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
-    cfg["export_average_x"] = True
+    cfg["analyse_average_x"] = True
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",

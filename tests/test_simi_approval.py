@@ -44,7 +44,7 @@ def extract_folderinfo():
 def extract_cfg():
     cfg = {}
     cfg["sampling_rate"] = 100
-    cfg["dont_show_plots"] = False
+    cfg["dont_show_plots"] = True
     cfg["y_acceleration"] = True
     cfg["angular_acceleration"] = True
     cfg["bin_num"] = 25
@@ -53,7 +53,7 @@ def extract_cfg():
     cfg["plot_joint_number"] = 7
     cfg["legend_outside"] = True
     cfg["color_palette"] = "viridis"
-    cfg["export_average_y"] = False
+    cfg["analyse_average_y"] = False
     cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis "]
     cfg["angles"] = {
         "name": ["Ankle", "Knee", "Hip"],
