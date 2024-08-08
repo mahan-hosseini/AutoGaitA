@@ -157,16 +157,18 @@ def group(folderinfo, cfg):
 
         # ..................................  ANOVA  ...................................
         if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
-            for stats_var in cfg["stats_variables"]:
-                twoway_RMANOVA(
-                    stats_df,
-                    g_avg_dfs,
-                    g_std_dfs,
-                    stats_var,
-                    folderinfo,
-                    cfg,
-                    plot_panel_instance,
-                )
+            anova_sanity = anova_design_sanity_check(stats_df, folderinfo, cfg)
+            if anova_sanity:
+                for stats_var in cfg["stats_variables"]:
+                    twoway_RMANOVA(
+                        stats_df,
+                        g_avg_dfs,
+                        g_std_dfs,
+                        stats_var,
+                        folderinfo,
+                        cfg,
+                        plot_panel_instance,
+                    )
         plt.close("all")
 
     # ..................................  plots  .......................................
@@ -314,7 +316,7 @@ def extract_cfg_vars(folderinfo, cfg):
         # test that at least 1 folder has valid results for all groups
         if not valid_results_folders:
             no_valid_results_error = (
-                "\n***********\n! ERROR !\n***********\n"
+                "\n*********\n! ERROR !\n*********\n"
                 + "No valid results folder found for "
                 + group_names[g]
                 + "\nFix & re-run!"
@@ -330,7 +332,7 @@ def extract_cfg_vars(folderinfo, cfg):
             PCA_variable_num = len(cfg["PCA_variables"])
             PCA_variables_str = "\n".join(cfg["PCA_variables"])
             PCA_error_message = (
-                "\n***********\n! ERROR !\n***********\n"
+                "\n*********\n! ERROR !\n*********\n"
                 + "\nPCA Configuration invalid, number of input features cannot exceed "
                 + "number of principal components to compute!\n"
                 + str(PCA_variable_num)
@@ -490,7 +492,7 @@ def bin_num_error_helper_function(dfs, g, group_names, sc_breaks, results_dir, b
     """Handle this error in a separate function for readability"""
     id_col_idx = dfs[g].columns.get_loc(ID_COL)
     message = (
-        "\n***********\n! ERROR !\n***********\n"
+        "\n*********\n! ERROR !\n*********\n"
         + "\nSC Normalisation bin number mismatch for:"
         + "\nGroup: "
         + group_names[g]
@@ -514,7 +516,7 @@ def test_PCA_and_stats_variables(df, group_name, name, results_dir, cfg):
             ]
             missing_PCA_variables_str = "\n".join(missing_PCA_variables)
             PCA_variable_mismatch_message = (
-                "\n***********\n! ERROR !\n***********\n"
+                "\n*********\n! ERROR !\n*********\n"
                 + "\nNot all features you asked us to analyse WITH PCA were present in "
                 + "the dataset of:\n"
                 + group_name
@@ -534,7 +536,7 @@ def test_PCA_and_stats_variables(df, group_name, name, results_dir, cfg):
             ]
             missing_stats_variables_str = "\n".join(missing_stats_variables)
             stats_variable_mismatch_message = (
-                "\n***********\n! ERROR !\n***********\n"
+                "\n*********\n! ERROR !\n*********\n"
                 + "\nNot all features you asked us to analyse STATISTICALLY were "
                 + "present in the dataset of:\n"
                 + group_name
@@ -1548,6 +1550,76 @@ def extract_all_clusters(trueobs_results_df, contrast):
 # %% .................  local functions #7 - 2-way RM/Mixed-ANOVA  .....................
 
 
+# ...............................  sanity check . ......................................
+def anova_design_sanity_check(stats_df, folderinfo, cfg):
+    """Sanity check the anova_design input of the user based on stats_df's IDs"""
+
+    # unpack
+    anova_design = cfg["anova_design"]
+    results_dir = folderinfo["results_dir"]
+
+    # get IDs for each group to check if they are unique
+    group_IDs = stats_df.groupby("Group")["ID"].unique()
+    ID_list = []
+    for this_groups_IDs in group_IDs:
+        for ID in this_groups_IDs:
+            ID_list.append(ID)
+    ID_list = [str(IDs) for IDs in ID_list]
+    unique_ID_list = list(set(ID_list))
+
+    # Mixed ANOVA - no duplicate IDs across groups!
+    if anova_design == "Mixed ANOVA":
+        if len(ID_list) == len(unique_ID_list):  # check passed
+            return True
+        else:
+            mixed_anova_error_message = (
+                "\n*********\n! ERROR !\n*********\n"
+                + "\nANOVA design seems wrong - skipping ANOVA!"
+                + "\nMixed ANOVA requires unique IDs across groups & we found "
+                + "duplicates!"
+                + "\n\nIDs were:\n"
+                + str(group_IDs)
+            )
+            print(mixed_anova_error_message)
+            write_issues_to_textfile(mixed_anova_error_message, results_dir)
+            return False
+    # RM ANOVA - IDs in each group must be the same!
+    elif anova_design == "RM ANOVA":
+        if len(ID_list) != len(unique_ID_list):  # check passed
+            # Bonus - inform user about which IDs were valid (have data)
+            # ==> based on pingouin's approach of removing all IDs that do not have
+            #     data in all conditions (see https://pingouin-stats.org/build/
+            #     html/generated/pingouin.rm_anova.html under "Missing values...")
+            valid_IDs = []
+            group_number = len(group_IDs.index)
+            for ID in unique_ID_list:
+                ID_count = ID_list.count(ID)
+                if ID_count == group_number:
+                    valid_IDs.append(ID)
+            rm_anova_info_message = (
+                "\n********\n! INFO !\n********\n"
+                + "\nFollowing IDs with valid data in all conditions after first-level "
+                + "analyses will be included in RM ANOVA:\n\n"
+                + str(valid_IDs)
+            )
+            print(rm_anova_info_message)
+            write_issues_to_textfile(rm_anova_info_message, results_dir)
+            return True
+        else:
+            rm_anova_error_message = (
+                "\n*********\n! ERROR !\n*********\n"
+                + "\nANOVA design seems wrong - skipping ANOVA!"
+                + "\nRM ANOVA requires IDs to be present in all groups & we found "
+                + "only unique IDs!"
+                + "\n\nIDs were:\n"
+                + str(group_IDs)
+            )
+            print(rm_anova_error_message)
+            write_issues_to_textfile(rm_anova_error_message, results_dir)
+            return False
+
+
+# ...............................  main function  ......................................
 def twoway_RMANOVA(
     stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg, plot_panel_instance
 ):
@@ -1560,10 +1632,10 @@ def twoway_RMANOVA(
 
     # run the (fully) RM or Mixed ANOVA
     ANOVA_result = run_ANOVA(stats_df, stats_var, cfg)
+
     # check if sphericity is given to see if p vals have to be GG corrected
     # => even though this is done automatically for mixed anovas, you always get the GG
-    #    col in results of rm anovas so we have to test it ourselves and can not (as
-    #    done in an earlier version of gaita, have "if GG-col is there")
+    #    col in results of rm anovas so we have to test it ourselves
     sphericity_flag = sphericity(
         stats_df, dv=stats_var, within=SC_PERCENTAGE_COL, subject=ID_COL
     )[0]
@@ -1595,6 +1667,7 @@ def twoway_RMANOVA(
         )
 
 
+# .............................  multiple comparison test  .............................
 def multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg):
     """Perform multiple comparison test if the ANOVA's interaction was significant.
     Do a separate multcomp test for each SC % bin."""
@@ -1639,6 +1712,7 @@ def multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg):
     return multcomp_df
 
 
+# ..............................  main ANOVA  computation  .............................
 def run_ANOVA(stats_df, stats_var, cfg):
     """Run the RM-ANOVA using pingouin"""
 
