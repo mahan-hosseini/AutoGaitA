@@ -2245,7 +2245,7 @@ def tickconvert_mm_to_cm(axis, whichlabel):
         x_ticks = axis.get_xticks()
         x_ticklabels = []
         for t in x_ticks:
-            x_ticklabels.append(str(t / 10))
+            x_ticklabels.append(str(round(t / 10, 2)))
         axis.set_xticks(x_ticks, labels=x_ticklabels)
         old_xlabel = axis.get_xlabel()
         axis.set_xlabel(old_xlabel + " (cm)")
@@ -2253,17 +2253,31 @@ def tickconvert_mm_to_cm(axis, whichlabel):
         y_ticks = axis.get_yticks()
         y_ticklabels = []
         for t in y_ticks:
-            y_ticklabels.append(str(t / 10, 2))
+            y_ticklabels.append(str(round(t / 10, 2)))
         axis.set_yticks(y_ticks, labels=y_ticklabels)
         old_ylabel = axis.get_ylabel()
         axis.set_ylabel(old_ylabel + " (cm)")
 
 
 def generate_sc_latency_label(all_steps_data, this_sc_idx, sampling_rate, time_col_idx):
+    if sampling_rate <= 100:
+        float_precision = 2  # how many decimals we round to
+    else:
+        float_precision = 4
     this_label = (
-        str(all_steps_data.iloc[this_sc_idx[0], time_col_idx])
+        str(
+            round(
+                all_steps_data.iloc[this_sc_idx[0], time_col_idx],
+                float_precision,
+            )
+        )
         + "-"
-        + str(all_steps_data.iloc[this_sc_idx[-1], time_col_idx])
+        + str(
+            round(
+                all_steps_data.iloc[this_sc_idx[-1], time_col_idx],
+                float_precision,
+            )
+        )
         + "s"
     )
     return this_label
