@@ -336,14 +336,9 @@ def some_prep(info, folderinfo, cfg):
         for joint in list(set(fore_joints + beam_fore_jointadd)):
             data[joint + "y"] = data[joint + "y"] - data[beam_col_right + "y"]
         data.drop(columns=list(beamdf.columns), inplace=True)  # beam not needed anymore
-    # add Time and round based on sampling rate
+    # add Time
     data[TIME_COL] = data.index * (1 / sampling_rate)
-    if sampling_rate <= 100:
-        data[TIME_COL] = round(data[TIME_COL], 2)
-    elif 100 < sampling_rate <= 1000:
-        data[TIME_COL] = round(data[TIME_COL], 3)
-    else:
-        data[TIME_COL] = round(data[TIME_COL], 4)
+
     # reorder the columns we added
     cols = [TIME_COL, "Flipped"]
     data = data[cols + [c for c in data.columns if c not in cols]]
@@ -862,17 +857,10 @@ def extract_stepcycles(data, info, folderinfo, cfg):
         # extract the SC times
         start_in_s = float(SCdf.iloc[info_row, start_col].values[0])
         end_in_s = float(SCdf.iloc[info_row, end_col].values[0])
-        if sampling_rate <= 100:
-            float_precision = 2  # how many decimals we round to
-        elif 100 < sampling_rate <= 1000:
-            float_precision = 3
-        else:
-            float_precision = 4
-        start_in_s = round(start_in_s, float_precision)
-        end_in_s = round(end_in_s, float_precision)
+
         try:
-            all_cycles[s][0] = np.where(data[TIME_COL] == start_in_s)[0][0]
-            all_cycles[s][1] = np.where(data[TIME_COL] == end_in_s)[0][0]
+            all_cycles[s][0] = int(start_in_s*sampling_rate)
+            all_cycles[s][1] = int(end_in_s*sampling_rate)
         except IndexError:
             this_message = (
                 "\n***********\n! WARNING !\n***********\n"
