@@ -708,7 +708,7 @@ def avg_and_std(dfs, folderinfo, cfg):
         if tracking_software == "DLC":
             cols_to_exclude = [ID_COL, "Run", "Stepcycle", "Flipped", "Time"]
             for col in dfs[g].columns:
-                if (col.endswith("x")) | (col.endswith("likelihood")):
+                if (col.endswith("likelihood")):
                     cols_to_exclude.append(col)
         elif tracking_software == "Simi":
             cols_to_exclude = [ID_COL, "Leg", "Stepcycle", "Time"]
@@ -960,6 +960,7 @@ def create_PCA_df(avg_dfs, folderinfo, cfg):
         for b in range(bin_num):
             bin_in_percent = int(((1 + b) / bin_num) * 100)
             features.append(var + " " + str(bin_in_percent))
+
     # for each mouse, create a series to concat to PCA_df
     for g, group_name in enumerate(group_names):
         for ID in pd.unique(avg_dfs[g][ID_COL]):

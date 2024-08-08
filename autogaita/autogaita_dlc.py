@@ -10,6 +10,7 @@ import math
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
+import IPython
 
 # %% constants
 plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
@@ -316,12 +317,12 @@ def some_prep(info, folderinfo, cfg):
         data.drop(columns=list(beamdf.columns), inplace=True)  # beam not needed anymore
     # add Time and round based on sampling rate
     data[TIME_COL] = data.index * (1 / sampling_rate)
-    if sampling_rate <= 100:
-        data[TIME_COL] = round(data[TIME_COL], 2)
-    elif 100 < sampling_rate <= 1000:
-        data[TIME_COL] = round(data[TIME_COL], 3)
-    else:
-        data[TIME_COL] = round(data[TIME_COL], 4)
+    # if sampling_rate <= 100:
+    #     data[TIME_COL] = round(data[TIME_COL], 2)
+    # elif 100 < sampling_rate <= 1000:
+    #     data[TIME_COL] = round(data[TIME_COL], 3)
+    # else:
+    #     data[TIME_COL] = round(data[TIME_COL], 4)
     # reorder the columns we added
     cols = [TIME_COL, "Flipped"]
     data = data[cols + [c for c in data.columns if c not in cols]]
@@ -848,17 +849,19 @@ def extract_stepcycles(data, info, folderinfo, cfg):
         # extract the SC times
         start_in_s = float(SCdf.iloc[info_row, start_col].values[0])
         end_in_s = float(SCdf.iloc[info_row, end_col].values[0])
-        if sampling_rate <= 100:
-            float_precision = 2  # how many decimals we round to
-        elif 100 < sampling_rate <= 1000:
-            float_precision = 3
-        else:
-            float_precision = 4
-        start_in_s = round(start_in_s, float_precision)
-        end_in_s = round(end_in_s, float_precision)
+        # if sampling_rate <= 100:
+        #     float_precision = 2  # how many decimals we round to
+        # elif 100 < sampling_rate <= 1000:
+        #     float_precision = 3
+        # else:
+        #     float_precision = 4
+        # start_in_s = round(start_in_s, float_precision)
+        # end_in_s = round(end_in_s, float_precision)
+
+        ##########avoid rounding with closest function
         try:
-            all_cycles[s][0] = np.where(data[TIME_COL] == start_in_s)[0][0]
-            all_cycles[s][1] = np.where(data[TIME_COL] == end_in_s)[0][0]
+            all_cycles[s][0] = int(start_in_s*sampling_rate)
+            all_cycles[s][1] = int(end_in_s*sampling_rate)
         except IndexError:
             this_message = (
                 "\n***********\n! WARNING !\n***********\n"
@@ -1110,6 +1113,7 @@ def analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg):
     average_data, std_data = compute_average_and_std_data(
         name, normalised_steps_data, bin_num, export_average_x
     )
+
     # save to results dict
     results = {}
     results["all_steps_data"] = all_steps_data
@@ -1318,8 +1322,7 @@ def define_bins(triallength, bin_num):
 
 
 def compute_average_and_std_data(
-    name, normalised_steps_data, bin_num, export_average_x
-):
+    name, normalised_steps_data, bin_num, export_average_x):
     """Export XLS tables that store all averages & std of y-coords & angles"""
     # initialise col of % of SC over time for plotting first
     percentages = [int(((s + 1) / bin_num) * 100) for s in range(bin_num)]
@@ -1339,8 +1342,8 @@ def compute_average_and_std_data(
             )
         else:
             condition = (
-                (not col.endswith("x"))
-                & (not col.endswith("likelihood"))
+                #(not col.endswith("x"))
+                (not col.endswith("likelihood"))
                 & (col != TIME_COL)
                 & (col != "Flipped")
             )
@@ -1456,6 +1459,9 @@ def plot_results(info, results, folderinfo, cfg):
     if angles["name"]:
         if angular_acceleration:
             plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg)
+
+     #...................I added this one 11 - joint x over SC percentage ..............
+    plot_joint_x_by_average_SC(average_data, std_data, info, cfg)
 
 
 # ..................................  inner functions  .................................
@@ -2006,6 +2012,50 @@ def plot_angular_acceleration_by_average_SC(average_data, std_data, info, cfg):
     if dont_show_plots:
         plt.close(f)
 
+def plot_joint_x_by_average_SC(average_data, std_data, info, cfg):
+    """5 - Plot joints' x as a function of average SC's percentage"""
+
+    # unpack
+    name = info["name"]
+    results_dir = info["results_dir"]
+    dont_show_plots = cfg["dont_show_plots"]
+    convert_to_mm = cfg["convert_to_mm"]
+    bin_num = cfg["bin_num"]
+    plot_SE = cfg["plot_SE"]
+    sc_num = cfg["sc_num"]
+    hind_joints = cfg["hind_joints"]
+    legend_outside = cfg["legend_outside"]
+    color_palette = cfg["color_palette"]
+
+    # plot
+    f, ax = plt.subplots(1, 1)
+    ax.set_prop_cycle(
+        plt.cycler("color", sns.color_palette(color_palette, len(hind_joints)))
+    )
+    x = np.linspace(0, 100, bin_num)
+    for joint in hind_joints:  # joint loop (lines)
+        x_col_idx = average_data.columns.get_loc(joint + "x")
+        this_x = average_data.iloc[:, x_col_idx]  # average & std_data share colnames
+        if plot_SE:
+            this_std = std_data.iloc[:, x_col_idx] / np.sqrt(sc_num)
+        else:
+            this_std = std_data.iloc[:, x_col_idx]
+        ax.plot(x, this_x, label=joint)
+        ax.fill_between(x, this_x - this_std, this_x + this_std, alpha=0.2)
+    # legend adjustments
+    if legend_outside is True:
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    elif legend_outside is False:
+        ax.legend()
+    ax.set_title(name + " - Joint X over average step cycle")
+    ax.set_xlabel("Percentage")
+    ax.set_ylabel("X (pixel)")
+    if convert_to_mm:
+        tickconvert_mm_to_cm(ax, "x")
+    figure_file_string = " - Joint x-coord.s over average step cycle"
+    save_figures(f, results_dir, name, figure_file_string)
+    if dont_show_plots:
+        plt.close(f)
 
 def save_figures(figure, results_dir, name, figure_file_string):
     """Save figures as pngs to results_dir and as svgs to separate subfolders"""
