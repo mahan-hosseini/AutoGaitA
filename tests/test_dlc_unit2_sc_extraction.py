@@ -130,7 +130,9 @@ def test_handle_issues_1_all_SCs_invalid_because_all_cycles_empty_in_dlc(
     dlc(extract_info, extract_folderinfo, extract_cfg)
     with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
         content = f.read()
-    assert "Skipped since all SCs invalid!" in content
+    assert ("Skipped since all SCs invalid!" in content) & (
+        "not in data/video" in content
+    )
 
 
 def test_handle_issues_2_no_scs_of_given_mouse_and_run_in_extract_stepcycles(
