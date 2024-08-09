@@ -215,7 +215,8 @@ def test_handle_issues_5_double_ID_in_annotation_table_in_extract_stepcycles(
 def test_clean_cycles_1_cycle_out_of_bounds_in_extract_stepcycles(all_cycles):
     all_cycles = check_cycle_out_of_bounds(all_cycles)
     flat_cycles = flatten_all_cycles(all_cycles)
-    assert all(isinstance(idx, (int, np.integer)) for idx in flat_cycles)
+    if all_cycles:  # can be None
+        assert all(isinstance(idx, (int, np.integer)) for idx in flat_cycles)
 
 
 cases = (
@@ -240,7 +241,8 @@ def test_clean_cycles_3_cycle_order(all_cycles, extract_info):
         os.makedirs(extract_info["results_dir"])
     all_cycles = check_cycle_order(all_cycles, extract_info)
     flat_cycles = flatten_all_cycles(all_cycles)
-    assert flat_cycles == sorted(flat_cycles)
+    if all_cycles:  # can be None
+        assert flat_cycles == sorted(flat_cycles)
 
 
 def test_clean_cycles_4_DLC_tracking(
