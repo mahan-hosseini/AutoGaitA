@@ -8,6 +8,7 @@ from autogaita.autogaita_dlc import (
 )
 from hypothesis import given, strategies as st, settings, HealthCheck
 import os
+import math
 import numpy as np
 import pandas as pd
 import pandas.testing as pdt
@@ -123,8 +124,12 @@ def test_global_min_normalisation(extract_info, extract_folderinfo, extract_cfg)
 def test_datas_indexing_and_time_column(extract_info, extract_folderinfo, extract_cfg):
     for extract_cfg["sampling_rate"] in [50, 500, 5000]:
         data = some_prep(extract_info, extract_folderinfo, extract_cfg)
-        assert data["Time"].max() == (
-            (len(data) - 1) / (1 * extract_cfg["sampling_rate"])
+        # use isclose here because there are some floating point things going on (eg. 1.
+        # 66 and 1.660 for sampling rate of 500)
+        assert math.isclose(
+            data["Time"].max(),
+            (len(data) - 1) / (1 * extract_cfg["sampling_rate"]),
+            rel_tol=1e-9,
         )
 
 
