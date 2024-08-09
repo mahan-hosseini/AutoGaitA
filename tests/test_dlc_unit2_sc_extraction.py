@@ -263,4 +263,5 @@ def test_clean_cycles_4_DLC_tracking(
 
 # ...............................  helper functions  ...................................
 def flatten_all_cycles(all_cycles):
-    return [idx for cycle in all_cycles for idx in cycle]
+    if all_cycles:
+        return [idx for cycle in all_cycles for idx in cycle]
