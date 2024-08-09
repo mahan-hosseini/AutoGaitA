@@ -82,7 +82,7 @@ def dlc(info, folderinfo, cfg):
 
     # .........................  step-cycle extraction  ................................
     all_cycles = extract_stepcycles(data, info, folderinfo, cfg)
-    if not all_cycles:
+    if all_cycles is None:
         handle_issues("scs_invalid", info)
         if cfg["dont_show_plots"] is False:  # otherwise stuck at loading
             plot_panel_instance.destroy_plot_panel()
@@ -338,7 +338,6 @@ def some_prep(info, folderinfo, cfg):
         data.drop(columns=list(beamdf.columns), inplace=True)  # beam not needed anymore
     # add Time
     data[TIME_COL] = data.index * (1 / sampling_rate)
-
     # reorder the columns we added
     cols = [TIME_COL, "Flipped"]
     data = data[cols + [c for c in data.columns if c not in cols]]
@@ -857,19 +856,43 @@ def extract_stepcycles(data, info, folderinfo, cfg):
         # extract the SC times
         start_in_s = float(SCdf.iloc[info_row, start_col].values[0])
         end_in_s = float(SCdf.iloc[info_row, end_col].values[0])
-
-        try:
-            all_cycles[s][0] = int(start_in_s*sampling_rate)
-            all_cycles[s][1] = int(end_in_s*sampling_rate)
-        except IndexError:
+        # see if we are rounding to fix inaccurate user input
+        # => account for python's float precision leading to inaccuracies
+        # => two important steps here (sanity_check_vals only used for these checks)
+        # 1. round to 10th decimal to fix python making
+        #    3211.999999999999999995 out of 3212
+        sanity_check_start = round(start_in_s * sampling_rate, 10)
+        sanity_check_end = round(end_in_s * sampling_rate, 10)
+        # 2. comparing abs(sanity check vals) to 1e-7 just to be 1000% sure
+        if (abs(sanity_check_start % 1) > 1e-7) | (abs(sanity_check_end % 1) > 1e-7):
+            round_message = (
+                "\n***********\n! WARNING !\n***********\n"
+                + "SC latencies of "
+                + str(start_in_s)
+                + "s to "
+                + str(end_in_s)
+                + "s were not provided in units of the frame rate!"
+                + "\nWe thus use the previous possible frame(s)."
+                + "\nDouble check if this worked as expected or fix annotation table!"
+            )
+            print(round_message)
+            write_issues_to_textfile(round_message, info)
+        # assign to all_cycles (note int() rounds down!)
+        all_cycles[s][0] = int(start_in_s * sampling_rate)
+        all_cycles[s][1] = int(end_in_s * sampling_rate)
+        # check if we are in data-bounds
+        if (all_cycles[s][0] in data.index) & (all_cycles[s][1] in data.index):
+            pass
+        else:
+            all_cycles[s] = [None, None]  # so they can be cleaned later
             this_message = (
                 "\n***********\n! WARNING !\n***********\n"
                 + "SC latencies of: "
                 + str(start_in_s)
                 + "s to "
                 + str(end_in_s)
-                + "s not in data/video range!\n"
-                + "Skipping!"
+                + "s not in data/video range!"
+                + "\nSkipping!"
             )
             print(this_message)
             write_issues_to_textfile(this_message, info)
@@ -877,25 +900,28 @@ def extract_stepcycles(data, info, folderinfo, cfg):
     # ............................  clean all_cycles  ..................................
     # check if we skipped latencies because they were out of data-bounds
     all_cycles = check_cycle_out_of_bounds(all_cycles)
-    # check if there are any duplicates (e.g., SC2's start-lat == SC1's end-lat)
-    all_cycles = check_cycle_duplicates(all_cycles)
-    # check if user input progressively later latencies
-    all_cycles = check_cycle_order(all_cycles, info)
-    # check if DLC tracking broke for any SCs - if so remove them
-    all_cycles = check_DLC_tracking(data, info, all_cycles, cfg)
+    if all_cycles:  # can be None if all SCs were out of bounds
+        # check if there are any duplicates (e.g., SC2's start-lat == SC1's end-lat)
+        all_cycles = check_cycle_duplicates(all_cycles)
+        # check if user input progressively later latencies
+        all_cycles = check_cycle_order(all_cycles, info)
+        # check if DLC tracking broke for any SCs - if so remove them
+        all_cycles = check_DLC_tracking(data, info, all_cycles, cfg)
     return all_cycles
 
 
 # ..............................  helper functions  ....................................
 def check_cycle_out_of_bounds(all_cycles):
     """Check if user provided SC latencies that were not in video/data bounds"""
-    clean_cycles = []
+    clean_cycles = None
     for cycle in all_cycles:
         # below checks if values are any type of int (just in case this should
         # for some super random reason change...)
         if isinstance(cycle[0], (int, np.integer)) & isinstance(
             cycle[1], (int, np.integer)
         ):
+            if clean_cycles is None:
+                clean_cycles = []
             clean_cycles.append(cycle)
     return clean_cycles
 
@@ -906,7 +932,6 @@ def check_cycle_duplicates(all_cycles):
     all indices of all_cycles have to be unique. If any duplicates found, add one
     datapoint to the start latency.
     """
-
     for c, cycle in enumerate(all_cycles):
         if c > 0:
             if cycle[0] == all_cycles[c - 1][1]:
@@ -921,7 +946,6 @@ def check_cycle_order(all_cycles, info):
     1. Start latency earlier than end latency of previous SC
     2. End latency earlier then start latency of current SC
     """
-
     clean_cycles = []
     current_max_time = 0
     for c, cycle in enumerate(all_cycles):

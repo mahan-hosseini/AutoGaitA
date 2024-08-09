@@ -258,12 +258,6 @@ def some_prep(info, folderinfo, cfg):
         write_issues_to_textfile(unable_to_convert_message, info)
         raise ValueError(unable_to_convert_message)
     data[DF_TIME_COL] = data.index * (1 / sampling_rate)
-    if sampling_rate <= 100:
-        data[DF_TIME_COL] = round(data[DF_TIME_COL], 2)
-    elif 100 < sampling_rate <= 1000:
-        data[DF_TIME_COL] = round(data[DF_TIME_COL], 3)
-    else:
-        data[DF_TIME_COL] = round(data[DF_TIME_COL], 4)
 
     # Standardise y columns to be positive & afterwards save global y_max for flipping
     y_cols = [col for col in data.columns if col.endswith("Y")]
@@ -783,36 +777,70 @@ def read_SC_info(data, SCdf, info, legname, cfg):
                 # str(s) because colnames match s for s>0 (& @else our loop starts @ 1)!
                 start_col = SCdf.columns.get_loc(SWINGSTART_COL + "." + str(s))
                 end_col = SCdf.columns.get_loc(STANCEEND_COL + "." + str(s))
-            # make sure times have two decimals (because data["Time"] has!)
+            # time as floats
             start_in_s = float(SCdf.iloc[run_row, start_col].values[0])
             end_in_s = float(SCdf.iloc[run_row, end_col].values[0])
-            if sampling_rate <= 100:
-                float_precision = 2  # how many decimals we round to
-            elif 100 < sampling_rate <= 1000:
-                float_precision = 3
+            # see if we are rounding to fix inaccurate user input
+            # => account for python's float precision leading to inaccuracies
+            # => two important steps here (sanity_check_vals only used for these checks)
+            # 1. round to 10th decimal to fix python making
+            #    3211.999999999999999995 out of 3212
+            sanity_check_start = round(start_in_s * sampling_rate, 10)
+            sanity_check_end = round(end_in_s * sampling_rate, 10)
+            # 2. comparing abs(sanity check vals) to 1e-7 just to be 1000% sure
+            if (abs(sanity_check_start % 1) > 1e-7) | (
+                abs(sanity_check_end % 1) > 1e-7
+            ):
+                round_message = (
+                    "\n***********\n! WARNING !\n***********\n"
+                    + "SC latencies of "
+                    + str(start_in_s)
+                    + "s to "
+                    + str(end_in_s)
+                    + "s were not provided in units of the frame rate!"
+                    + "\nWe thus use the previous possible frame(s)."
+                    + "\nDouble check if this worked as expected or fix annotation table!"
+                )
+                print(round_message)
+                write_issues_to_textfile(round_message, info)
+            # assign to all_cycles (note int() rounds down!)
+            all_cycles[r][s][0] = int(start_in_s * sampling_rate)
+            all_cycles[r][s][1] = int(end_in_s * sampling_rate)
+            # check if we are in data bounds
+            if (all_cycles[r][s][0] in data.index) & (
+                all_cycles[r][s][1] in data.index
+            ):
+                pass
             else:
-                float_precision = 4
-            start_in_s = round(start_in_s, float_precision)
-            end_in_s = round(end_in_s, float_precision)
-            all_cycles[r][s][0] = np.where(data[DF_TIME_COL] == start_in_s)[0][0]
-            all_cycles[r][s][1] = np.where(data[DF_TIME_COL] == end_in_s)[0][0]
+                all_cycles[r][s] = [None, None]  # so they can be cleaned later
+                this_message = (
+                    "\n***********\n! WARNING !\n***********\n"
+                    + legname
+                    + " leg"
+                    + " - Run #"
+                    + str(r + 1)
+                    + " - SC #"
+                    + str(s + 1)
+                    + " is out of data-bounds - Skipping!"
+                )
+                print(this_message)
+                write_issues_to_textfile(this_message, info)
 
     # ............................  clean all_cycles  ..................................
     # check if we skipped latencies because they were out of data-bounds
-    all_cycles = check_cycle_out_of_bounds(all_cycles, info, legname)
-    # check if there are any duplicates (e.g., SC2's start-lat == SC1's end-lat)
-    all_cycles = check_cycle_duplicates(all_cycles)
-    # check if user input progressively later latencies
-    all_cycles = check_cycle_order(all_cycles, info, legname)
+    all_cycles = check_cycle_out_of_bounds(all_cycles)
+    if all_cycles:  # can be None if all SCs were out of bounds
+        # check if there are any duplicates (e.g., SC2's start-lat == SC1's end-lat)
+        all_cycles = check_cycle_duplicates(all_cycles)
+        # check if user input progressively later latencies
+        all_cycles = check_cycle_order(all_cycles, info, legname)
     return all_cycles
 
 
 # ..............................  helper functions  ....................................
-def check_cycle_out_of_bounds(all_cycles, info, legname):
-    """Check if user provided SC latencies that were not in video/data bounds
-    Note that the all_cycles = np.where... doesn't return an int if it was out-of-bounds
-    """
-    clean_cycles = [[] for s in range(len(all_cycles))]
+def check_cycle_out_of_bounds(all_cycles):
+    """Check if user provided SC latencies that were not in video/data bounds"""
+    clean_cycles = None
     for r, run_cycles in enumerate(all_cycles):
         for c, cycle in enumerate(run_cycles):
             # below checks if values are any type of int (just in case int-type should
@@ -820,19 +848,9 @@ def check_cycle_out_of_bounds(all_cycles, info, legname):
             if isinstance(cycle[0], (int, np.integer)) & isinstance(
                 cycle[1], (int, np.integer)
             ):
+                if clean_cycles is None:
+                    clean_cycles = [[] for s in range(len(all_cycles))]
                 clean_cycles[r].append(cycle)
-            else:
-                this_message = (
-                    "\n***********\n! WARNING !\n***********\n"
-                    + legname
-                    + " - Run #"
-                    + str(r)
-                    + " - SC #"
-                    + str(c)
-                    + " is out of data-bounds- Skipping!"
-                )
-                print(this_message)
-                write_issues_to_textfile(this_message, info)
     return clean_cycles
 
 
@@ -1470,9 +1488,10 @@ def flatten_all_cycles(all_cycles):
     """Extract all runs' SC latencies and create a list of len=SC_num for each leg"""
     flattened_cycles = {"left": [], "right": []}
     for legname in LEGS:
-        for run_cycles in all_cycles[legname]:
-            for cycle in run_cycles:
-                flattened_cycles[legname].append(cycle)
+        if all_cycles[legname]:  # can be None
+            for run_cycles in all_cycles[legname]:
+                for cycle in run_cycles:
+                    flattened_cycles[legname].append(cycle)
     return flattened_cycles
 
 
