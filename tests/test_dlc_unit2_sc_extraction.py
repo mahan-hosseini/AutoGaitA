@@ -212,11 +212,26 @@ def test_handle_issues_5_double_ID_in_annotation_table_in_extract_stepcycles(
         )
     )
 )
-def test_clean_cycles_1_cycle_out_of_bounds_in_extract_stepcycles(all_cycles):
+def test_clean_cycles_1a_cycle_out_of_bounds_in_extract_stepcycles(all_cycles):
     all_cycles = check_cycle_out_of_bounds(all_cycles)
     flat_cycles = flatten_all_cycles(all_cycles)
     if all_cycles:  # can be None
         assert all(isinstance(idx, (int, np.integer)) for idx in flat_cycles)
+
+
+# Note for following cases that within extract_stepcycles a check for cycle-idxs being in data.index assigns all_cycles[s] to [None, None] - so we have to use that here
+cases = (
+    (
+        [[1, 100], [None, None], [200, 300]],
+        [[1, 100], [200, 300]],
+    ),
+    ([[None, None], [None, None], [None, None]], None),
+)  # fmt: skip
+@pytest.mark.parametrize("all_cycles, expected_cycles", cases)
+def test_clean_cycles_1b_cycle_out_of_bounds_in_extract_stepcycles(
+    all_cycles, expected_cycles
+):
+    assert expected_cycles == check_cycle_out_of_bounds(all_cycles)
 
 
 cases = (
