@@ -834,6 +834,12 @@ def read_SC_info(data, SCdf, info, legname, cfg):
         all_cycles = check_cycle_duplicates(all_cycles)
         # check if user input progressively later latencies
         all_cycles = check_cycle_order(all_cycles, info, legname)
+        # NOTE for future self
+        # => If you are considering to remove empty lists from run_cycles note that we
+        #    need them for the case of Runs 1 & 3 having SCs but 2 not having any
+        # => Otherwise SC-level plots arent plotted correctly (ie Run3 could easily
+        #    look like Run2 - we need an empty subplot panel for run2 and thus an empty
+        #    list!)
     return all_cycles
 
 
@@ -852,6 +858,20 @@ def check_cycle_out_of_bounds(all_cycles):
                     clean_cycles = [[] for s in range(len(all_cycles))]
                 clean_cycles[r].append(cycle)
     return clean_cycles
+
+
+def check_cycle_duplicates(all_cycles):
+    """Check if there are any duplicate SC latencies.
+    This would break our plotting functions, which use .loc on all_steps_data - thus,
+    all indices of all_cycles have to be unique. If any duplicates found, add one
+    datapoint to the start latency.
+    """
+    for r, run_cycles in enumerate(all_cycles):
+        for c, cycle in enumerate(run_cycles):
+            if c > 0:
+                if cycle[0] == run_cycles[c - 1][1]:
+                    all_cycles[r][c][0] += 1
+    return all_cycles
 
 
 def check_cycle_order(all_cycles, info, legname):
@@ -895,20 +915,6 @@ def check_cycle_order(all_cycles, info, legname):
                 print(this_message)
                 write_issues_to_textfile(this_message, info)
     return clean_cycles
-
-
-def check_cycle_duplicates(all_cycles):
-    """Check if there are any duplicate SC latencies.
-    This would break our plotting functions, which use .loc on all_steps_data - thus,
-    all indices of all_cycles have to be unique. If any duplicates found, add one
-    datapoint to the start latency.
-    """
-    for r, run_cycles in enumerate(all_cycles):
-        for c, cycle in enumerate(run_cycles):
-            if c > 0:
-                if cycle[0] == run_cycles[c - 1][1]:
-                    all_cycles[r][c][0] += 1
-    return all_cycles
 
 
 def check_stepcycles(all_cycles, info):
@@ -1015,6 +1021,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
             )
             all_steps_data[l_idx] = this_step
             normalised_steps_data[l_idx] = normalise_one_steps_data(this_step, bin_num)
+            sc_num[l_idx] = 1
         # 2 or more steps - build dataframes
         elif len(all_cycles[legname]) > 1:
             # first step is added manually
@@ -1085,11 +1092,25 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
             normalised_steps_data[l_idx], bin_num, analyse_average_y
         )
     # ................................  after leg-loop  ................................
-    # 1) create "both" sheets for all our data-formats (added to -1 idx of df_list)
-    all_steps_data = combine_legs(all_steps_data, "concatenate")
-    normalised_steps_data = combine_legs(normalised_steps_data, "concatenate")
-    average_data = combine_legs(average_data, "average")
-    std_data = combine_legs(std_data, "average")
+    # 1a) create "both" sheets for all our data-formats (added to -1 idx of df_list)
+    # => note that we only need only_one_valid_leg once so the first 3 functions are
+    #    called with [0] to index the output-tuple and get only the df from the function
+    all_steps_data = combine_legs(all_steps_data, "concatenate")[0]
+    normalised_steps_data = combine_legs(normalised_steps_data, "concatenate")[0]
+    average_data = combine_legs(average_data, "average")[0]
+    std_data, only_one_valid_leg = combine_legs(std_data, "average")
+    # 1b) inform user if only one leg had valid SCs (affects 3rd sheet!)
+    if only_one_valid_leg:
+        this_message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + "Only the "
+            + only_one_valid_leg
+            + " leg had valid step cycles after our sanity checks. "
+            + "\nThe third sheet of generated Sheet (XLS) files therefore only "
+            + "reflects this leg's data!"
+        )
+        print(this_message)
+        write_issues_to_textfile(this_message, info)
     # 2) loop to assign to results and save to xls-file sheets
     for idx, output in enumerate(OUTPUTS):
         results[output]["all_steps_data"] = all_steps_data[idx]
@@ -1097,26 +1118,38 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
         results[output]["average_data"] = average_data[idx]
         results[output]["std_data"] = std_data[idx]
         if idx == len(OUTPUTS) - 1:
-            results[output]["sc_num"] = sc_num[0] + sc_num[1]
+            if not only_one_valid_leg:
+                results[output]["sc_num"] = sc_num[0] + sc_num[1]
+            else:
+                if only_one_valid_leg == "left":
+                    results[output]["sc_num"] = sc_num[0]
+                elif only_one_valid_leg == "right":
+                    results[output]["sc_num"] = sc_num[1]
         else:
             results[output]["sc_num"] = sc_num[idx]
         save_results_sheet(
             all_steps_data[idx],
             output,
             os.path.join(results_dir, name + ORIGINAL_XLS_FILENAME),
+            only_one_valid_leg,
         )
         save_results_sheet(
             normalised_steps_data[idx],
             output,
             os.path.join(results_dir, name + NORMALISED_XLS_FILENAME),
+            only_one_valid_leg,
         )
         save_results_sheet(
             average_data[idx],
             output,
             os.path.join(results_dir, name + AVERAGE_XLS_FILENAME),
+            only_one_valid_leg,
         )
         save_results_sheet(
-            std_data[idx], output, os.path.join(results_dir, name + STD_XLS_FILENAME)
+            std_data[idx],
+            output,
+            os.path.join(results_dir, name + STD_XLS_FILENAME),
+            only_one_valid_leg,
         )
     return results
 
@@ -1389,47 +1422,6 @@ def define_bins(triallength, bin_num):
 # ......................................................................................
 
 
-def combine_legs(dataframe_list, combination_procedure):
-    """Combine the results of left and right legs as a new df to export as Sheet 3"""
-    if combination_procedure == "concatenate":
-        # preparation
-        infovector = dataframe_list[0].iloc[0, :]
-        infovector = pd.DataFrame(infovector).T
-        infovector.index = [SEPARATOR_IDX]
-        infovector[:] = "leg-change"
-        nanvector = dataframe_list[0].iloc[0, :]
-        nanvector = pd.DataFrame(nanvector).T
-        nanvector.index = [SEPARATOR_IDX]
-        nanvector[:] = np.nan
-        # concatenation (similar separators as between stepcycles)
-        # ignoring warnings here temporarily
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            dataframe_list[-1] = pd.concat(
-                [dataframe_list[0], nanvector], axis=0
-            )  # list0!
-        dataframe_list[-1] = pd.concat([dataframe_list[-1], infovector], axis=0)  # -1 !
-        dataframe_list[-1] = pd.concat([dataframe_list[-1], nanvector], axis=0)
-        dataframe_list[-1] = pd.concat([dataframe_list[-1], dataframe_list[1]], axis=0)
-        # reorder columns
-        for i in range(len(dataframe_list)):
-            cols = REORDER_COLS_IN_STEP_NORMDATA
-            dataframe_list[i] = dataframe_list[i][
-                cols + [c for c in dataframe_list[i].columns if c not in cols]
-            ]
-    elif combination_procedure == "average":
-        # initialise both df with same idx and cols as left df
-        dataframe_list[-1] = pd.DataFrame(
-            data=None, index=dataframe_list[0].index, columns=dataframe_list[0].columns
-        )
-        for col in dataframe_list[0].columns:
-            this_data = np.zeros([len(dataframe_list[0].index), 2])
-            this_data[:, 0] = np.asarray(dataframe_list[0][col])
-            this_data[:, 1] = np.asarray(dataframe_list[1][col])
-            dataframe_list[-1][col] = np.mean(this_data, axis=1)
-    return dataframe_list
-
-
 def compute_average_and_std_data(normalised_steps_data, bin_num, analyse_average_y):
     """Export XLS tables that store all averages & std of y-coords & angles"""
     # initialise data & columns of average & std dataframes (fill vals in loop)
@@ -1479,6 +1471,85 @@ def compute_average_and_std_data(normalised_steps_data, bin_num, analyse_average
     return average_data, std_data
 
 
+def combine_legs(dataframe_list, combination_procedure):
+    """Combine the results of left and right legs as a new df to export as Sheet 3"""
+    # first check if we only have one valid leg
+    # => if av/std dfs are empty they only have SC_COL
+    only_one_valid_leg = False
+    if combination_procedure == "concatenate":
+        # list[0] is left, so right is valid & vice versa
+        if dataframe_list[0].empty:
+            only_one_valid_leg = "right"
+        if dataframe_list[1].empty:
+            only_one_valid_leg = "left"
+    elif combination_procedure == "average":
+        if (
+            len(dataframe_list[0].columns) == 1
+            and dataframe_list[0].columns[0] == DF_SCPERCENTAGE_COL
+        ):
+            only_one_valid_leg = "right"
+        if (
+            len(dataframe_list[1].columns) == 1
+            and dataframe_list[1].columns[0] == DF_SCPERCENTAGE_COL
+        ):
+            only_one_valid_leg = "left"
+    if combination_procedure == "concatenate":
+        # copy dfs if only one leg, otherwise concatenate
+        if only_one_valid_leg == "left":
+            dataframe_list[-1] = dataframe_list[0].copy()
+        elif only_one_valid_leg == "right":
+            dataframe_list[-1] = dataframe_list[1].copy()
+        else:
+            infovector = dataframe_list[0].iloc[0, :]
+            infovector = pd.DataFrame(infovector).T
+            infovector.index = [SEPARATOR_IDX]
+            infovector[:] = "leg-change"
+            nanvector = dataframe_list[0].iloc[0, :]
+            nanvector = pd.DataFrame(nanvector).T
+            nanvector.index = [SEPARATOR_IDX]
+            nanvector[:] = np.nan
+            # concatenation (similar separators as between stepcycles)
+            # ignoring warnings here temporarily
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                dataframe_list[-1] = pd.concat(
+                    [dataframe_list[0], nanvector], axis=0
+                )  # list0!
+            dataframe_list[-1] = pd.concat(
+                [dataframe_list[-1], infovector], axis=0
+            )  # -1 !
+            dataframe_list[-1] = pd.concat([dataframe_list[-1], nanvector], axis=0)
+            dataframe_list[-1] = pd.concat(
+                [dataframe_list[-1], dataframe_list[1]], axis=0
+            )
+            # reorder columns
+            for i in range(len(dataframe_list)):
+                cols = REORDER_COLS_IN_STEP_NORMDATA
+                dataframe_list[i] = dataframe_list[i][
+                    cols + [c for c in dataframe_list[i].columns if c not in cols]
+                ]
+    elif combination_procedure == "average":
+        # we can assign as we do here since dataframe_lists' dfs are average or std dfs
+        # => note that we purposely check against SC col above for these to make sure
+        if only_one_valid_leg == "left":
+            dataframe_list[-1] = dataframe_list[0].copy()
+        elif only_one_valid_leg == "right":
+            dataframe_list[-1] = dataframe_list[1].copy()
+        else:
+            # initialise both df with same idx and cols as left df
+            dataframe_list[-1] = pd.DataFrame(
+                data=None,
+                index=dataframe_list[0].index,
+                columns=dataframe_list[0].columns,
+            )
+            for col in dataframe_list[0].columns:
+                this_data = np.zeros([len(dataframe_list[0].index), 2])
+                this_data[:, 0] = np.asarray(dataframe_list[0][col])
+                this_data[:, 1] = np.asarray(dataframe_list[1][col])
+                dataframe_list[-1][col] = np.mean(this_data, axis=1)
+    return dataframe_list, only_one_valid_leg
+
+
 # ......................................................................................
 # ....................  helper functions d - miscellaneous  ............................
 # ......................................................................................
@@ -1511,15 +1582,26 @@ def delete_previous_xlsfiles(name, results_dir):
             os.remove(fullfilepath)
 
 
-def save_results_sheet(dataframe, sheet, fullfilepath):
+def save_results_sheet(dataframe, sheet, fullfilepath, only_one_valid_leg):
     """Save a xls sheet of given df"""
     fullfilepath = fullfilepath + ".xlsx"
+    # pdb.set_trace()
     if os.path.exists(fullfilepath):
         with pd.ExcelWriter(fullfilepath, mode="a") as writer:
-            dataframe.to_excel(writer, sheet_name=sheet, index=False)
+            if (only_one_valid_leg == "left" and sheet == "right") or (
+                only_one_valid_leg == "right" and sheet == "left"
+            ):
+                pd.DataFrame(data=None).to_excel(writer, sheet_name=sheet, index=False)
+            else:
+                dataframe.to_excel(writer, sheet_name=sheet, index=False)
     else:
         with pd.ExcelWriter(fullfilepath) as writer:
-            dataframe.to_excel(writer, sheet_name=sheet, index=False)
+            if (only_one_valid_leg == "left" and sheet == "right") or (
+                only_one_valid_leg == "right" and sheet == "left"
+            ):
+                pd.DataFrame(data=None).to_excel(writer, sheet_name=sheet, index=False)
+            else:
+                dataframe.to_excel(writer, sheet_name=sheet, index=False)
 
 
 def add_step_separators(dataframe, nanvector, numvector):
@@ -1577,70 +1659,41 @@ def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
         std_data = results[legname]["std_data"]
         sc_num = results[legname]["sc_num"]
 
-        # .....................  1 - z coords by y coords  .............................
-        plot_joint_z_by_y(
-            legname, all_steps_data, all_cycles, info, cfg, plot_panel_instance
-        )
+        if all_cycles[legname]:
 
-        # ........................  2 - y coords by time  ..............................
-        if analyse_average_y:
-            plot_joint_y_by_time(
+            # ....................  1 - z coords by y coords  ..........................
+            plot_joint_z_by_y(
                 legname, all_steps_data, all_cycles, info, cfg, plot_panel_instance
             )
 
-        # ..................  3 - angle by time for each SC  ...........................
-        if angles["name"]:
-            plot_angles_by_time(
+            # ........................  2 - y coords by time  ..........................
+            if analyse_average_y:
+                plot_joint_y_by_time(
+                    legname, all_steps_data, all_cycles, info, cfg, plot_panel_instance
+                )
+
+            # ..................  3 - angle by time for each SC  .......................
+            if angles["name"]:
+                plot_angles_by_time(
+                    legname, all_steps_data, all_cycles, info, cfg, plot_panel_instance
+                )
+            # regularly closing figures to save memory
+            # => no problem to do this since we pass figure-vars to save-functions and Panel
+            plt.close("all")
+
+            # ............................  4 - stick diagram  .........................
+            plot_stickdiagram(
                 legname, all_steps_data, all_cycles, info, cfg, plot_panel_instance
             )
-        # regularly closing figures to save memory
-        # => no problem to do this since we pass figure-vars to save-functions and Panel
-        plt.close("all")
 
-        # ............................  4 - stick diagram  .............................
-        plot_stickdiagram(
-            legname, all_steps_data, all_cycles, info, cfg, plot_panel_instance
-        )
-
-        # .................  5 - average 5-joints' z over SC percentage  ...............
-        plot_joint_z_by_average_SC(
-            legname, average_data, std_data, sc_num, info, cfg, plot_panel_instance
-        )
-
-        # .................  5 - average 5-joints' y over SC percentage  ...............
-        if analyse_average_y:
-            plot_joint_y_by_average_SC(
+            # .................  5 - average 5-joints' z over SC percentage  ...........
+            plot_joint_z_by_average_SC(
                 legname, average_data, std_data, sc_num, info, cfg, plot_panel_instance
             )
 
-        # ...................  6 - average angles over SC percentage  ..................
-        if angles["name"]:
-            plot_angles_by_average_SC(
-                legname, average_data, std_data, sc_num, info, cfg, plot_panel_instance
-            )
-        plt.close("all")
-
-        # .............  7 - average y velocities over SC percentage   .................
-        plot_y_velocities_by_average_SC(
-            legname, average_data, std_data, sc_num, info, cfg, plot_panel_instance
-        )
-
-        # ..........  8 - average angular velocities over SC percentage  ...............
-        if angles["name"]:
-            plot_angular_velocities_by_average_SC(
-                legname, average_data, std_data, sc_num, info, cfg, plot_panel_instance
-            )
-
-        # ........  optional - 9 - average x acceleration over SC percentage  ..........
-        if y_acceleration:
-            plot_y_acceleration_by_average_SC(
-                legname, average_data, std_data, sc_num, info, cfg, plot_panel_instance
-            )
-
-        # .....  optional - 10 - average angular acceleration over SC percentage  ......
-        if angles["name"]:
-            if angular_acceleration:
-                plot_angular_acceleration_by_average_SC(
+            # .................  6 - average 5-joints' y over SC percentage  ...........
+            if analyse_average_y:
+                plot_joint_y_by_average_SC(
                     legname,
                     average_data,
                     std_data,
@@ -1649,9 +1702,74 @@ def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
                     cfg,
                     plot_panel_instance,
                 )
-        plt.close("all")
 
-    # ........................optional - 11 - build plot panel..........................
+            # ...................  7 - average angles over SC percentage  ..............
+            if angles["name"]:
+                plot_angles_by_average_SC(
+                    legname,
+                    average_data,
+                    std_data,
+                    sc_num,
+                    info,
+                    cfg,
+                    plot_panel_instance,
+                )
+            plt.close("all")
+
+            # .............  8 - average y velocities over SC percentage   .............
+            plot_y_velocities_by_average_SC(
+                legname, average_data, std_data, sc_num, info, cfg, plot_panel_instance
+            )
+
+            # ..........  9 - average angular velocities over SC percentage  ...........
+            if angles["name"]:
+                plot_angular_velocities_by_average_SC(
+                    legname,
+                    average_data,
+                    std_data,
+                    sc_num,
+                    info,
+                    cfg,
+                    plot_panel_instance,
+                )
+
+            # .......  optional - 10 - average x acceleration over SC percentage  ......
+            if y_acceleration:
+                plot_y_acceleration_by_average_SC(
+                    legname,
+                    average_data,
+                    std_data,
+                    sc_num,
+                    info,
+                    cfg,
+                    plot_panel_instance,
+                )
+
+            # ....  optional - 11 - average angular acceleration over SC percentage  ...
+            if angles["name"]:
+                if angular_acceleration:
+                    plot_angular_acceleration_by_average_SC(
+                        legname,
+                        average_data,
+                        std_data,
+                        sc_num,
+                        info,
+                        cfg,
+                        plot_panel_instance,
+                    )
+            plt.close("all")
+        else:
+            no_plots_message = (
+                "\n***********\n! WARNING !\n***********\n"
+                + "No step cycles found for "
+                + legname
+                + " leg!"
+                + "\nWe thus skip all figures for this leg!\n"
+            )
+            print(no_plots_message)
+            write_issues_to_textfile(no_plots_message, info)
+
+    # ........................optional - 12 - build plot panel..........................
     if dont_show_plots is True:
         pass  # going on without building the plot window
     elif dont_show_plots is False:  # -> show plot panel
