@@ -77,8 +77,8 @@ CLUSTER_P_COL = "Cluster p"
 CLUSTER_MASK_COL = "Cluster Mask"
 
 # PLOTS
-PERM_PLOT_LEGEND_SIZE = 6
-PERM_PLOT_SUPLABEL_SIZE = 12
+STATS_PLOT_LEGEND_SIZE = 6
+STATS_PLOTS_SUPLABEL_SIZE = 12
 BOX_COLOR = "#fe420f"  # significance boxes - col = orangered
 BOX_ALPHA = 0.1
 STD_ALPHA = 0.2  # std boxes around means
@@ -1406,9 +1406,11 @@ def plot_permutation_test_results(
     group_names = folderinfo["group_names"]
     results_dir = folderinfo["results_dir"]
     contrasts = folderinfo["contrasts"]
+    sampling_rate = cfg["sampling_rate"]
     bin_num = cfg["bin_num"]
     group_color_dict = cfg["group_color_dict"]
     plot_SE = cfg["plot_SE"]
+    tracking_software = cfg["tracking_software"]
     feature = stats_var.split(" ")[-1]
     dont_show_plots = cfg["dont_show_plots"]
     legend_outside = cfg["legend_outside"]
@@ -1458,30 +1460,29 @@ def plot_permutation_test_results(
                     lw=STD_LW,
                     zorder=1,
                 )
-        # convert to cm (if needed) before plotting clusters
+        # adjust legend & convert to cm (if needed) before plotting clusters
         if type(ax) == np.ndarray:
-            # legend adjustments
             if legend_outside is True:
                 ax[c].legend(
-                    fontsize=PERM_PLOT_LEGEND_SIZE,
+                    fontsize=STATS_PLOT_LEGEND_SIZE,
                     loc="center left",
                     bbox_to_anchor=(1, 0.5),
                 )
             elif legend_outside is False:
-                ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
-            if check_mouse_conversion(feature, cfg):
-                ytickconvert_mm_to_cm(feature, ax[c])
-                ax[c].set_ylabel("")  # we use supylabel
+                ax[c].legend(fontsize=STATS_PLOT_LEGEND_SIZE)
+            if check_mouse_conversion(feature, cfg, stats_var=stats_var):
+                ytickconvert_mm_to_cm(ax[c])
         else:
-            # legend adjustments
             if legend_outside is True:
                 ax.legend(
-                    fontsize=PERM_PLOT_LEGEND_SIZE + 4,
+                    fontsize=STATS_PLOT_LEGEND_SIZE + 4,
                     loc="center left",
                     bbox_to_anchor=(1, 0.5),
                 )
             elif legend_outside is False:
-                ax.legend(fontsize=PERM_PLOT_LEGEND_SIZE + 4)
+                ax.legend(fontsize=STATS_PLOT_LEGEND_SIZE + 4)
+            if check_mouse_conversion(feature, cfg, stats_var=stats_var):
+                ytickconvert_mm_to_cm(ax)
         # plot significant clusters
         # => note that clusters is a list of list with idxs between 0 & bin_num-1
         clusters = extract_all_clusters(trueobs_results_df, contrast)
@@ -1512,13 +1513,39 @@ def plot_permutation_test_results(
                     lw=STD_LW,
                     zorder=0,
                 )
-    f.supxlabel("Percentage", fontsize=PERM_PLOT_SUPLABEL_SIZE)
-    if check_mouse_conversion(feature, cfg):
-        f.supylabel(feature + " (cm)", fontsize=PERM_PLOT_SUPLABEL_SIZE)
+    f.supxlabel("Percentage", fontsize=STATS_PLOTS_SUPLABEL_SIZE)
+    # ylabels depend on whether we converted mm to cm and on the feature
+    # code below calls the ylabel function for all possible cases:
+    # 1) (DLC only) converted velocity & acceleration
+    # 2) (DLC only) converted x/y coordinates
+    # 3) (non-converted) angular velocity & acceleration
+    # 4) (non-converted) x(DLC)/Y(Simi) velocity & acceleration
+    # 5) (non-converted) x(DLC)/Y(Simi) coordinates
+    if check_mouse_conversion(feature, cfg, stats_var=stats_var):
+        if feature in ["Velocity", "Acceleration"]:
+            f.supylabel(
+                ylabel_velocity_and_acceleration(feature, "x in cm", sampling_rate),
+                fontsize=STATS_PLOTS_SUPLABEL_SIZE,
+            )
+        else:
+            f.supylabel(feature + " (cm)", fontsize=STATS_PLOTS_SUPLABEL_SIZE)
     else:
-        f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE)
+        if feature in ["Velocity", "Acceleration"]:
+            if "Angle" in stats_var:
+                unit = "degrees"
+            else:
+                if tracking_software == "DLC":
+                    unit = "x in pixels"
+                elif tracking_software == "Simi":
+                    unit = "Y in (your units)"
+            f.supylabel(
+                ylabel_velocity_and_acceleration(feature, unit, sampling_rate),
+                fontsize=STATS_PLOTS_SUPLABEL_SIZE,
+            )
+        else:
+            f.supylabel(feature, fontsize=STATS_PLOTS_SUPLABEL_SIZE)
     figure_file_string = stats_var + " - Cluster-extent Test"
-    f.suptitle(figure_file_string, fontsize=PERM_PLOT_SUPLABEL_SIZE)
+    f.suptitle(figure_file_string, fontsize=STATS_PLOTS_SUPLABEL_SIZE)
     save_figures(f, results_dir, figure_file_string)
 
     # add figure to plot panel figures list
@@ -1739,10 +1766,12 @@ def plot_multcomp_results(
     group_names = folderinfo["group_names"]
     results_dir = folderinfo["results_dir"]
     contrasts = folderinfo["contrasts"]
+    sampling_rate = cfg["sampling_rate"]
     bin_num = cfg["bin_num"]
     group_color_dict = cfg["group_color_dict"]
     stats_threshold = cfg["stats_threshold"]
     plot_SE = cfg["plot_SE"]
+    tracking_software = cfg["tracking_software"]
     feature = stats_var.split(" ")[-1]
     dont_show_plots = cfg["dont_show_plots"]
     legend_outside = cfg["legend_outside"]
@@ -1788,30 +1817,29 @@ def plot_multcomp_results(
                     lw=STD_LW,
                     zorder=1,
                 )
-        # convert to cm (if needed) before plotting clusters
+        # adjust legend & convert to cm (if needed) before plotting clusters
         if type(ax) == np.ndarray:
-            # legend adjustments
             if legend_outside is True:
                 ax[c].legend(
-                    fontsize=PERM_PLOT_LEGEND_SIZE,
+                    fontsize=STATS_PLOT_LEGEND_SIZE,
                     loc="center left",
                     bbox_to_anchor=(1, 0.5),
                 )
             elif legend_outside is False:
-                ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
-            if check_mouse_conversion(feature, cfg):
-                ytickconvert_mm_to_cm(feature, ax[c])
-                ax[c].set_ylabel("")  # we use supylabel
+                ax[c].legend(fontsize=STATS_PLOT_LEGEND_SIZE)
+            if check_mouse_conversion(feature, cfg, stats_var=stats_var):
+                ytickconvert_mm_to_cm(ax[c])
         else:
-            # legend adjustments
             if legend_outside is True:
                 ax.legend(
-                    fontsize=PERM_PLOT_LEGEND_SIZE + 4,
+                    fontsize=STATS_PLOT_LEGEND_SIZE + 4,
                     loc="center left",
                     bbox_to_anchor=(1, 0.5),
                 )
             elif legend_outside is False:
-                ax.legend(fontsize=PERM_PLOT_LEGEND_SIZE + 4)
+                ax.legend(fontsize=STATS_PLOT_LEGEND_SIZE + 4)
+            if check_mouse_conversion(feature, cfg, stats_var=stats_var):
+                ytickconvert_mm_to_cm(ax)
         # plot significant clusters
         clusters = extract_multcomp_significance_clusters(
             multcomp_df, contrast, stats_threshold
@@ -1847,31 +1875,57 @@ def plot_multcomp_results(
             # legend adjustments
             if legend_outside is True:
                 ax[c].legend(
-                    fontsize=PERM_PLOT_LEGEND_SIZE,
+                    fontsize=STATS_PLOT_LEGEND_SIZE,
                     loc="center left",
                     bbox_to_anchor=(1, 0.5),
                 )
             elif legend_outside is False:
-                ax[c].legend(fontsize=PERM_PLOT_LEGEND_SIZE)
+                ax[c].legend(fontsize=STATS_PLOT_LEGEND_SIZE)
         else:
             # legend adjustments
             if legend_outside is True:
                 ax.legend(
-                    fontsize=PERM_PLOT_LEGEND_SIZE + 4,
+                    fontsize=STATS_PLOT_LEGEND_SIZE + 4,
                     loc="center left",
                     bbox_to_anchor=(1, 0.5),
                 )
             elif legend_outside is False:
-                ax.legend(fontsize=PERM_PLOT_LEGEND_SIZE + 4)
-    f.supxlabel("Percentage", fontsize=PERM_PLOT_SUPLABEL_SIZE)
-    if check_mouse_conversion(feature, cfg):
-        f.supylabel(feature + " (cm)", fontsize=PERM_PLOT_SUPLABEL_SIZE)
+                ax.legend(fontsize=STATS_PLOT_LEGEND_SIZE + 4)
+    f.supxlabel("Percentage", fontsize=STATS_PLOTS_SUPLABEL_SIZE)
+    # ylabels depend on whether we converted mm to cm and on the feature
+    # code below calls the ylabel function for all possible cases:
+    # 1) (DLC only) converted velocity & acceleration
+    # 2) (DLC only) converted x/y coordinates
+    # 3) (non-converted) angular velocity & acceleration
+    # 4) (non-converted) x(DLC)/Y(Simi) velocity & acceleration
+    # 5) (non-converted) x(DLC)/Y(Simi) coordinates
+    if check_mouse_conversion(feature, cfg, stats_var=stats_var):
+        if feature in ["Velocity", "Acceleration"]:
+            f.supylabel(
+                ylabel_velocity_and_acceleration(feature, "x in cm", sampling_rate),
+                fontsize=STATS_PLOTS_SUPLABEL_SIZE,
+            )
+        else:
+            f.supylabel(feature + " (cm)", fontsize=STATS_PLOTS_SUPLABEL_SIZE)
     else:
-        f.supylabel(feature, fontsize=PERM_PLOT_SUPLABEL_SIZE)
+        if feature in ["Velocity", "Acceleration"]:
+            if "Angle" in stats_var:
+                unit = "degrees"
+            else:
+                if tracking_software == "DLC":
+                    unit = "x in pixels"
+                elif tracking_software == "Simi":
+                    unit = "Y in (your units)"
+            f.supylabel(
+                ylabel_velocity_and_acceleration(feature, unit, sampling_rate),
+                fontsize=STATS_PLOTS_SUPLABEL_SIZE,
+            )
+        else:
+            f.supylabel(feature, fontsize=STATS_PLOTS_SUPLABEL_SIZE)
     figure_file_string = stats_var + " - Tukey's Multiple Comparison Test"
     f.suptitle(
         figure_file_string,
-        fontsize=PERM_PLOT_SUPLABEL_SIZE,
+        fontsize=STATS_PLOTS_SUPLABEL_SIZE,
     )
     save_figures(f, results_dir, figure_file_string)
 
@@ -2009,7 +2063,8 @@ def plot_joint_y_by_average_SC(
         if tracking_software == "DLC":
             ax.set_title(group_name + " - Joint Y over average step cycle")
             if check_mouse_conversion("y", cfg):
-                ytickconvert_mm_to_cm("y", ax)
+                ytickconvert_mm_to_cm(ax)
+                ax.set_ylabel("y (cm)")
             else:
                 ax.set_ylabel("y (pixel)")
             figure_file_string = " - Joint y-coord.s over average step cycle"
@@ -2053,7 +2108,8 @@ def plot_joint_y_by_average_SC(
         if tracking_software == "DLC":
             ax.set_title(joint + "Y over average step cycle")
             if check_mouse_conversion("y", cfg):
-                ytickconvert_mm_to_cm("y", ax)
+                ytickconvert_mm_to_cm(ax)
+                ax.set_ylabel("y (cm)")
             else:
                 ax.set_ylabel("y (pixel)")
             figure_file_string = "- Y-coord.s over average step cycle"
@@ -2121,7 +2177,8 @@ def plot_joint_x_by_average_SC(
         if tracking_software == "DLC":
             ax.set_title(group_name + " - Joint X over average step cycle")
             if check_mouse_conversion("x", cfg):
-                ytickconvert_mm_to_cm("x", ax)
+                ytickconvert_mm_to_cm(ax)
+                ax.set_ylabel("x (cm)")
             else:
                 ax.set_ylabel("x (pixel)")
             figure_file_string = " - Joint x-coord.s over average step cycle"
@@ -2165,7 +2222,8 @@ def plot_joint_x_by_average_SC(
         if tracking_software == "DLC":
             ax.set_title(joint + "X over average step cycle")
             if check_mouse_conversion("x", cfg):
-                ytickconvert_mm_to_cm("x", ax)
+                ytickconvert_mm_to_cm(ax)
+                ax.set_ylabel("x (cm)")
             else:
                 ax.set_ylabel("x (pixel)")
             figure_file_string = "- X-coord.s over average step cycle"
@@ -2331,31 +2389,21 @@ def plot_x_velocities_by_average_SC(
         ax.set_xlabel("Percentage")
         if tracking_software == "DLC":
             if check_mouse_conversion("x", cfg):
-                ytickconvert_mm_to_cm("x", ax)
-                ax.set_ylabel(  # overwriting convert-funcs ylabel
-                    "Velocity (x in cm / "
-                    + str(int((1 / sampling_rate) * 1000))
-                    + " ms)"
-                )
+                ytickconvert_mm_to_cm(ax)
+                unit = "x in cm"
             else:
-                ax.set_ylabel(
-                    "Velocity (x in pixels / "
-                    + str(int((1 / sampling_rate) * 1000))
-                    + " ms)"
-                )
+                unit = "x in pixels"
             ax.set_title(group_name + " - Joint velocities over average step cycle")
         elif tracking_software == "Simi":
-            ax.set_ylabel(
-                "Velocity (Y in (your_units) / "
-                + str(int((1 / sampling_rate) * 1000))
-                + " ms)"
-            )
+            unit = "Y in (your units)"
             ax.set_title(
                 group_name
                 + " - "
                 + which_leg
                 + " joint velocities over average step cycle"
             )
+        # note unit-input-argument is depending on conditional statements above
+        ax.set_ylabel(ylabel_velocity_and_acceleration("Velocity", unit, sampling_rate))
         figure_file_string = " - Joint velocities over average step cycle"
         save_figures(f, results_dir, group_name + figure_file_string)
 
@@ -2390,25 +2438,13 @@ def plot_x_velocities_by_average_SC(
         ax.set_xlabel("Percentage")
         if tracking_software == "DLC":
             if check_mouse_conversion("x", cfg):
-                ytickconvert_mm_to_cm("x", ax)
-                ax.set_ylabel(
-                    "Velocity (x in cm / "
-                    + str(int((1 / sampling_rate) * 1000))
-                    + " ms)"
-                )
+                ytickconvert_mm_to_cm(ax)
+                unit = "x in cm"
             else:
-                ax.set_ylabel(
-                    "Velocity (x in pixels / "
-                    + str(int((1 / sampling_rate) * 1000))
-                    + " ms)"
-                )
-            ax.set_title(joint + "velocities over average step cycle")
+                unit = "x in pixels"
+            ax.set_title(group_name + " - Joint velocities over average step cycle")
         elif tracking_software == "Simi":
-            ax.set_ylabel(
-                "Velocity (Y in (your_units) / "
-                + str(int((1 / sampling_rate) * 1000))
-                + " ms)"
-            )
+            unit = "Y in (your units)"
             if joint + "Velocity" in g_avg_dfs[g].columns:
                 title_leg = ""
             else:
@@ -2416,6 +2452,8 @@ def plot_x_velocities_by_average_SC(
             ax.set_title(
                 title_leg + " " + joint + " velocities over average step cycle"
             )
+        # note unit-input-argument is depending on conditional statements above
+        ax.set_ylabel(ylabel_velocity_and_acceleration("Velocity", unit, sampling_rate))
         figure_file_string = "- Velocities over average step cycle"
         save_figures(f, results_dir, joint + figure_file_string)
 
@@ -2468,7 +2506,7 @@ def plot_angular_velocities_by_average_SC(
             ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel(
-            "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + " ms)"
+            ylabel_velocity_and_acceleration("Velocity", "degrees", sampling_rate)
         )
         if tracking_software == "DLC":
             ax.set_title(group_name + " - Angular velocities over average step cycle")
@@ -2512,7 +2550,7 @@ def plot_angular_velocities_by_average_SC(
             ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel(
-            "Velocity (degree / " + str(int((1 / sampling_rate) * 1000)) + " ms)"
+            ylabel_velocity_and_acceleration("Velocity", "degrees", sampling_rate)
         )
         if tracking_software == "DLC":
             ax.set_title(angle + "- Angular velocities over average step cycle")
@@ -2551,14 +2589,24 @@ def save_figures(figure, results_dir, figure_file_string):
     )
 
 
-def ytickconvert_mm_to_cm(feature, axis):
+def ytickconvert_mm_to_cm(axis):
     """Convert axis y-ticks from mm (of data) to cm"""
     y_ticks = axis.get_yticks()
     y_ticklabels = []
     for t in y_ticks:
         y_ticklabels.append(str(round(t / 10, 2)))
     axis.set_yticks(y_ticks, labels=y_ticklabels)
-    axis.set_ylabel(feature + " (cm)")
+
+
+def ylabel_velocity_and_acceleration(feature, unit, sampling_rate):
+    """Generate strings for velo and accel ylabels"""
+    ylabel = feature
+    ylabel += " ("
+    ylabel += unit  # unit must reflect conversion (x in pixel or cm)
+    ylabel += " / "
+    ylabel += str(int((1 / sampling_rate) * 1000))
+    ylabel += " ms)"
+    return ylabel
 
 
 def extract_feature_column(df, joint, legname, feature):
@@ -2650,20 +2698,30 @@ def write_issues_to_textfile(message, results_dir):
         f.write(message)
 
 
-def check_mouse_conversion(feature, cfg):
-    """For mouse plots: check if we have to convert mm to cm (for plotting x or y)"""
+def check_mouse_conversion(feature, cfg, **kwargs):
+    """For DLC: check if we have to convert mm to cm (for plotting x/y/velo/accel)"""
     if "convert_to_mm" not in cfg.keys():
         return False
     else:
         if cfg["convert_to_mm"] is False:
             return False
         else:
+            # case 1: just x/y in mm
             if (
                 feature.endswith(" x")
-                | feature.endswith(" y")
-                | (feature in ["x", "y"])
+                or feature.endswith(" y")
+                or (feature in ["x", "y"])
             ):
                 return True
+            if feature in ["Velocity", "Acceleration"]:
+                # case 2: velo/accel as in plot functions
+                if "stats_var" not in kwargs.keys():
+                    return True
+                # case 3: velo/accel as in stats functions
+                # => make sure it's not angular!
+                elif "Angle" not in kwargs["stats_var"]:
+                    return True
+    return False
 
 
 def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cfg):
