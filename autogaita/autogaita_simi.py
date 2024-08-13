@@ -1876,8 +1876,8 @@ def plot_joint_z_by_y(
             except:
                 ax[j].set_title(figure_file_string)
         # figure stuff
-        f[j].supxlabel("y (m)")
-        f[j].supylabel("z (m)")
+        f[j].supxlabel("y")
+        f[j].supylabel("z")
         save_figures(f[j], results_dir, figure_file_string)
         if dont_show_plots:
             plt.close(f[j])
@@ -1981,7 +1981,7 @@ def plot_joint_y_by_time(
                 ax[j].set_title(figure_file_string)
         # figure stuff
         f[j].supxlabel("Time (s)")
-        f[j].supylabel("y (m)")
+        f[j].supylabel("y")
         save_figures(f[j], results_dir, figure_file_string)
         if dont_show_plots:
             plt.close(f[j])
@@ -2178,8 +2178,8 @@ def plot_stickdiagram(
             ax[0].set_title(figure_file_string)
         except:
             ax.set_title(figure_file_string)
-    f.supxlabel("y (m)")
-    f.supylabel("z (m)")
+    f.supxlabel("y")
+    f.supylabel("z")
     save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -2226,7 +2226,7 @@ def plot_joint_z_by_average_SC(
     elif legend_outside is False:
         ax.legend()
     ax.set_xlabel("Percentage")
-    ax.set_ylabel("z (m)")
+    ax.set_ylabel("z")
     figure_file_string = (
         name + " - " + legname + " - Joint z-coord.s over average step cycle"
     )
@@ -2277,7 +2277,7 @@ def plot_joint_y_by_average_SC(
     elif legend_outside is False:
         ax.legend()
     ax.set_xlabel("Percentage")
-    ax.set_ylabel("y (m)")
+    ax.set_ylabel("y")
     figure_file_string = (
         name + " - " + legname + " - Joint y-coord.s over average step cycle"
     )
