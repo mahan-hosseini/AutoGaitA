@@ -56,20 +56,24 @@ def extract_cfg():
     cfg["dont_show_plots"] = True
     cfg["convert_to_mm"] = True
     cfg["pixel_to_mm_ratio"] = 3.76
-    cfg["x_sc_broken_threshold"] = 200  # optional cfg
+    cfg["x_sc_broken_threshold"] = 200
     cfg["y_sc_broken_threshold"] = 50
     cfg["x_acceleration"] = True
     cfg["angular_acceleration"] = True
     cfg["save_to_xls"] = True
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
-    cfg["normalise_height_at_SC_level"] = True
+    cfg["standardise_y_at_SC_level"] = False
+    cfg["standardise_y_to_a_joint"] = True
+    cfg["y_standardisation_joint"] = ["Knee"]
     cfg["plot_joint_number"] = 3
     cfg["color_palette"] = "viridis"
     cfg["legend_outside"] = True
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
     cfg["analyse_average_x"] = True
+    cfg["standardise_x_coordinates"] = True
+    cfg["x_standardisation_joint"] = ["Hind paw tao"]
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",

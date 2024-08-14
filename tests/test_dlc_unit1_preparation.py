@@ -8,6 +8,7 @@ from autogaita.autogaita_dlc import (
 )
 from hypothesis import given, strategies as st, settings, HealthCheck
 import os
+import copy
 import math
 import numpy as np
 import pandas as pd
@@ -37,7 +38,9 @@ def extract_info(tmp_path):
 def extract_folderinfo():
     folderinfo = {}
     folderinfo["root_dir"] = "tests/test_data/dlc_data"
-    folderinfo["sctable_filename"] = "25mm.xlsx"  # has to be an excel file
+    folderinfo["sctable_filename"] = (
+        "correct_annotation_table.xlsx"  # has to be an excel file
+    )
     folderinfo["data_string"] = "SIMINewOct"
     folderinfo["beam_string"] = "BeamTraining"
     folderinfo["premouse_string"] = "Mouse"
@@ -55,20 +58,24 @@ def extract_cfg():
     cfg["dont_show_plots"] = True
     cfg["convert_to_mm"] = True
     cfg["pixel_to_mm_ratio"] = 3.76
-    cfg["x_sc_broken_threshold"] = 200  # optional cfg
+    cfg["x_sc_broken_threshold"] = 200
     cfg["y_sc_broken_threshold"] = 50
     cfg["x_acceleration"] = True
     cfg["angular_acceleration"] = True
     cfg["save_to_xls"] = True
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
-    cfg["normalise_height_at_SC_level"] = False
+    cfg["standardise_y_at_SC_level"] = False
+    cfg["standardise_y_to_a_joint"] = True
+    cfg["y_standardisation_joint"] = ["Knee"]
     cfg["plot_joint_number"] = 3
     cfg["color_palette"] = "viridis"
     cfg["legend_outside"] = True
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
-    cfg["analyse_average_x"] = False
+    cfg["analyse_average_x"] = True
+    cfg["standardise_x_coordinates"] = True
+    cfg["x_standardisation_joint"] = ["Hind paw tao"]
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",
@@ -114,11 +121,26 @@ def test_wrong_postmouse_string(extract_info, extract_folderinfo, extract_cfg):
     assert "Unable to identify ANY RELEVANT FILES for" in content
 
 
-def test_global_min_normalisation(extract_info, extract_folderinfo, extract_cfg):
+def test_global_min_standardisation(extract_info, extract_folderinfo, extract_cfg):
     extract_cfg["subtract_beam"] = False
+    extract_cfg["standardise_y_to_a_joint"] = False
     data = some_prep(extract_info, extract_folderinfo, extract_cfg)
     y_cols = [c for c in data.columns if c.endswith(" y")]
     assert data[y_cols].min().min() == 0
+    # approach here is find difference between global & standardisation joint minma and
+    # see if all y cols' difference is equal to that
+    # => this implies that joint-based y-standardisation worked
+    global_and_standardisation_joints_y_min_diff = data[
+        extract_cfg["y_standardisation_joint"][0] + " y"
+    ].min()
+    global_min_data = data.copy()
+    extract_cfg["standardise_y_to_a_joint"] = True
+    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    assert np.allclose(  # use np.allclose here because we are comparing arrays
+        global_min_data[y_cols],
+        data[y_cols] + global_and_standardisation_joints_y_min_diff,
+        atol=1e-9,
+    )
 
 
 def test_datas_indexing_and_time_column(extract_info, extract_folderinfo, extract_cfg):
@@ -150,10 +172,34 @@ def test_move_csv_datafile_to_results_dir(extract_info, extract_folderinfo):
             )
 
 
-def test_error_if_no_hindlimb_joints(extract_info, extract_folderinfo, extract_cfg):
-    extract_cfg["hind_joints"] = ["not_in_data"]
+def test_error_if_no_cfgkey_joints(extract_info, extract_folderinfo, extract_cfg):
+    full_cfg = copy.deepcopy(extract_cfg)  # no referencing here - we need copies!
+    for cfg_key in [
+        "hind_joints",
+        "x_standardisation_joint",
+        "y_standardisation_joint",
+    ]:
+        extract_cfg = copy.deepcopy(full_cfg)  # here too!
+        extract_cfg[cfg_key] = ["not_in_data"]
+        data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+        with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
+            content = f.read()
+        if cfg_key == "hind_joints":
+            assert "hind limb joint names" in content
+        elif cfg_key == "x_standardisation_joint":
+            assert "x-coordinate standardisation joint" in content
+        elif cfg_key == "y_standardisation_joint":
+            assert "y-coordinate standardisation joint" in content
+        assert data is None
+    # cannot loop case of x & y joints being broken
+    extract_cfg = copy.deepcopy(full_cfg)
+    extract_cfg["x_standardisation_joint"] = ["not_in_data"]
+    extract_cfg["y_standardisation_joint"] = ["not_in_data"]
     data = some_prep(extract_info, extract_folderinfo, extract_cfg)
-    assert data is None
+    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
+        content = f.read()
+        assert "x & y-coordinate standardisation joint" in content
+        assert data is None
 
 
 def test_plot_joint_error(extract_data_using_some_prep, extract_cfg, extract_info):

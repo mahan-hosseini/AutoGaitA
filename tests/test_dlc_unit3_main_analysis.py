@@ -1,7 +1,13 @@
-from autogaita.autogaita_dlc import some_prep
+from autogaita.autogaita_dlc import (
+    some_prep,
+    extract_stepcycles,
+    analyse_and_export_stepcycles,
+)
 from autogaita.autogaita_dlc import add_angles, add_velocities
+from autogaita.autogaita_dlc import standardise_x_y_and_add_features_to_one_step
 from hypothesis import given
 import hypothesis.strategies as st
+from hypothesis.extra.numpy import arrays
 import os
 import numpy as np
 import pandas as pd
@@ -31,7 +37,9 @@ def extract_info(tmp_path):
 def extract_folderinfo():
     folderinfo = {}
     folderinfo["root_dir"] = "tests/test_data/dlc_data"
-    folderinfo["sctable_filename"] = "25mm.xlsx"  # has to be an excel file
+    folderinfo["sctable_filename"] = (
+        "correct_annotation_table.xlsx"  # has to be an excel file
+    )
     folderinfo["data_string"] = "SIMINewOct"
     folderinfo["beam_string"] = "BeamTraining"
     folderinfo["premouse_string"] = "Mouse"
@@ -56,13 +64,17 @@ def extract_cfg():
     cfg["save_to_xls"] = True
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
-    cfg["normalise_height_at_SC_level"] = False
+    cfg["standardise_y_at_SC_level"] = False
+    cfg["standardise_y_to_a_joint"] = True
+    cfg["y_standardisation_joint"] = ["Knee"]  # "Hind paw tao"]
     cfg["plot_joint_number"] = 3
     cfg["color_palette"] = "viridis"
     cfg["legend_outside"] = True
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
-    cfg["analyse_average_x"] = False
+    cfg["analyse_average_x"] = True
+    cfg["standardise_x_coordinates"] = True
+    cfg["x_standardisation_joint"] = ["Hind paw tao"]
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",
@@ -86,7 +98,7 @@ def extract_cfg():
 # %%.......  main analysis: sc-lvl y-norm, features, df-creation & export ..........
 
 
-def test_dlc_height_normalisation_no_beam():
+def test_height_standardisation_no_beam():
     """Unit test normalising heights if there is no beam"""
     # Create a sample DataFrame
     data = {
@@ -115,7 +127,7 @@ cases = [
     ((0, 0), (1, 0), (2, 0), 0)
 ]  # fmt: skip
 @pytest.mark.parametrize("angle_x_y, lower_x_y, upper_x_y, expected_angle", cases)
-def test_dlc_angles(angle_x_y, lower_x_y, upper_x_y, expected_angle):
+def test_angles(angle_x_y, lower_x_y, upper_x_y, expected_angle):
     step = (
         pd.Series(
             {
@@ -141,9 +153,27 @@ def test_dlc_angles(angle_x_y, lower_x_y, upper_x_y, expected_angle):
     assert step["angle Angle"].values == expected_angle
 
 
+def test_angles_not_depending_on_x_coordinate_standardisation(
+    extract_info, extract_folderinfo, extract_cfg
+):
+    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    all_cycles = extract_stepcycles(data, extract_info, extract_folderinfo, extract_cfg)
+    results = analyse_and_export_stepcycles(
+        data, all_cycles, extract_info, extract_folderinfo, extract_cfg
+    )
+    all_steps_data = results["all_steps_data"]
+    x_standardised_steps_data = results["x_standardised_steps_data"]
+    angle_cols = [col for col in all_steps_data.columns if col.endswith("Angle")]
+    for angle_col in angle_cols:
+        pytest.set_trace()
+        pdt.assert_series_equal(
+            all_steps_data[angle_col], x_standardised_steps_data[angle_col]
+        )
+
+
 @given(x_y_coordinates = st.tuples(st.one_of(st.integers(), st.floats()), st.one_of(st.integers(), st.floats())))  # fmt: skip
 @pytest.mark.filterwarnings("ignore:invalid value encountered")
-def test_dlc_angles_is_nan_when_all_points_are_at_same_location(x_y_coordinates):
+def test_angles_is_nan_when_all_points_are_at_same_location(x_y_coordinates):
     angle_x_y = lower_x_y = upper_x_y = x_y_coordinates
     step = (
         pd.Series(
@@ -170,7 +200,7 @@ def test_dlc_angles_is_nan_when_all_points_are_at_same_location(x_y_coordinates)
     assert step["angle Angle"].isna().all()
 
 
-def test_dlc_velocities():
+def test_velocities():
     """Unit test of how velocities are added
     A Note
     ------
@@ -209,8 +239,3 @@ def test_dlc_velocities():
     }
     for key in expected_values.keys():
         assert all(expected_values[key] == step[key])
-
-
-# what happens if we hit run
-if __name__ == "__main__":
-    test_dlc_velocities()

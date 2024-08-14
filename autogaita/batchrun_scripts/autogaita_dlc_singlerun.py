@@ -33,13 +33,17 @@ def dlc_singlerun():
     cfg["save_to_xls"] = True
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
-    cfg["normalise_height_at_SC_level"] = True
+    cfg["standardise_y_at_SC_level"] = True
+    cfg["standardise_y_to_a_joint"] = True
+    cfg["y_standardisation_joint"] = ["Hind paw tao"]
     cfg["plot_joint_number"] = 3
     cfg["color_palette"] = "viridis"
     cfg["legend_outside"] = True
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
     cfg["analyse_average_x"] = True
+    cfg["standardise_x_coordinates"] = True
+    cfg["x_standardisation_joint"] = ["Hind paw tao"]
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",
