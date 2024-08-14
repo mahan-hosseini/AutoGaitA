@@ -262,8 +262,9 @@ def some_prep(info, folderinfo, cfg):
     beam_hind_jointadd = cfg["beam_hind_jointadd"]
     beam_fore_jointadd = cfg["beam_fore_jointadd"]
     direction_joint = cfg["direction_joint"]
-    x_standardisation_joint = cfg["x_standardisation_joint"]
-    y_standardisation_joint = cfg["y_standardisation_joint"]
+    # important to unpack to vars hand not to cfg since cfg is overwritten in multiruns!
+    x_standardisation_joint = cfg["x_standardisation_joint"][0]
+    y_standardisation_joint = cfg["y_standardisation_joint"][0]
     # store config json file @ group path
     # !!! NU - do this @ mouse path!
     group_path = results_dir.split(name)[0]
@@ -528,8 +529,6 @@ def check_and_expand_cfg(data, cfg, info):
         )
         if not cfg["x_standardisation_joint"]:
             broken_standardisation_joint += "x"
-        else:
-            cfg["x_standardisation_joint"] = cfg["x_standardisation_joint"][0]
     if cfg["standardise_y_to_a_joint"]:
         cfg["y_standardisation_joint"] = check_and_fix_cfg_strings(
             data, cfg, "y_standardisation_joint", info
@@ -539,8 +538,6 @@ def check_and_expand_cfg(data, cfg, info):
                 broken_standardisation_joint += " & y"
             else:
                 broken_standardisation_joint += "y"
-        else:
-            cfg["y_standardisation_joint"] = cfg["y_standardisation_joint"][0]
     if broken_standardisation_joint:
         no_standardisation_joint_message = (
             "\n******************\n! CRITICAL ERROR !\n******************\n"
@@ -1284,7 +1281,8 @@ def standardise_x_y_and_add_features_to_one_step(step, cfg):
     if cfg["standardise_y_at_SC_level"] is True:
         y_cols = [col for col in step_copy.columns if col.endswith("y")]
         if cfg["standardise_y_to_a_joint"] is True:
-            this_y_min = step_copy[cfg["y_standardisation_joint"] + "y"].min()
+            # note the [0] here is important because it's still a list of len=1!!
+            this_y_min = step_copy[cfg["y_standardisation_joint"][0] + "y"].min()
         else:
             this_y_min = step_copy[y_cols].min().min()
         step_copy[y_cols] -= this_y_min
@@ -1294,8 +1292,9 @@ def standardise_x_y_and_add_features_to_one_step(step, cfg):
     if cfg["standardise_x_coordinates"] is True:
         x_norm_step = step_copy.copy()
         x_cols = [col for col in x_norm_step.columns if col.endswith("x")]
+        # note the [0] here is important because it's still a list of len=1!!
         min_x_standardisation_joint = x_norm_step[
-            cfg["x_standardisation_joint"] + "x"
+            cfg["x_standardisation_joint"][0] + "x"
         ].min()
         x_norm_step[x_cols] -= min_x_standardisation_joint
         x_norm_step = add_features(x_norm_step, cfg)
