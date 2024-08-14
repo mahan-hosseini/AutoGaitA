@@ -165,7 +165,6 @@ def test_angles_not_depending_on_x_coordinate_standardisation(
     x_standardised_steps_data = results["x_standardised_steps_data"]
     angle_cols = [col for col in all_steps_data.columns if col.endswith("Angle")]
     for angle_col in angle_cols:
-        pytest.set_trace()
         pdt.assert_series_equal(
             all_steps_data[angle_col], x_standardised_steps_data[angle_col]
         )
