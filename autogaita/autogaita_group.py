@@ -51,8 +51,10 @@ CONFIG_JSON_FILENAME = "config.json"
 # EXPORT XLS
 NORM_SHEET_NAME = "Normalised Stepcycles"
 ORIG_SHEET_NAME = "Original Stepcycles"
+X_STANDARDISED_SHEET_NAME = "X-Standardised Stepcycles"
 NORM_GROUP_SHEET_NAME = "Normalised Group Stepcycles"
 ORIG_GROUP_SHEET_NAME = "Original Group Stepcycles"
+X_STAND_GROUP_SHEET_NAME = "X-Standardised Group Stepcycles"
 AVG_GROUP_SHEET_NAME = "Average Group Stepcycles"
 STD_GROUP_SHEET_NAME = "Standard Deviation Group Stepcycles"
 G_AVG_GROUP_SHEET_NAME = "Grand Average Group Stepcycles"
@@ -124,6 +126,8 @@ def group(folderinfo, cfg):
     folderinfo, cfg = some_prep(folderinfo, cfg)
 
     # ...................................  import  .....................................
+    # => DLC ONLY: dfs is x-standardised automatically if 1st-level standardised x
+    #   -- As a result all average & std dfs are x-standardised as well
     dfs, raw_dfs, cfg = import_data(folderinfo, cfg)
 
     # .................................  avgs & stds  ..................................
@@ -372,10 +376,18 @@ def import_data(folderinfo, cfg):
     save_to_xls = cfg["save_to_xls"]
     which_leg = cfg["which_leg"]
     tracking_software = cfg["tracking_software"]
+    standardise_x_coordinates = False  # update next if needed
+    if "standardise_x_coordinates" in cfg.keys():
+        standardise_x_coordinates = cfg["standardise_x_coordinates"]
 
     # prepare lists of group-level dfs
-    dfs = [pd.DataFrame(data=None)] * len(group_names)
-    raw_dfs = [pd.DataFrame(data=None)] * len(group_names)
+    df_dict = {
+        "Normalised": [pd.DataFrame(data=None)] * len(group_names),
+        "Original": [pd.DataFrame(data=None)] * len(group_names),
+    }
+    if standardise_x_coordinates:
+        df_dict["X-Standardised"] = [pd.DataFrame(data=None)] * len(group_names)
+
     # loop over each subfolder in each group-dir (i.e. "Results")
     for g, group_dir in enumerate(group_dirs):
         group_name = group_names[g]  # for import and combine function
@@ -392,7 +404,7 @@ def import_data(folderinfo, cfg):
                         folder + " - " + ORIG_SHEET_NAME + ".csv",
                     )
                 )
-            ) | (
+            ) or (
                 os.path.exists(
                     os.path.join(
                         group_dir,
@@ -402,61 +414,69 @@ def import_data(folderinfo, cfg):
                 )
             ):
                 valid_results_folders.append(folder)
-        # below local function keeps loading group-dfs and adds current dataset to it
-        # => called once for normalised and once for original data
-        for name in valid_results_folders:
-            dfs[g] = import_and_combine_dfs(
-                dfs[g],
-                group_name,
-                group_dir,
-                tracking_software,
-                name,
-                "Normalised",
-                which_leg,
+        # loop over all valid results folders and add to the different types
+        # of group-dfs (which_df can be Original, Normalised or X-Standardised)
+        for which_df in df_dict.keys():
+            for name in valid_results_folders:
+                df_dict[which_df][g] = import_and_combine_dfs(
+                    df_dict[which_df][g],
+                    which_df,
+                    group_name,
+                    group_dir,
+                    tracking_software,
+                    name,
+                    which_leg,
+                    results_dir,
+                    cfg,
+                )
+            df_dict[which_df][g] = final_df_checks_and_save_to_xls(
+                df_dict[which_df][g],
                 results_dir,
-                cfg,
-            )
-            raw_dfs[g] = import_and_combine_dfs(
-                raw_dfs[g],
                 group_name,
-                group_dir,
+                which_df,
+                save_to_xls[g],
                 tracking_software,
-                name,
-                "Original",
-                which_leg,
-                results_dir,
-                cfg,
             )
-        # reorder the columns we added
-        if tracking_software == "DLC":
-            cols = [ID_COL, "Run", "Stepcycle", "Flipped", "Time"]
-        elif tracking_software == "Simi":
-            cols = [ID_COL, "Leg", "Stepcycle", "Time"]
-        dfs[g] = dfs[g][cols + [c for c in dfs[g].columns if c not in cols]]
-        raw_dfs[g] = raw_dfs[g][cols + [c for c in raw_dfs[g].columns if c not in cols]]
-        # for both dfs, check if there's rows with consecutive np.nan entries
-        # => this happened while testing for some strange edge case I didn't understand)
-        # => if so, remove them so we only have 1 row of np.nan
-        all_nan_df = dfs[g].isna().all(axis=1)  # normalised dfs
-        consecutive_nan_df = all_nan_df & all_nan_df.shift(fill_value=False)
-        dfs[g] = dfs[g][~consecutive_nan_df]
-        all_nan_raw_df = raw_dfs[g].isna().all(axis=1)  # original (raw) dfs
-        consecutive_nan_raw_df = all_nan_raw_df & all_nan_raw_df.shift(fill_value=False)
-        raw_dfs[g] = raw_dfs[g][~consecutive_nan_raw_df]
-        # save to files & return
-        norm_filepath = os.path.join(
-            results_dir, group_names[g] + " - " + NORM_GROUP_SHEET_NAME  # norm SCs
-        )
-        save_results_sheet(dfs[g], save_to_xls[g], norm_filepath)
-        orig_filepath = os.path.join(
-            results_dir, group_names[g] + " - " + ORIG_GROUP_SHEET_NAME  # orig SCs
-        )
-        save_results_sheet(raw_dfs[g], save_to_xls[g], orig_filepath)
     # test: is bin_num is consistent across our groups
     # => if so, add it as well as one_bin_in_% to cfg
-    cfg["bin_num"] = test_bin_num_consistency(dfs, group_names, results_dir)
+    cfg["bin_num"] = test_bin_num_consistency(
+        df_dict["Normalised"], group_names, results_dir
+    )
     cfg["one_bin_in_sc_percent"] = 100 / cfg["bin_num"]
+    dfs = df_dict["Normalised"]
+    raw_dfs = df_dict["Original"]
     return dfs, raw_dfs, cfg
+
+
+def final_df_checks_and_save_to_xls(
+    this_df, results_dir, group_name, which_df, save_to_xls, tracking_software
+):
+    """Some final checks and saving to xls
+    Note
+    ----
+    this_df is a given df of a given condition and of a given group (we have a nested loop outside of this function!)
+    => After valid results folders have been added (i.e. the group-df has been
+       completed)
+    """
+    # reorder the columns we added
+    if tracking_software == "DLC":
+        cols = [ID_COL, "Run", "Stepcycle", "Flipped", "Time"]
+    elif tracking_software == "Simi":
+        cols = [ID_COL, "Leg", "Stepcycle", "Time"]
+    this_df = this_df[cols + [c for c in this_df.columns if c not in cols]]
+    # check if there's rows with consecutive np.nan entries
+    # => this happened while testing for some strange edge case I didn't understand)
+    # => if so, remove them so we only have 1 row of np.nan
+    all_nan_df = this_df.isna().all(axis=1)
+    consecutive_nan_df = all_nan_df & all_nan_df.shift(fill_value=False)
+    this_df = this_df[~consecutive_nan_df]
+    # save as sheet file and return
+    sheet_constant_string = ORIG_SHEET_NAME.split(" ")[1]
+    filepath = os.path.join(
+        results_dir, group_name + " - " + which_df + " " + sheet_constant_string
+    )
+    save_results_sheet(this_df, save_to_xls, filepath)
+    return this_df
 
 
 def test_bin_num_consistency(dfs, group_names, results_dir):
@@ -553,11 +573,11 @@ def test_PCA_and_stats_variables(df, group_name, name, results_dir, cfg):
 
 def import_and_combine_dfs(
     group_df,
+    which_df,
     group_name,
     group_dir,
     tracking_software,
     name,
-    which_df,
     which_leg,
     results_dir,
     cfg,
@@ -567,6 +587,8 @@ def import_and_combine_dfs(
         this_sheet_name = NORM_SHEET_NAME
     elif which_df == "Original":
         this_sheet_name = ORIG_SHEET_NAME
+    elif which_df == "X-Standardised":
+        this_sheet_name = X_STANDARDISED_SHEET_NAME
     fullfilepath = os.path.join(group_dir, name, name + " - " + this_sheet_name)
     if tracking_software == "DLC":
         df = load_sheet_file(fullfilepath)
