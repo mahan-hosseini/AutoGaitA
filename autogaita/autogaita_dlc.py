@@ -1917,7 +1917,7 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
                 ax.plot(this_xs, this_ys, color=this_color, label=this_label)
             else:
                 ax.plot(this_xs, this_ys, color=this_color)
-    ax.set_title(name + " - Hindlimb Stick Diagram")
+    ax.set_title(name + " - Primary Stick Diagram")
     # legend adjustments
     if legend_outside is True:
         ax.legend(
@@ -1933,7 +1933,7 @@ def plot_hindlimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
     else:
         ax.set_xlabel("x (pixels)")
         ax.set_ylabel("y (pixels)")
-    figure_file_string = " - Hindlimb Stick Diagram"
+    figure_file_string = " - Primary Stick Diagram"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
@@ -1981,7 +1981,7 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
                 ax.plot(this_xs, this_ys, color=this_color, label=this_label)
             else:
                 ax.plot(this_xs, this_ys, color=this_color)
-    ax.set_title(name + " - Forelimb Stick Diagram")
+    ax.set_title(name + " - Secondary Stick Diagram")
     if convert_to_mm:
         tickconvert_mm_to_cm(ax, "both")
     # legend adjustments
@@ -1999,7 +1999,7 @@ def plot_forelimb_stickdiagram(all_steps_data, sc_idxs, info, cfg, plot_panel_in
     else:
         ax.set_xlabel("x (pixels)")
         ax.set_ylabel("y (pixels)")
-    figure_file_string = " - Forelimb Stick Diagram"
+    figure_file_string = " - Secondary Stick Diagram"
     save_figures(f, results_dir, name, figure_file_string)
     if dont_show_plots:
         plt.close(f)
