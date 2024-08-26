@@ -15,8 +15,15 @@ import copy
 # %% global constants
 FG_COLOR = "#5a7d9a"  # steel blue
 HOVER_COLOR = "#8ab8fe"  # carolina blue
+HEADER_FONT_NAME = "Calibri Bold"
 HEADER_TXT_COLOR = "#ffffff"  # white
-HEADER_FONT_SIZE = 20
+HEADER_FONT_SIZE = 30
+MAIN_HEADER_FONT_SIZE = 35
+TEXT_FONT_NAME = "Calibri"
+TEXT_FONT_SIZE = 20
+ADV_CFG_TEXT_FONT_SIZE = TEXT_FONT_SIZE - 4
+CLOSE_COLOR = "#840000"  # dark red
+CLOSE_HOVER_COLOR = "#650021"  # maroon
 MIN_GROUP_NUM = 2
 MAX_GROUP_NUM = 6
 CONFIG_FILE_NAME = "group_gui_config.json"
@@ -127,7 +134,7 @@ def group_gui():
     root_dimensions = (root_w, root_h, root_x, root_y)
     # set the dimensions of the screen and where it is placed
     root.geometry("%dx%d+%d+%d" % root_dimensions)
-    root.title("Group GaitA")
+    root.title("AutoGaitA Group")
 
     # nested function: main window
     def mainwindow(root, group_number, root_dimensions):
@@ -147,7 +154,7 @@ def group_gui():
         width=root_w,
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
     )
     welcomeheader_label.grid(row=0, column=0, columnspan=MAX_GROUP_NUM - 1)
     # contrast number message
@@ -157,7 +164,7 @@ def group_gui():
         text=numberstring,
         width=root_w,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
     numberheader_label.grid(row=1, column=0, columnspan=MAX_GROUP_NUM - 1, pady=(20, 5))
     # number of groups to contrast radio buttons
@@ -172,7 +179,7 @@ def group_gui():
                 value=i,
                 fg_color=FG_COLOR,
                 hover_color=HOVER_COLOR,
-                font=("Britannic Bold", HEADER_FONT_SIZE),
+                font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
             )
         )
         group_buttons[-1].grid(row=2, column=i - MIN_GROUP_NUM)
@@ -182,7 +189,7 @@ def group_gui():
         text="Continue",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: (
             mainwindow(root, group_number, root_dimensions),
             root.withdraw(),
@@ -223,32 +230,13 @@ def build_mainwindow(root, group_number, root_dimensions):
         # ........................  geometry & intro section  ..........................
         # geometry
         mainwindow = ctk.CTkToplevel(root)
-        mainwindow.title("Group GaitA")
-        mainwindow.geometry(f"{screen_width}x{screen_height}+0+0")
+        mainwindow.title("AutoGaitA Group")
+        # set the dimensions of the screen and where it is placed
+        # => have it half-wide starting at 1/4 of screen's width (dont change w & x!)
+        mainwindow.geometry(
+            f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0"
+        )
         fix_window_after_its_creation(mainwindow)
-        # welcome message
-        welcomestring = "Please read info below carefully."
-        welcomeheader_label = ctk.CTkLabel(
-            mainwindow,
-            text=welcomestring,
-            width=screen_width,
-            fg_color=FG_COLOR,
-            text_color=HEADER_TXT_COLOR,
-            font=("Britannic Bold", HEADER_FONT_SIZE),
-        )
-        welcomeheader_label.grid(row=0, column=0, columnspan=2, sticky="nsew")
-        # info message
-        introstring = (
-            "This program performs group-level analyses on results obtained with "
-            + "AutoGaitA DLC or AutoGaitA Simi. \n\nFor this, it requires:"
-            + "\n1) Group names and paths to groups' /Results/ subfolders obtained our "
-            + "first-level programs."
-            + "\n2) A path to a folder where you would like group-results to be stored."
-        )
-        introheader_label = ctk.CTkLabel(
-            mainwindow, text=introstring, width=screen_width
-        )
-        introheader_label.grid(row=1, column=0, columnspan=2, pady=10)
 
         # ..........................  main configuration  ..............................
         # config header
@@ -258,9 +246,9 @@ def build_mainwindow(root, group_number, root_dimensions):
             width=screen_width,
             fg_color=FG_COLOR,
             text_color=HEADER_TXT_COLOR,
-            font=("Britannic Bold", HEADER_FONT_SIZE),
+            font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
         )
-        cfgheader_label.grid(row=2, column=0, columnspan=2, pady=10, sticky="nsew")
+        cfgheader_label.grid(row=0, column=0, columnspan=3, sticky="nsew")
         # load group names and dirs from the config file
         initial_names, initial_dirs = extract_group_names_and_dirs_from_json_file()
         # group names & dirs - variables
@@ -274,48 +262,85 @@ def build_mainwindow(root, group_number, root_dimensions):
         group_names_entries = []
         group_dirs_labels = []
         group_dirs_entries = []
-        row_counter = 3  # track row idxs for loop-widget-creation
+        # group number, name & dir labels
+        group_number_label = ctk.CTkLabel(
+            mainwindow,
+            text="Group Number",
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        )
+        group_number_label.grid(row=1, column=0)
+        group_name_label = ctk.CTkLabel(
+            mainwindow,
+            text="Name",
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        )
+        group_name_label.grid(row=1, column=1)
+        group_dir_label = ctk.CTkLabel(
+            mainwindow,
+            text="Path to first-level Results",
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        )
+        group_dir_label.grid(row=1, column=2)
+        row_counter = 2  # track row idxs for loop-widget-creation
+        # ...........................  group-widgets-loop  .............................
         for g in range(group_number):
             this_groups_number = g + 1
-            # group names - labels
+            # group numbers - labels
             group_names_labels.append(
                 ctk.CTkLabel(
                     mainwindow,
-                    text="Group " + str(this_groups_number) + "'s Name",
+                    text=str(this_groups_number),
+                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
                 )
             )
             group_names_labels[-1].grid(row=row_counter, column=0)
             # group names - entries
             group_names_entries.append(
-                ctk.CTkEntry(mainwindow, textvariable=group_names[g])
+                ctk.CTkEntry(
+                    mainwindow,
+                    textvariable=group_names[g],
+                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+                )
             )
-            group_names_entries[-1].grid(row=row_counter + 1, column=0)
-            # group dirs - labels
-            group_dir_string = (
-                "Path to Group " + str(this_groups_number) + "'s /Results/ subfolder"
-            )
-            group_dirs_labels.append(ctk.CTkLabel(mainwindow, text=group_dir_string))
-            group_dirs_labels[-1].grid(row=row_counter, column=1)
+            group_names_entries[-1].grid(row=row_counter, column=1)
             # group dirs - entries
             group_dirs_entries.append(
-                ctk.CTkEntry(mainwindow, textvariable=group_dirs[g])
+                ctk.CTkEntry(
+                    mainwindow,
+                    textvariable=group_dirs[g],
+                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+                )
             )
-            group_dirs_entries[-1].grid(row=row_counter + 1, column=1, sticky="ew")
+            group_dirs_entries[-1].grid(row=row_counter, column=2, sticky="ew")
             # update row counter
-            row_counter += 2
+            row_counter += 1
         # call row_counter a better name
         last_group_row = row_counter
+        # empty label 1 for spacing
+        empty_label_one = ctk.CTkLabel(mainwindow, text="")
+        empty_label_one.grid(row=last_group_row, column=0, columnspan=3, sticky="nsew")
         # results dir
         results_dir = tk.StringVar(
             mainwindow,
             extract_results_dir_from_json_file(),
         )
-        results_dir_string = "Where do you want group-results to be saved?"
-        results_dir_label = ctk.CTkLabel(mainwindow, text=results_dir_string)
-        results_dir_label.grid(row=last_group_row, column=0, columnspan=2, sticky="ew")
-        results_dir_entry = ctk.CTkEntry(mainwindow, textvariable=results_dir)
+        results_dir_string = "Path to save group-analysis results to"
+        results_dir_label = ctk.CTkLabel(
+            mainwindow, text=results_dir_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+        )
+        results_dir_label.grid(
+            row=last_group_row + 1, column=0, columnspan=3, sticky="ew"
+        )
+        results_dir_entry = ctk.CTkEntry(
+            mainwindow, textvariable=results_dir, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+        )
         results_dir_entry.grid(
-            row=last_group_row + 1, column=0, columnspan=2, sticky="ew"
+            row=last_group_row + 2, column=0, columnspan=3, sticky="ew"
+        )
+        # empty label 2 for spacing
+        empty_label_two = ctk.CTkLabel(mainwindow, text="")
+        empty_label_two.grid(
+            row=last_group_row + 3, column=0, columnspan=3, sticky="nsew"
         )
         # Perm Test
         perm_string = "Run cluster-extent permutation test"
@@ -327,8 +352,9 @@ def build_mainwindow(root, group_number, root_dimensions):
             offvalue=False,
             fg_color=FG_COLOR,
             hover_color=HOVER_COLOR,
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
         )
-        perm_checkbox.grid(row=last_group_row + 2, column=0, columnspan=2, pady=10)
+        perm_checkbox.grid(row=last_group_row + 4, column=0, columnspan=3, pady=10)
         # ANOVA info
         ANOVA_string = "Run ANOVA - if yes: choose design below"
         ANOVA_checkbox = ctk.CTkCheckBox(
@@ -339,9 +365,10 @@ def build_mainwindow(root, group_number, root_dimensions):
             offvalue=False,
             fg_color=FG_COLOR,
             hover_color=HOVER_COLOR,
-            command=lambda: change_ANOVA_buttons_state(ANOVA_buttons, cfg),
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+            command=lambda: change_ANOVA_buttons_state(ANOVA_buttons),
         )
-        ANOVA_checkbox.grid(row=last_group_row + 3, column=0, columnspan=2, pady=10)
+        ANOVA_checkbox.grid(row=last_group_row + 5, column=0, columnspan=3, pady=10)
         # ANOVA design
         ANOVA_buttons_strings = ["Mixed ANOVA", "RM ANOVA"]
         ANOVA_buttons = []
@@ -354,50 +381,44 @@ def build_mainwindow(root, group_number, root_dimensions):
                     value=ANOVA_buttons_strings[i],
                     fg_color=FG_COLOR,
                     hover_color=HOVER_COLOR,
-                    state="disabled",
+                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
                 )
             )
             if cfg["do_anova"].get() == True:
                 ANOVA_buttons[i].configure(state="normal")
-            ANOVA_buttons[-1].grid(row=last_group_row + 4, column=i)
+            ANOVA_buttons[-1].grid(row=last_group_row + 6, column=i, columnspan=2)
+        # initialise ANOVA buttons state by running this function once
+        change_ANOVA_buttons_state(ANOVA_buttons)
+
         # ....................  advanced cfg & define features  ........................
+        # empty label 3 for spacing
+        empty_label_three = ctk.CTkLabel(mainwindow, text="")
+        empty_label_three.grid(
+            row=last_group_row + 7, column=0, columnspan=3, sticky="nsew"
+        )
+
         # advanced cfg
-        cfgwindow_label = ctk.CTkLabel(
+        cfgwindow_button = ctk.CTkButton(
             mainwindow,
             text="Advanced Configuration",
             fg_color=FG_COLOR,
-            text_color=HEADER_TXT_COLOR,
-            font=("Britannic Bold", HEADER_FONT_SIZE),
-        )
-        cfgwindow_label.grid(
-            row=last_group_row + 5, column=0, pady=(15, 0), sticky="nsew"
-        )
-        cfgwindow_button = ctk.CTkButton(
-            mainwindow,
-            text="Advanced cfg",
-            fg_color=FG_COLOR,
             hover_color=HOVER_COLOR,
+            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
             command=lambda: (advanced_cfgwindow(mainwindow, root_dimensions)),
         )
         cfgwindow_button.grid(
-            row=last_group_row + 6, column=0, sticky="nsew", pady=15, padx=30
+            row=last_group_row + 8,
+            column=0,
+            columnspan=3,
         )
-        # define features
-        definefeatures_label = ctk.CTkLabel(
-            mainwindow,
-            text="Define Features",
-            fg_color=FG_COLOR,
-            text_color=HEADER_TXT_COLOR,
-            font=("Britannic Bold", HEADER_FONT_SIZE),
-        )
-        definefeatures_label.grid(
-            row=last_group_row + 5, column=1, pady=(15, 0), sticky="nsew"
-        )
+
+        # define features button
         definefeatures_button = ctk.CTkButton(
             mainwindow,
             text="I am ready - define features!",
             fg_color=FG_COLOR,
             hover_color=HOVER_COLOR,
+            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
             command=lambda: (
                 definefeatures_window(
                     mainwindow,
@@ -409,9 +430,28 @@ def build_mainwindow(root, group_number, root_dimensions):
                 ),
             ),
         )
-        definefeatures_button.grid(
-            row=last_group_row + 6, column=1, sticky="nsew", pady=15, padx=30
+        definefeatures_button.grid(row=last_group_row + 9, column=0, columnspan=3)
+
+        # empty label four for spacing
+        empty_label_four = ctk.CTkLabel(mainwindow, text="")
+        empty_label_four.grid(
+            row=last_group_row + 10, column=1, columnspan=3, sticky="ns"
         )
+
+        # close & exit button
+        close_button = ctk.CTkButton(
+            mainwindow,
+            text="Exit",
+            fg_color=CLOSE_COLOR,
+            hover_color=CLOSE_HOVER_COLOR,
+            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+            command=lambda: (
+                mainwindow.withdraw(),
+                root.deiconify(),
+                mainwindow.after(5000, mainwindow.destroy),
+            ),
+        )
+        close_button.grid(row=last_group_row + 11, column=0, columnspan=3)
 
         # maximise widgets to fit fullscreen
         maximise_widgets(mainwindow)
@@ -426,35 +466,53 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     # build window
     cfgwindow = ctk.CTkToplevel(mainwindow)
     cfgwindow.title("Advanced Configuration")
-    cfgwindow.geometry(f"{screen_width}x{screen_height}+0+0")
+    cfgwindow.geometry(f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0")
     fix_window_after_its_creation(cfgwindow)
 
     # number of permutations
     permutation_number_string = "Number of permutations of the cluster-extent test"
-    permutation_number_label = ctk.CTkLabel(cfgwindow, text=permutation_number_string)
+    permutation_number_label = ctk.CTkLabel(
+        cfgwindow, text=permutation_number_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
     permutation_number_label.grid(row=0, column=0)
     permutation_number_entry = ctk.CTkEntry(
-        cfgwindow, textvariable=cfg["permutation_number"]
+        cfgwindow,
+        textvariable=cfg["permutation_number"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    permutation_number_entry.grid(row=1, column=0)
+    permutation_number_entry.grid(row=1, column=0, sticky="n")
 
     # statistical threshold of significance
     stats_threshold_string = "Alpha level of statistical significance (as a decimal)"
-    stats_threshold_label = ctk.CTkLabel(cfgwindow, text=stats_threshold_string)
+    stats_threshold_label = ctk.CTkLabel(
+        cfgwindow, text=stats_threshold_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
     stats_threshold_label.grid(row=2, column=0)
-    stats_threshold_entry = ctk.CTkEntry(cfgwindow, textvariable=cfg["stats_threshold"])
-    stats_threshold_entry.grid(row=3, column=0)
+    stats_threshold_entry = ctk.CTkEntry(
+        cfgwindow,
+        textvariable=cfg["stats_threshold"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    stats_threshold_entry.grid(row=3, column=0, sticky="n")
 
     # number of PCs
     number_of_PCs_string = "How many principal components to compute?"
-    number_of_PCs_label = ctk.CTkLabel(cfgwindow, text=number_of_PCs_string)
+    number_of_PCs_label = ctk.CTkLabel(
+        cfgwindow, text=number_of_PCs_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
     number_of_PCs_label.grid(row=4, column=0)
-    number_of_PCs_entry = ctk.CTkEntry(cfgwindow, textvariable=cfg["number_of_PCs"])
-    number_of_PCs_entry.grid(row=5, column=0)
+    number_of_PCs_entry = ctk.CTkEntry(
+        cfgwindow,
+        textvariable=cfg["number_of_PCs"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    number_of_PCs_entry.grid(row=5, column=0, sticky="n")
 
     # color palette
     color_palette_string = "Choose figures' color palette"
-    color_palette_label = ctk.CTkLabel(cfgwindow, text=color_palette_string)
+    color_palette_label = ctk.CTkLabel(
+        cfgwindow, text=color_palette_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
     color_palette_label.grid(row=6, column=0)
     color_palette_entry = ctk.CTkOptionMenu(
         cfgwindow,
@@ -463,8 +521,9 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         fg_color=FG_COLOR,
         button_color=FG_COLOR,
         button_hover_color=HOVER_COLOR,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    color_palette_entry.grid(row=7, column=0)
+    color_palette_entry.grid(row=7, column=0, sticky="n")
 
     # plot SE
     plot_SE_string = "Plot standard error instead of standard deviation as error bars"
@@ -476,6 +535,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
     plot_SE_box.grid(row=8, column=0)
 
@@ -489,6 +549,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
     legend_outside_checkbox.grid(row=9, column=0)
 
@@ -502,6 +563,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         offvalue=False,
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
     save_PCA_video_checkbox.grid(row=10, column=0)
 
@@ -515,8 +577,29 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         offvalue=False,
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
     dont_show_plots_checkbox.grid(row=11, column=0)
+
+    # which leg of human data to analyse
+    which_leg_string = (
+        "If first-level was AutoGaitA Simi: which leg's step-cycles to analyse?"
+    )
+    which_leg_label = ctk.CTkLabel(
+        cfgwindow, text=which_leg_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
+    which_leg_label.grid(row=12, column=0)
+    which_leg_options = ["left", "right"]  # !!! NU - "both" functionality
+    which_leg_optionmenu = ctk.CTkOptionMenu(
+        cfgwindow,
+        values=which_leg_options,
+        variable=cfg["which_leg"],
+        fg_color=FG_COLOR,
+        button_color=FG_COLOR,
+        button_hover_color=HOVER_COLOR,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    which_leg_optionmenu.grid(row=13, column=0, sticky="n")
 
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -524,9 +607,10 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         text="I am done, update cfg.",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: cfgwindow.destroy(),
     )
-    adv_cfg_done_button.grid(row=12, column=0, sticky="nsew", pady=20, padx=80)
+    adv_cfg_done_button.grid(row=14, column=0, sticky="nsew", pady=20, padx=80)
 
     # maximise widgets to fit fullscreen
     maximise_widgets(cfgwindow)
@@ -626,7 +710,7 @@ def definefeatures_window(
         text="Statistics",
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
     )
     stats_label.grid(row=0, column=0, sticky="nsew")
     # PCA label
@@ -635,7 +719,7 @@ def definefeatures_window(
         text="PCA",
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
     )
     PCA_label.grid(row=0, column=1, sticky="nsew")
 
@@ -673,7 +757,7 @@ def definefeatures_window(
                 variable=var,
                 fg_color=FG_COLOR,
                 hover_color=HOVER_COLOR,
-                font=("Britannic Bold", HEADER_FONT_SIZE - 5),
+                font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
             )
             this_checkbox.grid(row=row_counter, column=col_counter, sticky="nsew")
             # if user doesn't want to do stats, dont have them choose features
@@ -691,46 +775,13 @@ def definefeatures_window(
         # maximise widgets to fit frame (of scrollbar!)
         maximise_widgets(frame)
 
-    # which leg label
-    which_leg_label = ctk.CTkLabel(
-        featureswindow,
-        text="Choose Body Side",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
-    )
-    which_leg_label.grid(row=2 + scrollbar_rows, column=0, sticky="nsew")
-    # which leg of human data to analyse
-    which_leg_string = (
-        "If you ran AutoGaitA Simi first: which body side's behaviour "
-        " (e.g. step-cycles) do you want to analyse?"
-    )
-    which_leg_label = ctk.CTkLabel(featureswindow, text=which_leg_string)
-    which_leg_label.grid(row=3 + scrollbar_rows, column=0, sticky="ew")
-    which_leg_options = ["left", "right"]  # !!! NU - "both" functionality
-    which_leg_optionmenu = ctk.CTkOptionMenu(
-        featureswindow,
-        values=which_leg_options,
-        variable=cfg["which_leg"],
-        fg_color=FG_COLOR,
-        button_color=FG_COLOR,
-        button_hover_color=HOVER_COLOR,
-    )
-    which_leg_optionmenu.grid(row=4 + scrollbar_rows, column=0)
     # run
-    runheader_label = ctk.CTkLabel(
-        featureswindow,
-        text="Run Analysis",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
-    )
-    runheader_label.grid(row=2 + scrollbar_rows, column=1, sticky="nsew")
     run_button = ctk.CTkButton(
         featureswindow,
         text="I am ready - run analysis!",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
         command=lambda: (
             build_donewindow(
                 group_names,
@@ -743,7 +794,9 @@ def definefeatures_window(
             get_selected_variables(),
         ),
     )
-    run_button.grid(row=4 + scrollbar_rows, column=1, sticky="nsew", pady=40, padx=40)
+    run_button.grid(
+        row=1 + scrollbar_rows, column=0, columnspan=2, sticky="nsew", pady=20, padx=200
+    )
 
     # maximise widgets to fit fullscreen
     maximise_widgets(featureswindow)
@@ -759,36 +812,53 @@ def build_donewindow(
     h = screen_height
     donewindow = ctk.CTkToplevel(root)
     donewindow.title("GaitA Ready :)")
-    donewindow_w = w * (1 / 2)
+    donewindow_w = w * (3 / 5)
     donewindow_h = h * (1 / 5)
-    donewindow_x = w * (1 / 4)
+    donewindow_x = (w - donewindow_w) // 2
     donewindow_y = h * (1 / 2.5)
     donewindow.geometry(
         "%dx%d+%d+%d" % (donewindow_w, donewindow_h, donewindow_x, donewindow_y)
     )
     fix_window_after_its_creation(donewindow)
+
     # labels
-    done_label1_string = "Your results will be saved in a subfolder of your directory"
-    done_label1 = ctk.CTkLabel(donewindow, text=done_label1_string, width=donewindow_w)
-    done_label1.grid(row=0, column=0)
+    done_label1_string = "Your results will be saved as your data is processed"
+    done_label1 = ctk.CTkLabel(
+        donewindow,
+        text=done_label1_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label1.grid(row=0, column=0, sticky="nsew")
     done_label2_string = (
         "Please see the Python command window for progress "
-        + "and the plots panel for an overview of all plots."
+        + "and the figure panel for an overview of all plots."
     )
-    done_label2 = ctk.CTkLabel(donewindow, text=done_label2_string, width=donewindow_w)
-    done_label2.grid(row=1, column=0)
+    done_label2 = ctk.CTkLabel(
+        donewindow,
+        text=done_label2_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label2.grid(row=1, column=0, sticky="nsew")
     done_label3_string = (
         "You may start another analysis while we are "
         + "processing - however your PC might slow down a bit. "
     )
-    done_label3 = ctk.CTkLabel(donewindow, text=done_label3_string, width=donewindow_w)
-    done_label3.grid(row=2, column=0)
+    done_label3 = ctk.CTkLabel(
+        donewindow,
+        text=done_label3_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label3.grid(row=2, column=0, sticky="nsew")
     done_label4_string = (
         "Thank you for using AutoGaitA! Feel free to "
-        + "email me about bugs/feedback at autogaita@fz-juelich.de - MH."
+        + "contact me on Github or at autogaita@fz-juelich.de - MH."
     )
-    done_label4 = ctk.CTkLabel(donewindow, text=done_label4_string, width=donewindow_w)
-    done_label4.grid(row=3, column=0)
+    done_label4 = ctk.CTkLabel(
+        donewindow,
+        text=done_label4_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label4.grid(row=3, column=0, sticky="nsew")
 
     # ..................................................................................
     # ........................  IMPORTANT - prepare folderinfo .........................
@@ -805,6 +875,7 @@ def build_donewindow(
         text="Run!",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
         command=lambda: (
             update_config_file(folderinfo, cfg),
             run_analysis(folderinfo, cfg),
@@ -814,9 +885,9 @@ def build_donewindow(
             root.deiconify(),
         ),
     )
-    done_button.grid(row=4, column=0, sticky="nsew", pady=10, padx=20)
-    # maximise button only
-    donewindow.grid_rowconfigure(4, weight=1)
+    done_button.grid(row=4, column=0, sticky="nsew", pady=10, padx=200)
+
+    maximise_widgets(donewindow)
 
 
 # %%..................  LOCAL FUNCTION(S) #5 - RUN GROUP ANALYSIS  .....................
@@ -1004,7 +1075,7 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
 # %%...............  LOCAL FUNCTION(S) #6 - VARIOUS HELPER FUNCTIONS  ..................
 
 
-def change_ANOVA_buttons_state(ANOVA_buttons, cfg):
+def change_ANOVA_buttons_state(ANOVA_buttons):
     """Change the state of ANOVA radio button widgets based on whether user wants
     to perform an ANOVA or not.
     """

@@ -12,8 +12,15 @@ import json
 # %% global constants
 FG_COLOR = "#c0737a"  # dusty rose
 HOVER_COLOR = "#b5485d"  # dark rose
+HEADER_FONT_NAME = "Calibri Bold"
+HEADER_FONT_SIZE = 30
 HEADER_TXT_COLOR = "#ffffff"  # white
-HEADER_FONT_SIZE = 20
+MAIN_HEADER_FONT_SIZE = 35
+TEXT_FONT_NAME = "Calibri"
+TEXT_FONT_SIZE = 20
+ADV_CFG_TEXT_FONT_SIZE = TEXT_FONT_SIZE - 4
+CLOSE_COLOR = "#840000"  # dark red
+CLOSE_HOVER_COLOR = "#650021"  # maroon
 CONFIG_FILE_NAME = "simi_gui_config.json"
 INT_VARS = ["sampling_rate", "bin_num", "plot_joint_number"]
 LIST_VARS = ["joints"]
@@ -127,10 +134,16 @@ def simi_gui():
     w, h, x, y = screen_width, screen_height, 0, 0
     root_dimensions = (w, h, x, y)
     # set the dimensions of the screen and where it is placed
-    root.geometry(f"{screen_width}x{screen_height}+0+0")
+    # => have it half-wide starting at 1/4 of screen's width (dont change w & x!)
+    root.geometry(f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0")
     root.title("Simi GaitA")
     fix_window_after_its_creation(root)
     configure_the_icon(root)
+
+    # nested function: advanced configuration
+    def advanced_cfg_window(cfg):
+        """Advanced configuration window"""
+        build_cfg_window(root, cfg, root_dimensions)
 
     # nested function: run windows
     def donewindow(results, root, root_dimensions):
@@ -152,34 +165,7 @@ def simi_gui():
     cfg = extract_cfg_from_json_file(root)
     results = extract_results_from_json_file(root)
 
-    # ............................  top section  .......................................
-    # welcome message
-    welcomestring = "Welcome to AutoGaitA Simi! Please read info below " + "carefully."
-    welcomeheader_label = ctk.CTkLabel(
-        root,
-        text=welcomestring,
-        width=w,
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
-    )
-    welcomeheader_label.grid(row=0, column=0, columnspan=2, sticky="nsew")
-    # info message
-    introstring = (
-        "This program analyses kinematics after tracking with Simi Motion."
-        + "\n\nFor this, it requires:"
-        + "\n1) A data XLS-file of joint (i.e., key point) coordinates per "
-        + "animal/subject. \n2) A (group-level) Annotation Table Excel file (see "
-        + "documentation)"
-        + "\n\nPlease place all these files into a single folder, enter configuration "
-        + "(customise joint names & angle definitions if desired) & hit run."
-    )
-    introheader_label = ctk.CTkLabel(root, text=introstring, width=w)
-    introheader_label.grid(row=1, column=0, columnspan=2)
-
-    # ..................................................................................
     # .........................  main configuration  ...................................
-    # ..................................................................................
     # config header
     cfgheader_label = ctk.CTkLabel(
         root,
@@ -187,32 +173,47 @@ def simi_gui():
         width=w,
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
     )
-    cfgheader_label.grid(row=2, column=0, columnspan=2, sticky="nsew")
+    cfgheader_label.grid(row=0, column=0, columnspan=2, sticky="nsew")
 
-    # ............................  left section  ......................................
     # root directory
-    rootdir_string = "Directory location of the folder containing the files to analyse"
-    rootdir_label = ctk.CTkLabel(root, text=rootdir_string)
-    rootdir_label.grid(row=3, column=0)
-    rootdir_entry = ctk.CTkEntry(root, textvariable=results["root_dir"])
-    rootdir_entry.grid(row=4, column=0)
+    rootdir_string = "Directory containing the files to be analysed:"
+    rootdir_label = ctk.CTkLabel(
+        root, text=rootdir_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
+    rootdir_label.grid(row=1, column=0, columnspan=2, sticky="w")
+    rootdir_entry = ctk.CTkEntry(
+        root, textvariable=results["root_dir"], font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
+    rootdir_entry.grid(row=1, column=1)
 
-    # postname info label 1 & 2
-    postname_info_label_string_1 = (
-        "Files may either be named: 1) ID.xls(x) or 2) ID+STRING.xls(x)"
+    # stepcycle latency XLS
+    SCXLS_string = "Name of the Annotation Table Excel file:"
+    SCXLS_label = ctk.CTkLabel(
+        root, text=SCXLS_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
     )
-    postname_info_label_label_1 = ctk.CTkLabel(root, text=postname_info_label_string_1)
-    postname_info_label_label_1.grid(row=5, column=0)
-    postname_info_label_string_2 = (
-        "If 2), the STRING has to be constant across datasets!"
+    SCXLS_label.grid(row=2, column=0, columnspan=2, sticky="w")
+    SCXLS_entry = ctk.CTkEntry(
+        root,
+        textvariable=results["sctable_filename"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    postname_info_label_label_2 = ctk.CTkLabel(root, text=postname_info_label_string_2)
-    postname_info_label_label_2.grid(row=6, column=0)
+    SCXLS_entry.grid(row=2, column=1)
+    # sampling rate
+    samprate_label = ctk.CTkLabel(
+        root,
+        text="Sampling rate of videos in Hertz (frames/second):",
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    samprate_label.grid(row=3, column=0, columnspan=2, sticky="w")
+    samprate_entry = ctk.CTkEntry(
+        root, textvariable=cfg["sampling_rate"], font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
+    samprate_entry.grid(row=3, column=1)
 
     # postname present checkbox
-    postname_flag_string = "I have a constant string that follows IDs in data files"
+    postname_flag_string = "I have a constant string that follows IDs in filenames."
     postname_flag_checkbox = ctk.CTkCheckBox(
         root,
         text=postname_flag_string,
@@ -221,34 +222,83 @@ def simi_gui():
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
         command=lambda: change_postname_entry_state(postname_entry, results),
     )
-    postname_flag_checkbox.grid(row=7, column=0)
+    postname_flag_checkbox.grid(row=4, column=0, columnspan=2)
     # data string
     postname_string = "The constant string is:"
-    postname_label = ctk.CTkLabel(root, text=postname_string)
-    postname_label.grid(row=8, column=0)
+    postname_label = ctk.CTkLabel(
+        root, text=postname_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
+    postname_label.grid(row=5, column=0, sticky="e")
     postname_entry = ctk.CTkEntry(
-        root, textvariable=results["postname_string"], state="disabled"
+        root,
+        textvariable=results["postname_string"],
+        state="disabled",
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    postname_entry.grid(row=9, column=0)
+    postname_entry.grid(row=5, column=1, sticky="w")
 
-    # .............................  right section  ....................................
-    # stepcycle latency XLS
-    SCXLS_string = "Name of the Annotation Table Excel file"
-    SCXLS_label = ctk.CTkLabel(root, text=SCXLS_string)
-    SCXLS_label.grid(row=3, column=1)
-    SCXLS_entry = ctk.CTkEntry(root, textvariable=results["sctable_filename"])
-    SCXLS_entry.grid(row=4, column=1)
-    # sampling rate
-    samprate_label = ctk.CTkLabel(
-        root, text="Insert sampling rate of videos (frames/second)"
+    # empty label 1 (for spacing)
+    empty_label_one = ctk.CTkLabel(root, text="")
+    empty_label_one.grid(row=8, column=0)
+
+    # ..........................  advanced cfg section  ................................
+
+    # advanced header string
+    advanced_cfg_header_string = "Advanced Configuration"
+    advanced_cfg_header_label = ctk.CTkLabel(
+        root,
+        text=advanced_cfg_header_string,
+        width=w,
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
     )
-    samprate_label.grid(row=5, column=1)
-    samprate_entry = ctk.CTkEntry(root, textvariable=cfg["sampling_rate"])
-    samprate_entry.grid(row=6, column=1)
+    advanced_cfg_header_label.grid(row=9, column=0, columnspan=2, sticky="nsew")
+
+    # column name information window
+    column_info_string = "Customise Joints & Angles"
+    column_info_button = ctk.CTkButton(
+        root,
+        text=column_info_string,
+        fg_color=FG_COLOR,
+        hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        command=lambda: build_column_info_window(root, cfg, root_dimensions),
+    )
+    column_info_button.grid(row=10, column=0, columnspan=2)
+
+    # advanced cfg
+    cfg_window_button = ctk.CTkButton(
+        root,
+        text="Advanced Configuration",
+        fg_color=FG_COLOR,
+        hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        command=lambda: (advanced_cfg_window(cfg)),
+    )
+    cfg_window_button.grid(row=11, column=0, columnspan=2)
+
+    # empty label 2 (for spacing)
+    empty_label_two = ctk.CTkLabel(root, text="")
+    empty_label_two.grid(row=12, column=0)
+
+    # ............................  run & exit section  ................................
+
+    # run analysis label
+    runheader_label = ctk.CTkLabel(
+        root,
+        text="Run Analysis",
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    )
+    runheader_label.grid(row=13, column=0, columnspan=3, sticky="nsew")
+
     # single video checkbox
-    singlevideo_string = "Do you want to only analyse one dataset?"
+    singlevideo_string = "Only analyse a single dataset."
     singlevideo_checkbox = ctk.CTkCheckBox(
         root,
         text=singlevideo_string,
@@ -257,175 +307,31 @@ def simi_gui():
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
-        command=lambda: change_ID_entry_state(ID_entry, results),
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        command=lambda: change_ID_entry_state(ID_entry),
     )
-    singlevideo_checkbox.grid(row=7, column=1)
+    singlevideo_checkbox.grid(row=14, column=0, columnspan=2)
+
     # ID string info
-    ID_label = ctk.CTkLabel(root, text="If so, what is the animal/subject's ID?")
-    ID_label.grid(row=8, column=1)
-    ID_entry = ctk.CTkEntry(root, textvariable=results["name"], state="disabled")
-    ID_entry.grid(row=9, column=1)
+    ID_label = ctk.CTkLabel(
+        root,
+        text="ID to be analysed:",
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    ID_label.grid(row=15, column=0, sticky="e")
+    ID_entry = ctk.CTkEntry(
+        root,
+        textvariable=results["name"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    ID_entry.grid(row=15, column=1, sticky="w")
+    change_ID_entry_state(ID_entry)
 
-    # ..................................................................................
-    # ........................  advanced configuration  ................................
-    # ..................................................................................
-    # advanced config header
-    advanced_cfgheader_label = ctk.CTkLabel(
-        root,
-        text="Advanced Configuration",
-        width=w,
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
-    )
-    advanced_cfgheader_label.grid(row=10, column=0, columnspan=2, sticky="nsew")
-
-    # .............................  left section  .....................................
-    # plot plots to python
-    showplots_string = "Don't show plots in GUI (save only)"
-    showplots_checkbox = ctk.CTkCheckBox(
-        root,
-        text=showplots_string,
-        variable=cfg["dont_show_plots"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-    )
-    showplots_checkbox.grid(row=11, column=0)
-    # bin_num
-    bin_num_string = "Number of bins to use for normalising the step cycle"
-    bin_num_label = ctk.CTkLabel(root, text=bin_num_string)
-    bin_num_label.grid(row=12, column=0)
-    bin_num_entry = ctk.CTkEntry(root, textvariable=cfg["bin_num"])
-    bin_num_entry.grid(row=13, column=0)
-    # number of joints to plot
-    plot_joint_num_string = "Number of joints to plot in detail"
-    plot_joint_num_label = ctk.CTkLabel(root, text=plot_joint_num_string)
-    plot_joint_num_label.grid(row=14, column=0)
-    plot_joint_num_entry = ctk.CTkEntry(root, textvariable=cfg["plot_joint_number"])
-    plot_joint_num_entry.grid(row=15, column=0)
-    # color palette
-    color_palette_string = "Choose figures' color palette"
-    color_palette_label = ctk.CTkLabel(root, text=color_palette_string)
-    color_palette_label.grid(row=16, column=0)
-    color_palette_entry = ctk.CTkOptionMenu(
-        root,
-        values=COLOR_PALETTES_LIST,
-        variable=cfg["color_palette"],
-        fg_color=FG_COLOR,
-        button_color=FG_COLOR,
-        button_hover_color=HOVER_COLOR,
-    )
-    color_palette_entry.grid(row=17, column=0)
-    # legend outside
-    legend_outside_string = "Plot legends outside of figures' panels"
-    legend_outside_checkbox = ctk.CTkCheckBox(
-        root,
-        text=legend_outside_string,
-        variable=cfg["legend_outside"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-    )
-    legend_outside_checkbox.grid(row=18, column=0)
-
-    # .............................  right section  ....................................
-    # x acceleration
-    x_accel_string = "Compute, plot & export joints' y-accelerations"
-    x_accel_box = ctk.CTkCheckBox(
-        root,
-        text=x_accel_string,
-        variable=cfg["y_acceleration"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-    )
-    x_accel_box.grid(row=11, column=1)
-    # angular acceleration
-    angular_accel_string = "Compute, plot & export angular accelerations"
-    angular_accel_box = ctk.CTkCheckBox(
-        root,
-        text=angular_accel_string,
-        variable=cfg["angular_acceleration"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-    )
-    angular_accel_box.grid(row=12, column=1)
-    # plot SE
-    plot_SE_string = "Use standard error instead of standard deviation for plots"
-    plot_SE_box = ctk.CTkCheckBox(
-        root,
-        text=plot_SE_string,
-        variable=cfg["plot_SE"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-    )
-    plot_SE_box.grid(row=13, column=1)
-    # height normalisation at each step cycle separately
-    height_normalisation_string = "Normalise heights of all step cycles separately"
-    height_normalisation_box = ctk.CTkCheckBox(
-        root,
-        text=height_normalisation_string,
-        variable=cfg["normalise_height_at_SC_level"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-    )
-    height_normalisation_box.grid(row=14, column=1)
-    # export average y coordinates
-    analyse_average_y_string = "Analyse y-coordinate averages"
-    analyse_average_y_box = ctk.CTkCheckBox(
-        root,
-        text=analyse_average_y_string,
-        variable=cfg["analyse_average_y"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-    )
-    analyse_average_y_box.grid(row=15, column=1)
-    # results dir
-    results_dir_string = (
-        "Save Results subfolders to directory location below instead of to data's"
-    )
-    results_dir_label = ctk.CTkLabel(root, text=results_dir_string)
-    results_dir_label.grid(row=16, column=1)
-    results_dir_entry = ctk.CTkEntry(root, textvariable=cfg["results_dir"])
-    results_dir_entry.grid(row=17, column=1)
-    # column name information window
-    column_info_string = "Customise joints and angles"
-    column_info_button = ctk.CTkButton(
-        root,
-        text=column_info_string,
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        command=lambda: build_column_info_window(root, cfg, root_dimensions),
-    )
-    column_info_button.grid(
-        row=18, column=1, sticky="nsew", rowspan=2, padx=10, pady=10
-    )
-    # .........................  run and done section  .................................
-    # run button
-    runheader_label = ctk.CTkLabel(
-        root,
-        text="Run Analysis",
-        width=w,
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
-    )
-    runheader_label.grid(row=20, column=0, columnspan=2, sticky="nsew")
+    # run analysis button
     run_button = ctk.CTkButton(
         root,
-        text="I am ready - run analysis!",
+        text="Run Analysis!",
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: (
             update_config_file(results, cfg),
             donewindow(results, root, root_dimensions),
@@ -433,29 +339,243 @@ def simi_gui():
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
     )
-    run_button.grid(row=21, column=0, sticky="nsew", padx=10, pady=(10, 5))
+    run_button.grid(row=16, column=0, columnspan=2, padx=10, pady=(10, 5))
+
+    # empty label 3 (for spacing)
+    empty_label_three = ctk.CTkLabel(root, text="")
+    empty_label_three.grid(row=17, column=0)
+
     # close program button
     close_button = ctk.CTkButton(
         root,
-        text="I am done - close program",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
+        text="Exit",
+        fg_color=CLOSE_COLOR,
+        hover_color=CLOSE_HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: (
             update_config_file(results, cfg),
             root.withdraw(),
             root.after(5000, root.destroy),
         ),
     )
-    close_button.grid(row=21, column=1, sticky="nsew", padx=10, pady=(10, 5))
+    close_button.grid(row=18, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # maximise widgets
     maximise_widgets(root)
+    root.columnconfigure(list(range(2)), weight=1, uniform="Silent_Creme")
 
     # main loop
     root.mainloop()
 
 
-# %%..............  LOCAL FUNCTION(S) #1 - BUILD COLUMN INFO WINDOW  ...................
+# %%..........  LOCAL FUNCTION(S) #1 - BUILD ADVANCED CFG WINDOW  .............
+
+
+def build_cfg_window(root, cfg, root_dimensions):
+    """Build advanced configuration window"""
+    # unpack root window dimensions
+    screen_width = root.winfo_screenwidth()  # width of the screen
+    screen_height = root.winfo_screenheight()  # height of the screen
+    # build window
+    cfg_window = ctk.CTkToplevel(root)
+    cfg_window.geometry(
+        f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0"
+    )
+    fix_window_after_its_creation(cfg_window)
+
+    #  ...........................  advanced analysis  .................................
+    # advanced analysis header
+    adv_cfg_analysis_header_label = ctk.CTkLabel(
+        cfg_window,
+        text="Analysis",
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    )
+    adv_cfg_analysis_header_label.grid(row=0, column=0, rowspan=2, sticky="nsew")
+    # bin_num
+    bin_num_string = "Number of bins to use for normalising the step cycle"
+    bin_num_label = ctk.CTkLabel(
+        cfg_window, text=bin_num_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+    )
+    bin_num_label.grid(row=2, column=0)
+    bin_num_entry = ctk.CTkEntry(
+        cfg_window,
+        textvariable=cfg["bin_num"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    bin_num_entry.grid(row=3, column=0)
+    # x acceleration
+    x_accel_string = "Compute, plot & export joints' y-accelerations"
+    x_accel_box = ctk.CTkCheckBox(
+        cfg_window,
+        text=x_accel_string,
+        variable=cfg["y_acceleration"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    x_accel_box.grid(row=4, column=0)
+    # angular acceleration
+    angular_accel_string = "Compute, plot & export angular accelerations"
+    angular_accel_box = ctk.CTkCheckBox(
+        cfg_window,
+        text=angular_accel_string,
+        variable=cfg["angular_acceleration"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    angular_accel_box.grid(row=5, column=0)
+    # height normalisation at each step cycle separately
+    height_normalisation_string = "Normalise heights of all step cycles separately"
+    height_normalisation_box = ctk.CTkCheckBox(
+        cfg_window,
+        text=height_normalisation_string,
+        variable=cfg["normalise_height_at_SC_level"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    height_normalisation_box.grid(row=6, column=0)
+    # export average y coordinates
+    analyse_average_y_string = "Analyse y-coordinate averages"
+    analyse_average_y_box = ctk.CTkCheckBox(
+        cfg_window,
+        text=analyse_average_y_string,
+        variable=cfg["analyse_average_y"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    analyse_average_y_box.grid(row=7, column=0)
+
+    #  .............................  advanced output  .................................
+    # advanced output header
+    adv_cfg_output_header_label = ctk.CTkLabel(
+        cfg_window,
+        text="Output",
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    )
+    adv_cfg_output_header_label.grid(row=8, column=0, rowspan=2, sticky="nsew")
+    # number of joints to plot
+    plot_joint_num_string = "Number of joints to plot in detail"
+    plot_joint_num_label = ctk.CTkLabel(
+        cfg_window,
+        text=plot_joint_num_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    plot_joint_num_label.grid(row=10, column=0)
+    plot_joint_num_entry = ctk.CTkEntry(
+        cfg_window,
+        textvariable=cfg["plot_joint_number"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    plot_joint_num_entry.grid(row=11, column=0)
+    # plot plots to python
+    showplots_string = "Don't show plots in GUI (save only)"
+    showplots_checkbox = ctk.CTkCheckBox(
+        cfg_window,
+        text=showplots_string,
+        variable=cfg["dont_show_plots"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    showplots_checkbox.grid(row=12, column=0)
+
+    # plot SE
+    plot_SE_string = "Use standard error instead of standard deviation for plots"
+    plot_SE_box = ctk.CTkCheckBox(
+        cfg_window,
+        text=plot_SE_string,
+        variable=cfg["plot_SE"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    plot_SE_box.grid(row=13, column=0)
+    # color palette
+    color_palette_string = "Choose figures' color palette"
+    color_palette_label = ctk.CTkLabel(
+        cfg_window,
+        text=color_palette_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    color_palette_label.grid(row=14, column=0)
+    color_palette_entry = ctk.CTkOptionMenu(
+        cfg_window,
+        values=COLOR_PALETTES_LIST,
+        variable=cfg["color_palette"],
+        fg_color=FG_COLOR,
+        button_color=FG_COLOR,
+        button_hover_color=HOVER_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    color_palette_entry.grid(row=15, column=0)
+    # legend outside
+    legend_outside_string = "Plot legends outside of figures' panels"
+    legend_outside_checkbox = ctk.CTkCheckBox(
+        cfg_window,
+        text=legend_outside_string,
+        variable=cfg["legend_outside"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    legend_outside_checkbox.grid(row=16, column=0)
+
+    # results dir
+    results_dir_string = (
+        "Save Results subfolders to directory below instead of to data's"
+    )
+    results_dir_label = ctk.CTkLabel(
+        cfg_window,
+        text=results_dir_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    results_dir_label.grid(row=17, column=0)
+    results_dir_entry = ctk.CTkEntry(
+        cfg_window,
+        textvariable=cfg["results_dir"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    results_dir_entry.grid(row=18, column=0)
+
+    # done button
+    adv_cfg_done_button = ctk.CTkButton(
+        cfg_window,
+        text="I am done, update cfg.",
+        fg_color=CLOSE_COLOR,
+        hover_color=CLOSE_HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        command=lambda: cfg_window.destroy(),
+    )
+    adv_cfg_done_button.grid(
+        row=19, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+    )
+    # maximise widgets
+    cfg_window.columnconfigure(0, weight=1, uniform="Silent_Creme")
+    cfg_window.rowconfigure(list(range(20)), weight=1, uniform="Silent_Creme")
+
+
+# %%..............  LOCAL FUNCTION(S) #2 - BUILD COLUMN INFO WINDOW  ...................
 def build_column_info_window(root, cfg, root_dimensions):
     """Build a window allowing users to configure custom column names if required"""
     columnwindow = ctk.CTkToplevel(root)
@@ -476,9 +596,15 @@ def build_column_info_window(root, cfg, root_dimensions):
         nrows = window.grid_size()[1]
         # add stuff based on to which case we are adding
         if key == "joints":
-            label = ctk.CTkLabel(window, text="Joint #" + str(len(cfg[key])))
+            label = ctk.CTkLabel(
+                window,
+                text="Joint #" + str(len(cfg[key])),
+                font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+            )
             label.grid(row=nrows + 1, column=0, sticky="ew")
-            entry = ctk.CTkEntry(window, textvariable=cfg[key][-1])
+            entry = ctk.CTkEntry(
+                window, textvariable=cfg[key][-1], font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+            )
             entry.grid(row=nrows + 2, column=0)
         elif key == "angles":
             for a, angle_key in enumerate(cfg[key]):
@@ -489,10 +615,16 @@ def build_column_info_window(root, cfg, root_dimensions):
                 elif angle_key == "upper_joint":
                     this_case = "Upper Joint"
                 label = ctk.CTkLabel(
-                    window, text=this_case + " #" + str(len(cfg[key][angle_key]))
+                    window,
+                    text=this_case + " #" + str(len(cfg[key][angle_key])),
+                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
                 )
                 label.grid(row=nrows + 1, column=angle_column + a, sticky="ew")
-                entry = ctk.CTkEntry(window, textvariable=cfg[key][angle_key][-1])
+                entry = ctk.CTkEntry(
+                    window,
+                    textvariable=cfg[key][angle_key][-1],
+                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+                )
                 entry.grid(row=nrows + 2, column=angle_column + a)
         # maximise columns
         for c in range(window.grid_size()[0]):
@@ -509,7 +641,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         text="Joints",
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
     )
     joint_label.grid(row=0, column=joint_column, sticky="nsew", pady=(0, 5))
     # initialise scrollable frame for hindlimb
@@ -523,6 +655,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         text="Add joint",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: (add_joint(joint_frame, "joints")),  # 2nd input = cfg's key
     )
     add_joint_button.grid(
@@ -541,7 +674,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         text="Angle Configuration",
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
     )
     angle_label.grid(
         row=0, column=angle_column, columnspan=3, sticky="nsew", pady=(0, 5)
@@ -568,6 +701,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         text="Add angle",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: add_joint(angle_frame, "angles"),  # 2nd input = cfg's key
     )
     add_angle_button.grid(
@@ -582,8 +716,9 @@ def build_column_info_window(root, cfg, root_dimensions):
     columncfg_done_button = ctk.CTkButton(
         columnwindow,
         text="I am done, update cfg!",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
+        fg_color=CLOSE_COLOR,
+        hover_color=CLOSE_HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: (columnwindow.destroy()),
     )
     columncfg_done_button.grid(
@@ -591,8 +726,8 @@ def build_column_info_window(root, cfg, root_dimensions):
         column=joint_column,
         columnspan=4,
         sticky="nsew",
-        padx=5,
-        pady=(10, 5),
+        padx=200,
+        pady=10,
     )
     # maximise everything in columnwindow
     maximise_widgets(columnwindow)
@@ -616,14 +751,22 @@ def initialise_labels_and_entries(window, key, which_case_string, *args):
         column_number = 0
     for j, joint in enumerate(this_var):
         joint_labels[j] = ctk.CTkLabel(
-            window, text=which_case_string + " #" + str(j + 1)
+            window,
+            text=which_case_string + " #" + str(j + 1),
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
         )
         joint_labels[j].grid(row=row_counter, column=column_number, sticky="ew")
         row_counter += 1
         if type(key) is str:
-            joint_entries[j] = ctk.CTkEntry(window, textvariable=cfg[key][j])
+            joint_entries[j] = ctk.CTkEntry(
+                window, textvariable=cfg[key][j], font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+            )
         elif type(key) is list:
-            joint_entries[j] = ctk.CTkEntry(window, textvariable=cfg[key[0]][key[1]][j])
+            joint_entries[j] = ctk.CTkEntry(
+                window,
+                textvariable=cfg[key[0]][key[1]][j],
+                font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+            )
         # span only in width
         joint_entries[j].grid(row=row_counter, column=column_number)
         row_counter += 1
@@ -658,9 +801,9 @@ def build_donewindow(results, root, root_dimensions):
     h = root_dimensions[1]
     donewindow = ctk.CTkToplevel(root)
     donewindow.title("GaitA Ready :)")
-    donewindow_w = w * (1 / 2)
+    donewindow_w = w * (3 / 5)
     donewindow_h = h * (1 / 5)
-    donewindow_x = w * (1 / 4)
+    donewindow_x = (w - donewindow_w) // 2
     donewindow_y = h * (1 / 2.5)
     donewindow.geometry(
         "%dx%d+%d+%d" % (donewindow_w, donewindow_h, donewindow_x, donewindow_y)
@@ -668,43 +811,58 @@ def build_donewindow(results, root, root_dimensions):
     fix_window_after_its_creation(donewindow)
 
     # labels
-    done_label1_string = "Your results will be saved in a subfolder of your directory"
-    done_label1 = ctk.CTkLabel(donewindow, text=done_label1_string, width=donewindow_w)
-    done_label1.grid(row=0, column=0)
+    done_label1_string = "Your results will be saved as your data is processed"
+    done_label1 = ctk.CTkLabel(
+        donewindow,
+        text=done_label1_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label1.grid(row=0, column=0, sticky="nsew")
     done_label2_string = (
         "Please see the Python command window for progress "
-        + "and the plots panel for an overview of all plots."
+        + "and the figure panel for an overview of all plots."
     )
-    done_label2 = ctk.CTkLabel(donewindow, text=done_label2_string, width=donewindow_w)
-    done_label2.grid(row=1, column=0)
+    done_label2 = ctk.CTkLabel(
+        donewindow,
+        text=done_label2_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label2.grid(row=1, column=0, sticky="nsew")
     done_label3_string = (
         "You may start another analysis while we are "
         + "processing - however your PC might slow down a bit. "
     )
-    done_label3 = ctk.CTkLabel(donewindow, text=done_label3_string, width=donewindow_w)
-    done_label3.grid(row=2, column=0)
+    done_label3 = ctk.CTkLabel(
+        donewindow,
+        text=done_label3_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label3.grid(row=2, column=0, sticky="nsew")
     done_label4_string = (
         "Thank you for using AutoGaitA! Feel free to "
-        + "email me about bugs/feedback at autogaita@fz-juelich.de - MH."
+        + "contact me on Github or at autogaita@fz-juelich.de - MH."
     )
-    done_label4 = ctk.CTkLabel(donewindow, text=done_label4_string, width=donewindow_w)
-    done_label4.grid(row=3, column=0)
-
+    done_label4 = ctk.CTkLabel(
+        donewindow,
+        text=done_label4_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label4.grid(row=3, column=0, sticky="nsew")
     # run button
     done_button = ctk.CTkButton(
         donewindow,
         text="Run!",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
         command=lambda: (
             run_analysis(this_runs_results, this_runs_cfg),
             donewindow.destroy(),
         ),
     )
-    done_button.grid(row=4, column=0, sticky="nsew", pady=10, padx=20)
+    done_button.grid(row=4, column=0, sticky="nsew", pady=10, padx=200)
 
-    # maximise button only
-    donewindow.grid_rowconfigure(4, weight=1)
+    maximise_widgets(donewindow)
 
 
 # %%..........  LOCAL FUNCTION(S) #3 - PREPARE & CALL AUTOGAITA  ....................
@@ -786,7 +944,7 @@ def multirun_run_a_single_dataset(idx, multirun_info, this_folderinfo, this_runs
 # %%..............  LOCAL FUNCTION(S) #4 - VARIOUS HELPER FUNCTIONS  ...................
 
 
-def change_ID_entry_state(ID_entry, results):
+def change_ID_entry_state(ID_entry):
     """Change the state of ID entry widget based on whether user wants to only analyse
     a single dataset.
     """

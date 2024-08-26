@@ -18,7 +18,7 @@
         "normalise_height_at_SC_level": true,
         "analyse_average_y": false,
         "color_palette": "viridis",
-        "legend_outside": false,
+        "legend_outside": true,
         "results_dir": "",
         "joints": [
             "Midfoot",

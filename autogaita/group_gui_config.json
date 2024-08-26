@@ -30,7 +30,7 @@
         "plot_SE": false,
         "color_palette": "viridis",
         "dont_show_plots": false,
-        "legend_outside": false,
+        "legend_outside": true,
         "stats_variables": [],
         "PCA_variables": []
     }

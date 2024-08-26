@@ -7,13 +7,21 @@ from threading import Thread
 from importlib import resources
 import platform
 import json
+import pdb
 
 
 # %% global constants
-FG_COLOR = "#789b73"  # grey green
+HEADER_FONT_NAME = "Calibri Bold"
+HEADER_FONT_SIZE = 30
 HEADER_TXT_COLOR = "#ffffff"  # white
-HEADER_FONT_SIZE = 20
+MAIN_HEADER_FONT_SIZE = 35
+TEXT_FONT_NAME = "Calibri"
+TEXT_FONT_SIZE = 20
+ADV_CFG_TEXT_FONT_SIZE = TEXT_FONT_SIZE - 4
+FG_COLOR = "#789b73"  # grey green
 HOVER_COLOR = "#287c37"  # darkish green
+CLOSE_COLOR = "#840000"  # dark red
+CLOSE_HOVER_COLOR = "#650021"  # maroon
 CONFIG_FILE_NAME = "dlc_gui_config.json"
 FLOAT_VARS = ["pixel_to_mm_ratio"]
 INT_VARS = [
@@ -28,6 +36,8 @@ INT_VARS = [
 LIST_VARS = [
     "hind_joints",
     "fore_joints",
+    "x_standardisation_joint",
+    "y_standardisation_joint",
     "beam_hind_jointadd",
     "beam_fore_jointadd",
     "beam_col_left",
@@ -44,7 +54,9 @@ TK_BOOL_VARS = [
     "angular_acceleration",
     "save_to_xls",
     "plot_SE",
-    "normalise_height_at_SC_level",
+    "standardise_y_at_SC_level",
+    "standardise_y_to_a_joint",
+    "standardise_x_coordinates",
     "invert_y_axis",
     "flip_gait_direction",
     "analyse_average_x",
@@ -144,7 +156,8 @@ def dlc_gui():
     w, h, x, y = screen_width, screen_height, 0, 0
     root_dimensions = (w, h, x, y)
     # set the dimensions of the screen and where it is placed
-    root.geometry(f"{screen_width}x{screen_height}+0+0")
+    # => have it half-wide starting at 1/4 of screen's width (dont change w & x!)
+    root.geometry(f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0")
     root.title("DLC GaitA")
     fix_window_after_its_creation(root)
     configure_the_icon(root)
@@ -159,128 +172,40 @@ def dlc_gui():
         """Run and done windows"""
         build_run_and_done_windows(root, cfg, analysis, root_dimensions)
 
-    # ..........................................................................
-    # ........................  root window population .........................
-    # ..........................................................................
-    # initialise default cfg vars
-    # ==> see a note @ get_results_and_cfg helper function about why I
-    #     initialise all vars that are not Boolean as Strings!
-    # if you are looking for the initialisation of the results dict, that is at the top
-    # of POPULATE_RUN_WINDOW local function
-
-    global cfg
     # .....................  load cfg dict from config .....................
     # use the values in the config json file for the results dictionary
+    global cfg
     cfg = extract_cfg_from_json_file(root)
 
-    # .........................  top section  ..................................
-    # welcome message
-    welcomestring = "Welcome to AutoGaitA DLC! Please read info below " + "carefully."
-    welcomeheader_label = ctk.CTkLabel(
+    # ...............................  header ..........................................
+    # main configuration header
+    main_cfg_header_string = "Main Configuration"
+    main_cfg_header_label = ctk.CTkLabel(
         root,
-        text=welcomestring,
+        text=main_cfg_header_string,
         width=w,
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
     )
-    welcomeheader_label.grid(row=0, column=0, columnspan=2, sticky="nsew")
-    # info message
-    introstring = (
-        "This program analyses kinematics after tracking with DeepLabCut."
-        + "\n\nFor this, it requires: "
-        + "\n1) DLC-generated CSV file of joint (i.e., key point) coordinates "
-        + "(optional: corresponding video files)."
-        + "\n2) A (group-level) Annotation Table Excel file (see documentation)"
-        + "\n3) Optional: corresponding CSV file & video of tracked height baseline."
-        + "\nPlease place all these files into a single folder "
-        + "(filenames between CSVs and videos have to match)."
-        + "\n\nTo use program: \n1) Enter main configuration info below."
-        + "\n2) Use bottom left button for advanced configuration (including custom "
-        + "joint/key point names & angle definitions) if desired."
-        + "\n3) Use bottom right buttons to analyse one video or multiple videos at "
-        + "once."
-    )
-    textbox_label = ctk.CTkLabel(
-        root, text=introstring, width=w, fg_color="transparent"
-    )
-    textbox_label.grid(row=1, column=0, rowspan=2, columnspan=2, sticky="nsew", pady=10)
-    # config header
-    cfgheader_label = ctk.CTkLabel(
-        root,
-        text="Main Configuration",
-        width=w,
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
-    )
-    cfgheader_label.grid(row=3, column=0, columnspan=2, rowspan=1, sticky="nsew")
+    main_cfg_header_label.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
-    # .........................  left section  .................................
+    # ............................  main cfg section  ..................................
     # sampling rate
     samprate_label = ctk.CTkLabel(
-        root, text="Insert sampling rate of videos (frames/second)"
-    )
-    samprate_label.grid(row=4, column=0)
-    samprate_entry = ctk.CTkEntry(root, textvariable=cfg["sampling_rate"])
-    samprate_entry.grid(row=5, column=0)
-    # subtract beam
-    subtract_beam_string = "Normalise y-coordinates to baseline height"
-    subtract_beam_checkbox = ctk.CTkCheckBox(
         root,
-        text=subtract_beam_string,
-        variable=cfg["subtract_beam"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
+        text="Sampling rate of videos in Hertz (frames/second):",
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    subtract_beam_checkbox.grid(row=6, column=0)
-    # plot plots to python
-    showplots_string = "Don't show plots in GUI (save only)"
-    showplots_checkbox = ctk.CTkCheckBox(
+    samprate_label.grid(row=1, column=0, columnspan=2, sticky="w")
+    samprate_entry = ctk.CTkEntry(
         root,
-        text=showplots_string,
-        variable=cfg["dont_show_plots"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
+        textvariable=cfg["sampling_rate"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    showplots_checkbox.grid(row=7, column=0)
-    # advanced cfg
-    cfg_window_label = ctk.CTkLabel(
-        root,
-        text="Advanced Configuration & Exit",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
-    )
-    cfg_window_label.grid(row=8, column=0, sticky="nsew")
-    cfg_window_button = ctk.CTkButton(
-        root,
-        text="Advanced cfg",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        command=lambda: (advanced_cfg_window(cfg)),
-    )
-    cfg_window_button.grid(row=9, column=0, pady=(15, 5), padx=30, sticky="nsew")
-    close_button = ctk.CTkButton(
-        root,
-        text="I am done - close program",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        command=lambda: (
-            # results variable is only defined later in populate_run_window()
-            # therefore only cfg settings will be updated
-            update_config_file("results dict not defined yet", cfg),
-            root.withdraw(),
-            root.after(5000, root.destroy),
-        ),
-    )
-    close_button.grid(row=10, column=0, pady=(10, 15), padx=30, sticky="nsew")
+    samprate_entry.grid(row=1, column=2, sticky="w")
 
-    # .........................  right section  ................................
+    # convert pixel to mm - checkbox
     # Note: convert_checkbox also modifies the state of ratio_entry's state
     #       (which starts with being disabled), so users can only change
     #       pixel_to_mm ratio value when they want the conversion in the first
@@ -288,8 +213,7 @@ def dlc_gui():
     #       ==> AutoGaitA only uses pixel_to_mm when converting, so when we
     #           are not converting we can just leave the value at whatever
     #           value (e.g., the initialised 0))
-    # convert pixel to mm
-    convert_string = "Convert x & y values to millimeters"
+    convert_string = "Convert pixels to millimetres:"
     convert_checkbox = ctk.CTkCheckBox(
         root,
         text=convert_string,
@@ -298,44 +222,188 @@ def dlc_gui():
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
-        command=lambda: change_ratio_entry_state(ratio_entry, cfg),
+        command=lambda: change_ratio_entry_state(ratio_entry),
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    convert_checkbox.grid(row=4, column=1, rowspan=2)
-    ratio_string = "Only needed if converting: How many pixels equal a millimeter?"
-    ratio_label = ctk.CTkLabel(root, text=ratio_string)
-    ratio_label.grid(row=5, column=1)
+    convert_checkbox.grid(row=2, column=0, columnspan=2, sticky="w")
+
+    # ratio  label
     ratio_entry = ctk.CTkEntry(
-        root, textvariable=cfg["pixel_to_mm_ratio"], state="disabled"
+        root,
+        textvariable=cfg["pixel_to_mm_ratio"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    ratio_entry.grid(row=6, column=1, pady=4)
-    # run analysis buttons
+    ratio_entry.grid(row=2, column=1, sticky="e")
+    ratio_right_string = "pixels = 1 mm"
+    ratio_right_label = ctk.CTkLabel(
+        root, text=ratio_right_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
+    ratio_right_label.grid(row=2, column=2, sticky="w")
+    # to initialise the widget correctly, run this function once
+    change_ratio_entry_state(ratio_entry)
+
+    # subtract beam
+    subtract_beam_string = (
+        "Standardise y-coordinates to baseline height (requires to be tracked)"
+    )
+    subtract_beam_checkbox = ctk.CTkCheckBox(
+        root,
+        text=subtract_beam_string,
+        variable=cfg["subtract_beam"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    subtract_beam_checkbox.grid(row=3, column=0, columnspan=3, sticky="w")
+
+    # flip gait direction
+    flip_gait_direction_string = "Adjust x-coordinates to follow direction of movement"
+    flip_gait_direction_box = ctk.CTkCheckBox(
+        root,
+        text=flip_gait_direction_string,
+        variable=cfg["flip_gait_direction"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    flip_gait_direction_box.grid(row=4, column=0, columnspan=3, sticky="w")
+
+    # plot plots to python
+    showplots_string = "Don't show plots in Figure GUI (save only)"
+    showplots_checkbox = ctk.CTkCheckBox(
+        root,
+        text=showplots_string,
+        variable=cfg["dont_show_plots"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    showplots_checkbox.grid(row=5, column=0, columnspan=2, sticky="w")
+
+    # bin number of SC normalisation
+    bin_num_string = "Number of bins used to normalise the step cycle:"
+    bin_num_label = ctk.CTkLabel(
+        root, text=bin_num_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
+    bin_num_label.grid(row=6, column=0, columnspan=2, sticky="w")
+    bin_num_entry = ctk.CTkEntry(
+        root, textvariable=cfg["bin_num"], font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
+    bin_num_entry.grid(row=6, column=2, sticky="w")
+
+    # empty label 1 (for spacing)
+    empty_label_one = ctk.CTkLabel(root, text="")
+    empty_label_one.grid(row=7, column=0)
+
+    # ..........................  advanced cfg section  ................................
+    # advanced header string
+    advanced_cfg_header_string = "Advanced Configuration"
+    advanced_cfg_header_label = ctk.CTkLabel(
+        root,
+        text=advanced_cfg_header_string,
+        width=w,
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    )
+    advanced_cfg_header_label.grid(row=8, column=0, columnspan=3, sticky="nsew")
+
+    # column name information window
+    column_info_string = "Customise Joints & Angles"
+    column_info_button = ctk.CTkButton(
+        root,
+        text=column_info_string,
+        fg_color=FG_COLOR,
+        hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        command=lambda: build_column_info_window(root, cfg, root_dimensions),
+    )
+    column_info_button.grid(row=9, column=0, columnspan=3)
+
+    # advanced cfg
+    cfg_window_button = ctk.CTkButton(
+        root,
+        text="Advanced Configuration",
+        fg_color=FG_COLOR,
+        hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        command=lambda: (advanced_cfg_window(cfg)),
+    )
+    cfg_window_button.grid(row=10, column=0, columnspan=3)
+
+    # empty label 2 (for spacing)
+    empty_label_two = ctk.CTkLabel(root, text="")
+    empty_label_two.grid(row=11, column=0)
+
+    # run analysis label
     runheader_label = ctk.CTkLabel(
         root,
         text="Run Analysis",
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
     )
-    runheader_label.grid(row=8, column=1, sticky="nsew")
+    runheader_label.grid(row=12, column=0, columnspan=3, sticky="nsew")
+
+    # single gaita button
     onevid_button = ctk.CTkButton(
         root,
         text="One Video",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: run_window(cfg, "single"),
     )
-    onevid_button.grid(row=9, column=1, pady=(15, 5), padx=30, sticky="nsew")
+    onevid_button.grid(row=13, column=1, sticky="ew")
+
+    # multi gaita button
     multivid_button = ctk.CTkButton(
         root,
-        text="Multiple Videos",
+        text="Batch Analysis",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: run_window(cfg, "multi"),
     )
-    multivid_button.grid(row=10, column=1, pady=(10, 15), padx=30, sticky="nsew")
+    multivid_button.grid(row=14, column=1, sticky="ew")
 
-    # maximise widgets
-    maximise_widgets(root)
+    # empty label 2 (for spacing)
+    empty_label_two = ctk.CTkLabel(root, text="")
+    empty_label_two.grid(row=15, column=0)
+
+    # close & exit button
+    close_button = ctk.CTkButton(
+        root,
+        text="Exit",
+        fg_color=CLOSE_COLOR,
+        hover_color=CLOSE_HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        command=lambda: (
+            # results variable is only defined later in populate_run_window()
+            # therefore only cfg settings will be updated
+            update_config_file("results dict not defined yet", cfg),
+            root.withdraw(),
+            root.after(5000, root.destroy),
+        ),
+    )
+    close_button.grid(row=16, column=0, columnspan=3)
+
+    # # .........................  widget configuration  ...............................
+
+    # first maximise everything according to sticky
+    # => Silent_Creme is some undocumented option that makes stuff uniform
+    #   see: https://stackoverflow.com/questions/45847313/tkinter-grid-rowconfigure-weight-doesnt-work
+    root.columnconfigure(list(range(3)), weight=1, uniform="Silent_Creme")
+    root.rowconfigure(list(range(17)), weight=1, uniform="Silent_Creme")
+
+    # then un-maximise main config rows to have them grouped together
+    root.rowconfigure(list(range(1, 7)), weight=0)
 
     # main loop
     root.mainloop()
@@ -352,105 +420,191 @@ def build_cfg_window(root, cfg, root_dimensions):
     # build window
     cfg_window = ctk.CTkToplevel(root)
     cfg_window.title("Advanced Configuration")
-    cfg_w = w * (1 / 3)
-    cfg_h = h * (1 / 1.5)
-    cfg_x = ((1 / 2) * w) - (1 / 2 * cfg_w)
-    cfg_y = ((1 / 2) * h) - (1 / 2 * cfg_h)
-    cfg_window.geometry("%dx%d+%d+%d" % (cfg_w, cfg_h, cfg_x, cfg_y))
+    cfg_window.geometry(f"{int(w/2)}x{h}+{int(w/4)}+0")
     fix_window_after_its_creation(cfg_window)
 
-    # enter info - cfg vars are global!
-    x_threshold_string = (
-        "What x-criterion (in pixels) to use for rejecting step cycles?"
+    #  ...........................  advanced analysis  .................................
+
+    # advanced analysis header
+    adv_cfg_analysis_header_label = ctk.CTkLabel(
+        cfg_window,
+        text="Analysis",
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
     )
-    x_thresh_label = ctk.CTkLabel(cfg_window, text=x_threshold_string, width=cfg_w)
-    x_thresh_label.grid(row=0, column=0)
-    x_thresh_entry = ctk.CTkEntry(cfg_window, textvariable=cfg["x_sc_broken_threshold"])
-    x_thresh_entry.grid(row=1, column=0)
+    adv_cfg_analysis_header_label.grid(
+        row=0, column=0, rowspan=2, columnspan=2, sticky="nsew"
+    )
+
+    # x & y threshold for rejecting SCs
+    threshold_string = "What criteria (in pixels) to use for rejecting step cycles?"
+    thresh_label = ctk.CTkLabel(
+        cfg_window, text=threshold_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+    )
+    thresh_label.grid(row=2, column=0, columnspan=2, sticky="ew")
+    x_threshold_string = "Along x-dimension:"
+    x_thresh_label = ctk.CTkLabel(
+        cfg_window,
+        text=x_threshold_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    x_thresh_label.grid(row=3, column=0, sticky="e")
+    x_thresh_entry = ctk.CTkEntry(
+        cfg_window,
+        textvariable=cfg["x_sc_broken_threshold"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    x_thresh_entry.grid(row=3, column=1, sticky="w")
     # y threshold for rejecting SCs
-    y_threshold_string = (
-        "What y-criterion (in pixels) to use for rejecting step cycles?"
+    y_thresh_string = "Along y-dimension:"
+    y_thresh_label = ctk.CTkLabel(
+        cfg_window, text=y_thresh_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
     )
-    y_thresh_label = ctk.CTkLabel(cfg_window, text=y_threshold_string, width=cfg_w)
-    y_thresh_label.grid(row=2, column=0)
-    y_thresh_entry = ctk.CTkEntry(cfg_window, textvariable=cfg["y_sc_broken_threshold"])
-    y_thresh_entry.grid(row=3, column=0)
+    y_thresh_label.grid(row=4, column=0, sticky="e")
+    y_thresh_entry = ctk.CTkEntry(
+        cfg_window,
+        textvariable=cfg["y_sc_broken_threshold"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    y_thresh_entry.grid(row=4, column=1, sticky="w")
+
+    # acceleration label
+    acceleration_string = "Analyse (i.e. plot & export) accelerations for:"
+    acceleration_label = ctk.CTkLabel(
+        cfg_window,
+        text=acceleration_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    acceleration_label.grid(row=5, column=0, columnspan=2)
     # x acceleration
-    x_accel_string = "Compute, plot & export joints' x-accelerations"
     x_accel_box = ctk.CTkCheckBox(
         cfg_window,
-        text=x_accel_string,
+        text="x-coordinates",
         variable=cfg["x_acceleration"],
         onvalue=True,
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    x_accel_box.grid(row=4, column=0)
+    x_accel_box.grid(row=6, column=0, sticky="e")
     # angular acceleration
-    angular_accel_string = "Compute, plot & export angular accelerations"
     angular_accel_box = ctk.CTkCheckBox(
         cfg_window,
-        text=angular_accel_string,
+        text="angles",
         variable=cfg["angular_acceleration"],
         onvalue=True,
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    angular_accel_box.grid(row=5, column=0)
-    # save to xls
-    save_to_xls_string = "Save results as .xlsx instead of .csv files"
-    save_to_xls_box = ctk.CTkCheckBox(
+    angular_accel_box.grid(row=6, column=1, sticky="w")
+
+    # y standardisation at each step cycle separately
+    standardise_y_at_SC_level_string = (
+        "Standardise y-coordinates separately for all step cycles"
+    )
+    standardise_y_at_SC_level_box = ctk.CTkCheckBox(
         cfg_window,
-        text=save_to_xls_string,
-        variable=cfg["save_to_xls"],
+        text=standardise_y_at_SC_level_string,
+        variable=cfg["standardise_y_at_SC_level"],
         onvalue=True,
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    save_to_xls_box.grid(row=6, column=0)
-    # bin number of SC normalisation
-    bin_num_string = "Number of bins to use for normalising the step cycle"
-    bin_num_label = ctk.CTkLabel(cfg_window, text=bin_num_string, width=cfg_w)
-    bin_num_label.grid(row=7, column=0)
-    bin_num_entry = ctk.CTkEntry(cfg_window, textvariable=cfg["bin_num"])
-    bin_num_entry.grid(row=8, column=0)
-    # number of hindlimb joints to plot
-    plot_joint_num_string = "Number of hindlimb joints to plot in detail"
-    plot_joint_num__label = ctk.CTkLabel(
-        cfg_window, text=plot_joint_num_string, width=cfg_w
+    standardise_y_at_SC_level_box.grid(row=7, column=0, columnspan=2)
+
+    # y standardisation to a specific joint not global minimum
+    standardise_y_to_joint_string = (
+        "Standardise y to a joint instead of to global minimum"
     )
-    plot_joint_num__label.grid(row=9, column=0)
-    plot_joint_num_entry = ctk.CTkEntry(
-        cfg_window, textvariable=cfg["plot_joint_number"]
-    )
-    plot_joint_num_entry.grid(row=10, column=0)
-    # plot SE
-    plot_SE_string = "Use standard error instead of standard deviation for plots"
-    plot_SE_box = ctk.CTkCheckBox(
+    standardise_y_to_joint_box = ctk.CTkCheckBox(
         cfg_window,
-        text=plot_SE_string,
-        variable=cfg["plot_SE"],
+        text=standardise_y_to_joint_string,
+        variable=cfg["standardise_y_to_a_joint"],
         onvalue=True,
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        command=lambda: change_y_standardisation_joint_entry_state(
+            y_standardisation_joint_entry
+        ),
     )
-    plot_SE_box.grid(row=11, column=0)
-    # height normalisation at each step cycle separately
-    height_normalisation_string = "Normalise height of all step cycles separately"
-    height_normalisation_box = ctk.CTkCheckBox(
+    standardise_y_to_joint_box.grid(row=8, column=0, columnspan=2)
+
+    # y standardisation joint string label & entry
+    y_standardisation_joint_string = "Y-standardisation joint:"
+    y_standardisation_joint_label = ctk.CTkLabel(
         cfg_window,
-        text=height_normalisation_string,
-        variable=cfg["normalise_height_at_SC_level"],
+        text=y_standardisation_joint_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    y_standardisation_joint_label.grid(row=9, column=0, sticky="e")
+    y_standardisation_joint_entry = ctk.CTkEntry(
+        cfg_window,
+        textvariable=cfg["y_standardisation_joint"][0],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    y_standardisation_joint_entry.grid(row=9, column=1, sticky="w")
+    # to initialise the widget correctly, run this function once
+    change_y_standardisation_joint_entry_state(y_standardisation_joint_entry)
+
+    # analyse average x coordinates
+    analyse_average_x_string = "Analyse x-coordinate averages"
+    analyse_average_x_box = ctk.CTkCheckBox(
+        cfg_window,
+        text=analyse_average_x_string,
+        variable=cfg["analyse_average_x"],
         onvalue=True,
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        command=lambda: change_x_standardisation_box_state(
+            standardise_x_coordinates_box
+        ),
     )
-    height_normalisation_box.grid(row=12, column=0)
+    analyse_average_x_box.grid(row=10, column=0)
+
+    # standardise x coordinates
+    standardise_x_coordinates_string = "Standardise x-coordinates"
+    standardise_x_coordinates_box = ctk.CTkCheckBox(
+        cfg_window,
+        text=standardise_x_coordinates_string,
+        variable=cfg["standardise_x_coordinates"],
+        onvalue=True,
+        offvalue=False,
+        hover_color=HOVER_COLOR,
+        fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        command=lambda: change_x_standardisation_joint_entry_state(
+            x_standardisation_joint_entry
+        ),
+    )
+    standardise_x_coordinates_box.grid(row=10, column=1)
+    change_x_standardisation_box_state(standardise_x_coordinates_box)
+
+    # x standardisation joint string label & entry
+    x_standardisation_joint_string = "X-standardisation joint:"
+    x_standardisation_joint_label = ctk.CTkLabel(
+        cfg_window,
+        text=x_standardisation_joint_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    x_standardisation_joint_label.grid(row=11, column=0, sticky="e")
+    x_standardisation_joint_entry = ctk.CTkEntry(
+        cfg_window,
+        textvariable=cfg["x_standardisation_joint"][0],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    x_standardisation_joint_entry.grid(row=11, column=1, sticky="w")
+    change_x_standardisation_joint_entry_state(x_standardisation_joint_entry)
+
     # invert y-axis
     invert_y_axis_string = "Invert y-axis"
     invert_y_axis_box = ctk.CTkCheckBox(
@@ -461,40 +615,74 @@ def build_cfg_window(root, cfg, root_dimensions):
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    invert_y_axis_box.grid(row=13, column=0)
-    # flip gait direction
-    flip_gait_direction_string = "Adjust x-coordinates to follow direction of movement"
-    flip_gait_direction_box = ctk.CTkCheckBox(
+    invert_y_axis_box.grid(row=12, column=0, columnspan=2)
+
+    #  .............................  advanced output  .................................
+    # advanced analysis header
+    adv_cfg_output_header_label = ctk.CTkLabel(
         cfg_window,
-        text=flip_gait_direction_string,
-        variable=cfg["flip_gait_direction"],
+        text="Output",
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    )
+    adv_cfg_output_header_label.grid(
+        row=13, column=0, rowspan=2, columnspan=2, sticky="nsew"
+    )
+
+    # number of hindlimb (primary) joints to plot
+    plot_joint_num_string = "Number of primary joints to plot in detail"
+    plot_joint_num__label = ctk.CTkLabel(
+        cfg_window,
+        text=plot_joint_num_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    plot_joint_num__label.grid(row=15, column=0, columnspan=2)
+    plot_joint_num_entry = ctk.CTkEntry(
+        cfg_window,
+        textvariable=cfg["plot_joint_number"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    plot_joint_num_entry.grid(row=16, column=0, columnspan=2)
+
+    # save to xls
+    save_to_xls_string = "Save results as .xlsx instead of .csv files"
+    save_to_xls_box = ctk.CTkCheckBox(
+        cfg_window,
+        text=save_to_xls_string,
+        variable=cfg["save_to_xls"],
         onvalue=True,
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    flip_gait_direction_box.grid(row=14, column=0)
-    # export average x coordinates
-    analyse_average_x_string = (
-        "Analyse x-coordinate averages"
-    )
-    analyse_average_x_box = ctk.CTkCheckBox(
+    save_to_xls_box.grid(row=17, column=0, columnspan=2)
+
+    # plot SE
+    plot_SE_string = "Use standard error instead of standard deviation for plots"
+    plot_SE_box = ctk.CTkCheckBox(
         cfg_window,
-        text=analyse_average_x_string,
-        variable=cfg["analyse_average_x"],
+        text=plot_SE_string,
+        variable=cfg["plot_SE"],
         onvalue=True,
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    analyse_average_x_box.grid(row=15, column=0)
+    plot_SE_box.grid(row=18, column=0, columnspan=2)
+
     # color palette
     color_palette_string = "Choose figures' color palette"
     color_palette_label = ctk.CTkLabel(
-        cfg_window, text=color_palette_string, width=cfg_w
+        cfg_window,
+        text=color_palette_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    color_palette_label.grid(row=16, column=0)
+    color_palette_label.grid(row=19, column=0, columnspan=2)
     color_palette_entry = ctk.CTkOptionMenu(
         cfg_window,
         values=COLOR_PALETTES_LIST,
@@ -502,8 +690,10 @@ def build_cfg_window(root, cfg, root_dimensions):
         fg_color=FG_COLOR,
         button_color=FG_COLOR,
         button_hover_color=HOVER_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    color_palette_entry.grid(row=17, column=0)
+    color_palette_entry.grid(row=20, column=0, columnspan=2)
+
     # legend outside
     legend_outside_string = "Plot legends outside of figures' panels"
     legend_outside_checkbox = ctk.CTkCheckBox(
@@ -514,44 +704,52 @@ def build_cfg_window(root, cfg, root_dimensions):
         offvalue=False,
         hover_color=HOVER_COLOR,
         fg_color=FG_COLOR,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    legend_outside_checkbox.grid(row=18, column=0)
+    legend_outside_checkbox.grid(row=21, column=0, columnspan=2)
+
     # results dir
     results_dir_string = (
-        "Save Results subfolders to directory location below instead of to data's"
+        "Save Results subfolders to directory below instead of to data's"
     )
-    results_dir_label = ctk.CTkLabel(cfg_window, text=results_dir_string, width=cfg_w)
-    results_dir_label.grid(row=19, column=0)
-    results_dir_entry = ctk.CTkEntry(cfg_window, textvariable=cfg["results_dir"])
-    results_dir_entry.grid(row=20, column=0)
-    # column name information window
-    column_info_string = "Customise joints and angles"
-    column_info_button = ctk.CTkButton(
+    results_dir_label = ctk.CTkLabel(
         cfg_window,
-        text=column_info_string,
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        command=lambda: build_column_info_window(root, cfg, root_dimensions),
+        text=results_dir_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    column_info_button.grid(
-        row=21, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+    results_dir_label.grid(row=22, column=0, columnspan=2)
+    results_dir_entry = ctk.CTkEntry(
+        cfg_window,
+        textvariable=cfg["results_dir"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
+    results_dir_entry.grid(row=23, column=0, columnspan=2)
+
     # done button
     adv_cfg_done_button = ctk.CTkButton(
         cfg_window,
         text="I am done, update cfg.",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
+        fg_color=CLOSE_COLOR,
+        hover_color=CLOSE_HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: cfg_window.destroy(),
     )
     adv_cfg_done_button.grid(
-        row=23, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=24, column=0, columnspan=2, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # maximise widgets
-    maximise_widgets(cfg_window)
+    cfg_window.columnconfigure(list(range(2)), weight=1, uniform="Silent_Creme")
+    cfg_window.rowconfigure(list(range(25)), weight=1, uniform="Silent_Creme")
 
 
 # %%..............  LOCAL FUNCTION(S) #2 - BUILD COLUMN INFO WINDOW  ...................
+# Note
+# ----
+# Hindlimb and forelimb joints were re-named to primary and secondary joints @ v0.4.0.
+# I kept the old variable/key-names for compatibility with autogaita_dlc.
+# => Except for input to build_beam_jointadd_window since that is used for a string
+
+
 def build_column_info_window(root, cfg, root_dimensions):
     """Build a window allowing users to configure custom column names if required"""
     columnwindow = ctk.CTkToplevel(root)
@@ -578,16 +776,20 @@ def build_column_info_window(root, cfg, root_dimensions):
             "beam_fore_jointadd",
         ]:
             if key == "hind_joints":
-                label_string = "Hindlimb Joint #" + str(len(cfg[key]))
+                label_string = "Primary Joint #" + str(len(cfg[key]))
             elif key == "fore_joints":
-                label_string = "Forelimb Joint #" + str(len(cfg[key]))
+                label_string = "Secondary Joint #" + str(len(cfg[key]))
             elif key == "beam_hind_jointadd":
-                label_string = "Hindlimb Beamsubtraction Joint #" + str(len(cfg[key]))
+                label_string = "Left beam-subtraction joint #" + str(len(cfg[key]))
             elif key == "beam_fore_jointadd":
-                label_string = "Forelimb Beamsubtraction Joint #" + str(len(cfg[key]))
-            label = ctk.CTkLabel(window, text=label_string)
+                label_string = "Right beam-subtraction joint #" + str(len(cfg[key]))
+            label = ctk.CTkLabel(
+                window, text=label_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+            )
             label.grid(row=nrows + 1, column=0, sticky="ew")
-            entry = ctk.CTkEntry(window, textvariable=cfg[key][-1])
+            entry = ctk.CTkEntry(
+                window, textvariable=cfg[key][-1], font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+            )
             entry.grid(row=nrows + 2, column=0)
         elif key == "angles":
             for a, angle_key in enumerate(cfg[key]):
@@ -598,10 +800,16 @@ def build_column_info_window(root, cfg, root_dimensions):
                 elif angle_key == "upper_joint":
                     this_case = "Upper Joint"
                 label = ctk.CTkLabel(
-                    window, text=this_case + " #" + str(len(cfg[key][angle_key]))
+                    window,
+                    text=this_case + " #" + str(len(cfg[key][angle_key])),
+                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
                 )
                 label.grid(row=nrows + 1, column=angle_column + a, sticky="ew")
-                entry = ctk.CTkEntry(window, textvariable=cfg[key][angle_key][-1])
+                entry = ctk.CTkEntry(
+                    window,
+                    textvariable=cfg[key][angle_key][-1],
+                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+                )
                 entry.grid(row=nrows + 2, column=angle_column + a)
         # maximise columns
         for c in range(window.grid_size()[0]):
@@ -628,30 +836,37 @@ def build_column_info_window(root, cfg, root_dimensions):
         # left beam label
         beam_left_label = ctk.CTkLabel(
             beamwindow,
-            text="Left Beam Column",
+            text="Left beam column (primary joints')",
             fg_color=FG_COLOR,
             text_color=HEADER_TXT_COLOR,
-            font=("Britannic Bold", HEADER_FONT_SIZE),
+            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         )
         beam_left_label.grid(row=0, column=0, sticky="nsew")
         # left beam entry
-        beam_left_entry = ctk.CTkEntry(beamwindow, textvariable=cfg["beam_col_left"][0])
+        beam_left_entry = ctk.CTkEntry(
+            beamwindow,
+            textvariable=cfg["beam_col_left"][0],
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        )
         beam_left_entry.grid(row=1, column=0)
+        # empty label one (for spacing)
+        empty_label_one = ctk.CTkLabel(beamwindow, text="")
+        empty_label_one.grid(row=2, column=0)
         # important: cfg key for forelimb joint add
         hindlimb_key = "beam_hind_jointadd"
         # hindlimb jointadd label
         hind_jointsubtract_label = ctk.CTkLabel(
             beamwindow,
-            text="Hindlimb Joints subtracted from Left Beam",
+            text="Left beam: additional joints subtracted",
             fg_color=FG_COLOR,
             text_color=HEADER_TXT_COLOR,
-            font=("Britannic Bold", HEADER_FONT_SIZE),
+            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         )
-        hind_jointsubtract_label.grid(row=2, column=0, sticky="nsew")
+        hind_jointsubtract_label.grid(row=3, column=0, sticky="nsew")
         # initialise scrollable frame for beamsubtract windows
         hind_jointsubtract_frame = ctk.CTkScrollableFrame(beamwindow)
         hind_jointsubtract_frame.grid(
-            row=3,
+            row=4,
             column=0,
             rowspan=beam_scrollable_rows,
             sticky="nsew",
@@ -660,20 +875,21 @@ def build_column_info_window(root, cfg, root_dimensions):
         initialise_labels_and_entries(
             hind_jointsubtract_frame,
             hindlimb_key,
-            "Hindlimb Beamsubtraction Joint",
+            "Left beam-subtraction joint",
         )
         # add button
         add_hindjoint_button = ctk.CTkButton(
             beamwindow,
-            text="Add Hindlimb Beamsubtraction Joint",
+            text="Add left beam-subtraction joint",
             fg_color=FG_COLOR,
             hover_color=HOVER_COLOR,
+            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
             command=lambda: add_joint(
                 hind_jointsubtract_frame, hindlimb_key
             ),  # input = cfg's key
         )
         add_hindjoint_button.grid(
-            row=3 + beam_scrollable_rows,
+            row=4 + beam_scrollable_rows,
             column=0,
             sticky="nsew",
             padx=left_padx,
@@ -683,32 +899,37 @@ def build_column_info_window(root, cfg, root_dimensions):
         # right beam label
         beam_right_label = ctk.CTkLabel(
             beamwindow,
-            text="Right Beam Column",
+            text="Right beam column (secondary joints')",
             fg_color=FG_COLOR,
             text_color=HEADER_TXT_COLOR,
-            font=("Britannic Bold", HEADER_FONT_SIZE),
+            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         )
         beam_right_label.grid(row=0, column=1, sticky="nsew")
         # right beam entry
         beam_right_entry = ctk.CTkEntry(
-            beamwindow, textvariable=cfg["beam_col_right"][0]
+            beamwindow,
+            textvariable=cfg["beam_col_right"][0],
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
         )
         beam_right_entry.grid(row=1, column=1)
+        # empty label two (for spacing)
+        empty_label_two = ctk.CTkLabel(beamwindow, text="")
+        empty_label_two.grid(row=2, column=1)
         # important: cfg key for forelimb joint add
         forelimb_key = "beam_fore_jointadd"
         # hindlimb jointadd label
         fore_jointsubtract_label = ctk.CTkLabel(
             beamwindow,
-            text="Forelimb Joints subtracted from Right Beam",
+            text="Right beam: additional joints subtracted",
             fg_color=FG_COLOR,
             text_color=HEADER_TXT_COLOR,
-            font=("Britannic Bold", HEADER_FONT_SIZE),
+            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         )
-        fore_jointsubtract_label.grid(row=2, column=1, sticky="nsew")
+        fore_jointsubtract_label.grid(row=3, column=1, sticky="nsew")
         # initialise scrollable frame for beamsubtract windows
         fore_jointsubtract_frame = ctk.CTkScrollableFrame(beamwindow)
         fore_jointsubtract_frame.grid(
-            row=3,
+            row=4,
             column=1,
             rowspan=beam_scrollable_rows,
             sticky="nsew",
@@ -717,36 +938,41 @@ def build_column_info_window(root, cfg, root_dimensions):
         initialise_labels_and_entries(
             fore_jointsubtract_frame,
             forelimb_key,
-            "Forelimb Beamsubtraction Joint",
+            "Right beam-subtraction joint",
         )
         # add button
         add_forejoint_button = ctk.CTkButton(
             beamwindow,
-            text="Add Forelimb Beamsubtraction Joint",
+            text="Add right beam-subtraction joint",
             fg_color=FG_COLOR,
             hover_color=HOVER_COLOR,
+            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
             command=lambda: add_joint(
                 fore_jointsubtract_frame, forelimb_key
             ),  # input = cfg's key
         )
         add_forejoint_button.grid(
-            row=3 + beam_scrollable_rows,
+            row=4 + beam_scrollable_rows,
             column=1,
             sticky="nsew",
             padx=right_padx,
             pady=20,
         )
         # .................... bottom section - update & close  ........................
+        # empty label three (for spacing)
+        empty_label_three = ctk.CTkLabel(beamwindow, text="")
+        empty_label_three.grid(row=5 + beam_scrollable_rows, column=0, columnspan=2)
         # done button
         beam_done_button = ctk.CTkButton(
             beamwindow,
             text="I am done, update cfg!",
-            fg_color=FG_COLOR,
-            hover_color=HOVER_COLOR,
+            fg_color=CLOSE_COLOR,
+            hover_color=CLOSE_HOVER_COLOR,
+            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
             command=lambda: beamwindow.destroy(),
         )
         beam_done_button.grid(
-            row=4 + beam_scrollable_rows,
+            row=6 + beam_scrollable_rows,
             column=0,
             columnspan=2,
             sticky="nsew",
@@ -764,10 +990,10 @@ def build_column_info_window(root, cfg, root_dimensions):
     # header label
     hind_joint_label = ctk.CTkLabel(
         columnwindow,
-        text="Hindlimb Joints",
+        text="Primary Joints",
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
     )
     hind_joint_label.grid(row=0, column=hind_column, sticky="nsew", pady=(0, 5))
     # initialise scrollable frame for hindlimb
@@ -779,13 +1005,14 @@ def build_column_info_window(root, cfg, root_dimensions):
         sticky="nsew",
     )
     # initialise labels & entries with hind limb defaults
-    initialise_labels_and_entries(hindlimb_frame, "hind_joints", "Hindlimb Joint ")
+    initialise_labels_and_entries(hindlimb_frame, "hind_joints", "Primary Joint ")
     # add joint button
     add_hind_joint_button = ctk.CTkButton(
         columnwindow,
-        text="Add hindlimb joint",
+        text="Add Primary Joint",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: add_joint(
             hindlimb_frame, "hind_joints"
         ),  # 2nd input = cfg's key
@@ -794,13 +1021,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         row=2 + scrollable_rows, column=hind_column, sticky="nsew", padx=5, pady=(10, 5)
     )
     # beam config window label
-    beam_window_label = ctk.CTkLabel(
-        columnwindow,
-        text="Baseline (Beam) Configuration",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
-    )
+    beam_window_label = ctk.CTkLabel(columnwindow, text="")  # empty for spacing only
     beam_window_label.grid(
         row=4 + scrollable_rows,
         column=hind_column,
@@ -812,9 +1033,10 @@ def build_column_info_window(root, cfg, root_dimensions):
     # beam config window button
     beam_window_button = ctk.CTkButton(
         columnwindow,
-        text="Configure Beam Columns and Beamsubtraction Joints",
+        text="Baseline (Beam) Configuration",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: build_beam_window(),
     )
     beam_window_button.grid(
@@ -831,10 +1053,10 @@ def build_column_info_window(root, cfg, root_dimensions):
     # header label
     fore_joint_label = ctk.CTkLabel(
         columnwindow,
-        text="Forelimb Joints",
+        text="Secondary Joints",
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
     )
     fore_joint_label.grid(row=0, column=fore_column, sticky="nsew", pady=(0, 5))
     # initialise scrollable frame for forelimb
@@ -846,14 +1068,15 @@ def build_column_info_window(root, cfg, root_dimensions):
     initialise_labels_and_entries(
         forelimb_frame,
         "fore_joints",
-        "Forelimb Joint ",
+        "Secondary Joint ",
     )
     # add joint button
     add_fore_joint_button = ctk.CTkButton(
         columnwindow,
-        text="Add forelimb joint",
+        text="Add Secondary Joint",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: add_joint(
             forelimb_frame, "fore_joints"
         ),  # 2nd input = cfg's key
@@ -870,7 +1093,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         text="Angle Configuration",
         fg_color=FG_COLOR,
         text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
     )
     angle_label.grid(
         row=0, column=angle_column, columnspan=3, sticky="nsew", pady=(0, 5)
@@ -894,9 +1117,10 @@ def build_column_info_window(root, cfg, root_dimensions):
     # add angle trio button
     add_angle_button = ctk.CTkButton(
         columnwindow,
-        text="Add angle",
+        text="Add Angle",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: add_joint(angle_frame, "angles"),  # 2nd input = cfg's key
     )
     add_angle_button.grid(
@@ -908,13 +1132,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         pady=(10, 5),
     )
     # done label
-    done_label = ctk.CTkLabel(
-        columnwindow,
-        text="Update Configuration",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=("Britannic Bold", HEADER_FONT_SIZE),
-    )
+    done_label = ctk.CTkLabel(columnwindow, text="")  # empty for spacing only
     done_label.grid(
         row=4 + scrollable_rows,
         column=angle_column,
@@ -927,8 +1145,9 @@ def build_column_info_window(root, cfg, root_dimensions):
     columncfg_done_button = ctk.CTkButton(
         columnwindow,
         text="I am done, update cfg!",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
+        fg_color=CLOSE_COLOR,
+        hover_color=CLOSE_HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: columnwindow.destroy(),
     )
     columncfg_done_button.grid(
@@ -961,14 +1180,22 @@ def initialise_labels_and_entries(window, key, which_case_string, *args):
         column_number = 0
     for j, joint in enumerate(this_var):
         joint_labels[j] = ctk.CTkLabel(
-            window, text=which_case_string + " #" + str(j + 1)
+            window,
+            text=which_case_string + " #" + str(j + 1),
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
         )
         joint_labels[j].grid(row=row_counter, column=column_number, sticky="ew")
         row_counter += 1
         if type(key) is str:
-            joint_entries[j] = ctk.CTkEntry(window, textvariable=cfg[key][j])
+            joint_entries[j] = ctk.CTkEntry(
+                window, textvariable=cfg[key][j], font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+            )
         elif type(key) is list:
-            joint_entries[j] = ctk.CTkEntry(window, textvariable=cfg[key[0]][key[1]][j])
+            joint_entries[j] = ctk.CTkEntry(
+                window,
+                textvariable=cfg[key[0]][key[1]][j],
+                font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+            )
         # span only in width
         joint_entries[j].grid(row=row_counter, column=column_number)
         row_counter += 1
@@ -990,8 +1217,9 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
     if analysis == "single":
         runwindow.title("Single GaitA")
     else:
-        runwindow.title("Multi GaitA")
-    runwindow.geometry("%dx%d+%d+%d" % root_dimensions)
+        runwindow.title("Batch GaitA")
+    # runwindow.geometry("%dx%d+%d+%d" % root_dimensions)
+    runwindow.geometry(f"{int(w/2)}x{h}+{int(w/4)}+0")
     fix_window_after_its_creation(runwindow)
     # fill window with required info labels & entries - then get results
     results = populate_run_window(runwindow, w, analysis, user_ready)
@@ -1025,9 +1253,9 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
     # .............................  done window  .............................
     donewindow = ctk.CTkToplevel(root)
     donewindow.title("GaitA Ready :)")
-    donewindow_w = w * (1 / 2)
+    donewindow_w = w * (3 / 5)
     donewindow_h = h * (1 / 5)
-    donewindow_x = w * (1 / 4)
+    donewindow_x = (w - donewindow_w) // 2
     donewindow_y = h * (1 / 2.5)
     donewindow.geometry(
         "%dx%d+%d+%d" % (donewindow_w, donewindow_h, donewindow_x, donewindow_y)
@@ -1035,41 +1263,58 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
     fix_window_after_its_creation(donewindow)
 
     # labels
-    done_label1_string = "Your results will be saved in a subfolder of your directory"
-    done_label1 = ctk.CTkLabel(donewindow, text=done_label1_string, width=donewindow_w)
-    done_label1.grid(row=0, column=0)
+    done_label1_string = "Your results will be saved as your data is processed"
+    done_label1 = ctk.CTkLabel(
+        donewindow,
+        text=done_label1_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label1.grid(row=0, column=0, sticky="nsew")
     done_label2_string = (
         "Please see the Python command window for progress "
-        + "and the plots panel for an overview of all plots."
+        + "and the figure panel for an overview of all plots."
     )
-    done_label2 = ctk.CTkLabel(donewindow, text=done_label2_string, width=donewindow_w)
-    done_label2.grid(row=1, column=0)
+    done_label2 = ctk.CTkLabel(
+        donewindow,
+        text=done_label2_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label2.grid(row=1, column=0, sticky="nsew")
     done_label3_string = (
         "You may start another analysis while we are "
         + "processing - however your PC might slow down a bit. "
     )
-    done_label3 = ctk.CTkLabel(donewindow, text=done_label3_string, width=donewindow_w)
-    done_label3.grid(row=2, column=0)
+    done_label3 = ctk.CTkLabel(
+        donewindow,
+        text=done_label3_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label3.grid(row=2, column=0, sticky="nsew")
     done_label4_string = (
         "Thank you for using AutoGaitA! Feel free to "
-        + "email me about bugs/feedback at autogaita@fz-juelich.de - MH."
+        + "contact me on Github or at autogaita@fz-juelich.de - MH."
     )
-    done_label4 = ctk.CTkLabel(donewindow, text=done_label4_string, width=donewindow_w)
-    done_label4.grid(row=3, column=0)
+    done_label4 = ctk.CTkLabel(
+        donewindow,
+        text=done_label4_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    done_label4.grid(row=3, column=0, sticky="nsew")
     # run button
     done_button = ctk.CTkButton(
         donewindow,
         text="Run!",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
         command=lambda: (
             runanalysis(this_runs_results, this_runs_cfg, analysis),
             donewindow.destroy(),
         ),
     )
-    done_button.grid(row=4, column=0, sticky="nsew", pady=10, padx=20)
-    # maximise button only
-    donewindow.grid_rowconfigure(4, weight=1)
+    done_button.grid(row=4, column=0, sticky="nsew", pady=10, padx=200)
+
+    maximise_widgets(donewindow)
 
 
 # %%..........  LOCAL FUNCTION(S) #4 - POPULATE RUN WINDOW ....................
@@ -1084,15 +1329,29 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
     if analysis == "single":
         # mouse number
         mousenum_string = "What is the number of the animal/subject?"
-        mousenum_label = ctk.CTkLabel(runwindow, text=mousenum_string)
+        mousenum_label = ctk.CTkLabel(
+            runwindow,
+            text=mousenum_string,
+            font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        )
         mousenum_label.grid(row=0, column=0)
-        mousenum_entry = ctk.CTkEntry(runwindow, textvariable=results["mouse_num"])
+        mousenum_entry = ctk.CTkEntry(
+            runwindow,
+            textvariable=results["mouse_num"],
+            font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        )
         mousenum_entry.grid(row=1, column=0)
         # run number
         runnum_string = "What is the number of the trial?"
-        runnum_label = ctk.CTkLabel(runwindow, text=runnum_string)
+        runnum_label = ctk.CTkLabel(
+            runwindow, text=runnum_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+        )
         runnum_label.grid(row=2, column=0)
-        runnum_entry = ctk.CTkEntry(runwindow, textvariable=results["run_num"])
+        runnum_entry = ctk.CTkEntry(
+            runwindow,
+            textvariable=results["run_num"],
+            font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        )
         runnum_entry.grid(row=3, column=0)
     # how we index rows from here upon depends on current analysis
     if analysis == "single":
@@ -1100,64 +1359,127 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
     else:
         r = 0
     # root directory
-    rootdir_string = "Directory location of the folder containing the files to analyse"
-    rootdir_label = ctk.CTkLabel(runwindow, text=rootdir_string, width=runwindow_w)
+    rootdir_string = "Directory containing the files to be analysed"
+    rootdir_label = ctk.CTkLabel(
+        runwindow, text=rootdir_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+    )
     rootdir_label.grid(row=r + 0, column=0)
-    rootdir_entry = ctk.CTkEntry(runwindow, textvariable=results["root_dir"])
+    rootdir_entry = ctk.CTkEntry(
+        runwindow,
+        textvariable=results["root_dir"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
     rootdir_entry.grid(row=r + 1, column=0)
     # stepcycle latency XLS
-    SCXLS_string = "Name of the Annotation Table Excel file"
-    SCXLS_label = ctk.CTkLabel(runwindow, text=SCXLS_string, width=runwindow_w)
+    SCXLS_string = "Filename of the Annotation Table Excel file"
+    SCXLS_label = ctk.CTkLabel(
+        runwindow, text=SCXLS_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+    )
     SCXLS_label.grid(row=r + 2, column=0)
-    SCXLS_entry = ctk.CTkEntry(runwindow, textvariable=results["sctable_filename"])
+    SCXLS_entry = ctk.CTkEntry(
+        runwindow,
+        textvariable=results["sctable_filename"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
     SCXLS_entry.grid(row=r + 3, column=0)
-    # file naming convention label
-    name_convention_string = (
-        "According to [A]_[B]_[C]_[D]-[E][G] filename convention "
-        + "(e.g. C57B6_Mouse10_25mm_Run1-6DLC-JointTracking):"
+    # empty label 1 (for spacing)
+    empty_label_one = ctk.CTkLabel(runwindow, text="")
+    empty_label_one.grid(row=r + 4, column=0)
+    # file naming convention label one
+    name_convention_string_one = (
+        "According to the [A]_[B]_[C]_[D]-[E][G] filename convention "
     )
-    name_convention_label = ctk.CTkLabel(
-        runwindow, text=name_convention_string, width=runwindow_w
+    name_convention_label_one = ctk.CTkLabel(
+        runwindow,
+        text=name_convention_string_one,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    name_convention_label.grid(row=r + 4, column=0)
+    name_convention_label_one.grid(row=r + 5, column=0)
+    # file naming convention label two
+    name_convention_string_two = "(e.g. C57B6_Mouse10_25mm_Run1-6DLC-JointTracking):"
+    name_convention_label_two = ctk.CTkLabel(
+        runwindow,
+        text=name_convention_string_two,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    name_convention_label_two.grid(row=r + 6, column=0)
+    # empty label 2 (for spacing)
+    empty_label_two = ctk.CTkLabel(runwindow, text="")
+    empty_label_two.grid(row=r + 7, column=0)
     # data string
     data_string = "[G] What is the identifier of the DLC-tracked coordinate file?"
-    data_label = ctk.CTkLabel(runwindow, text=data_string, width=runwindow_w)
-    data_label.grid(row=r + 5, column=0)
-    data_entry = ctk.CTkEntry(runwindow, textvariable=results["data_string"])
-    data_entry.grid(row=r + 6, column=0)
+    data_label = ctk.CTkLabel(
+        runwindow, text=data_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+    )
+    data_label.grid(row=r + 8, column=0)
+    data_entry = ctk.CTkEntry(
+        runwindow,
+        textvariable=results["data_string"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    data_entry.grid(row=r + 9, column=0)
     # beam string
     beam_string = (
         "[G] What is the identifier of the DLC-tracked baseline file? (optional)"
     )
-    beam_label = ctk.CTkLabel(runwindow, text=beam_string, width=runwindow_w)
-    beam_label.grid(row=r + 7, column=0)
-    beam_entry = ctk.CTkEntry(runwindow, textvariable=results["beam_string"])
-    beam_entry.grid(row=r + 8, column=0)
+    beam_label = ctk.CTkLabel(
+        runwindow, text=beam_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+    )
+    beam_label.grid(row=r + 10, column=0)
+    beam_entry = ctk.CTkEntry(
+        runwindow,
+        textvariable=results["beam_string"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    beam_entry.grid(row=r + 11, column=0)
     # premouse_num string
     premouse_string = "[B] Define the 'unique subject identifier' preceding the number"
-    premouse_label = ctk.CTkLabel(runwindow, text=premouse_string, width=runwindow_w)
-    premouse_label.grid(row=r + 9, column=0)
-    premouse_entry = ctk.CTkEntry(runwindow, textvariable=results["premouse_string"])
-    premouse_entry.grid(row=r + 10, column=0)
+    premouse_label = ctk.CTkLabel(
+        runwindow, text=premouse_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+    )
+    premouse_label.grid(row=r + 12, column=0)
+    premouse_entry = ctk.CTkEntry(
+        runwindow,
+        textvariable=results["premouse_string"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    premouse_entry.grid(row=r + 13, column=0)
     # postmouse_num string
     postmouse_string = "[C] Define the 'unique task identifier"
-    postmouse_label = ctk.CTkLabel(runwindow, text=postmouse_string, width=runwindow_w)
-    postmouse_label.grid(row=r + 11, column=0)
-    postmouse_entry = ctk.CTkEntry(runwindow, textvariable=results["postmouse_string"])
-    postmouse_entry.grid(row=r + 12, column=0)
+    postmouse_label = ctk.CTkLabel(
+        runwindow, text=postmouse_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+    )
+    postmouse_label.grid(row=r + 14, column=0)
+    postmouse_entry = ctk.CTkEntry(
+        runwindow,
+        textvariable=results["postmouse_string"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    postmouse_entry.grid(row=r + 15, column=0)
     # prerun string
     prerun_string = "[D] Define the 'unique trial identifier"
-    prerun_label = ctk.CTkLabel(runwindow, text=prerun_string, width=runwindow_w)
-    prerun_label.grid(row=r + 13, column=0)
-    prerun_entry = ctk.CTkEntry(runwindow, textvariable=results["prerun_string"])
-    prerun_entry.grid(row=r + 14, column=0)
+    prerun_label = ctk.CTkLabel(
+        runwindow, text=prerun_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+    )
+    prerun_label.grid(row=r + 16, column=0)
+    prerun_entry = ctk.CTkEntry(
+        runwindow,
+        textvariable=results["prerun_string"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    prerun_entry.grid(row=r + 17, column=0)
     # postrun string
     postrun_string = "[E] Define the 'unique camera identifier"
-    postrun_label = ctk.CTkLabel(runwindow, text=postrun_string, width=runwindow_w)
-    postrun_label.grid(row=r + 15, column=0)
-    postrun_entry = ctk.CTkEntry(runwindow, textvariable=results["postrun_string"])
-    postrun_entry.grid(row=r + 16, column=0)
+    postrun_label = ctk.CTkLabel(
+        runwindow, text=postrun_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+    )
+    postrun_label.grid(row=r + 18, column=0)
+    postrun_entry = ctk.CTkEntry(
+        runwindow,
+        textvariable=results["postrun_string"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    postrun_entry.grid(row=r + 19, column=0)
     # button confirming being done
     # => change value of user_ready in this call
     finishbutton = ctk.CTkButton(
@@ -1165,12 +1487,13 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         text="I am done, pass the info!",
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: (
             update_config_file(results, cfg),
             user_ready.set(1),
         ),
     )
-    finishbutton.grid(row=r + 17, column=0, rowspan=2, sticky="nsew", pady=5, padx=70)
+    finishbutton.grid(row=r + 20, column=0, rowspan=2, sticky="nsew", pady=5, padx=70)
     # maximise widgets
     maximise_widgets(runwindow)
     # wait until user is ready before returning
@@ -1258,7 +1581,7 @@ def multirun_run_a_single_dataset(idx, info, folderinfo, this_runs_cfg):
 # %%...............  LOCAL FUNCTION(S) #6 - VARIOUS HELPER FUNCTIONS  ..................
 
 
-def change_ratio_entry_state(ratio_entry, cfg):
+def change_ratio_entry_state(ratio_entry):
     """Change the state of ratio entry widget based on whether user wants
     to convert pixels to mm or not.
     """
@@ -1266,6 +1589,27 @@ def change_ratio_entry_state(ratio_entry, cfg):
         ratio_entry.configure(state="normal")
     elif cfg["convert_to_mm"].get() == False:
         ratio_entry.configure(state="disabled")
+
+
+def change_y_standardisation_joint_entry_state(y_standardisation_joint_entry):
+    if cfg["standardise_y_to_a_joint"].get() == True:
+        y_standardisation_joint_entry.configure(state="normal")
+    elif cfg["standardise_y_to_a_joint"].get() == False:
+        y_standardisation_joint_entry.configure(state="disabled")
+
+
+def change_x_standardisation_box_state(standardise_x_coordinates_box):
+    if cfg["analyse_average_x"].get() == True:
+        standardise_x_coordinates_box.configure(state="normal")
+    elif cfg["analyse_average_x"].get() == False:
+        standardise_x_coordinates_box.configure(state="disabled")
+
+
+def change_x_standardisation_joint_entry_state(x_standardisation_joint_entry):
+    if cfg["standardise_x_coordinates"].get() == True:
+        x_standardisation_joint_entry.configure(state="normal")
+    elif cfg["standardise_x_coordinates"].get() == False:
+        x_standardisation_joint_entry.configure(state="disabled")
 
 
 def maximise_widgets(window):
