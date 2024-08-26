@@ -33,25 +33,30 @@ def group_simirun():
         cfg["plot_SE"] = False
         cfg["color_palette"] = "viridis"
         cfg["legend_outside"] = True
-        cfg["dont_show_plots"] = False
+        cfg["dont_show_plots"] = True
         cfg["anova_design"] = "Mixed ANOVA"
         cfg["PCA_variables"] = [
-            "Midfoot, " + cfg["which_leg"] + " Z",
-            "Ankle, " + cfg["which_leg"] + " Z",
-            "Knee, " + cfg["which_leg"] + " Z",
-            "Hip, " + cfg["which_leg"] + " Z",
-            "Skullbase Angle",
-            "Elbow, " + cfg["which_leg"] + " Angle",
-            "Pelvis Z",
-            "Shoulder, " + cfg["which_leg"] + " Z",
+            # "Midfoot, " + cfg["which_leg"] + " Z",
+            # "Ankle, " + cfg["which_leg"] + " Z",
+            # "Knee, " + cfg["which_leg"] + " Z",
+            # "Hip, " + cfg["which_leg"] + " Z",
+            # "Skullbase Angle",
+            # "Elbow, " + cfg["which_leg"] + " Angle",
+            # "Pelvis Z",
+            # "Shoulder, " + cfg["which_leg"] + " Z",
         ]
         cfg["stats_variables"] = [
-            "Midfoot, " + cfg["which_leg"] + " Z",
             "Ankle, " + cfg["which_leg"] + " Z",
+            "Ankle, " + cfg["which_leg"] + " Y",
+            "Ankle, " + cfg["which_leg"] + " Velocity",
+            "Ankle, " + cfg["which_leg"] + " Acceleration",
+            "Ankle, " + cfg["which_leg"] + " Angle",
+            "Ankle, " + cfg["which_leg"] + " Angle Velocity",
+            "Ankle, " + cfg["which_leg"] + " Angle Acceleration",
             # "Knee, " + cfg["which_leg"] + " Z",
             # "Shoulder, " + cfg["which_leg"] + " Angle",
-            "Skullbase Angle",
-            "Elbow, " + cfg["which_leg"] + " Angle",
+            # "Skullbase Angle",
+            # "Elbow, " + cfg["which_leg"] + " Angle",
         ]
         # run
         autogaita_group.group(folderinfo, cfg)

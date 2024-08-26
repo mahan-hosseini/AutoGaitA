@@ -10,12 +10,40 @@ def group_dlcrun():
     # => Note that length of folderinfo's group_names & group_dirs lists determines how #    many groups are compared.
     # => Also note that indices must correspond (i.e., idx #    1's name will be used #    for dataset stored in group_dir's idx 1)
     folderinfo = {}
-    folderinfo["group_names"] = ["one", "two"]
+    folderinfo["group_names"] = [
+        # RM Dataset
+        # "5mm",
+        # "12mm",
+        # "25mm",
+        # Interaction Issue Dataset
+        # "Control",
+        # "Silenced",
+        # Testing Dataset
+        "one",
+        "two",
+    ]
     folderinfo["group_dirs"] = [
+        # --------------------------
+        # Full Dataset (39 subjects)
+        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Sanity Test Interaction Graziana/Result 10 joints/Control Full",
+        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Sanity Test Interaction Graziana/Result 10 joints/Silenced Full/",
+        # --------------------------
+        # Reduced Dataset (5 subjects)
+        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Sanity Test Interaction Graziana/Result 10 joints/Control",
+        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Sanity Test Interaction Graziana/Result 10 joints/Silenced/",
+        # --------------------------
+        # Testing Dataset
         "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group 1/",
         "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group 2/",
+        # --------------------------
+        # RM Dataset (example data in repo)
+        # "/Users/mahan/sciebo/PythonCode/autogaita_repository/example data/5mm/Results/",
+        # "/Users/mahan/sciebo/PythonCode/autogaita_repository/example data/12mm/Results/",
+        # "/Users/mahan/sciebo/PythonCode/autogaita_repository/example data/25mm/Results/",
     ]
     folderinfo["results_dir"] = (
+        # " /Users/mahan/sciebo/Research/AutoGaitA/Mouse/example_data_results/"
+        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Sanity Test Interaction Graziana/Result 10 joints/Mahan Results/"
         "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/GroupResults/"
     )
     # cfg
@@ -28,18 +56,26 @@ def group_dlcrun():
     cfg["stats_threshold"] = 0.05
     cfg["plot_SE"] = False
     cfg["color_palette"] = "viridis"
+    cfg["dont_show_plots"] = True
     cfg["legend_outside"] = True
-    cfg["dont_show_plots"] = False
     cfg["which_leg"] = "left"
     cfg["anova_design"] = "Mixed ANOVA"
     cfg["permutation_number"] = 100
-    cfg["PCA_variables"] = ["Hind paw tao y", "Ankle y", "Knee y"]
+    cfg["PCA_variables"] = []  # ["Hind paw tao y", "Ankle y", "Knee y"]
     cfg["stats_variables"] = [
         # "Hind paw tao y",
-        "Ankle y",
+        # "Ankle y",
         # "Knee y",
-        "Ankle Angle",
+        # "Ankle Angle",
         # "Knee Angle",
+        # "Nose x",
+        "Knee y",
+        "Knee x",
+        "Knee Velocity",
+        "Knee Acceleration",
+        "Knee Angle",
+        "Knee Angle Velocity",
+        "Knee Angle Acceleration",
         # "Hip Angle",
         # "Elbow Angle"
     ]

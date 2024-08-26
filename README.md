@@ -47,7 +47,7 @@ We provide an example dataset in the **example data** folder of this repository,
 ### Annotation Table Examples and Templates
 Annotation Table example and template files for *AutoGaitA_DLC* and *AutoGaitA_Simi* can be found in the [**annotation tables**](https://github.com/mahan-hosseini/AutoGaitA/tree/main/annotation%20tables) folder of this repository.
 
-Users are advised to read the [*General Recommendations* in the documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.vdyamml0ywgq), use the template to enter their data's timestamp information and to then compare the resulting table with our example to check formatting. Users working with ImageJ/FIJI are encouraged to check out the [AnnotationTable-Plugin](https://github.com/luca-flemming/AnnotationTable-Plugin) developed by our contributor Luca Flemming.
+Users are advised to read the **General Recommendations** section of that folder, use the template to enter their data's timestamp information and to then compare the resulting table with our example to check formatting. Users working with ImageJ/FIJI are encouraged to check out the [AnnotationTable-Plugin](https://github.com/luca-flemming/AnnotationTable-Plugin) developed by our contributor Luca Flemming.
 
 ## Documentation
 

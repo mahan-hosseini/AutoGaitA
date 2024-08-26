@@ -20,7 +20,7 @@ def simi_multirun():
     # cfg
     cfg = {}
     cfg["sampling_rate"] = 100  # base cfg
-    cfg["dont_show_plots"] = False
+    cfg["dont_show_plots"] = True
     cfg["y_acceleration"] = True
     cfg["angular_acceleration"] = True
     cfg["bin_num"] = 25
@@ -29,7 +29,7 @@ def simi_multirun():
     cfg["plot_joint_number"] = 7
     cfg["color_palette"] = "viridis"
     cfg["legend_outside"] = True
-    cfg["analyse_average_y"] = False
+    cfg["analyse_average_y"] = True
     cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis", "Shoulder", "Neck"]
     cfg["angles"] = {
         "name": ["Ankle", "Knee"],
