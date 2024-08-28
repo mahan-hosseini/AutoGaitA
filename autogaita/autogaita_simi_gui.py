@@ -378,6 +378,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     screen_height = root.winfo_screenheight()  # height of the screen
     # build window
     cfg_window = ctk.CTkToplevel(root)
+    cfg_window.title("Advanced Configuration")
     cfg_window.geometry(
         f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0"
     )
