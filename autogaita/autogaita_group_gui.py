@@ -82,7 +82,7 @@ COLOR_PALETTES_LIST = [
     "cividis_r",  # uniform palettes in reversed order
 ]
 EXCLUDED_VARS_FROM_CFG_FILE = ["last_runs_stats_variables", "last_runs_PCA_variables"]
-AV_SHEET_NAME = "Average Stepcycle"
+NORM_SHEET_NAME = "Normalised Stepcycle"
 WINDOWS_TASKBAR_MAXHEIGHT = 72
 
 # To get the path of the autogaita folder I use __file__
@@ -134,7 +134,7 @@ def group_gui():
     root_dimensions = (root_w, root_h, root_x, root_y)
     # set the dimensions of the screen and where it is placed
     root.geometry("%dx%d+%d+%d" % root_dimensions)
-    root.title("AutoGaitA Group")
+    root.title("Group GaitA")
 
     # nested function: main window
     def mainwindow(root, group_number, root_dimensions):
@@ -230,7 +230,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         # ........................  geometry & intro section  ..........................
         # geometry
         mainwindow = ctk.CTkToplevel(root)
-        mainwindow.title("AutoGaitA Group")
+        mainwindow.title("Group GaitA")
         # set the dimensions of the screen and where it is placed
         # => have it half-wide starting at 1/4 of screen's width (dont change w & x!)
         mainwindow.geometry(
@@ -668,7 +668,7 @@ def definefeatures_window(
         # next operator means we loop lazy - stop once we find it & return None if av
         # sheet not in dir
         av_sheet_path = next(
-            (file for file in IDs_files if AV_SHEET_NAME in file), None
+            (file for file in IDs_files if NORM_SHEET_NAME in file), None
         )
         if av_sheet_path:  # won't be true if no AVXLS found
             full_path = os.path.join(some_IDs_dir, av_sheet_path)
