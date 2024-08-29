@@ -20,7 +20,7 @@
 
 It is strongly recommended that a separate virtual environment for AutoGaitA is created (note that the approach below creates the virtual environment to your current directory):
 
-- Create the virtual environment
+- Create the virtual environment:
     - `python -m venv env_gaita`
 
 - After creation, activate the virtual environment via:
@@ -29,9 +29,12 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
 
 - Once activated, install AutoGaitA in the virtual environment via pip: `pip install autogaita`.
 
-- Access the main user interface via `python -m autogaita`.
+- Access the main user interface via: `python -m autogaita`.
 
 - To update to the latest release (see the *Releases* panel on the right for the latest release) activate the virtual environment and: `pip install autogaita -U`. 
+
+## AutoGaitA Demo
+[![AutoGaitA Demo]()](https://youtu.be/StTqXEQ2l-Y?t=35s "Everything Is AWESOME")
 
 ## Tutorials and Examples
 
@@ -39,7 +42,7 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
 
 **[The AutoGaitA YouTube Channel](https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&si=mV5p2--nYvbofkPh) provides tutorials for file preparation and instructions on how to use AutoGaitA**
 
-*Please note that tutorial videos might not always reflect the most up-to-date version of our toolbox, especially in the beginning when things are regularly changing. We will make sure to record new videos whenever there are major changes, though.*
+*Please note that tutorial videos might not always reflect the most up-to-date version of our toolbox, especially in the beginning when things are regularly changing. We will make sure to record new videos whenever there are major changes though.*
 
 ### Example Data
 We provide an example dataset in the **example data** folder of this repository, with a set of mice walking over differently wide beams and both the beam as well as body coordinates being tracked with DLC. Note that this dataset was used in our tutorial videos introducing *AutoGaitA_DLC*, *AutoGaitA_Group* and in our video explaining file preparation for *AutoGaitA_DLC*.  We further provide a **group** folder there that can be used alongside the *AutoGaitA_Group* tutorial to confirm that users generate the same set of results following our instructions.
