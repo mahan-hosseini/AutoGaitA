@@ -36,7 +36,7 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
 ## Demo Video
 *Check out the video below for a demonstration of AutoGaitA's main workflow!*
 <p><a href="https://youtu.be/_HIZVuUzpzk?feature=shared">
-<img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/pic_to_demo_for_repo.png" width="600">
+<img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/pic_to_demo_for_repo.png" width="550">
 
 ## Tutorials & Examples
 
