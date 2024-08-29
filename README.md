@@ -64,8 +64,8 @@ Users are advised to read the **General Recommendations** section of that folder
 By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for mouse and human locomotion, respectively. If your analysis deviates from these standards (e.g. by focussing on another limb or a different species) **you must change these values!** You can find the window in the *advanced configuration* sections and once values are customised they remain for subsequent executions of AutoGaitA (i.e., until the program is closed). 
 
 **Find out more about *AutoGaitA's custom joints and angles:***
-- [YouTube - AutoGaitA DLC Advanced Configuration](https://youtu.be/YABoQMOqChk?feature=shared) 
-- [YouTube - AutoGaitA Simi](https://youtu.be/fJhnjrJbA5c?feature=shared) 
+- [YouTube - AutoGaitA DLC Advanced Configuration](https://youtu.be/MP9g9kXRE_Q?feature=shared) 
+- [YouTube - AutoGaitA Simi](https://youtu.be/rTG-Fc9XI9g?feature=shared) 
 - [Documentation - AutoGaitA DLC](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.20bg7b7ymt0b)
 - [Documentation - AutoGaitA Simi](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.uz61bpmua7qz)
 
