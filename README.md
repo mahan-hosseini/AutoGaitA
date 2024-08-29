@@ -33,9 +33,10 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
 
 - To update to the latest release (see the *Releases* panel on the right for the latest release) activate the virtual environment and: `pip install autogaita -U`. 
 
-## Check out the Demo below for AutoGaitA's main workflow! 
-<p><a href="https://youtu.be/_HIZVuUzpzk?feature=shared"/>
-<img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/yt_demo_thumbnail.png" width="400" />
+## Check out the Demo below for AutoGaitA's main workflow!
+## Demo 2
+<p><a href="https://youtu.be/_HIZVuUzpzk?feature=shared">
+<img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/pic_to_demo_for_repo.png" width="400" /> 
 
 ## Tutorials & Examples
 
