@@ -3,7 +3,7 @@ from autogaita.autogaita_dlc import (
     extract_stepcycles,
     analyse_and_export_stepcycles,
 )
-from autogaita.autogaita_dlc import add_angles, add_velocities
+from autogaita.autogaita_dlc import add_angles, add_x_velocities, add_angular_velocities
 from autogaita.autogaita_dlc import standardise_x_y_and_add_features_to_one_step
 from hypothesis import given
 import hypothesis.strategies as st
@@ -217,7 +217,8 @@ def test_velocities():
         "x_acceleration": True,
         "angular_acceleration": True,
     }
-    step = add_velocities(step, cfg)
+    step = add_x_velocities(step, cfg)
+    step = add_angular_velocities(step, cfg)
     # expected values were obtained by calling np.gradient on arrays above
     expected_values = {
         "Sample Velocity": [2.0, 2.0, 3.0, 2.0, -2.0, -3.0, -2.0, -2.0, -5.0, -8.0],
