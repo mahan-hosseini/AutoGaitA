@@ -1286,10 +1286,13 @@ def standardise_x_y_and_add_features_to_one_step(step, cfg):
         else:
             this_y_min = step_copy[y_cols].min().min()
         step_copy[y_cols] -= this_y_min
-    # add angles and velocities
-    step_copy = add_features(step_copy, cfg)
-    # standardise x (horizontal dimension) at step-cycle level too
-    if cfg["standardise_x_coordinates"] is True:
+    # if no x-standardisation, just add features & return non-(x-)normalised step
+    if cfg["standardise_x_coordinates"] is False:
+        non_norm_step = add_features(step_copy, cfg)
+        return non_norm_step
+        # else standardise x (horizontal dimension) at step-cycle level too
+    else:
+        non_norm_step = add_features(step_copy, cfg)
         x_norm_step = step_copy.copy()
         x_cols = [col for col in x_norm_step.columns if col.endswith("x")]
         # note the [0] here is important because it's still a list of len=1!!
@@ -1298,9 +1301,7 @@ def standardise_x_y_and_add_features_to_one_step(step, cfg):
         ].min()
         x_norm_step[x_cols] -= min_x_standardisation_joint
         x_norm_step = add_features(x_norm_step, cfg)
-        return step_copy, x_norm_step
-    else:
-        return step_copy
+        return non_norm_step, x_norm_step
 
 
 def add_features(step, cfg):
@@ -1308,10 +1309,11 @@ def add_features(step, cfg):
     # unpack
     hind_joints = cfg["hind_joints"]
     angles = cfg["angles"]
+    if hind_joints:
+        step = add_x_velocities(step, cfg)
     if angles["name"]:  # if there is at least 1 string in the list
         step = add_angles(step, cfg)
-    if hind_joints:
-        step = add_velocities(step, cfg)
+        step = add_angular_velocities(step, cfg)
     return step
 
 
@@ -1356,28 +1358,31 @@ def compute_angle(joint_angle, joint2, joint3):
     return math.degrees(angle)
 
 
-def add_velocities(step, cfg):
-    """Feature #2: Joint x and Angular Velocities"""
+def add_x_velocities(step, cfg):
+    """Feature #2: Joint x Velocities & Accelerations"""
     # unpack
     hind_joints = cfg["hind_joints"]
     x_acceleration = cfg["x_acceleration"]
-    angular_acceleration = cfg["angular_acceleration"]
-    # compute velocities (& acceleration if wanted) for hind joints first
+
     for joint in hind_joints:
         step[joint + "Velocity"] = 0.0
         if x_acceleration:
             step[joint + "Acceleration"] = 0.0
-        # step[joint + "Accel. Gradient"] = 0.0
     for joint in hind_joints:
         step.loc[:, joint + "Velocity"] = np.gradient(step.loc[:, joint + "x"])
         if x_acceleration:
             step.loc[:, joint + "Acceleration"] = np.gradient(
                 step.loc[:, joint + "Velocity"]
             )
-        # step.loc[:, joint + "Accel. Gradient"]= np.gradient(
-        #     step.loc[:, joint + "Acceleration"])
-    # compute velocities (& acceleration) for the angles too
-    angle_cols = [c for c in step.columns if "Angle" in c]
+    return step
+
+
+def add_angular_velocities(step, cfg):
+    """Feature #3: Angular Velocities & Accelerations"""
+    # unpack
+    angular_acceleration = cfg["angular_acceleration"]
+
+    angle_cols = [c for c in step.columns if c.endswith("Angle")]
     for angle in angle_cols:
         step[angle + " Velocity"] = 0.0  # space is correct here
         if angular_acceleration:
