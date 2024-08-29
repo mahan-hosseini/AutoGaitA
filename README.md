@@ -33,20 +33,17 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
 
 - To update to the latest release (see the *Releases* panel on the right for the latest release) activate the virtual environment and: `pip install autogaita -U`. 
 
-## AutoGaitA Demo
-[![AutoGaitA Demo](https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/pic_to_demo_for_repo.png?raw=true)](https://youtu.be/_HIZVuUzpzk?feature=shared)
-
-## Demo 2
+## Check out the Demo below for AutoGaitA's main workflow! 
 <p><a href="https://youtu.be/_HIZVuUzpzk?feature=shared">
-<img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/yt_demo_thumbnail.png" width="200" />
+<img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/yt_demo_thumbnail.png" width="400" />
 
-## Tutorials and Examples
+## Tutorials & Examples
 
-### Video Walkthrough Tutorials
+### Walkthrough Tutorial Videos  
 
-**[The AutoGaitA YouTube Channel](https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&si=mV5p2--nYvbofkPh) provides tutorials for file preparation and instructions on how to use AutoGaitA**
+**[The AutoGaitA YouTube Channel](https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&si=mV5p2--nYvbofkPh) provides tutorials for file preparation and instructions on how to use AutoGaitA. This includes in-depth explanations of all details, (main & advanced) configurations, possibilities, and outputs.**
 
-*Please note that tutorial videos might not always reflect the most up-to-date version of our toolbox, especially in the beginning when things are regularly changing. We will make sure to record new videos whenever there are major changes though.*
+*Please note that tutorial videos might not always reflect the most up-to-date version of our toolbox, especially in the beginning when things are regularly changing. We will make sure to record new videos whenever there are major changes though. Last tutorial-update was with v0.4.0. (August 2024)*
 
 ### Example Data
 We provide an example dataset in the **example data** folder of this repository, with a set of mice walking over differently wide beams and both the beam as well as body coordinates being tracked with DLC. Note that this dataset was used in our tutorial videos introducing *AutoGaitA_DLC*, *AutoGaitA_Group* and in our video explaining file preparation for *AutoGaitA_DLC*.  We further provide a **group** folder there that can be used alongside the *AutoGaitA_Group* tutorial to confirm that users generate the same set of results following our instructions.
