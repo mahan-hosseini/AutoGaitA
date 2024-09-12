@@ -103,4 +103,4 @@ We are looking forward to your input and ideas 😊
 ## Archive
 We have archived the resources of outdated AutoGaitA versions here:
 
-- v0.3.1 [YouTube Tutorials](https://youtube.com/playlist?list=PLCn5T7K_H8K776DLuXKoPsUpI6Yb0NU33&si=7ZAAvcrPxR7WsB8a) & [Documentation](https://docs.google.com/document/d/11mJd7jUHk7joQ0BdZT98CJRrIANdyosMQMJGFtp6yR4/edit?usp=sharing)
+- v0.3.1 - [YouTube Tutorials](https://youtube.com/playlist?list=PLCn5T7K_H8K776DLuXKoPsUpI6Yb0NU33&si=7ZAAvcrPxR7WsB8a) & [Documentation](https://docs.google.com/document/d/11mJd7jUHk7joQ0BdZT98CJRrIANdyosMQMJGFtp6yR4/edit?usp=sharing)
