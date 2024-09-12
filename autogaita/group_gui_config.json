@@ -1,26 +1,26 @@
 [
     {
         "group_names": [
-            "5 mm",
-            "12 mm",
-            "25 mm ",
+            "",
+            "",
+            "",
             "",
             "",
             ""
         ],
         "group_dirs": [
-            "/Users/mahan/sciebo/PythonCode/autogaita_repository/example data/5mm/Results",
-            "/Users/mahan/sciebo/PythonCode/autogaita_repository/example data/12mm/Results",
-            "/Users/mahan/sciebo/PythonCode/autogaita_repository/example data/25mm/Results",
+            "",
+            "",
+            "",
             "",
             "",
             ""
         ],
-        "results_dir": "/Users/mahan/Desktop/GroupResults/"
+        "results_dir": ""
     },
     {
-        "do_permtest": false,
-        "do_anova": true,
+        "do_permtest": true,
+        "do_anova": false,
         "anova_design": "RM ANOVA",
         "permutation_number": 10000,
         "stats_threshold": "0.05",
@@ -28,42 +28,12 @@
         "number_of_PCs": 3,
         "save_3D_PCA_video": false,
         "plot_SE": false,
-        "color_palette": "viridis",
+        "color_palette": "Set2",
         "dont_show_plots": false,
         "legend_outside": true,
         "stats_variables": [
-            "Ankle y"
         ],
         "PCA_variables": [
-            "Wrist y",
-            "Elbow x",
-            "Elbow y",
-            "Lower Shoulder x",
-            "Lower Shoulder y",
-            "Upper Shoulder x",
-            "Upper Shoulder y",
-            "Iliac Crest x",
-            "Iliac Crest y",
-            "Hip x",
-            "Hip y",
-            "Knee x",
-            "Knee y",
-            "Ankle x",
-            "Ankle y",
-            "Hind paw tao x",
-            "Hind paw tao y",
-            "Tail base x",
-            "Tail base y",
-            "Tail center x",
-            "Tail center y",
-            "Tail tip x",
-            "Tail tip y",
-            "Ankle Angle",
-            "Knee Angle",
-            "Hip Angle",
-            "Hind paw tao Velocity",
-            "Hind paw tao Acceleration",
-            "Ankle Velocity"
         ]
     }
 ]
