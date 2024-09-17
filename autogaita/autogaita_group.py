@@ -24,13 +24,9 @@ import warnings
 # %% A note on cross species functionality
 # => This function supports cross species analyses, however the data must be obtained
 #    from the same tracking_software (=> I.e., resulting from autogaita_dlc or _simi)
-# !!!
-# Add "both" leg functionality in compute_avg & g_avg_dfs at some point. For now make
-# sure it works for which_leg = right for our CS paper
-# !!!
-# The code won't work for tracking_software differing within a given execution of the
-# script. Not sure the hassle will be worth it, particularly since it's pretty unlikely
-# that a given lab has both DLC and Simi setups
+# => Also users have to ensure that the comparison makes sense across species w.r.t.
+#    features
+# => Adding "both" leg functionality in compute_avg & g_avg_dfs at some point.
 
 
 # %% constants
@@ -161,8 +157,7 @@ def group(folderinfo, cfg):
 
         # ..................................  ANOVA  ...................................
         if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
-            anova_sanity = anova_design_sanity_check(stats_df, folderinfo, cfg)
-            if anova_sanity:
+            if anova_design_sanity_check(stats_df, folderinfo, cfg):
                 for stats_var in cfg["stats_variables"]:
                     twoway_RMANOVA(
                         stats_df,
