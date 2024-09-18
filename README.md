@@ -72,20 +72,9 @@ By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for m
 - [Documentation - AutoGaitA Simi](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.uz61bpmua7qz)
 
 ### Bin number of step cycle normalisation
-An important step in AutoGaitA is normalising step cycles (or instances of other behaviours) to a uniform length before calculating the video-level average. This uniform length is called *bin number*, must be set by users and defaults to a value of 25 (see the last option in [AutoGaitA DLC's main configuration panel](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.bboivsfqr2lz)). 
+An important step in AutoGaitA is normalising step cycles (or instances of other behaviours) to a uniform length before calculating the video-level average. This uniform length is called *bin number*, must be set by users and defaults to a value of 25.
 
-Step cycles are normalised via averaging temporally adjacent data points if their original length was larger than the bin number and repeating values if they were shorter originally.
-
-Examples with a bin number of 25 and an original step cycle length of:
-- 5 - Repeat all 5 values 5 times.
-- 20 - Repeat the first 5 values once.
-- 30 - Average the first 10 values in pairs, then leave the last 20 unchanged.
-- 50 - Average all 50 values in pairs.
-- 51 - Average the first 3 values into 1, then average in pairs for the next 48.
-- *Note that "averaging in pairs" means:*
-    - Average of original values 1 & 2 results in normalised value 1.
-    - Average of original values 3 & 4 results in normalised value 2.
-    - And so on.
+Step cycles are normalised via averaging temporally adjacent data points if their original length was larger than the bin number and repeating values if they were shorter originally. [See our documentation for examples](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.bboivsfqr2lz). 
 
 **We strongly advise** users to think carefully about an appropriate bin number for their datasets. The correct value varies and depends strongly on the studied species, behaviour and the frame rate of cameras.
 
