@@ -58,9 +58,9 @@ Users are advised to read the **General Recommendations** section of that folder
 
 **[The AutoGaitA Documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit?usp=sharing) provides complete guidelines on installation, file preparation, AutoGaitA GUIs, using AutoGaitA via the command line, installing FFmpeg for rotating 3D PCA videos, lists known issues and FAQ.**  
 
-## Please Note - Two important options!
+## Two important options
 
-### 1) Custom joints & angles
+### Custom joints & angles
 **We strongly advise** users to pay attention to the *custom joints and angles* windows of AutoGaitA's first level toolboxes. Please see the relevant links below. These windows allow users to customise which columns of their data should be analysed and how angles should be computed. 
 
 By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for mouse and human locomotion, respectively. If your analysis deviates from these standards (e.g. by focussing on another behaviour or a different species) **you must change these values!** 
@@ -71,21 +71,21 @@ By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for m
 - [Documentation - AutoGaitA DLC](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.20bg7b7ymt0b)
 - [Documentation - AutoGaitA Simi](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.uz61bpmua7qz)
 
-### 2) Bin number of step cycle normalisation
+### Bin number of step cycle normalisation
 An important step in AutoGaitA is normalising step cycles (or instances of other behaviours) to a uniform length before calculating the video-level average. This uniform length is called *bin number*, must be set by users and defaults to a value of 25 (see the last option in [AutoGaitA DLC's main configuration panel](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.bboivsfqr2lz)). 
 
 Step cycles are normalised via averaging temporally adjacent data points if their original length was larger than the bin number and repeating values if they were shorter originally.
 
 Examples with a bin number of 25 and an original step cycle length of:
-- 5: Repeat all 5 values 5 times.
-- 20: Repeat the first 5 values once.
-- 30: Average the first 10 time points in pairs, then leave the last 20 unchanged
-- 50: Average all 50 time points in pairs.
-- 51: Average the first 3 points into 1, then average in pairs for the next 48.
+- 5 - Repeat all 5 values 5 times.
+- 20 - Repeat the first 5 values once.
+- 30 - Average the first 10 values in pairs, then leave the last 20 unchanged.
+- 50 - Average all 50 values in pairs.
+- 51 - Average the first 3 values into 1, then average in pairs for the next 48.
 - *Note that "averaging in pairs" means:*
-    - Average original time point 1 & 2 resulting in normalised time point 1
-    - Average original time point 3 & 4 resulting in normalised time point 2
-     - And so on
+    - Average of original values 1 & 2 results in normalised value 1.
+    - Average of original values 3 & 4 results in normalised value 2.
+    - And so on.
 
 **We strongly advise** users to think carefully about an appropriate bin number for their datasets. The correct value varies and depends strongly on the studied species, behaviour and the frame rate of cameras.
 
