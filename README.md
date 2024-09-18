@@ -58,16 +58,36 @@ Users are advised to read the **General Recommendations** section of that folder
 
 **[The AutoGaitA Documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit?usp=sharing) provides complete guidelines on installation, file preparation, AutoGaitA GUIs, using AutoGaitA via the command line, installing FFmpeg for rotating 3D PCA videos, lists known issues and FAQ.**  
 
-## Please Note: Custom Joints and Angles!
-**We strongly recommend** users to pay attention to the *custom joints and angles* windows of AutoGaitA's first level toolboxes. Please see the relevant links below. These windows allow users to customise which columns of their data should be analysed and how angles should be computed. 
+## Please Note - Two important options!
 
-By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for mouse and human locomotion, respectively. If your analysis deviates from these standards (e.g. by focussing on another limb or a different species) **you must change these values!** You can find the window in the *advanced configuration* sections and once values are customised they remain for subsequent executions of AutoGaitA (i.e., until the program is closed). 
+### 1) Custom joints & angles
+**We strongly advise** users to pay attention to the *custom joints and angles* windows of AutoGaitA's first level toolboxes. Please see the relevant links below. These windows allow users to customise which columns of their data should be analysed and how angles should be computed. 
+
+By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for mouse and human locomotion, respectively. If your analysis deviates from these standards (e.g. by focussing on another behaviour or a different species) **you must change these values!** 
 
 **Find out more about *AutoGaitA's custom joints and angles:***
 - [YouTube - AutoGaitA DLC Advanced Configuration](https://youtu.be/MP9g9kXRE_Q?feature=shared) 
 - [YouTube - AutoGaitA Simi](https://youtu.be/rTG-Fc9XI9g?feature=shared) 
 - [Documentation - AutoGaitA DLC](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.20bg7b7ymt0b)
 - [Documentation - AutoGaitA Simi](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.uz61bpmua7qz)
+
+### 2) Bin number of step cycle normalisation
+An important step in AutoGaitA is normalising step cycles (or instances of other behaviours) to a uniform length before calculating the video-level average. This uniform length is called *bin number*, must be set by users and defaults to a value of 25 (see the last option in [AutoGaitA DLC's main configuration panel](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.bboivsfqr2lz)). 
+
+Step cycles are normalised via averaging temporally adjacent data points if their original length was larger than the bin number and repeating values if they were shorter originally.
+
+Examples with a bin number of 25 and an original step cycle length of:
+- 5: Repeat all 5 values 5 times.
+- 20: Repeat the first 5 values once.
+- 30: Average the first 10 time points in pairs, then leave the last 20 unchanged
+- 50: Average all 50 time points in pairs.
+- 51: Average the first 3 points into 1, then average in pairs for the next 48.
+- *Note that "averaging in pairs" means:*
+    - Average original time point 1 & 2 resulting in normalised time point 1
+    - Average original time point 3 & 4 resulting in normalised time point 2
+     - And so on
+
+**We strongly advise** users to think carefully about an appropriate bin number for their datasets. The correct value varies and depends strongly on the studied species, behaviour and the frame rate of cameras.
 
 ## Analysing other behaviours - AutoCyclA 🚴
 Even though AutoGaitA's main focus is to automate and standardise gait analyses, our toolbox can be used to automate the analyses of any rhythmic behaviour of interest. For a proof-of-principle demonstration and an introduction of the general workflow of such analyses, see **[AutoCyclA - Automated Cycling Analysis with AutoGaitA.](https://github.com/mahan-hosseini/AutoGaitA/tree/main/autocycla)**
