@@ -660,6 +660,7 @@ def read_SC_info(data, SCdf, info, legname, cfg):
     sc_col = SCdf.columns.get_loc(header_columns[3])
     # first find the rows of this leg
     # a. find overall start row of this subject
+    SCdf[header_columns[0]] = SCdf[header_columns[0]].astype(str)  # ensure no ints!
     start_row = SCdf.index[SCdf[header_columns[0]] == name]
     if start_row.empty:
         this_message = (
