@@ -74,7 +74,7 @@ By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for m
 ### Bin number of step cycle normalisation
 An important step in AutoGaitA is normalising step cycles (or instances of other behaviours) to a uniform length before calculating the video-level average. This uniform length is called *bin number*, must be set by users and defaults to a value of 25.
 
-Step cycles are normalised via averaging temporally adjacent data points if their original length was larger than the bin number and repeating values if they were shorter originally. [See the documentation of option #6 of AutoGaitA DLC's Main Configuration for examples](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.bboivsfqr2lz).
+Step cycles are normalised via averaging temporally adjacent data points if their original length was larger than the bin number and repeating values if they were shorter originally. Example cases can be found here: [Documentation/AutoGaitA DLC/Main Configuration/Option #6](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.bboivsfqr2lz).
 
 **We strongly advise** users to think carefully about an appropriate bin number for their datasets. The correct value varies and depends strongly on the studied species, behaviour and the frame rate of cameras.
 
