@@ -802,24 +802,24 @@ def extract_stepcycles(data, info, folderinfo, cfg):
     sctable_filename = folderinfo["sctable_filename"]
     sampling_rate = cfg["sampling_rate"]
 
-    # check if excel file is .xlsx or .xls, if none found try to fix it
-    if (".xls" in sctable_filename) | (".xlsx" in sctable_filename):
-        if os.path.exists(os.path.join(root_dir, sctable_filename)):
-            SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename))
-        else:
-            raise FileNotFoundError(
-                "No Annotation Table found! sctable_filename has to be @ root_dir"
-            )
+    # load the table - try some filename & ending options
+    if os.path.exists(os.path.join(root_dir, sctable_filename)):
+        SCdf_full_filename = os.path.join(root_dir, sctable_filename)
+    elif os.path.exists(os.path.join(root_dir, sctable_filename) + ".xlsx"):
+        SCdf_full_filename = os.path.join(root_dir, sctable_filename) + ".xlsx"
+    elif os.path.exists(os.path.join(root_dir, sctable_filename) + ".xls"):
+        SCdf_full_filename = os.path.join(root_dir, sctable_filename) + ".xls"
     else:
-        # in cases below use string-concat (+) - otherwise xls added as path
-        if os.path.exists(os.path.join(root_dir, sctable_filename + ".xls")):
-            SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename + ".xls"))
-        elif os.path.exists(os.path.join(root_dir, sctable_filename + ".xlsx")):
-            SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename + ".xlsx"))
-        else:
-            raise FileNotFoundError(
-                "No Annotation Table found! sctable_filename has to be @ root_dir"
-            )
+        no_sc_table_message = (
+            "No Annotation Table found! sctable_filename has to be @ root_dir"
+        )
+        raise FileNotFoundError(no_sc_table_message)
+        # check if we need to specify engine (required for xlsx)
+    try:
+        SCdf = pd.read_excel(SCdf_full_filename)
+    except:
+        SCdf = pd.read_excel(SCdf_full_filename, engine="openpyxl")
+
     # see if table columns are labelled correctly (try a couple to allow user typos)
     valid_col_flags = [False, False, False]
     header_columns = ["", "", ""]

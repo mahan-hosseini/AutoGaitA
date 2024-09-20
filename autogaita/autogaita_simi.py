@@ -602,16 +602,21 @@ def extract_stepcycles(data, info, folderinfo, cfg):
 
     # load the table - try some filename & ending options
     if os.path.exists(os.path.join(root_dir, sctable_filename)):
-        SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename))
+        SCdf_full_filename = os.path.join(root_dir, sctable_filename)
     elif os.path.exists(os.path.join(root_dir, sctable_filename) + ".xlsx"):
-        SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename) + ".xlsx")
+        SCdf_full_filename = os.path.join(root_dir, sctable_filename) + ".xlsx"
     elif os.path.exists(os.path.join(root_dir, sctable_filename) + ".xls"):
-        SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename) + ".xls")
+        SCdf_full_filename = os.path.join(root_dir, sctable_filename) + ".xls"
     else:
         no_sc_table_message = (
             "No Annotation Table found! sctable_filename has to be @ root_dir"
         )
-        raise Exception(no_sc_table_message)
+        raise FileNotFoundError(no_sc_table_message)
+    # check if we need to specify engine (required for xlsx)
+    try:
+        SCdf = pd.read_excel(SCdf_full_filename)
+    except:
+        SCdf = pd.read_excel(SCdf_full_filename, engine="openpyxl")
 
     # extract & return all_cycles
     all_cycles = {"left": [], "right": []}
