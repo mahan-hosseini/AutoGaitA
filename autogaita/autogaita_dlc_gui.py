@@ -1797,7 +1797,7 @@ def extract_info(folderinfo):
                     + "Check unique trial [D] and unique camera [E] identifiers"
                 )
                 tk.messagebox.showerror(
-                    title="No Trial number found!", message=no_ID_num_found_msg
+                    title="No Trial number found!", message=no_run_num_found_msg
                 )
                 return
             # if we found both an ID and a run number, create this_name & add to dict
