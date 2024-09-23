@@ -937,8 +937,22 @@ def extract_stepcycles(data, info, folderinfo, cfg):
             print(round_message)
             write_issues_to_textfile(round_message, info)
         # assign to all_cycles (note int() rounds down!)
-        all_cycles[s][0] = int(start_in_s * sampling_rate)
-        all_cycles[s][1] = int(end_in_s * sampling_rate)
+        try:
+            all_cycles[s] = [
+                int(start_in_s * sampling_rate),
+                int(end_in_s * sampling_rate),
+            ]
+        except:
+            assign_error_message = (
+                "\n***********\n! WARNING !\n***********\n"
+                + "Unable to assign SC latencies of:"
+                + str(start_in_s)
+                + "s to "
+                + str(end_in_s)
+                + "\nThis should not happen. Please let us know if it does!"
+            )
+            print(assign_error_message)
+            write_issues_to_textfile(assign_error_message, info)
         # check if we are in data-bounds
         if (all_cycles[s][0] in data.index) & (all_cycles[s][1] in data.index):
             pass
