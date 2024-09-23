@@ -949,7 +949,9 @@ def extract_stepcycles(data, info, folderinfo, cfg):
                 + str(start_in_s)
                 + "s to "
                 + str(end_in_s)
-                + "\nThis should not happen. Please let us know if it does!"
+                + "\nThis could indicate that your Swing/Stance columns of your "
+                + "Annotation Table are not named correctly."
+                + "\nPlease double-check & re-run!"
             )
             print(assign_error_message)
             write_issues_to_textfile(assign_error_message, info)
