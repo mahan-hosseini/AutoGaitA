@@ -1,6 +1,6 @@
 ---
 name: AutoGaitA Bug
-about: Create a report to help us improve AutoGaitA
+about: Report a bug you encountered with AutoGaitA
 title: AutoGaitA Bug
 labels: ''
 assignees: ''
