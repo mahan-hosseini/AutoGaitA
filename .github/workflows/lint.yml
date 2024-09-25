@@ -7,6 +7,6 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - name: "Prepare Python"
-              run: "pip install pylint"
+              run: "pip install flake8"
             - name: "Run linter"
-              run: "pylint autogaita --disable C301, C302"
+              run: "flake8 ..."
