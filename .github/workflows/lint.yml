@@ -1,0 +1,12 @@
+name: "RANDOM LINTING WORKFLOW FOR PRACTICE"
+on: [push]
+jobs: 
+    lint:
+        runs-on: ubuntu-latest
+        container: python
+        steps:
+            - uses: actions/checkout@v4
+            - name: "Prepare Python"
+              run: "pip install pylint"
+            - name: "Run linter"
+              run: "pylint"
