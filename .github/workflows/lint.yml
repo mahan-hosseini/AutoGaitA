@@ -1,4 +1,4 @@
-name: "RANDOM LINTING WORKFLOW FOR PRACTICE"
+name: "Linting workflow with flake8"
 on: [push]
 jobs: 
     lint:
@@ -9,4 +9,4 @@ jobs:
             - name: "Prepare Python"
               run: "pip install flake8"
             - name: "Run linter"
-              run: "flake8 ..."
+              run: "flake8 autogaita"
