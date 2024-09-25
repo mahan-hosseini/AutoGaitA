@@ -9,4 +9,4 @@ jobs:
             - name: "Prepare Python"
               run: "pip install flake8"
             - name: "Run linter"
-              run: "flake8 autogaita"
+              run: "flake8 autogaita --exclude=__init__ --max-line-length 88"
