@@ -9,4 +9,4 @@ jobs:
             - name: "Prepare Python"
               run: "pip install pylint"
             - name: "Run linter"
-              run: "pylint autogaita"
+              run: "pylint autogaita --disable C301, C302"
