@@ -9,4 +9,4 @@ jobs:
             - name: "Prepare Python"
               run: "pip install pylint"
             - name: "Run linter"
-              run: "pylint"
+              run: "pylint autogaita"
