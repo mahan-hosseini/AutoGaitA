@@ -1,6 +1,6 @@
 ![AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/autogaita_logo.png?raw=true)
 ![Repository Active](https://www.repostatus.org/badges/latest/active.svg)
-[![Test AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/auto_test_gaita.yml/badge.svg)](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/auto_test_gaita.yml)
+[![Test AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/autogaita_test_and_black.yml/badge.svg)](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/autogaita_test_and_black.yml)
 ![Python](https://img.shields.io/badge/python-v3.10+-blue.svg)
 [![PyPI - Version](https://img.shields.io/pypi/v/autogaita)](https://pypi.org/project/autogaita/)
 ![license: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)
