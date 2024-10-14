@@ -7,7 +7,7 @@
 [![paper: biorxiv](https://img.shields.io/badge/paper-biorxiv-blue)](https://doi.org/10.1101/2024.04.14.589409) 
 
 ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
-![X URL](https://img.shields.io/twitter/url?url=https%3A%2F%2Fx.com%2Fautogaita&style=social&label=autogaita%20updates)
+![X URL](https://img.shields.io/twitter/url?url=https%3A%2F%2Fx.com%2Fautogaita&style=social&label=updates)
 
 # Automated Gait Analysis in Python 🐸
 
