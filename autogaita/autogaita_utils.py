@@ -1,5 +1,5 @@
 # ...................................  imports  ........................................
-from autogaita import autogaita_dlc, autogaita_simi
+from autogaita import autogaita_dlc, autogaita_simi, autogaita_sleap
 import pandas as pd
 import numpy as np
 import os
@@ -32,10 +32,12 @@ def try_to_run_gaita(which_gaita, info, folderinfo, cfg, multirun_flag):
     try:
         if which_gaita == "DLC":
             autogaita_dlc.dlc(info, folderinfo, cfg)
+        elif which_gaita == "SLEAP":
+            autogaita_sleap.sleap(info, folderinfo, cfg)
         elif which_gaita == "Simi":
             autogaita_simi.simi(info, folderinfo, cfg)
         else:
-            print("which_gaita has to be DLC or Simi - try again.")
+            print("which_gaita has to be DLC, SLEAP or Simi - try again.")
     # catch these errors (don't catch all possbile errors - bad practice!)
     except (
         KeyError,
