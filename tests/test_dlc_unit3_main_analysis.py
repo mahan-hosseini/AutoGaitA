@@ -2,6 +2,7 @@ from autogaita.autogaita_dlc import (
     some_prep,
     extract_stepcycles,
     analyse_and_export_stepcycles,
+    add_step_separators,
 )
 from autogaita.autogaita_dlc import add_angles, add_x_velocities, add_angular_velocities
 from autogaita.autogaita_dlc import standardise_x_y_and_add_features_to_one_step
@@ -239,3 +240,27 @@ def test_velocities():
     }
     for key in expected_values.keys():
         assert all(expected_values[key] == step[key])
+
+
+def test_step_separators():
+    """Unit test of how step separators are added to df"""
+    df_no_separators = pd.DataFrame(
+        {"A": [1, 2, 3, 4, 5], "B": ["yes", "no", "yes", "no", "yes"]}
+    )
+    nanvector = df_no_separators.loc[[1]]
+    nanvector[:] = np.nan
+    numvector = df_no_separators.loc[[1]]
+    numvector[:] = 1
+    df_manually_added_separators = pd.DataFrame(
+        {
+            "A": [1, 2, 3, 4, 5, np.nan, 1, np.nan],
+            "B": ["yes", "no", "yes", "no", "yes", np.nan, 1, np.nan],
+        }
+    )
+    df_manually_added_separators.index = [0, 1, 2, 3, 4, 1, 1, 1]
+    df_func_added_separators = add_step_separators(
+        df_no_separators, nanvector, numvector
+    )
+    pd.testing.assert_frame_equal(
+        df_func_added_separators, df_manually_added_separators
+    )
