@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import pdb
 
 # user inputs
 TASK = "clean"  # can be clean or rename
@@ -29,7 +28,7 @@ SPACE_SEP = " "
 
 
 # .............................  main 3D preparation  ..................................
-def main(task, cfg, *args):
+def prepare_3D(task, cfg, *args):
     """
     Main renaming function in preparation for 3D universal gaita
 
@@ -110,18 +109,24 @@ def rename_a_column(col_string, separator):
     """
     id_dict = {}  # just used locally in this func to get (new) col names
     # first, extract identifiers based on separators
-    # => if statement with .lower() to make our life easy
-    # => note in coord_key the OUTPUT (!) should be capitalised!
+    # => lower case candidate_ids for comparison to side & coord identifiers
+    # => note we store original candidate id for JOINT_KEY!
+    # => note in COORD_KEY the OUTPUT (!) should be capitalised!
     for candidate_id in col_string.split(separator):
-        if candidate_id.lower() in CANDIDATE_SIDE_IDENTIFIER:
+        original_candidate_id = candidate_id
+        candidate_id = candidate_id.lower()
+        # 1: sides are set to pre-set values
+        if candidate_id in CANDIDATE_SIDE_IDENTIFIER:
             if candidate_id in ["l", "left"]:
                 id_dict[SIDE_KEY] = "left"
             if candidate_id in ["r", "right"]:
                 id_dict[SIDE_KEY] = "right"
-        elif candidate_id.lower() in CANDIDATE_COORD_IDENTIFIER:
-            id_dict[COORD_KEY] = candidate_id.capitalize()  # capitalise!
+        # 2: coords are set to what they were but capitalised
+        elif candidate_id in CANDIDATE_COORD_IDENTIFIER:
+            id_dict[COORD_KEY] = candidate_id.capitalize()
+        # 3: joint is set to what it was (before lower-casing!)
         else:
-            id_dict[JOINT_KEY] = candidate_id
+            id_dict[JOINT_KEY] = original_candidate_id
     # then, return the new col name based on whether this col is side-specific,
     # central, or not a coordinate column at all
     if id_dict.keys() == {COORD_KEY, JOINT_KEY}:
@@ -169,4 +174,4 @@ if __name__ == "__main__":
     cfg["separator"] = SEPARATOR
     cfg["file_type"] = FILE_TYPE
     cfg["results_dir"] = RESULTS_DIR
-    main(TASK, cfg, STRING_TO_REMOVE)
+    prepare_3D(TASK, cfg, STRING_TO_REMOVE)
