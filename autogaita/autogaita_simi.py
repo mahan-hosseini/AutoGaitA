@@ -13,6 +13,7 @@ import tkinter as tk
 import customtkinter as ctk
 import warnings
 import seaborn as sns
+import pdb
 
 # %% constants
 matplotlib.use("agg")
@@ -209,7 +210,7 @@ def some_prep(info, folderinfo, cfg):
     if import_error_message:  # see if there was any issues with import, if so: stop
         print(import_error_message)
         write_issues_to_textfile(import_error_message, info)
-        return
+        return (None, None)
 
     # ................  final data checks, conversions & additions  ....................
     # IMPORTANT
@@ -236,7 +237,15 @@ def some_prep(info, folderinfo, cfg):
     with open(config_json_path, "w") as config_json_file:
         json.dump(config_vars_to_json, config_json_file, indent=4)
 
-    # For some reason there are two Time = 0 @ start. Take the second/last.
+    # Check if data has some col sayin "Time" in any form of capitalisation and if so
+    # make sure it's capitalised
+    if any(col.lower() == DF_TIME_COL.lower() for col in data.columns):
+        data.columns = [
+            col.capitalize() if col.lower() == DF_TIME_COL.lower() else col
+            for col in data.columns
+        ]
+    # If for some reason (we had this with simi files) there are two Time = 0s, take
+    # the second/last.
     if len(np.where(data[DF_TIME_COL] == 0)[0]) > 1:
         real_start_idx = np.where(data[DF_TIME_COL] == 0)[0][-1]
         data = data.iloc[real_start_idx:, :]
@@ -274,6 +283,7 @@ def some_prep(info, folderinfo, cfg):
     return data, global_Y_max
 
     # ..............................  sanity checks  ...................................
+    # Note - this was before I knew what tests are
     # below are some old & less efficient ways of computing y min / max & z min
     # => I saved these so you can put breakpoints and copy paste the sanity checks on
     #    (e.g.) data_copy = data.copy() and then check equivalence of dfs using
@@ -1591,7 +1601,6 @@ def delete_previous_xlsfiles(name, results_dir):
 def save_results_sheet(dataframe, sheet, fullfilepath, only_one_valid_leg):
     """Save a xls sheet of given df"""
     fullfilepath = fullfilepath + ".xlsx"
-    # pdb.set_trace()
     if os.path.exists(fullfilepath):
         with pd.ExcelWriter(fullfilepath, mode="a") as writer:
             if (only_one_valid_leg == "left" and sheet == "right") or (

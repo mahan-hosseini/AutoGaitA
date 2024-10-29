@@ -2,11 +2,14 @@ import os
 import pandas as pd
 
 # user inputs
-TASK = "clean"  # can be clean or rename
-ROOT_DIR = "/Users/mahan/sciebo/Research/AutoGaitA/Human/Sebastian/renaming/"
+TASK = "rename"  # can be clean or rename
+ROOT_DIR = (
+    "/Users/mahan/sciebo/Research/AutoGaitA/Human/Sebastian/ChatGPTs fake 3D Data/"
+)
 SEPARATOR = "_"
 RESULTS_DIR = ""
 FILE_TYPE = "csv"  # can be csv, xls or xlsx
+POSTNAME_STRING = ""  # string that must be included in loading files
 STRING_TO_REMOVE = "_xyz"  # string to remove from colnames before renaming
 
 
@@ -19,16 +22,14 @@ JOINT_KEY = "joint"
 COMMA_SEP = ", "
 SPACE_SEP = " "
 
+
 # NU
 # => could add an option to either remove or keep the cols that are not renamed
-# => add Time column (probably in _simi though)
-# => tidy it up and check if the generated xls works with gaita_simi for the renamed cols
-# => if my first manual tests seem to work, then write proper unit & property tests for this
 # => finally add to GUI
 
 
 # .............................  main 3D preparation  ..................................
-def prepare_3D(task, cfg, *args):
+def prepare_3D(task, folderinfo, info, cfg, *args):
     """
     Main renaming function in preparation for 3D universal gaita
 
@@ -40,15 +41,16 @@ def prepare_3D(task, cfg, *args):
     """
 
     # unpack
-    root_dir = cfg["root_dir"]
+    root_dir = folderinfo["root_dir"]
+    results_dir = info["results_dir"]
     separator = cfg["separator"]
     file_type = cfg["file_type"]
-    results_dir = cfg["results_dir"]
+    postname_string = cfg["postname_string"]
 
     # loop over files in root dir
     counter = 0
     for input_file in os.listdir(root_dir):
-        if input_file.endswith(f".{file_type}"):
+        if postname_string in input_file and input_file.endswith(f".{file_type}"):
             # load
             full_input_file = os.path.join(root_dir, input_file)
             df = load_input_file(full_input_file, file_type)
@@ -62,7 +64,10 @@ def prepare_3D(task, cfg, *args):
             # save
             save_output_file(task, df, root_dir, results_dir, input_file, file_type)
             counter += 1
-    print(f"\nRenamed {counter} file successfully!")
+    if task == "clean":
+        print(f"\nCleaned {counter} file successfully!")
+    elif task == "rename":
+        print(f"\nRenamed {counter} file successfully!")
 
 
 # ..............................  cleaning function  ...................................
@@ -156,22 +161,30 @@ def save_output_file(task, df, root_dir, results_dir, input_file, file_type):
             input_file.split("." + file_type)[0] + "_cleaned" + "." + file_type
         )
     if results_dir:
+        if not os.path.exists(results_dir):
+            os.makedirs(results_dir)
         full_output_file = os.path.join(results_dir, output_file)
     else:
         full_output_file = os.path.join(root_dir, output_file)
+    # note we hard-coded output-file ending to xlsx if we are renaming
+    # => since gaita needs xlsx.
+    # => index=False is set to avoid unnamed col
     if output_file.endswith(".xlsx"):
-        df.to_excel(full_output_file)
+        df.to_excel(full_output_file, index=False)
     elif output_file.endswith(".xls"):  # transform xls to xlsx
-        df.to_excel(full_output_file + "x")
+        df.to_excel(full_output_file + "x", index=False)
     elif output_file.endswith(".csv"):
         df.to_csv(full_output_file)
 
 
 # what if we hit run
 if __name__ == "__main__":
+    folderinfo = {}
+    info = {}
     cfg = {}
-    cfg["root_dir"] = ROOT_DIR
+    folderinfo["root_dir"] = ROOT_DIR
+    info["results_dir"] = RESULTS_DIR
     cfg["separator"] = SEPARATOR
     cfg["file_type"] = FILE_TYPE
-    cfg["results_dir"] = RESULTS_DIR
-    prepare_3D(TASK, cfg, STRING_TO_REMOVE)
+    cfg["postname_string"] = POSTNAME_STRING
+    prepare_3D(TASK, folderinfo, info, cfg, STRING_TO_REMOVE)
