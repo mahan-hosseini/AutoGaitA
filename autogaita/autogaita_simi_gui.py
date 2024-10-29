@@ -1,5 +1,6 @@
 # %% imports
 from autogaita import autogaita_utils
+from autogaita.autogaita_3D_preparation import prepare_3D
 import tkinter as tk
 import customtkinter as ctk
 import os
@@ -48,6 +49,12 @@ TK_STR_VARS = [
     "sctable_filename",
     "postname_string",
     "color_palette",
+    "fileprep_root_dir",  # for datafile prep window only
+    "fileprep_filetype",
+    "fileprep_postname_string",
+    "fileprep_results_dir",
+    "fileprep_separator",
+    "fileprep_string_to_remove",
 ]
 # For how the look like refer to https://r02b.github.io/seaborn_palettes/
 COLOR_PALETTES_LIST = [
@@ -139,16 +146,6 @@ def simi_gui():
     root.title("Simi GaitA")
     fix_window_after_its_creation(root)
     configure_the_icon(root)
-
-    # nested function: advanced configuration
-    def advanced_cfg_window(cfg):
-        """Advanced configuration window"""
-        build_cfg_window(root, cfg, root_dimensions)
-
-    # nested function: run windows
-    def donewindow(results, root, root_dimensions):
-        """Run and done windows"""
-        build_donewindow(results, root, root_dimensions)
 
     # ..........................................................................
     # ........................  root window population .........................
@@ -258,6 +255,18 @@ def simi_gui():
     )
     advanced_cfg_header_label.grid(row=9, column=0, columnspan=2, sticky="nsew")
 
+    # data file preparation window
+    datafile_prep_string = "Data File Preparation"
+    datafile_prep_button = ctk.CTkButton(
+        root,
+        text=datafile_prep_string,
+        fg_color=FG_COLOR,
+        hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        command=lambda: build_datafile_prep_window(root, results, cfg),
+    )
+    datafile_prep_button.grid(row=10, column=0, columnspan=2)
+
     # column name information window
     column_info_string = "Customise Joints & Angles"
     column_info_button = ctk.CTkButton(
@@ -268,7 +277,7 @@ def simi_gui():
         font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
-    column_info_button.grid(row=10, column=0, columnspan=2)
+    column_info_button.grid(row=11, column=0, columnspan=2)
 
     # advanced cfg
     cfg_window_button = ctk.CTkButton(
@@ -277,13 +286,13 @@ def simi_gui():
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
         font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
-        command=lambda: (advanced_cfg_window(cfg)),
+        command=lambda: (build_cfg_window(root, cfg)),
     )
-    cfg_window_button.grid(row=11, column=0, columnspan=2)
+    cfg_window_button.grid(row=12, column=0, columnspan=2)
 
     # empty label 2 (for spacing)
     empty_label_two = ctk.CTkLabel(root, text="")
-    empty_label_two.grid(row=12, column=0)
+    empty_label_two.grid(row=13, column=0)
 
     # ............................  run & exit section  ................................
 
@@ -295,7 +304,7 @@ def simi_gui():
         text_color=HEADER_TXT_COLOR,
         font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
     )
-    runheader_label.grid(row=13, column=0, columnspan=3, sticky="nsew")
+    runheader_label.grid(row=14, column=0, columnspan=3, sticky="nsew")
 
     # single video checkbox
     singlevideo_string = "Only analyse a single dataset."
@@ -310,7 +319,7 @@ def simi_gui():
         font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
         command=lambda: change_ID_entry_state(ID_entry),
     )
-    singlevideo_checkbox.grid(row=14, column=0, columnspan=2)
+    singlevideo_checkbox.grid(row=15, column=0, columnspan=2)
 
     # ID string info
     ID_label = ctk.CTkLabel(
@@ -318,13 +327,13 @@ def simi_gui():
         text="ID to be analysed:",
         font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    ID_label.grid(row=15, column=0, sticky="e")
+    ID_label.grid(row=16, column=0, sticky="e")
     ID_entry = ctk.CTkEntry(
         root,
         textvariable=results["name"],
         font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    ID_entry.grid(row=15, column=1, sticky="w")
+    ID_entry.grid(row=16, column=1, sticky="w")
     change_ID_entry_state(ID_entry)
 
     # run analysis button
@@ -334,16 +343,16 @@ def simi_gui():
         font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: (
             update_config_file(results, cfg),
-            donewindow(results, root, root_dimensions),
+            build_donewindow(results, root, root_dimensions),
         ),
         fg_color=FG_COLOR,
         hover_color=HOVER_COLOR,
     )
-    run_button.grid(row=16, column=0, columnspan=2, padx=10, pady=(10, 5))
+    run_button.grid(row=17, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # empty label 3 (for spacing)
     empty_label_three = ctk.CTkLabel(root, text="")
-    empty_label_three.grid(row=17, column=0)
+    empty_label_three.grid(row=18, column=0)
 
     # close program button
     close_button = ctk.CTkButton(
@@ -358,7 +367,7 @@ def simi_gui():
             root.after(5000, root.destroy),
         ),
     )
-    close_button.grid(row=18, column=0, columnspan=2, padx=10, pady=(10, 5))
+    close_button.grid(row=19, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # maximise widgets
     maximise_widgets(root)
@@ -368,10 +377,219 @@ def simi_gui():
     root.mainloop()
 
 
-# %%..........  LOCAL FUNCTION(S) #1 - BUILD ADVANCED CFG WINDOW  .............
+# %%..............  LOCAL FUNCTION(S) #1 - BUILD DATAFILE PREP WINDOW  .................
+def build_datafile_prep_window(root, results, cfg):
+    """Build data file preparation window"""
+    # unpack root window dimensions
+    screen_width = root.winfo_screenwidth()  # width of the screen
+    screen_height = root.winfo_screenheight()  # height of the screen
+    # build window
+    fileprep_window = ctk.CTkToplevel(root)
+    fileprep_window.title("Datafile Preparation")
+    fileprep_window.geometry(
+        f"{int(screen_width/2)}x{int(screen_height/1.5)}+{int(screen_width/4)}+{int(screen_height/6)}"
+    )
+    fix_window_after_its_creation(fileprep_window)
+
+    # fileprep header
+    fileprep_header_label = ctk.CTkLabel(
+        fileprep_window,
+        text="Datafile Preparation",
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    )
+    fileprep_header_label.grid(row=0, column=0, rowspan=2, columnspan=2, sticky="nsew")
+    # root dir
+    fileprep_root_dir_string = "Directory containing files:"
+    fileprep_root_dir_label = ctk.CTkLabel(
+        fileprep_window,
+        text=fileprep_root_dir_string,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    fileprep_root_dir_label.grid(row=2, column=0, sticky="e")
+    fileprep_entry = ctk.CTkEntry(
+        fileprep_window,
+        textvariable=cfg["fileprep_root_dir"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    fileprep_entry.grid(row=2, column=1)
+    # file type
+    filetype_string = "File type:"
+    filetype_label = ctk.CTkLabel(
+        fileprep_window,
+        text=filetype_string,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    filetype_label.grid(row=3, column=0, columnspan=2)
+    filetype_strings = ["csv", "xls", "xlsx"]
+    filetype_buttons = []
+    for i, string in enumerate(filetype_strings):
+        filetype_buttons.append(
+            ctk.CTkRadioButton(
+                fileprep_window,
+                text=string,
+                variable=cfg["fileprep_filetype"],
+                value=string,
+                fg_color=FG_COLOR,
+                hover_color=HOVER_COLOR,
+                font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+            )
+        )
+        filetype_buttons[i].grid(row=4 + i, column=0, columnspan=2)
+    row_num = 4 + len(filetype_strings)  # 7
+    # postname string
+    postname_string = "Constant string present in file names:"
+    postname_label = ctk.CTkLabel(
+        fileprep_window,
+        text=postname_string,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    postname_label.grid(row=row_num, column=0, sticky="e")
+    postname_entry = ctk.CTkEntry(
+        fileprep_window,
+        textvariable=cfg["fileprep_postname_string"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    postname_entry.grid(row=row_num, column=1)
+    # results dir
+    fileprep_results_dir_string = "Directory to save results to:"
+    fileprep_results_dir_label = ctk.CTkLabel(
+        fileprep_window,
+        text=fileprep_results_dir_string,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    fileprep_results_dir_label.grid(row=row_num + 1, column=0, sticky="e")
+    fileprep_results_dir_entry = ctk.CTkEntry(
+        fileprep_window,
+        textvariable=cfg["fileprep_results_dir"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    fileprep_results_dir_entry.grid(row=row_num + 1, column=1)
+    # empty label for spacing
+    empty_label_one = ctk.CTkLabel(fileprep_window, text="")
+    empty_label_one.grid(row=row_num + 2, column=0)
+
+    # ............................  left section: clean  ...............................
+    # cleaning header
+    clean_header_label = ctk.CTkLabel(
+        fileprep_window,
+        text="Clean Columns",
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    )
+    clean_header_label.grid(row=row_num + 3, column=0, sticky="nsew")
+    # string to remove
+    string_to_remove_string = "Substring to remove"
+    string_to_remove_label = ctk.CTkLabel(
+        fileprep_window,
+        text=string_to_remove_string,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    string_to_remove_label.grid(row=row_num + 4, column=0)
+    string_to_remove_entry = ctk.CTkEntry(
+        fileprep_window,
+        textvariable=cfg["fileprep_string_to_remove"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    string_to_remove_entry.grid(row=row_num + 5, column=0)
+    # cleaning run button
+    clean_button = ctk.CTkButton(
+        fileprep_window,
+        text="Clean!",
+        fg_color=FG_COLOR,
+        hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        command=lambda: (
+            update_config_file(results, cfg),
+            run_universal_3D_preparation("clean", cfg),
+        ),
+    )
+    clean_button.grid(row=row_num + 6, column=0, sticky="nsew", padx=10, pady=(10, 5))
+
+    # ............................  right section: rename  .............................
+    # renaming header
+    rename_header_label = ctk.CTkLabel(
+        fileprep_window,
+        text="Rename Columns",
+        fg_color=FG_COLOR,
+        text_color=HEADER_TXT_COLOR,
+        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    )
+    rename_header_label.grid(row=row_num + 3, column=1, sticky="nsew")
+    # separator
+    separator_string = "Separator substring (must be unique!)"
+    separator_label = ctk.CTkLabel(
+        fileprep_window,
+        text=separator_string,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    separator_label.grid(row=row_num + 4, column=1)
+    separator_entry = ctk.CTkEntry(
+        fileprep_window,
+        textvariable=cfg["fileprep_separator"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    separator_entry.grid(row=row_num + 5, column=1)
+    # renaming run button
+    rename_button = ctk.CTkButton(
+        fileprep_window,
+        text="Rename!",
+        fg_color=FG_COLOR,
+        hover_color=HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        command=lambda: (
+            update_config_file(results, cfg),
+            run_universal_3D_preparation("rename", cfg),
+        ),
+    )
+    rename_button.grid(row=row_num + 6, column=1, sticky="nsew", padx=10, pady=(10, 5))
+
+    # ............................  bottom section: done  ..............................
+    # empty label two
+    empty_label_two = ctk.CTkLabel(fileprep_window, text="")
+    empty_label_two.grid(row=row_num + 7, column=0)
+    # done button
+    done_button = ctk.CTkButton(
+        fileprep_window,
+        text="I am done!",
+        fg_color=CLOSE_COLOR,
+        hover_color=CLOSE_HOVER_COLOR,
+        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        command=lambda: fileprep_window.destroy(),
+    )
+    done_button.grid(
+        row=row_num + 7, column=0, columnspan=2, padx=30, pady=(10, 5), sticky="ew"
+    )
+    # maximise widgets
+    maximise_widgets(fileprep_window)
 
 
-def build_cfg_window(root, cfg, root_dimensions):
+def run_universal_3D_preparation(task, cfg):
+    """Call the autogaita_3D_preparation function with appropriate arguments"""
+    # create separate cfg dict for fileprep function to avoid changing the main cfg
+    fileprep_cfg = {}
+    fileprep_cfg["root_dir"] = cfg["fileprep_root_dir"].get()
+    fileprep_cfg["file_type"] = cfg["fileprep_filetype"].get()
+    fileprep_cfg["postname_string"] = cfg["fileprep_postname_string"].get()
+    fileprep_cfg["results_dir"] = cfg["fileprep_results_dir"].get()
+    # set the appropriate kwargs based on the task
+    if task == "clean":
+        string_to_remove = cfg["fileprep_string_to_remove"].get()
+        kwargs = {"string_to_remove": string_to_remove}
+    elif task == "rename":
+        separator = cfg["fileprep_separator"].get()
+        kwargs = {"separator": separator}
+    # run the function, with kwargs depending on task, & show info for users
+    info_message = prepare_3D(task, fileprep_cfg, **kwargs)
+    tk.messagebox.showinfo(title="Info", message=info_message)
+
+
+# %%..........  LOCAL FUNCTION(S) #2 - BUILD ADVANCED CFG WINDOW  .............
+
+
+def build_cfg_window(root, cfg):
     """Build advanced configuration window"""
     # unpack root window dimensions
     screen_width = root.winfo_screenwidth()  # width of the screen
@@ -576,7 +794,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     cfg_window.rowconfigure(list(range(20)), weight=1, uniform="Silent_Creme")
 
 
-# %%..............  LOCAL FUNCTION(S) #2 - BUILD COLUMN INFO WINDOW  ...................
+# %%..............  LOCAL FUNCTION(S) #3 - BUILD COLUMN INFO WINDOW  ...................
 def build_column_info_window(root, cfg, root_dimensions):
     """Build a window allowing users to configure custom column names if required"""
     columnwindow = ctk.CTkToplevel(root)
@@ -776,7 +994,7 @@ def initialise_labels_and_entries(window, key, which_case_string, *args):
         window.grid_columnconfigure(c, weight=1)
 
 
-# %%..................  LOCAL FUNCTION(S) #2 - BUILD DONE WINDOW  ......................
+# %%..................  LOCAL FUNCTION(S) #4 - BUILD DONE WINDOW  ......................
 def build_donewindow(results, root, root_dimensions):
     """Build done window informing people"""
 
@@ -866,7 +1084,7 @@ def build_donewindow(results, root, root_dimensions):
     maximise_widgets(donewindow)
 
 
-# %%..........  LOCAL FUNCTION(S) #3 - PREPARE & CALL AUTOGAITA  ....................
+# %%..........  LOCAL FUNCTION(S) #5 - PREPARE & CALL AUTOGAITA  ....................
 
 
 def run_analysis(this_runs_results, this_runs_cfg):
@@ -942,7 +1160,7 @@ def multirun_run_a_single_dataset(idx, multirun_info, this_folderinfo, this_runs
     )
 
 
-# %%..............  LOCAL FUNCTION(S) #4 - VARIOUS HELPER FUNCTIONS  ...................
+# %%..............  LOCAL FUNCTION(S) #6 - VARIOUS HELPER FUNCTIONS  ...................
 
 
 def change_ID_entry_state(ID_entry):
@@ -1124,7 +1342,12 @@ def multirun_extract_info(folderinfo):
 
 
 def update_config_file(results, cfg):
-    """updates the simi_gui_config file with this runs parameters"""
+    """
+    Updates the simi_gui_config file with current parameters
+    Note
+    ----
+    It's called when 1) running program, 2) preparing data files (cleaning/renaming) or 3) closing the program
+    """
     # transform tkVars into normal strings and bools
     output_dicts = [{}, {}]
     for i in range(len(output_dicts)):

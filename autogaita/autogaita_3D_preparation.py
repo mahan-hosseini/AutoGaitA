@@ -6,10 +6,10 @@ TASK = "rename"  # can be clean or rename
 ROOT_DIR = (
     "/Users/mahan/sciebo/Research/AutoGaitA/Human/Sebastian/ChatGPTs fake 3D Data/"
 )
-SEPARATOR = "_"
-RESULTS_DIR = ""
 FILE_TYPE = "csv"  # can be csv, xls or xlsx
 POSTNAME_STRING = ""  # string that must be included in loading files
+RESULTS_DIR = ""
+SEPARATOR = "_"
 STRING_TO_REMOVE = "_xyz"  # string to remove from colnames before renaming
 
 
@@ -29,7 +29,7 @@ SPACE_SEP = " "
 
 
 # .............................  main 3D preparation  ..................................
-def prepare_3D(task, folderinfo, info, cfg, *args):
+def prepare_3D(task, cfg, **kwargs):
     """
     Main renaming function in preparation for 3D universal gaita
 
@@ -41,11 +41,14 @@ def prepare_3D(task, folderinfo, info, cfg, *args):
     """
 
     # unpack
-    root_dir = folderinfo["root_dir"]
-    results_dir = info["results_dir"]
-    separator = cfg["separator"]
+    root_dir = cfg["root_dir"]
+    results_dir = cfg["results_dir"]
     file_type = cfg["file_type"]
     postname_string = cfg["postname_string"]
+    if task == "clean":
+        string_to_remove = kwargs["string_to_remove"]
+    elif task == "rename":
+        separator = kwargs["separator"]
 
     # loop over files in root dir
     counter = 0
@@ -57,17 +60,17 @@ def prepare_3D(task, folderinfo, info, cfg, *args):
             # run
             if task == "clean":
                 # cleaning function
-                df = clean_a_file(df, args[0])  # args[0] = string to remove
+                df = clean_a_file(df, string_to_remove)  # note string_to_remove var
             elif task == "rename":
                 # main renaming function
-                df = rename_a_file(df, separator)
+                df = rename_a_file(df, separator)  # note separator var
             # save
             save_output_file(task, df, root_dir, results_dir, input_file, file_type)
             counter += 1
     if task == "clean":
-        print(f"\nCleaned {counter} file successfully!")
+        return f"\nCleaned {counter} file successfully!"
     elif task == "rename":
-        print(f"\nRenamed {counter} file successfully!")
+        return f"\nRenamed {counter} file successfully!"
 
 
 # ..............................  cleaning function  ...................................
@@ -174,17 +177,17 @@ def save_output_file(task, df, root_dir, results_dir, input_file, file_type):
     elif output_file.endswith(".xls"):  # transform xls to xlsx
         df.to_excel(full_output_file + "x", index=False)
     elif output_file.endswith(".csv"):
-        df.to_csv(full_output_file)
+        df.to_csv(full_output_file, index=False)
 
 
 # what if we hit run
 if __name__ == "__main__":
-    folderinfo = {}
-    info = {}
     cfg = {}
-    folderinfo["root_dir"] = ROOT_DIR
-    info["results_dir"] = RESULTS_DIR
-    cfg["separator"] = SEPARATOR
+    cfg["root_dir"] = ROOT_DIR
     cfg["file_type"] = FILE_TYPE
     cfg["postname_string"] = POSTNAME_STRING
-    prepare_3D(TASK, folderinfo, info, cfg, STRING_TO_REMOVE)
+    cfg["results_dir"] = RESULTS_DIR
+    if TASK == "clean":
+        prepare_3D(TASK, cfg, string_to_remove=STRING_TO_REMOVE)
+    elif TASK == "rename":
+        prepare_3D(TASK, cfg, separator=SEPARATOR)
