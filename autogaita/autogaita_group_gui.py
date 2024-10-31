@@ -583,7 +583,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
 
     # which leg of human data to analyse
     which_leg_string = (
-        "If first-level was AutoGaitA Simi: which leg's step-cycles to analyse?"
+        "If first-level was AutoGaitA Universal 3D: which leg's step-cycles to analyse?"
     )
     which_leg_label = ctk.CTkLabel(
         cfgwindow, text=which_leg_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)

@@ -6,10 +6,10 @@ import pdb
 # %% main function
 
 
-def simi_multirun():
+def universal3D_multirun():
     """
-    Batchrun script to run AutoGaitA Simi for a folder of datasets.
-    folderinfo & cfg dictionaries must be configured as explained in our documentation. See the "AutoGaitA without the GUI" section of our documentation for references to in-depth explanations to all dictionary keys (note that each key of dicts corresponds to some object in the AutoGaitA Simi GUI)
+    Batchrun script to run AutoGaitA Universal 3D for a folder of datasets.
+    folderinfo & cfg dictionaries must be configured as explained in our documentation. See the "AutoGaitA without the GUI" section of our documentation for references to in-depth explanations to all dictionary keys (note that each key of dicts corresponds to some object in the AutoGaitA Universal 3D GUI)
     """
     # folderinfo
     folderinfo = {}
@@ -53,7 +53,7 @@ def run_singlerun(idx, info, folderinfo, cfg):
     for keyname in keynames:
         this_info[keyname] = info[keyname][idx]
     # important to only pass this_info to main script here (1 run at a time!)
-    autogaita_utils.try_to_run_gaita("Simi", this_info, folderinfo, cfg, True)
+    autogaita_utils.try_to_run_gaita("Universal 3D", this_info, folderinfo, cfg, True)
 
 
 def extract_info(folderinfo):
@@ -94,4 +94,4 @@ def extract_info(folderinfo):
 
 # %% what happens if we just hit run
 if __name__ == "__main__":
-    simi_multirun()
+    universal3D_multirun()

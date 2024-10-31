@@ -13,7 +13,6 @@ import tkinter as tk
 import customtkinter as ctk
 import warnings
 import seaborn as sns
-import pdb
 
 # %% constants
 matplotlib.use("agg")
@@ -86,7 +85,7 @@ HOVER_COLOR = "#b5485d"  # dark rose
 # %% main program
 
 
-def simi(info, folderinfo, cfg):
+def universal3D(info, folderinfo, cfg):
     """Runs the main program for a given subject's run
 
     Procedure
@@ -231,7 +230,7 @@ def some_prep(info, folderinfo, cfg):
         "joints": joints,
         "angles": angles,
         "analyse_average_y": analyse_average_y,
-        "tracking_software": "Simi",
+        "tracking_software": "Universal 3D",
     }
     # note - using "w" will overwrite/truncate file, thus no need to remove it if exists
     with open(config_json_path, "w") as config_json_file:
@@ -841,7 +840,6 @@ def read_SC_info(data, SCdf, info, legname, cfg):
                 )
                 print(this_message)
                 write_issues_to_textfile(this_message, info)
-
     # ............................  clean all_cycles  ..................................
     # check if we skipped latencies because they were out of data-bounds
     all_cycles = check_cycle_out_of_bounds(all_cycles)
@@ -1221,7 +1219,7 @@ def add_features(step, cfg):
        step_copy.columns.duplicated() statement below, this means that such angles
        (and corresponding velocities & accelerations) will be computed with reference
        to the left body side by default
-       -- Add this to the documentation and tell people to fix their simi-columns if
+       -- Add this to the documentation and tell people to fix their columns if
           they want to have this differently... maybe improve in the future if wanted
        -- This leads to a slight inaccuracy/limitation in that e.g. the Pelvis Angle is
           computed w.r.t. the left side of the body always, even in the XLS sheets of
@@ -2785,11 +2783,11 @@ def print_finish(info, cfg):
 
 # %% what happens if we just hit run
 if __name__ == "__main__":
-    simi_info_message = (
+    universal3D_info_message = (
         "\n*************\nnot like this\n*************\n"
-        + "You are trying to execute autogaita.simi as a script, but that is not "
+        + "You are trying to execute autogaita.universal3D as a script, but that is not "
         + "possible.\nIf you prefer a non-GUI approach, please either: "
-        + "\n1. Call this as a function, i.e. autogaita.simi(info, folderinfo, cfg)"
+        + "\n1. Call this as a function, i.e. autogaita.universal3D(info, folderinfo, cfg)"
         + "\n2. Use the single or multirun scripts in the batchrun_scripts folder"
     )
-    print(simi_info_message)
+    print(universal3D_info_message)

@@ -3,10 +3,10 @@ import os
 
 
 # main function
-def simi_singlerun():
+def universal3D_singlerun():
     """
-    Batchrun script to run AutoGaitA Simi for a single dataset.
-    folderinfo & cfg dictionaries must be configured as explained in our documentation. (note that each value of these corresponds to some object in the AutoGaitA Simi GUI)
+    Batchrun script to run AutoGaitA Universal 3D for a single dataset.
+    folderinfo & cfg dictionaries must be configured as explained in our documentation. (note that each value of these corresponds to some object in the AutoGaitA Universal 3D GUI)
     """
     # folderinfo
     folderinfo = {}
@@ -43,9 +43,9 @@ def simi_singlerun():
             folderinfo["root_dir"], "Results", info["name"]
         )
     # run
-    autogaita_utils.try_to_run_gaita("Simi", info, folderinfo, cfg, False)
+    autogaita_utils.try_to_run_gaita("Universal 3D", info, folderinfo, cfg, False)
 
 
 # %% what happens if we just hit run
 if __name__ == "__main__":
-    simi_singlerun()
+    universal3D_singlerun()

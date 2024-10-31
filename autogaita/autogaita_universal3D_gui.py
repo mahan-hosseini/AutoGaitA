@@ -22,7 +22,7 @@ TEXT_FONT_SIZE = 20
 ADV_CFG_TEXT_FONT_SIZE = TEXT_FONT_SIZE - 4
 CLOSE_COLOR = "#840000"  # dark red
 CLOSE_HOVER_COLOR = "#650021"  # maroon
-CONFIG_FILE_NAME = "simi_gui_config.json"
+CONFIG_FILE_NAME = "universal3D_gui_config.json"
 INT_VARS = ["sampling_rate", "bin_num", "plot_joint_number"]
 LIST_VARS = ["joints"]
 DICT_VARS = ["angles"]
@@ -110,7 +110,7 @@ AUTOGAITA_FOLDER_PATH = autogaita_utils_path[:-18]
 # %%............................  MAIN PROGRAM ................................
 
 
-def simi_gui():
+def universal3D_gui():
     # ..........................................................................
     # ......................  root window initialisation .......................
     # ..........................................................................
@@ -118,7 +118,7 @@ def simi_gui():
     config_file_path = os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME)
     if not os.path.isfile(config_file_path):
         config_file_error_msg = (
-            "simi_gui_config.json file not found in autogaita folder.\n"
+            "universal3D_gui_config.json file not found in autogaita folder.\n"
             "Confirm that the file exists and is named correctly.\n"
             "If not, download it again from the GitHub repository."
         )
@@ -143,7 +143,7 @@ def simi_gui():
     # set the dimensions of the screen and where it is placed
     # => have it half-wide starting at 1/4 of screen's width (dont change w & x!)
     root.geometry(f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0")
-    root.title("Simi GaitA")
+    root.title("Universal 3D GaitA")
     fix_window_after_its_creation(root)
     configure_the_icon(root)
 
@@ -1101,7 +1101,7 @@ def run_analysis(this_runs_results, this_runs_cfg):
 
 
 def analyse_single_run(this_runs_results, this_runs_cfg):
-    """Prepare for one execution of autogaita_simi & execute"""
+    """Prepare for one execution of autogaita_universal3D & execute"""
     # prepare
     this_info = {}  # info dict: run-specific info
     this_info["name"] = this_runs_results["name"]
@@ -1123,7 +1123,7 @@ def analyse_single_run(this_runs_results, this_runs_cfg):
         )
     # execute
     autogaita_utils.try_to_run_gaita(
-        "Simi", this_info, this_folderinfo, this_runs_cfg, False
+        "Universal 3D", this_info, this_folderinfo, this_runs_cfg, False
     )
 
 
@@ -1156,7 +1156,7 @@ def multirun_run_a_single_dataset(idx, multirun_info, this_folderinfo, this_runs
         this_info[keyname] = multirun_info[keyname][idx]
     # important to only pass this_info here (1 run at a time - prints error if needed)
     autogaita_utils.try_to_run_gaita(
-        "Simi", this_info, this_folderinfo, this_runs_cfg, True
+        "Universal 3D", this_info, this_folderinfo, this_runs_cfg, True
     )
 
 
@@ -1343,7 +1343,7 @@ def multirun_extract_info(folderinfo):
 
 def update_config_file(results, cfg):
     """
-    Updates the simi_gui_config file with current parameters
+    Updates the universal3D_gui_config file with current parameters
     Note
     ----
     It's called when 1) running program, 2) preparing data files (cleaning/renaming) or 3) closing the program
@@ -1436,4 +1436,4 @@ def extract_results_from_json_file(root):
 
 # %% what happens if we hit run
 if __name__ == "__main__":
-    simi_gui()
+    universal3D_gui()

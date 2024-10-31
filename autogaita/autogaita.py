@@ -1,5 +1,5 @@
 # %% imports
-from autogaita import autogaita_dlc_gui, autogaita_simi_gui, autogaita_group_gui
+from autogaita import autogaita_dlc_gui, autogaita_universal3D_gui, autogaita_group_gui
 import tkinter as tk
 import customtkinter as ctk
 from PIL import Image, ImageTk
@@ -11,8 +11,8 @@ TXT_COLOR = "#ffffff"  # white
 FONT_SIZE = 35
 DLC_FG_COLOR = "#789b73"  # grey green
 DLC_HOVER_COLOR = "#287c37"  # darkish green
-SIMI_FG_COLOR = "#c0737a"  # dusty rose
-SIMI_HOVER_COLOR = "#b5485d"  # dark rose
+UNIVERSAL3D_FG_COLOR = "#c0737a"  # dusty rose
+UNIVERSAL3D_HOVER_COLOR = "#b5485d"  # dark rose
 GROUP_FG_COLOR = "#5a7d9a"  # steel blue
 GROUP_HOVER_COLOR = "#016795"  # peacock blue
 
@@ -83,17 +83,17 @@ def gui():
         command=lambda: autogaita_dlc_gui.dlc_gui(),
     )
     dlc_button.grid(row=1, column=0, sticky="nsew")
-    # 3 - Simi Button
-    simi_button = ctk.CTkButton(
+    # 3 - Universal 3D Button
+    universal3D_button = ctk.CTkButton(
         root,
-        text="Simi Motion",
-        fg_color=SIMI_FG_COLOR,
-        hover_color=SIMI_HOVER_COLOR,
+        text="Universal 3D",
+        fg_color=UNIVERSAL3D_FG_COLOR,
+        hover_color=UNIVERSAL3D_HOVER_COLOR,
         text_color=TXT_COLOR,
         font=("Britannic Bold", FONT_SIZE),
-        command=lambda: autogaita_simi_gui.simi_gui(),
+        command=lambda: autogaita_universal3D_gui.universal3D_gui(),
     )
-    simi_button.grid(row=2, column=0, sticky="nsew")
+    universal3D_button.grid(row=2, column=0, sticky="nsew")
     # 4 - Group Button
     group_button = ctk.CTkButton(
         root,

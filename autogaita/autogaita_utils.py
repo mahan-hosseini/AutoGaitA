@@ -1,5 +1,5 @@
 # ...................................  imports  ........................................
-from autogaita import autogaita_dlc, autogaita_simi
+from autogaita import autogaita_dlc, autogaita_universal3D
 import pandas as pd
 import numpy as np
 import os
@@ -17,7 +17,7 @@ def try_to_run_gaita(which_gaita, info, folderinfo, cfg, multirun_flag):
 
     Note
     ----
-    Needs to know "which gaita" (DLC or Simi) should be run and if "this run" is part
+    Needs to know "which gaita" (DLC or Universal 3D) should be run and if "this run" is part
     of a call to one of our multiruns!
     """
     # print info
@@ -32,10 +32,10 @@ def try_to_run_gaita(which_gaita, info, folderinfo, cfg, multirun_flag):
     try:
         if which_gaita == "DLC":
             autogaita_dlc.dlc(info, folderinfo, cfg)
-        elif which_gaita == "Simi":
-            autogaita_simi.simi(info, folderinfo, cfg)
+        elif which_gaita == "Universal 3D":
+            autogaita_universal3D.universal3D(info, folderinfo, cfg)
         else:
-            print("which_gaita has to be DLC or Simi - try again.")
+            print("which_gaita has to be DLC or Universal 3D - try again.")
     # catch these errors (don't catch all possbile errors - bad practice!)
     except (
         KeyError,
