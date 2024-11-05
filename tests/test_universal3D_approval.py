@@ -20,7 +20,7 @@ import pytest
 
 @pytest.fixture
 def extract_true_dir():
-    return "tests/test_data/simi_data/true_data/"
+    return "tests/test_data/universal3D_data/true_data/"
 
 
 @pytest.fixture
@@ -34,7 +34,7 @@ def extract_info(tmp_path):
 @pytest.fixture
 def extract_folderinfo():
     folderinfo = {}
-    folderinfo["root_dir"] = "tests/test_data/simi_data/test_data/"
+    folderinfo["root_dir"] = "tests/test_data/universal3D_data/test_data/"
     folderinfo["sctable_filename"] = "SC Latency Table"
     folderinfo["postname_string"] = ""
     return folderinfo
@@ -70,7 +70,7 @@ def extract_cfg():
 def test_simi_approval(extract_true_dir, extract_info, extract_folderinfo, extract_cfg):
     # run
     autogaita_utils.try_to_run_gaita(
-        "Simi", extract_info, extract_folderinfo, extract_cfg, False
+        "Universal 3D", extract_info, extract_folderinfo, extract_cfg, False
     )
     # load true dfs from xlsx files
     true_av_df = pd.read_excel(
