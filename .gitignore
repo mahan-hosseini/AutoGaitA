@@ -9,3 +9,6 @@ venv/
 .coverage
 CLA.md
 settings.json
+dlc_gui_config.json
+universal3D_gui_config.json
+group_gui_config.json
