@@ -1,6 +1,8 @@
 # %% imports
-from autogaita import autogaita_utils
-from autogaita.autogaita_universal3D_preparation import prepare_3D
+from autogaita import gui
+from autogaita.gaita_res.utils import try_to_run_gaita
+from autogaita.universal3D.universal3D_preparation import prepare_3D
+from autogaita.gaita_res.gui_utils import configure_the_icon
 import tkinter as tk
 import customtkinter as ctk
 import os
@@ -87,11 +89,11 @@ COLOR_PALETTES_LIST = [
 ]
 WINDOWS_TASKBAR_MAXHEIGHT = 72
 
-# To get the path of the autogaita folder I use __file__
-# which returns the path of the autogaita_utils module imported above.
-# Removing the 18 letter long "autogaita_utils.py" return the folder path
-autogaita_utils_path = autogaita_utils.__file__
-AUTOGAITA_FOLDER_PATH = autogaita_utils_path[:-18]
+# To get the path of the autogaita gui folder I use __file__
+# which returns the path of the autogaita gui module imported above.
+# Removing the 11 letter long "__init__.py" return the folder path
+autogaita_utils_path = gui.__file__
+AUTOGAITA_FOLDER_PATH = autogaita_utils_path[:-11]
 
 
 # %% An important Note
@@ -110,7 +112,7 @@ AUTOGAITA_FOLDER_PATH = autogaita_utils_path[:-18]
 # %%............................  MAIN PROGRAM ................................
 
 
-def universal3D_gui():
+def run_universal3D_gui():
     # ..........................................................................
     # ......................  root window initialisation .......................
     # ..........................................................................
@@ -1122,9 +1124,7 @@ def analyse_single_run(this_runs_results, this_runs_cfg):
             this_runs_results["root_dir"], "Results", this_info["name"]
         )
     # execute
-    autogaita_utils.try_to_run_gaita(
-        "Universal 3D", this_info, this_folderinfo, this_runs_cfg, False
-    )
+    try_to_run_gaita("Universal 3D", this_info, this_folderinfo, this_runs_cfg, False)
 
 
 def analyse_multi_run(this_runs_results, this_runs_cfg):
@@ -1155,9 +1155,7 @@ def multirun_run_a_single_dataset(idx, multirun_info, this_folderinfo, this_runs
     for keyname in keynames:
         this_info[keyname] = multirun_info[keyname][idx]
     # important to only pass this_info here (1 run at a time - prints error if needed)
-    autogaita_utils.try_to_run_gaita(
-        "Universal 3D", this_info, this_folderinfo, this_runs_cfg, True
-    )
+    try_to_run_gaita("Universal 3D", this_info, this_folderinfo, this_runs_cfg, True)
 
 
 # %%..............  LOCAL FUNCTION(S) #6 - VARIOUS HELPER FUNCTIONS  ...................
@@ -1178,25 +1176,6 @@ def fix_window_after_its_creation(window):
     window.attributes("-topmost", True)
     window.focus_set()
     window.after(100, lambda: window.attributes("-topmost", False))  # 100 ms
-
-
-def configure_the_icon(root):
-    """Configure the icon - in macos it changes the dock icon, in windows it changes
-    all windows titlebar icons (taskbar cannot be changed without converting to exe)
-    """
-    if platform.system().startswith("Darwin"):
-        try:
-            from Cocoa import NSApplication, NSImage
-        except ImportError:
-            print("Unable to import pyobjc modules")
-        else:
-            with resources.path("autogaita", "autogaita_icon.icns") as icon_path:
-                ns_application = NSApplication.sharedApplication()
-                logo_ns_image = NSImage.alloc().initByReferencingFile_(str(icon_path))
-                ns_application.setApplicationIconImage_(logo_ns_image)
-    elif platform.system().startswith("win"):
-        with resources.path("autogaita", "autogaita_icon.ico") as icon_path:
-            root.iconbitmap(str(icon_path))
 
 
 def change_postname_entry_state(postname_entry, results):
@@ -1436,4 +1415,4 @@ def extract_results_from_json_file(root):
 
 # %% what happens if we hit run
 if __name__ == "__main__":
-    universal3D_gui()
+    run_universal3D_gui()

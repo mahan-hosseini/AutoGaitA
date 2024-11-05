@@ -1,4 +1,4 @@
-from autogaita import autogaita_group
+import autogaita
 
 
 def group_universal3Drun():
@@ -59,7 +59,7 @@ def group_universal3Drun():
             # "Elbow, " + cfg["which_leg"] + " Angle",
         ]
         # run
-        autogaita_group.group(folderinfo, cfg)
+        autogaita.group(folderinfo, cfg)
 
 
 # %% what happens if we just hit run

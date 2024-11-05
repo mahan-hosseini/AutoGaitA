@@ -1,10 +1,10 @@
 # %% imports
-from autogaita import autogaita_dlc_gui, autogaita_universal3D_gui, autogaita_group_gui
+import autogaita
+from autogaita.gaita_res.gui_utils import configure_the_icon
 import tkinter as tk
 import customtkinter as ctk
 from PIL import Image, ImageTk
 from importlib import resources
-import platform
 
 # %% global constants
 TXT_COLOR = "#ffffff"  # white
@@ -20,7 +20,7 @@ GROUP_HOVER_COLOR = "#016795"  # peacock blue
 # %%...............................  MAIN PROGRAM  .....................................
 
 
-def gui():
+def run_gui():
     # ..........................  root window initialisation ...........................
     # CustomTkinter vars
     ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
@@ -61,10 +61,10 @@ def gui():
     # => load the original logo & resize it using ANTIALIASING (LANCZOS) of PIL
     # => create an initial photo image that tkinter can use & grid it
     # ...............  PACKAGE WAY OF LOADING LOGO  ...............
-    with resources.path("autogaita", "autogaita_logo.png") as image_path:
+    with resources.path("autogaita.gaita_res", "logo.png") as image_path:
         original_image = Image.open(image_path)
     # # ...............  LOCAL WAY OF LOADING LOGO  ...............
-    # image_path = "autogaita_logo.png"
+    # image_path = "logo.png"
     # original_image = Image.open(image_path)
     resized_image = original_image.resize(
         (int(w), int(original_image.height * (w / original_image.width))), Image.LANCZOS
@@ -80,7 +80,7 @@ def gui():
         hover_color=DLC_HOVER_COLOR,
         text_color=TXT_COLOR,
         font=("Britannic Bold", FONT_SIZE),
-        command=lambda: autogaita_dlc_gui.dlc_gui(),
+        command=lambda: autogaita.run_dlc_gui(),
     )
     dlc_button.grid(row=1, column=0, sticky="nsew")
     # 3 - Universal 3D Button
@@ -91,7 +91,7 @@ def gui():
         hover_color=UNIVERSAL3D_HOVER_COLOR,
         text_color=TXT_COLOR,
         font=("Britannic Bold", FONT_SIZE),
-        command=lambda: autogaita_universal3D_gui.universal3D_gui(),
+        command=lambda: autogaita.run_universal3D_gui(),
     )
     universal3D_button.grid(row=2, column=0, sticky="nsew")
     # 4 - Group Button
@@ -102,7 +102,7 @@ def gui():
         hover_color=GROUP_HOVER_COLOR,
         text_color=TXT_COLOR,
         font=("Britannic Bold", FONT_SIZE),
-        command=lambda: autogaita_group_gui.group_gui(),
+        command=lambda: autogaita.run_group_gui(),
     )
     group_button.grid(row=3, column=0, sticky="nsew")
     # maximise buttons
@@ -114,26 +114,6 @@ def gui():
     root.mainloop()
 
 
-# %%.............................  HELPER FUNCTIONS  ...................................
-def configure_the_icon(root):
-    """Configure the icon - in macos it changes the dock icon, in windows it changes
-    all windows titlebar icons (taskbar cannot be changed without converting to exe)
-    """
-    if platform.system().startswith("Darwin"):
-        try:
-            from Cocoa import NSApplication, NSImage
-        except ImportError:
-            print("Unable to import pyobjc modules")
-        else:
-            with resources.path("autogaita", "autogaita_icon.icns") as icon_path:
-                ns_application = NSApplication.sharedApplication()
-                logo_ns_image = NSImage.alloc().initWithContentsOfFile_(str(icon_path))
-                ns_application.setApplicationIconImage_(logo_ns_image)
-    elif platform.system().startswith("win"):
-        with resources.path("autogaita", "autogaita_icon.ico") as icon_path:
-            root.iconbitmap(str(icon_path))
-
-
 # %% what happens if we hit run
 if __name__ == "__main__":
-    gui()
+    run_gui()

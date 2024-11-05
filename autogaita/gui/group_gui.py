@@ -1,5 +1,7 @@
 # %% imports
-from autogaita import autogaita_group
+import autogaita
+from autogaita import gui
+from autogaita.gaita_res.gui_utils import configure_the_icon
 import tkinter as tk
 import customtkinter as ctk
 import pandas as pd
@@ -85,17 +87,17 @@ EXCLUDED_VARS_FROM_CFG_FILE = ["last_runs_stats_variables", "last_runs_PCA_varia
 NORM_SHEET_NAME = "Normalised Stepcycle"
 WINDOWS_TASKBAR_MAXHEIGHT = 72
 
-# To get the path of the autogaita folder I use __file__
-# which returns the path of the autogaita_group module imported above.
-# Removing the 18 letter long "autogaita_group.py" return the folder path
-autogaita_group_path = autogaita_group.__file__
-AUTOGAITA_FOLDER_PATH = autogaita_group_path[:-18]
+# To get the path of the autogaita gui folder I use __file__
+# which returns the path of the autogaita gui module imported above.
+# Removing the 11 letter long "__init__.py" return the folder path
+autogaita_utils_path = gui.__file__
+AUTOGAITA_FOLDER_PATH = autogaita_utils_path[:-11]
 
 
 # %%...............................  MAIN PROGRAM ......................................
 
 
-def group_gui():
+def run_group_gui():
     # ..................................................................................
     # .....................  root (intro) window initialisation  .......................
     # ..................................................................................
@@ -222,7 +224,7 @@ def build_mainwindow(root, group_number, root_dimensions):
     else:
         # .....................  important - global cfg variable  ......................
         # we have cfg be global so it can be modified by all widgets and frames.
-        # just prior to calling autogaita_group, we will copy its values to a temporary # cfg var, so the values of the global variable are never used for running
+        # just prior to calling autogaita.group, we will copy its values to a temporary # cfg var, so the values of the global variable are never used for running
         # anything (see run_analysis)
         global cfg
         cfg = extract_cfg_from_json_file(root)
@@ -927,7 +929,7 @@ def run_analysis(folderinfo, cfg):
 
     # run in a thread (see a note about thread running after helper functions)
     run_thread = Thread(
-        target=autogaita_group.group, args=(this_runs_folderinfo, this_runs_cfg)
+        target=autogaita.group, args=(this_runs_folderinfo, this_runs_cfg)
     )
     run_thread.start()
 
@@ -993,7 +995,7 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
     this_runs_folderinfo = {}
     # make sure that directories end with os.sep (since we want to be able to save files
     # using string concatenation). If not just add a forward slash. In the beginning
-    # of autogaita_group, we will convert os.sep to forward slashes if they should be
+    # of autogaita.group, we will convert os.sep to forward slashes if they should be
     # backward slashes (windows works with both)
     # => Note this was changed and works with os.path.join() now...
     # => NU: have another look @ this matter in GUI functions
@@ -1103,25 +1105,6 @@ def fix_window_after_its_creation(window):
     window.attributes("-topmost", True)
     window.focus_set()
     window.after(100, lambda: window.attributes("-topmost", False))  # 100 ms
-
-
-def configure_the_icon(root):
-    """Configure the icon - in macos it changes the dock icon, in windows it changes
-    all windows titlebar icons (taskbar cannot be changed without converting to exe)
-    """
-    if platform.system().startswith("Darwin"):
-        try:
-            from Cocoa import NSApplication, NSImage
-        except ImportError:
-            print("Unable to import pyobjc modules")
-        else:
-            with resources.path("autogaita", "autogaita_icon.icns") as icon_path:
-                ns_application = NSApplication.sharedApplication()
-                logo_ns_image = NSImage.alloc().initByReferencingFile_(str(icon_path))
-                ns_application.setApplicationIconImage_(logo_ns_image)
-    elif platform.system().startswith("win"):
-        with resources.path("autogaita", "autogaita_icon.ico") as icon_path:
-            root.iconbitmap(str(icon_path))
 
 
 def update_config_file(folderinfo, cfg):
@@ -1240,4 +1223,4 @@ def extract_results_dir_from_json_file():
 
 # %% what happens if we hit run
 if __name__ == "__main__":
-    group_gui()
+    run_group_gui()

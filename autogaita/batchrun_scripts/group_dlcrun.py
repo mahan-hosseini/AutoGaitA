@@ -1,4 +1,4 @@
-from autogaita import autogaita_group
+import autogaita
 
 
 def group_dlcrun():
@@ -80,7 +80,7 @@ def group_dlcrun():
         # "Elbow Angle"
     ]
     # run
-    autogaita_group.group(folderinfo, cfg)
+    autogaita.group(folderinfo, cfg)
 
 
 # %% what happens if we just hit run

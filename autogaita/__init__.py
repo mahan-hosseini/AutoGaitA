@@ -1,22 +1,24 @@
 # main gui
-from .autogaita import gui  # autogaita.gui()
+from .gui.main_gui import run_gui  # autogaita.run_gui()
 
 # 3 sub-guis
-from .autogaita_dlc_gui import dlc_gui  # autogaita.dlc_gui()
-from .autogaita_universal3D_gui import universal3D_gui  # autogaita.universal3D_gui()
-from .autogaita_group_gui import group_gui  # autogaita.group_gui()
+from .gui.dlc_gui import run_dlc_gui  # autogaita.run_dlc_gui()
+from .gui.universal3D_gui import (
+    run_universal3D_gui,
+)  # autogaita.run_universal3D_gui()
+from .gui.group_gui import run_group_gui  # autogaita.run_group_gui()
 
 # 3 main functions
-from .autogaita_dlc import dlc  # autogaita.dlc(info, folderinfo, cfg)
-from .autogaita_universal3D import (
+from .dlc.dlc_main import dlc  # autogaita.dlc(info, folderinfo, cfg)
+from .universal3D.universal3D_main import (
     universal3D,
 )  # autogaita.universal3D(info, folderinfo, cfg)
-from .autogaita_group import group  # autogaita.group(folderinfo, cfg)
+from .group.group_main import group  # autogaita.group(folderinfo, cfg)
 
 # 6 batchrun functions - call via e.g. autogaita.dlc_singlerun()
-from .batchrun_scripts.autogaita_dlc_singlerun import dlc_singlerun
-from .batchrun_scripts.autogaita_dlc_multirun import dlc_multirun
-from .batchrun_scripts.autogaita_universal3D_singlerun import universal3D_singlerun
-from .batchrun_scripts.autogaita_universal3D_multirun import universal3D_multirun
-from .batchrun_scripts.autogaita_group_dlcrun import group_dlcrun
-from .batchrun_scripts.autogaita_group_universal3Drun import group_universal3Drun
+from .batchrun_scripts.dlc_singlerun import dlc_singlerun
+from .batchrun_scripts.dlc_multirun import dlc_multirun
+from .batchrun_scripts.universal3D_multirun import universal3D_multirun
+from .batchrun_scripts.universal3D_singlerun import universal3D_singlerun
+from .batchrun_scripts.group_dlcrun import group_dlcrun
+from .batchrun_scripts.group_universal3Drun import group_universal3Drun

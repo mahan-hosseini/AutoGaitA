@@ -1,4 +1,4 @@
-![AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/autogaita_logo.png?raw=true)
+![AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/blob/main/autogaita/gaita_res/logo.png?raw=true)
 ![Repository Active](https://www.repostatus.org/badges/latest/active.svg)
 [![Test AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/autogaita_test_and_black.yml/badge.svg)](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/autogaita_test_and_black.yml)
 ![Python](https://img.shields.io/badge/python-v3.10+-blue.svg)
@@ -38,7 +38,7 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
 ## Demo Video
 *Check out the video below for a demonstration of AutoGaitA's main workflow!*
 <p><a href="https://youtu.be/_HIZVuUzpzk?feature=shared">
-<img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/res/pic_to_demo_for_repo.png" width="550">
+<img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/autogaita/gaita_res/pic_to_demo_for_repo.png" width="550">
 
 ## Tutorials & Examples
 

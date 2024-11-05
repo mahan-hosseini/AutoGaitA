@@ -1,4 +1,4 @@
-from autogaita import autogaita_utils
+from autogaita.gaita_res.utils import try_to_run_gaita
 import os
 import pdb
 
@@ -53,7 +53,7 @@ def run_singlerun(idx, info, folderinfo, cfg):
     for keyname in keynames:
         this_info[keyname] = info[keyname][idx]
     # important to only pass this_info to main script here (1 run at a time!)
-    autogaita_utils.try_to_run_gaita("Universal 3D", this_info, folderinfo, cfg, True)
+    try_to_run_gaita("Universal 3D", this_info, folderinfo, cfg, True)
 
 
 def extract_info(folderinfo):

@@ -1,4 +1,4 @@
-from autogaita import autogaita_utils
+from autogaita.gaita_res.utils import try_to_run_gaita
 import os
 
 
@@ -43,7 +43,7 @@ def universal3D_singlerun():
             folderinfo["root_dir"], "Results", info["name"]
         )
     # run
-    autogaita_utils.try_to_run_gaita("Universal 3D", info, folderinfo, cfg, False)
+    try_to_run_gaita("Universal 3D", info, folderinfo, cfg, False)
 
 
 # %% what happens if we just hit run

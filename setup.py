@@ -1,5 +1,5 @@
 # import
-from setuptools import setup
+from setuptools import setup, find_packages
 import platform
 
 # list of across-platform dependencies
@@ -28,7 +28,7 @@ setup(
     version="1.0.0rc",  # rc == release candidate (before release is finished)
     author="Mahan Hosseini",
     description="Automatic Gait Analysis in Python. A toolbox to streamline and standardise the analysis of kinematics across species after ML-based body posture tracking. Despite being optimised for gait analyses, AutoGaitA has the potential to be used for any kind of kinematic analysis.",
-    packages=["autogaita", "autogaita.batchrun_scripts"],
+    packages=find_packages(),
     include_package_data=True,
     package_data={"": ["*.txt", "*.rst", "*.png", "*.icns", "*.ico", "*.json"]},
     install_requires=install_requires,
