@@ -1,5 +1,5 @@
 # ...................................  imports  ........................................
-from autogaita import dlc, universal3D
+import autogaita
 import pandas as pd
 import numpy as np
 import os
@@ -31,9 +31,9 @@ def try_to_run_gaita(which_gaita, info, folderinfo, cfg, multirun_flag):
     print(message)
     try:
         if which_gaita == "DLC":
-            dlc(info, folderinfo, cfg)
+            autogaita.dlc(info, folderinfo, cfg)
         elif which_gaita == "Universal 3D":
-            universal3D(info, folderinfo, cfg)
+            autogaita.universal3D(info, folderinfo, cfg)
         else:
             print("which_gaita has to be DLC or Universal 3D - try again.")
     # catch these errors (don't catch all possbile errors - bad practice!)
