@@ -7,8 +7,5 @@ autogaita.egg-info/
 venv/
 **/.hypothesis/
 .coverage
-dlc_gui_config.json
-simi_gui_config.json
-group_gui_config.json
 CLA.md
 settings.json
