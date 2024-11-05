@@ -1,6 +1,6 @@
 # %% imports
 from autogaita import autogaita_utils
-from autogaita.autogaita_3D_preparation import prepare_3D
+from autogaita.autogaita_universal3D_preparation import prepare_3D
 import tkinter as tk
 import customtkinter as ctk
 import os

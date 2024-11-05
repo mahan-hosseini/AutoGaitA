@@ -3,9 +3,7 @@ import pandas as pd
 
 # user inputs
 TASK = "rename"  # can be clean or rename
-ROOT_DIR = (
-    "/Users/mahan/sciebo/Research/AutoGaitA/Human/Sebastian/ChatGPTs fake 3D Data/"
-)
+ROOT_DIR = ""  # path to the folder with the files to have columns cleaned/renamed
 FILE_TYPE = "csv"  # can be csv, xls or xlsx
 POSTNAME_STRING = ""  # string that must be included in loading files
 RESULTS_DIR = ""
@@ -25,7 +23,6 @@ SPACE_SEP = " "
 
 # NU
 # => could add an option to either remove or keep the cols that are not renamed
-# => finally add to GUI
 
 
 # .............................  main 3D preparation  ..................................
