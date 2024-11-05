@@ -11,14 +11,14 @@
 
 # Automated Gait Analysis in Python 🐸
 
-- AutoGaitA simplifies, accelerates, and standardises gait analyses after body posture tracking with [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut) and [Simi Motion](http://www.simi.com/en/products/movement-analysis/simi-motion-2d3d.html?type=rss%2F). 
+- AutoGaitA simplifies, accelerates, and standardises gait analyses after body posture tracking with [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut) or 3D tracking methods such as [Simi Motion](http://www.simi.com/en/products/movement-analysis/simi-motion-2d3d.html?type=rss%2F). 
 - AutoGaitA's first-level tools provide a wide range of automated kinematic analyses for each input video and AutoGaitA Group allows the comparison of up to six groups. 
 - AutoGaitA enables comparisons to be made across experimental conditions, species, disease states or genotypes. 
 - Despite being developed with gait data, AutoGaitA can be utilised for the analysis of any motor behaviour.
 
 ## Getting Started
 
-***Note!** [Our documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit?usp=sharing) provides step-by-step walkthroughs of how to install autogaita for **[Windows](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.28j6wu2vamre)** and **[Mac](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit)***
+***Note!** [Our documentation](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?usp=sharing) provides step-by-step walkthroughs of how to install autogaita for **[Windows](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.28j6wu2vamre)** and **[Mac](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.ljmdh7hfayyx)***
 
 It is strongly recommended that a separate virtual environment for AutoGaitA is created (note that the approach below creates the virtual environment to your current directory):
 
@@ -52,32 +52,32 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
 We provide an example dataset in the **example data** folder of this repository, with a set of mice walking over differently wide beams and both the beam as well as body coordinates being tracked with DLC. Note that this dataset was used in our tutorial videos introducing *AutoGaitA_DLC*, *AutoGaitA_Group* and in our video explaining file preparation for *AutoGaitA_DLC*.  We further provide a **group** folder there that can be used alongside the *AutoGaitA_Group* tutorial to confirm that users generate the same set of results following our instructions.
 
 ### Annotation Table Examples and Templates
-Annotation Table example and template files for *AutoGaitA_DLC* and *AutoGaitA_Simi* can be found in the [**annotation tables**](https://github.com/mahan-hosseini/AutoGaitA/tree/main/annotation%20tables) folder of this repository.
+Annotation Table example and template files for *AutoGaitA DLC* and *AutoGaitA Universal 3D* can be found in the [**annotation tables**](https://github.com/mahan-hosseini/AutoGaitA/tree/main/annotation%20tables) folder of this repository.
 
 Users are advised to read the **General Recommendations** section of that folder, use the template to enter their data's timestamp information and to then compare the resulting table with our example to check formatting. Users working with ImageJ/FIJI are encouraged to check out the [AnnotationTable-Plugin](https://github.com/luca-flemming/AnnotationTable-Plugin) developed by our contributor Luca Flemming.
 
 ## Documentation
 
-**[The AutoGaitA Documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit?usp=sharing) provides complete guidelines on installation, file preparation, AutoGaitA GUIs, using AutoGaitA via the command line, installing FFmpeg for rotating 3D PCA videos, lists known issues and FAQ.**  
+**[The AutoGaitA Documentation](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?usp=sharing) provides complete guidelines on installation, file preparation, AutoGaitA GUIs, using AutoGaitA via the command line, installing FFmpeg for rotating 3D PCA videos, lists known issues and FAQ.**  
 
 ## Two important options
 
 ### Custom joints & angles
 **We strongly advise** users to pay attention to the *custom joints and angles* windows of AutoGaitA's first level toolboxes. Please see the relevant links below. These windows allow users to customise which columns of their data should be analysed and how angles should be computed. 
 
-By default, *AutoGaitA DLC* and *AutoGaitA Simi* implement standard values for mouse and human locomotion, respectively. If your analysis deviates from these standards (e.g. by focussing on another behaviour or a different species) **you must change these values!** 
+By default, *AutoGaitA DLC* and *AutoGaitA Universal 3D* implement standard values for mouse and human locomotion, respectively. If your analysis deviates from these standards (e.g. by focussing on another behaviour or a different species) **you must change these values!** 
 
 **Find out more about *AutoGaitA's custom joints and angles:***
 - [YouTube - AutoGaitA DLC Advanced Configuration](https://youtu.be/MP9g9kXRE_Q?feature=shared) 
-- [YouTube - AutoGaitA Simi](https://youtu.be/rTG-Fc9XI9g?feature=shared) 
-- [Documentation - AutoGaitA DLC](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.20bg7b7ymt0b)
-- [Documentation - AutoGaitA Simi](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.uz61bpmua7qz)
+- [YouTube - AutoGaitA Universal 3D (prev. called Simi)](https://youtu.be/rTG-Fc9XI9g?feature=shared) 
+- [Documentation - AutoGaitA DLC](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.20bg7b7ymt0b)
+- [Documentation - AutoGaitA Universal 3D](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.uz61bpmua7qz)
 
 ### Bin number of step cycle normalisation
 An important step in AutoGaitA is normalising step cycles (or instances of other behaviours) to a uniform length before calculating the video-level average. This uniform length is called *bin number*, must be set by users and defaults to a value of 25.
 
 Step cycles are normalised via averaging temporally adjacent data points if their original length was larger than the bin number and repeating values if they were shorter originally. Examples are provided here: 
-- [Documentation/AutoGaitA DLC/Main Configuration/Option #6](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit#heading=h.bboivsfqr2lz).
+- [Documentation/AutoGaitA DLC/Main Configuration/Option #6](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.bboivsfqr2lz).
 
 **We strongly advise** users to think carefully about an appropriate bin number for their datasets. The correct value varies and depends strongly on the studied species, behaviour and the frame rate of cameras.
 
@@ -115,4 +115,5 @@ We are looking forward to your input and ideas 😊
 ## Archive
 We have archived the resources of outdated AutoGaitA versions here:
 
+- v0.4.1 - [Documentation](https://docs.google.com/document/d/1Y4wrrsjs0ybLDKPzE2LAatqPDq9jtwjIuk4M0jRZ3wE/edit?usp=sharing)
 - v0.3.1 - [YouTube Tutorials](https://youtube.com/playlist?list=PLCn5T7K_H8K776DLuXKoPsUpI6Yb0NU33&si=7ZAAvcrPxR7WsB8a) & [Documentation](https://docs.google.com/document/d/11mJd7jUHk7joQ0BdZT98CJRrIANdyosMQMJGFtp6yR4/edit?usp=sharing)
