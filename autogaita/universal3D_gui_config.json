@@ -3,7 +3,7 @@
         "name": "",
         "root_dir": "",
         "sctable_filename": "",
-        "postname_flag": false, 
+        "postname_flag": false,
         "postname_string": ""
     },
     {
@@ -43,6 +43,12 @@
                 "Hip",
                 "Pelvis"
             ]
-        }
+        },
+        "fileprep_root_dir": "",
+        "fileprep_filetype": "",
+        "fileprep_postname_string": "",
+        "fileprep_results_dir": "",
+        "fileprep_separator": "",
+        "fileprep_string_to_remove": ""
     }
 ]

@@ -23,7 +23,7 @@ import warnings
 
 # %% A note on cross species functionality
 # => This function supports cross species analyses, however the data must be obtained
-#    from the same tracking_software (=> I.e., resulting from autogaita_dlc or _simi)
+#    from the same tracking_software (=> I.e., resulting from autogaita_dlc or _universal3D)
 # => Also users have to ensure that the comparison makes sense across species w.r.t.
 #    features
 # => Adding "both" leg functionality in compute_avg & g_avg_dfs at some point.
@@ -232,7 +232,7 @@ def some_prep(folderinfo, cfg):
 
     # after having checked cfg keys for equivalence, we have to make sure that
     # hind_joints is renamed to joints if DLC
-    # => note that cfg will not be updated (and overwritten from input if Simi so it's)
+    # => note that cfg will not be updated (and overwritten from input if Universal 3D so it's)
     #    okay that we do this
     if cfg["tracking_software"] == "DLC":
         cfg["joints"] = cfg["hind_joints"]
@@ -456,7 +456,7 @@ def final_df_checks_and_save_to_xls(
     # reorder the columns we added
     if tracking_software == "DLC":
         cols = [ID_COL, "Run", "Stepcycle", "Flipped", "Time"]
-    elif tracking_software == "Simi":
+    elif tracking_software == "Universal 3D":
         cols = [ID_COL, "Leg", "Stepcycle", "Time"]
     this_df = this_df[cols + [c for c in this_df.columns if c not in cols]]
     # check if there's rows with consecutive np.nan entries
@@ -587,7 +587,7 @@ def import_and_combine_dfs(
     fullfilepath = os.path.join(group_dir, name, name + " - " + this_sheet_name)
     if tracking_software == "DLC":
         df = load_sheet_file(fullfilepath)
-    elif tracking_software == "Simi":
+    elif tracking_software == "Universal 3D":
         df = load_sheet_file(fullfilepath, which_leg=which_leg)
     if df is None:
         this_message = (
@@ -616,7 +616,7 @@ def import_and_combine_dfs(
             run_num = int(temp_split[1].split(" ")[1])  # temp_split[1] == RUN X
             df_copy["Run"] = run_num
             df_copy[ID_COL] = mouse_num
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             df_copy[ID_COL] = name
         df_copy["Stepcycle"] = np.nan
         sc_col_idx = df_copy.columns.get_loc("Stepcycle")
@@ -630,7 +630,7 @@ def import_and_combine_dfs(
                 nanvector = df_copy.loc[[1]]
                 # new for pandas 2.2.2 - change all cols to floats so its compatible
                 # with np.nan concatenation (does this break anything?)
-                # => 07.08. - Leaving this for when I have unit tests for simi & group
+                # => 07.08. - Leaving this for when I have unit tests for universal3D & group
                 # => Not sure it'll work well like this I feel like it will take more
                 #    than just changing the dtype
                 # => For now ignoring warnings so users don't get annoyed (and because
@@ -746,7 +746,7 @@ def avg_and_std(dfs, folderinfo, cfg):
     tracking_software = cfg["tracking_software"]
     if tracking_software == "DLC":
         analyse_average_x = cfg["analyse_average_x"]
-    elif tracking_software == "Simi":
+    elif tracking_software == "Universal 3D":
         analyse_average_y = cfg["analyse_average_y"]
 
     # preparation, initialise avg/std dfs & colnames
@@ -764,7 +764,7 @@ def avg_and_std(dfs, folderinfo, cfg):
                 if analyse_average_x is False:
                     if col.endswith(" x"):
                         cols_to_exclude.append(col)
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             cols_to_exclude = [ID_COL, "Leg", "Stepcycle", "Time"]
             for col in dfs[g].columns:
                 if col.endswith("X"):
@@ -1536,8 +1536,8 @@ def plot_permutation_test_results(
     # 1) (DLC only) converted velocity & acceleration
     # 2) (DLC only) converted x/y coordinates
     # 3) (non-converted) angular velocity & acceleration
-    # 4) (non-converted) x(DLC)/Y(Simi) velocity & acceleration
-    # 5) (non-converted) x(DLC)/Y(Simi) coordinates
+    # 4) (non-converted) x(DLC)/Y(Universal 3D) velocity & acceleration
+    # 5) (non-converted) x(DLC)/Y(Universal 3D) coordinates
     if check_mouse_conversion(feature, cfg, stats_var=stats_var):
         if feature in ["Velocity", "Acceleration"]:
             f.supylabel(
@@ -1553,7 +1553,7 @@ def plot_permutation_test_results(
             else:
                 if tracking_software == "DLC":
                     unit = "x in pixels"
-                elif tracking_software == "Simi":
+                elif tracking_software == "Universal 3D":
                     unit = "Y in (your units)"
             f.supylabel(
                 ylabel_velocity_and_acceleration(feature, unit, sampling_rate),
@@ -1914,8 +1914,8 @@ def plot_multcomp_results(
     # 1) (DLC only) converted velocity & acceleration
     # 2) (DLC only) converted x/y coordinates
     # 3) (non-converted) angular velocity & acceleration
-    # 4) (non-converted) x(DLC)/Y(Simi) velocity & acceleration
-    # 5) (non-converted) x(DLC)/Y(Simi) coordinates
+    # 4) (non-converted) x(DLC)/Y(Universal 3D) velocity & acceleration
+    # 5) (non-converted) x(DLC)/Y(Universal 3D) coordinates
     if check_mouse_conversion(feature, cfg, stats_var=stats_var):
         if feature in ["Velocity", "Acceleration"]:
             f.supylabel(
@@ -1931,7 +1931,7 @@ def plot_multcomp_results(
             else:
                 if tracking_software == "DLC":
                     unit = "x in pixels"
-                elif tracking_software == "Simi":
+                elif tracking_software == "Universal 3D":
                     unit = "Y in (your units)"
             f.supylabel(
                 ylabel_velocity_and_acceleration(feature, unit, sampling_rate),
@@ -1995,7 +1995,7 @@ def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance):
     if tracking_software == "DLC":
         if cfg["analyse_average_x"] is True:
             plot_horizontal_coord = True
-    elif tracking_software == "Simi":
+    elif tracking_software == "Universal 3D":
         if cfg["analyse_average_y"] is True:
             plot_horizontal_coord = True
     if plot_horizontal_coord:
@@ -2059,7 +2059,7 @@ def plot_joint_y_by_average_SC(
         for joint in joints:
             if tracking_software == "DLC":
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "y")
-            elif tracking_software == "Simi":
+            elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
                 feature = "Z"
                 y_col = extract_feature_column(g_avg_dfs[g], joint, which_leg, feature)
@@ -2085,7 +2085,7 @@ def plot_joint_y_by_average_SC(
             else:
                 ax.set_ylabel("y (pixel)")
             figure_file_string = " - Joint y-coord.s over average step cycle"
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             ax.set_title(
                 group_name + " - " + which_leg + " Joint Z over average step cycle"
             )
@@ -2105,7 +2105,7 @@ def plot_joint_y_by_average_SC(
         for g, group_name in enumerate(group_names):
             if tracking_software == "DLC":
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "y")
-            elif tracking_software == "Simi":
+            elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
                 feature = "Z"
                 y_col = extract_feature_column(g_avg_dfs[g], joint, which_leg, feature)
@@ -2130,7 +2130,7 @@ def plot_joint_y_by_average_SC(
             else:
                 ax.set_ylabel("y (pixel)")
             figure_file_string = "- Y-coord.s over average step cycle"
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             # do title_leg thingy only for B plots, because here we have separate
             # figures for joints / angles (in A plots just throw leg into title)
             if joint + "Z" in g_avg_dfs[g].columns:
@@ -2173,7 +2173,7 @@ def plot_joint_x_by_average_SC(
         for joint in joints:
             if tracking_software == "DLC":
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "x")
-            elif tracking_software == "Simi":
+            elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
                 feature = "Y"
                 y_col = extract_feature_column(g_avg_dfs[g], joint, which_leg, feature)
@@ -2199,7 +2199,7 @@ def plot_joint_x_by_average_SC(
             else:
                 ax.set_ylabel("x (pixel)")
             figure_file_string = " - Joint x-coord.s over average step cycle"
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             ax.set_title(
                 group_name + " - " + which_leg + " Joint Y over average step cycle"
             )
@@ -2219,7 +2219,7 @@ def plot_joint_x_by_average_SC(
         for g, group_name in enumerate(group_names):
             if tracking_software == "DLC":
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "x")
-            elif tracking_software == "Simi":
+            elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
                 feature = "Y"
                 y_col = extract_feature_column(g_avg_dfs[g], joint, which_leg, feature)
@@ -2244,7 +2244,7 @@ def plot_joint_x_by_average_SC(
             else:
                 ax.set_ylabel("x (pixel)")
             figure_file_string = "- X-coord.s over average step cycle"
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             # do title_leg thingy only for B plots, because here we have separate
             # figures for joints / angles (in A plots just throw leg into title)
             if joint + "Y" in g_avg_dfs[g].columns:
@@ -2287,7 +2287,7 @@ def plot_angles_by_average_SC(
         for angle in angles["name"]:
             if tracking_software == "DLC":
                 y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle")
-            elif tracking_software == "Simi":
+            elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
                 feature = "Angle"
                 y_col = extract_feature_column(g_avg_dfs[g], angle, which_leg, feature)
@@ -2307,7 +2307,7 @@ def plot_angles_by_average_SC(
         ax.set_ylabel("Angle (degrees)")
         if tracking_software == "DLC":
             ax.set_title(group_name + " - Joint angles over average step cycle")
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             ax.set_title(
                 group_name + " - " + which_leg + " joint angles over average step cycle"
             )
@@ -2326,7 +2326,7 @@ def plot_angles_by_average_SC(
         for g, group_name in enumerate(group_names):
             if tracking_software == "DLC":
                 y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle")
-            elif tracking_software == "Simi":
+            elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
                 feature = "Angle"
                 y_col = extract_feature_column(g_avg_dfs[g], angle, which_leg, feature)
@@ -2346,7 +2346,7 @@ def plot_angles_by_average_SC(
         ax.set_ylabel("Angle (degrees)")
         if tracking_software == "DLC":
             ax.set_title(angle + "angle over average step cycle")
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             if angle + "Angle" in g_avg_dfs[g].columns:
                 title_leg = ""
             else:
@@ -2387,7 +2387,7 @@ def plot_x_velocities_by_average_SC(
         for joint in joints:
             if tracking_software == "DLC":
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "Velocity")
-            elif tracking_software == "Simi":
+            elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
                 feature = "Velocity"
                 y_col = extract_feature_column(g_avg_dfs[g], joint, which_leg, feature)
@@ -2411,7 +2411,7 @@ def plot_x_velocities_by_average_SC(
             else:
                 unit = "x in pixels"
             ax.set_title(group_name + " - Joint velocities over average step cycle")
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             unit = "Y in (your units)"
             ax.set_title(
                 group_name
@@ -2436,7 +2436,7 @@ def plot_x_velocities_by_average_SC(
         for g, group_name in enumerate(group_names):
             if tracking_software == "DLC":
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "Velocity")
-            elif tracking_software == "Simi":
+            elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
                 feature = "Velocity"
                 y_col = extract_feature_column(g_avg_dfs[g], joint, which_leg, feature)
@@ -2460,7 +2460,7 @@ def plot_x_velocities_by_average_SC(
             else:
                 unit = "x in pixels"
             ax.set_title(group_name + " - Joint velocities over average step cycle")
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             unit = "Y in (your units)"
             if joint + "Velocity" in g_avg_dfs[g].columns:
                 title_leg = ""
@@ -2505,7 +2505,7 @@ def plot_angular_velocities_by_average_SC(
         for angle in angles["name"]:
             if tracking_software == "DLC":
                 y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle Velocity")
-            elif tracking_software == "Simi":
+            elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
                 feature = "Angle Velocity"
                 y_col = extract_feature_column(g_avg_dfs[g], angle, which_leg, feature)
@@ -2527,7 +2527,7 @@ def plot_angular_velocities_by_average_SC(
         )
         if tracking_software == "DLC":
             ax.set_title(group_name + " - Angular velocities over average step cycle")
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             ax.set_title(
                 group_name
                 + " - "
@@ -2549,7 +2549,7 @@ def plot_angular_velocities_by_average_SC(
         for g, group_name in enumerate(group_names):
             if tracking_software == "DLC":
                 y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle Velocity")
-            elif tracking_software == "Simi":
+            elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
                 feature = "Angle Velocity"
                 y_col = extract_feature_column(g_avg_dfs[g], angle, which_leg, feature)
@@ -2571,7 +2571,7 @@ def plot_angular_velocities_by_average_SC(
         )
         if tracking_software == "DLC":
             ax.set_title(angle + "- Angular velocities over average step cycle")
-        elif tracking_software == "Simi":
+        elif tracking_software == "Universal 3D":
             if angle + "Angle" in g_avg_dfs[g].columns:
                 title_leg = ""
             else:
@@ -2704,7 +2704,7 @@ def print_finish(folderinfo):
 
 
 def transform_joint_and_leg_to_colname(joint, legname, feature):
-    """For Human Data: Transform a joint and leg name to Simi-column name"""
+    """For Human Data: Transform a joint and leg name to Universal 3D-column name"""
     return joint + ", " + legname + " " + feature
 
 
@@ -3012,6 +3012,6 @@ if __name__ == "__main__":
         + "You are trying to execute autogaita.group as a script, but that is not "
         + "possible.\nIf you prefer a non-GUI approach, please either: "
         + "\n1. Call this as a function, i.e. autogaita.group(folderinfo, cfg)"
-        + "\n2. Use the dlc or simirun scripts in the batchrun_scripts folder"
+        + "\n2. Use the dlc or universal 3Drun scripts in the batchrun_scripts folder"
     )
     print(group_info_message)

@@ -85,7 +85,7 @@ HOVER_COLOR = "#b5485d"  # dark rose
 # %% main program
 
 
-def simi(info, folderinfo, cfg):
+def universal3D(info, folderinfo, cfg):
     """Runs the main program for a given subject's run
 
     Procedure
@@ -209,7 +209,7 @@ def some_prep(info, folderinfo, cfg):
     if import_error_message:  # see if there was any issues with import, if so: stop
         print(import_error_message)
         write_issues_to_textfile(import_error_message, info)
-        return
+        return (None, None)
 
     # ................  final data checks, conversions & additions  ....................
     # IMPORTANT
@@ -230,13 +230,21 @@ def some_prep(info, folderinfo, cfg):
         "joints": joints,
         "angles": angles,
         "analyse_average_y": analyse_average_y,
-        "tracking_software": "Simi",
+        "tracking_software": "Universal 3D",
     }
     # note - using "w" will overwrite/truncate file, thus no need to remove it if exists
     with open(config_json_path, "w") as config_json_file:
         json.dump(config_vars_to_json, config_json_file, indent=4)
 
-    # For some reason there are two Time = 0 @ start. Take the second/last.
+    # Check if data has some col sayin "Time" in any form of capitalisation and if so
+    # make sure it's capitalised
+    if any(col.lower() == DF_TIME_COL.lower() for col in data.columns):
+        data.columns = [
+            col.capitalize() if col.lower() == DF_TIME_COL.lower() else col
+            for col in data.columns
+        ]
+    # If for some reason (we had this with simi files) there are two Time = 0s, take
+    # the second/last.
     if len(np.where(data[DF_TIME_COL] == 0)[0]) > 1:
         real_start_idx = np.where(data[DF_TIME_COL] == 0)[0][-1]
         data = data.iloc[real_start_idx:, :]
@@ -274,6 +282,7 @@ def some_prep(info, folderinfo, cfg):
     return data, global_Y_max
 
     # ..............................  sanity checks  ...................................
+    # Note - this was before I knew what tests are
     # below are some old & less efficient ways of computing y min / max & z min
     # => I saved these so you can put breakpoints and copy paste the sanity checks on
     #    (e.g.) data_copy = data.copy() and then check equivalence of dfs using
@@ -831,7 +840,6 @@ def read_SC_info(data, SCdf, info, legname, cfg):
                 )
                 print(this_message)
                 write_issues_to_textfile(this_message, info)
-
     # ............................  clean all_cycles  ..................................
     # check if we skipped latencies because they were out of data-bounds
     all_cycles = check_cycle_out_of_bounds(all_cycles)
@@ -1211,7 +1219,7 @@ def add_features(step, cfg):
        step_copy.columns.duplicated() statement below, this means that such angles
        (and corresponding velocities & accelerations) will be computed with reference
        to the left body side by default
-       -- Add this to the documentation and tell people to fix their simi-columns if
+       -- Add this to the documentation and tell people to fix their columns if
           they want to have this differently... maybe improve in the future if wanted
        -- This leads to a slight inaccuracy/limitation in that e.g. the Pelvis Angle is
           computed w.r.t. the left side of the body always, even in the XLS sheets of
@@ -1591,7 +1599,6 @@ def delete_previous_xlsfiles(name, results_dir):
 def save_results_sheet(dataframe, sheet, fullfilepath, only_one_valid_leg):
     """Save a xls sheet of given df"""
     fullfilepath = fullfilepath + ".xlsx"
-    # pdb.set_trace()
     if os.path.exists(fullfilepath):
         with pd.ExcelWriter(fullfilepath, mode="a") as writer:
             if (only_one_valid_leg == "left" and sheet == "right") or (
@@ -2776,11 +2783,11 @@ def print_finish(info, cfg):
 
 # %% what happens if we just hit run
 if __name__ == "__main__":
-    simi_info_message = (
+    universal3D_info_message = (
         "\n*************\nnot like this\n*************\n"
-        + "You are trying to execute autogaita.simi as a script, but that is not "
+        + "You are trying to execute autogaita.universal3D as a script, but that is not "
         + "possible.\nIf you prefer a non-GUI approach, please either: "
-        + "\n1. Call this as a function, i.e. autogaita.simi(info, folderinfo, cfg)"
+        + "\n1. Call this as a function, i.e. autogaita.universal3D(info, folderinfo, cfg)"
         + "\n2. Use the single or multirun scripts in the batchrun_scripts folder"
     )
-    print(simi_info_message)
+    print(universal3D_info_message)

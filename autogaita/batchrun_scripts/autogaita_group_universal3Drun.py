@@ -1,9 +1,9 @@
 from autogaita import autogaita_group
 
 
-def group_simirun():
+def group_universal3Drun():
     """
-    Batchrun script to run AutoGaitA Group for Results obtained with AutoGaitA Simi.
+    Batchrun script to run AutoGaitA Group for Results obtained with AutoGaitA Universal 3D.
     folderinfo & cfg dictionaries must be configured as explained in our documentation. See the "AutoGaitA without the GUI" section of our documentation for references to in-depth explanations to all dictionary keys (note that each key of dicts corresponds to some object in the AutoGaitA Group GUI)
     """
     # loop over legs - currently no option to do both legs in a single run
@@ -64,4 +64,4 @@ def group_simirun():
 
 # %% what happens if we just hit run
 if __name__ == "__main__":
-    group_simirun()
+    group_universal3Drun()
