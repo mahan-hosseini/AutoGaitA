@@ -1,7 +1,7 @@
 # %% imports
 from autogaita import gui
 from autogaita.gaita_res.utils import try_to_run_gaita
-from autogaita.universal3D.universal3D_preparation import prepare_3D
+from autogaita.universal3D.universal3D_datafile_preparation import prepare_3D
 from autogaita.gaita_res.gui_utils import configure_the_icon
 import tkinter as tk
 import customtkinter as ctk

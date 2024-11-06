@@ -7,11 +7,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # %% constants
-matplotlib.use("agg")
-# Agg is a non-interactive backend for plotting that can only write to files
-# this is used to generate and save the plot figures
-# later a tkinter backend (FigureCanvasTkAgg) is used for the plot panel
-plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
 from autogaita.dlc.dlc_constants import (
     TIME_COL,
     SC_LAT_LEGEND_FONTSIZE,

@@ -15,9 +15,7 @@ matplotlib.use("agg")
 # this is used to generate and save the plot figures
 # later a tkinter backend (FigureCanvasTkAgg) is used for the plot panel
 plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
-# PLOT GUI COLORS
-FG_COLOR = "#789b73"  # grey green
-HOVER_COLOR = "#287c37"  # darkish green
+from autogaita.dlc.dlc_constants import FG_COLOR, HOVER_COLOR
 
 
 # %% main program

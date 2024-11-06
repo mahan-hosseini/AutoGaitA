@@ -1,10 +1,8 @@
 # %% imports
-from autogaita.dlc.dlc_utils import write_issues_to_textfile
+from autogaita.gaita_res.utils import write_issues_to_textfile
 import os
 import pandas as pd
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
 
 # %% constants
 from autogaita.dlc.dlc_constants import (

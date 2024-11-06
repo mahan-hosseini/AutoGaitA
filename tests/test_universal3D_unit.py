@@ -1,4 +1,7 @@
-from autogaita.universal3D.universal3D_preparation import clean_a_file, rename_a_column
+from autogaita.universal3D.universal3D_datafile_preparation import (
+    clean_a_file,
+    rename_a_column,
+)
 from hypothesis import given, strategies as st
 import pandas as pd
 

@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.dlc.dlc_utils import write_issues_to_textfile
+from autogaita.gaita_res.utils import write_issues_to_textfile
 import os
 import shutil
 import json
