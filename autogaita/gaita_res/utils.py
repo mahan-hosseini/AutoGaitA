@@ -1,13 +1,10 @@
 # ...................................  imports  ........................................
 import autogaita
+from autogaita.dlc.dlc_constants import ISSUES_TXT_FILENAME
 import pandas as pd
 import numpy as np
 import os
 import traceback
-
-
-# ...............................  global constants  ...................................
-ISSUES_TXT_FILENAME = "Issues.txt"
 
 
 # ...............................  error handling  .....................................

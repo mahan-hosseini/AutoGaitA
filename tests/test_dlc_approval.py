@@ -2,10 +2,7 @@ from autogaita.gaita_res.utils import try_to_run_gaita
 import pandas as pd
 import pandas.testing as pdt
 import os
-import shutil
-import pdb
 import pytest
-
 
 # ............................  DLC APPROVAL TESTS STRUCTURE  ..........................
 # 1. Run 4 pytest fixtures in preparation

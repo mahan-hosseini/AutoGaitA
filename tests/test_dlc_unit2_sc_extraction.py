@@ -1,6 +1,7 @@
-from autogaita.dlc.dlc_main import some_prep
-from autogaita.dlc.dlc_main import dlc, extract_stepcycles
-from autogaita.dlc.dlc_main import (
+from autogaita.dlc.dlc_1_preparation import some_prep
+from autogaita.dlc.dlc_main import dlc
+from autogaita.dlc.dlc_2_sc_extraction import (
+    extract_stepcycles,
     check_cycle_out_of_bounds,
     check_cycle_duplicates,
     check_cycle_order,
@@ -9,10 +10,7 @@ from autogaita.dlc.dlc_main import (
 from hypothesis import given, strategies as st, settings, HealthCheck
 import os
 import numpy as np
-import pandas as pd
-import pandas.testing as pdt
 import pytest
-import pdb
 
 
 # %%................................  fixtures  ........................................

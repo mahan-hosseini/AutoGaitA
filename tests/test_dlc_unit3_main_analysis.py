@@ -1,11 +1,13 @@
-from autogaita.dlc.dlc_main import (
-    some_prep,
-    extract_stepcycles,
+from autogaita.dlc.dlc_1_preparation import some_prep
+from autogaita.dlc.dlc_2_sc_extraction import extract_stepcycles
+from autogaita.dlc.dlc_3_analysis import (
     analyse_and_export_stepcycles,
     add_step_separators,
+    add_angles,
+    add_x_velocities,
+    add_angular_velocities,
+    standardise_x_y_and_add_features_to_one_step,
 )
-from autogaita.dlc.dlc_main import add_angles, add_x_velocities, add_angular_velocities
-from autogaita.dlc.dlc_main import standardise_x_y_and_add_features_to_one_step
 from hypothesis import given
 import hypothesis.strategies as st
 from hypothesis.extra.numpy import arrays
@@ -159,9 +161,7 @@ def test_angles_not_depending_on_x_coordinate_standardisation(
 ):
     data = some_prep(extract_info, extract_folderinfo, extract_cfg)
     all_cycles = extract_stepcycles(data, extract_info, extract_folderinfo, extract_cfg)
-    results = analyse_and_export_stepcycles(
-        data, all_cycles, extract_info, extract_folderinfo, extract_cfg
-    )
+    results = analyse_and_export_stepcycles(data, all_cycles, extract_info, extract_cfg)
     all_steps_data = results["all_steps_data"]
     x_standardised_steps_data = results["x_standardised_steps_data"]
     angle_cols = [col for col in all_steps_data.columns if col.endswith("Angle")]
