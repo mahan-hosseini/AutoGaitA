@@ -1,4 +1,4 @@
-from autogaita import autogaita_utils
+from autogaita.gaita_res.utils import try_to_run_gaita
 import pandas as pd
 import pandas.testing as pdt
 import os
@@ -109,9 +109,7 @@ def extract_cfg():
 def test_dlc_approval_average_df(
     extract_true_dir, extract_info, extract_folderinfo, extract_cfg
 ):
-    autogaita_utils.try_to_run_gaita(
-        "DLC", extract_info, extract_folderinfo, extract_cfg, False
-    )
+    try_to_run_gaita("DLC", extract_info, extract_folderinfo, extract_cfg, False)
     true_av_df = pd.read_excel(
         os.path.join(extract_true_dir, "ID 12 - Run 3 - Average Stepcycle.xlsx")
     )
@@ -128,9 +126,7 @@ def test_dlc_approval_average_df(
 def test_dlc_approval_std_df(
     extract_true_dir, extract_info, extract_folderinfo, extract_cfg
 ):
-    autogaita_utils.try_to_run_gaita(
-        "DLC", extract_info, extract_folderinfo, extract_cfg, False
-    )
+    try_to_run_gaita("DLC", extract_info, extract_folderinfo, extract_cfg, False)
     true_std_df = pd.read_excel(
         os.path.join(extract_true_dir, "ID 12 - Run 3 - Standard Devs. Stepcycle.xlsx")
     )

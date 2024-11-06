@@ -1,5 +1,5 @@
-from autogaita.autogaita_dlc import some_prep
-from autogaita.autogaita_dlc import (
+from autogaita.dlc.dlc_main import some_prep
+from autogaita.dlc.dlc_main import (
     move_data_to_folders,
     check_and_expand_cfg,
     check_and_fix_cfg_strings,

@@ -1,6 +1,6 @@
-from autogaita.autogaita_dlc import some_prep
-from autogaita.autogaita_dlc import dlc, extract_stepcycles
-from autogaita.autogaita_dlc import (
+from autogaita.dlc.dlc_main import some_prep
+from autogaita.dlc.dlc_main import dlc, extract_stepcycles
+from autogaita.dlc.dlc_main import (
     check_cycle_out_of_bounds,
     check_cycle_duplicates,
     check_cycle_order,

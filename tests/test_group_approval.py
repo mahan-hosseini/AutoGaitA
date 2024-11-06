@@ -1,4 +1,4 @@
-from autogaita import autogaita_group
+from autogaita import group
 import pandas as pd
 import pandas.testing as pdt
 import filecmp
@@ -82,7 +82,7 @@ def extract_cfg():
 def test_group_approval(extract_true_dir, extract_folderinfo, extract_cfg):
 
     # ...........................  1) RUN GROUP GAITA  .................................
-    autogaita_group.group(extract_folderinfo, extract_cfg)
+    group(extract_folderinfo, extract_cfg)
 
     # ......................  2) TEST EQUIVALENCE OF GROUP DFs  ........................
     # load true dfs from xlsx files

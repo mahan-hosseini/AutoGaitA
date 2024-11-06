@@ -1,4 +1,4 @@
-from autogaita import autogaita_utils
+from autogaita.gaita_res.utils import try_to_run_gaita
 import pandas as pd
 import pandas.testing as pdt
 import os
@@ -69,7 +69,7 @@ def extract_cfg():
 @pytest.mark.slow  # https://docs.pytest.org/en/7.1.x/example/markers.html
 def test_simi_approval(extract_true_dir, extract_info, extract_folderinfo, extract_cfg):
     # run
-    autogaita_utils.try_to_run_gaita(
+    try_to_run_gaita(
         "Universal 3D", extract_info, extract_folderinfo, extract_cfg, False
     )
     # load true dfs from xlsx files

@@ -1,11 +1,11 @@
-from autogaita.autogaita_dlc import (
+from autogaita.dlc.dlc_main import (
     some_prep,
     extract_stepcycles,
     analyse_and_export_stepcycles,
     add_step_separators,
 )
-from autogaita.autogaita_dlc import add_angles, add_x_velocities, add_angular_velocities
-from autogaita.autogaita_dlc import standardise_x_y_and_add_features_to_one_step
+from autogaita.dlc.dlc_main import add_angles, add_x_velocities, add_angular_velocities
+from autogaita.dlc.dlc_main import standardise_x_y_and_add_features_to_one_step
 from hypothesis import given
 import hypothesis.strategies as st
 from hypothesis.extra.numpy import arrays
