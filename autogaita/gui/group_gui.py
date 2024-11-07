@@ -8,7 +8,6 @@ import pandas as pd
 import os
 import math
 from threading import Thread
-from importlib import resources
 import platform
 import json
 import copy
@@ -32,7 +31,7 @@ CONFIG_FILE_NAME = "group_gui_config.json"
 STRING_VARS = ["group_names", "group_dirs", "results_dir"]
 FLOAT_VARS = ["stats_threshold"]
 LIST_VARS = [
-    "stats_variables",  # stats/PCA variables are also TK_BOOL_VARS but this will be
+    "stats_variables",  #  stats/PCA variables are also TK_BOOL_VARS but this will be
     "PCA_variables",  #  handled within the ---PCA / STATS FEATURE FRAMES--- part
 ]
 INT_VARS = ["permutation_number", "number_of_PCs", "number_of_PCs"]
@@ -236,7 +235,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         # set the dimensions of the screen and where it is placed
         # => have it half-wide starting at 1/4 of screen's width (dont change w & x!)
         mainwindow.geometry(
-            f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0"
+            f"{int(screen_width / 2)}x{screen_height}+{int(screen_width / 4)}+0"
         )
         fix_window_after_its_creation(mainwindow)
 
@@ -262,7 +261,6 @@ def build_mainwindow(root, group_number, root_dimensions):
         ]
         group_names_labels = []
         group_names_entries = []
-        group_dirs_labels = []
         group_dirs_entries = []
         # group number, name & dir labels
         group_number_label = ctk.CTkLabel(
@@ -386,7 +384,7 @@ def build_mainwindow(root, group_number, root_dimensions):
                     font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
                 )
             )
-            if cfg["do_anova"].get() == True:
+            if cfg["do_anova"].get() is True:
                 ANOVA_buttons[i].configure(state="normal")
             ANOVA_buttons[-1].grid(row=last_group_row + 6, column=i, columnspan=2)
         # initialise ANOVA buttons state by running this function once
@@ -468,7 +466,9 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     # build window
     cfgwindow = ctk.CTkToplevel(mainwindow)
     cfgwindow.title("Advanced Configuration")
-    cfgwindow.geometry(f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0")
+    cfgwindow.geometry(
+        f"{int(screen_width / 2)}x{screen_height}+{int(screen_width / 4)}+0"
+    )
     fix_window_after_its_creation(cfgwindow)
 
     # number of permutations
@@ -1003,7 +1003,7 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
         if key == "group_names":
             this_runs_folderinfo[key] = folderinfo[key]
         if "dir" in key:
-            if type(folderinfo[key]) == list:  # group_dirs
+            if isinstance(folderinfo[key], list):  # group_dirs
                 this_runs_folderinfo[key] = [[] for _ in range(len(folderinfo[key]))]
                 for i in range(len(folderinfo[key])):
                     if not folderinfo[key][i].endswith(os.sep):
@@ -1081,10 +1081,10 @@ def change_ANOVA_buttons_state(ANOVA_buttons):
     """Change the state of ANOVA radio button widgets based on whether user wants
     to perform an ANOVA or not.
     """
-    if cfg["do_anova"].get() == True:
+    if cfg["do_anova"].get() is True:
         for i in range(len(ANOVA_buttons)):
             ANOVA_buttons[i].configure(state="normal")
-    elif cfg["do_anova"].get() == False:
+    elif cfg["do_anova"].get() is False:
         for i in range(len(ANOVA_buttons)):
             ANOVA_buttons[i].configure(state="disabled")
 

@@ -307,7 +307,7 @@ def normalise_one_steps_data(step, bin_num):
         if c == 0:  # if first column, define bins anew
             bins = define_bins(int(len(thistrial)), bin_num)
         normtrial = np.zeros(bin_num)
-        if type(bins[0]) == list:  # we need to average
+        if isinstance(bins[0], list):  # we need to average
             for i in range(bin_num):
                 normtrial[i] = np.mean(thistrial.iloc[bins[i]])
         else:  # no need to average, repeat or assign

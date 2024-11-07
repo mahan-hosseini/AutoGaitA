@@ -7,7 +7,6 @@ import tkinter as tk
 import customtkinter as ctk
 import os
 from threading import Thread
-from importlib import resources
 import platform
 import json
 
@@ -144,7 +143,7 @@ def run_universal3D_gui():
     root_dimensions = (w, h, x, y)
     # set the dimensions of the screen and where it is placed
     # => have it half-wide starting at 1/4 of screen's width (dont change w & x!)
-    root.geometry(f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0")
+    root.geometry(f"{int(screen_width / 2)}x{screen_height}+{int(screen_width / 4)}+0")
     root.title("Universal 3D GaitA")
     fix_window_after_its_creation(root)
     configure_the_icon(root)
@@ -389,7 +388,7 @@ def build_datafile_prep_window(root, results, cfg):
     fileprep_window = ctk.CTkToplevel(root)
     fileprep_window.title("Datafile Preparation")
     fileprep_window.geometry(
-        f"{int(screen_width/2)}x{int(screen_height/1.5)}+{int(screen_width/4)}+{int(screen_height/6)}"
+        f"{int(screen_width / 2)}x{int(screen_height / 1.5)}+{int(screen_width / 4)}+{int(screen_height / 6)}"
     )
     fix_window_after_its_creation(fileprep_window)
 
@@ -600,7 +599,7 @@ def build_cfg_window(root, cfg):
     cfg_window = ctk.CTkToplevel(root)
     cfg_window.title("Advanced Configuration")
     cfg_window.geometry(
-        f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0"
+        f"{int(screen_width / 2)}x{screen_height}+{int(screen_width / 4)}+0"
     )
     fix_window_after_its_creation(cfg_window)
 
@@ -1165,9 +1164,9 @@ def change_ID_entry_state(ID_entry):
     """Change the state of ID entry widget based on whether user wants to only analyse
     a single dataset.
     """
-    if cfg["analyse_singlerun"].get() == True:
+    if cfg["analyse_singlerun"].get() is True:
         ID_entry.configure(state="normal")
-    elif cfg["analyse_singlerun"].get() == False:
+    elif cfg["analyse_singlerun"].get() is False:
         ID_entry.configure(state="disabled")
 
 
@@ -1182,9 +1181,9 @@ def change_postname_entry_state(postname_entry, results):
     """Change the state of ID entry widget based on whether user wants to only analyse
     a single dataset.
     """
-    if results["postname_flag"].get() == True:
+    if results["postname_flag"].get() is True:
         postname_entry.configure(state="normal")
-    elif results["postname_flag"].get() == False:
+    elif results["postname_flag"].get() is False:
         postname_entry.configure(state="disabled")
 
 

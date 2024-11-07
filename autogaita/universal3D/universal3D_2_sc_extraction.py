@@ -1,4 +1,5 @@
 # %% imports
+from autogaita.gaita_res.utils import write_issues_to_textfile
 import os
 import pandas as pd
 import numpy as np
@@ -118,7 +119,7 @@ def read_SC_info(data, SCdf, info, legname, cfg):
     while SCdf.iloc[start_row, leg_col].values[0] != legname:
         start_row += 1
     end_row = start_row
-    while (type(SCdf.iloc[end_row, run_col].values[0]) == int) & (
+    while isinstance(SCdf.iloc[end_row, run_col].values[0], int) & (
         end_row != len(SCdf) - 1
     ):
         end_row += 1
@@ -167,7 +168,7 @@ def read_SC_info(data, SCdf, info, legname, cfg):
         run_scnums[r] = 0
         for column in SCdf.columns:
             if STANCEEND_COL in column:
-                if np.isnan(SCdf[column][run_row].values[0]) == False:
+                if not np.isnan(SCdf[column][run_row].values[0]):
                     total_scnum += 1
                     run_scnums[r] += 1
     if user_scnum != total_scnum:  # warn the user, take the values we found
@@ -351,10 +352,10 @@ def check_stepcycles(all_cycles, info):
     """Check results of SC extraction. Cancel everything if None found!"""
     name = info["name"]
     # case 1 - valid SCs for both legs
-    if (type(all_cycles["left"]) == list) & (type(all_cycles["right"]) == list):
+    if isinstance(all_cycles["left"], list) and isinstance(all_cycles["right"], list):
         return all_cycles
     # case 2 - no valid SCs for left leg
-    elif (all_cycles["left"] == None) & (type(all_cycles["right"]) == list):
+    elif (all_cycles["left"] is None) and isinstance(all_cycles["right"], list):
         this_message = (
             "\n***********\n! ERROR !\n***********\n"
             + "\nID: "
@@ -365,7 +366,7 @@ def check_stepcycles(all_cycles, info):
         print(this_message)
         return all_cycles
     # case 3 - no valid SCs for right leg
-    elif (type(all_cycles["left"]) == list) & (all_cycles["right"] == None):
+    elif isinstance(all_cycles["left"], list) and (all_cycles["right"] is None):
         this_message = (
             "\n***********\n! ERROR !\n***********\n"
             + "\nID: "
@@ -376,7 +377,7 @@ def check_stepcycles(all_cycles, info):
         print(this_message)
         return all_cycles
     # case 4 - no valid SCs for either leg
-    elif (all_cycles["left"] == None) & (all_cycles["right"] == None):
+    elif (all_cycles["left"] is None) & (all_cycles["right"] is None):
         this_message = (
             "\n******************\n! CRITICAL ERROR !\n******************\n"
             + "\nID: "

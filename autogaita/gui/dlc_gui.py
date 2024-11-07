@@ -8,7 +8,6 @@ import os
 from threading import Thread
 import platform
 import json
-import pdb
 
 
 # %% global constants
@@ -158,7 +157,7 @@ def run_dlc_gui():
     root_dimensions = (w, h, x, y)
     # set the dimensions of the screen and where it is placed
     # => have it half-wide starting at 1/4 of screen's width (dont change w & x!)
-    root.geometry(f"{int(screen_width/2)}x{screen_height}+{int(screen_width/4)}+0")
+    root.geometry(f"{int(screen_width / 2)}x{screen_height}+{int(screen_width / 4)}+0")
     root.title("DLC GaitA")
     fix_window_after_its_creation(root)
     configure_the_icon(root)
@@ -421,7 +420,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     # build window
     cfg_window = ctk.CTkToplevel(root)
     cfg_window.title("Advanced Configuration")
-    cfg_window.geometry(f"{int(w/2)}x{h}+{int(w/4)}+0")
+    cfg_window.geometry(f"{int(w / 2)}x{h}+{int(w / 4)}+0")
     fix_window_after_its_creation(cfg_window)
 
     #  ...........................  advanced analysis  .................................
@@ -1220,7 +1219,7 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
     else:
         runwindow.title("Batch GaitA")
     # runwindow.geometry("%dx%d+%d+%d" % root_dimensions)
-    runwindow.geometry(f"{int(w/2)}x{h}+{int(w/4)}+0")
+    runwindow.geometry(f"{int(w / 2)}x{h}+{int(w / 4)}+0")
     fix_window_after_its_creation(runwindow)
     # fill window with required info labels & entries - then get results
     results = populate_run_window(runwindow, w, analysis, user_ready)
@@ -1586,30 +1585,30 @@ def change_ratio_entry_state(ratio_entry):
     """Change the state of ratio entry widget based on whether user wants
     to convert pixels to mm or not.
     """
-    if cfg["convert_to_mm"].get() == True:
+    if cfg["convert_to_mm"].get() is True:
         ratio_entry.configure(state="normal")
-    elif cfg["convert_to_mm"].get() == False:
+    elif cfg["convert_to_mm"].get() is False:
         ratio_entry.configure(state="disabled")
 
 
 def change_y_standardisation_joint_entry_state(y_standardisation_joint_entry):
-    if cfg["standardise_y_to_a_joint"].get() == True:
+    if cfg["standardise_y_to_a_joint"].get() is True:
         y_standardisation_joint_entry.configure(state="normal")
-    elif cfg["standardise_y_to_a_joint"].get() == False:
+    elif cfg["standardise_y_to_a_joint"].get() is False:
         y_standardisation_joint_entry.configure(state="disabled")
 
 
 def change_x_standardisation_box_state(standardise_x_coordinates_box):
-    if cfg["analyse_average_x"].get() == True:
+    if cfg["analyse_average_x"].get() is True:
         standardise_x_coordinates_box.configure(state="normal")
-    elif cfg["analyse_average_x"].get() == False:
+    elif cfg["analyse_average_x"].get() is False:
         standardise_x_coordinates_box.configure(state="disabled")
 
 
 def change_x_standardisation_joint_entry_state(x_standardisation_joint_entry):
-    if cfg["standardise_x_coordinates"].get() == True:
+    if cfg["standardise_x_coordinates"].get() is True:
         x_standardisation_joint_entry.configure(state="normal")
-    elif cfg["standardise_x_coordinates"].get() == False:
+    elif cfg["standardise_x_coordinates"].get() is False:
         x_standardisation_joint_entry.configure(state="disabled")
 
 
@@ -1730,7 +1729,6 @@ def prepare_folderinfo(this_runs_results):
 def extract_info(folderinfo):
     """Prepare a dict of lists that include unique name/mouse/run infos"""
     info = {"name": [], "mouse_num": [], "run_num": []}
-    postrun_string = folderinfo["postrun_string"]
     for filename in os.listdir(folderinfo["root_dir"]):
         # make sure we don't get wrong files
         if (
