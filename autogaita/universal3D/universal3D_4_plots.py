@@ -1,4 +1,8 @@
 # %% imports
+from autogaita.universal3D.universal3D_utils import (
+    extract_feature_column,
+    transform_joint_and_leg_to_colname,
+)
 from autogaita.gaita_res.utils import write_issues_to_textfile
 import os
 import numpy as np
@@ -979,26 +983,6 @@ def save_figures(figure, results_dir, figure_file_string):
     figure.savefig(
         os.path.join(svg_dir, figure_file_string + ".svg"), bbox_inches="tight"
     )
-
-
-def extract_feature_column(df, joint, legname, feature):
-    """Extract the column of a given joint (or angle) x legname (or not) x feature combo
-
-    Note
-    ----
-    Only use this when using .iloc, not .loc!
-    ==> the return statement gives the column-index to be used with .iloc!
-    """
-    if joint + feature in df.columns:
-        string = joint + feature
-    else:
-        string = transform_joint_and_leg_to_colname(joint, legname, feature)
-    return df.columns.get_loc(string)
-
-
-def transform_joint_and_leg_to_colname(joint, legname, feature):
-    """Transform a joint and leg name to Simi-column name"""
-    return joint + ", " + legname + " " + feature
 
 
 def generate_sc_latency_label(this_sc_idx, sampling_rate):

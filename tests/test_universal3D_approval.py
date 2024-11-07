@@ -67,7 +67,9 @@ def extract_cfg():
 
 
 @pytest.mark.slow  # https://docs.pytest.org/en/7.1.x/example/markers.html
-def test_simi_approval(extract_true_dir, extract_info, extract_folderinfo, extract_cfg):
+def test_universal3D_approval(
+    extract_true_dir, extract_info, extract_folderinfo, extract_cfg
+):
     # run
     try_to_run_gaita(
         "Universal 3D", extract_info, extract_folderinfo, extract_cfg, False
