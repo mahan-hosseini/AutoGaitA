@@ -1,4 +1,4 @@
-from autogaita.group.group_main import run_ANOVA
+from autogaita.group.group_4_stats import run_ANOVA
 import pytest
 import pandas as pd
 import numpy as np
