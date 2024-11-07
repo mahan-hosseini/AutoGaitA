@@ -14,7 +14,6 @@ import numpy as np
 # %% constants
 from autogaita.core2D.core2D_constants import (
     SCXLS_MOUSECOLS,
-    SCXLS_RUNCOLS,
     SCXLS_SCCOLS,
     SWINGSTART_COL,
     STANCEEND_COL,
@@ -28,34 +27,33 @@ def extract_stepcycles(data, info, folderinfo, cfg):
 
     # ...............................  preparation  ....................................
     # unpack
-    mouse_num = info["mouse_num"]
-    run_num = info["run_num"]
+    name = info["name"]
     root_dir = folderinfo["root_dir"]
     sctable_filename = folderinfo["sctable_filename"]
     sampling_rate = cfg["sampling_rate"]
 
-    # load the table - try some filename & ending options
-    if os.path.exists(os.path.join(root_dir, sctable_filename)):
-        SCdf_full_filename = os.path.join(root_dir, sctable_filename)
-    elif os.path.exists(os.path.join(root_dir, sctable_filename) + ".xlsx"):
-        SCdf_full_filename = os.path.join(root_dir, sctable_filename) + ".xlsx"
-    elif os.path.exists(os.path.join(root_dir, sctable_filename) + ".xls"):
-        SCdf_full_filename = os.path.join(root_dir, sctable_filename) + ".xls"
+    # check if excel file is .xlsx or .xls, if none found try to fix it
+    if (".xls" in sctable_filename) | (".xlsx" in sctable_filename):
+        if os.path.exists(os.path.join(root_dir, sctable_filename)):
+            SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename))
+        else:
+            raise FileNotFoundError(
+                "No Annotation Table found! sctable_filename has to be @ root_dir"
+            )
     else:
-        no_sc_table_message = (
-            "No Annotation Table found! sctable_filename has to be @ root_dir"
-        )
-        raise FileNotFoundError(no_sc_table_message)
-        # check if we need to specify engine (required for xlsx)
-    try:
-        SCdf = pd.read_excel(SCdf_full_filename)
-    except:
-        SCdf = pd.read_excel(SCdf_full_filename, engine="openpyxl")
-
+        # in cases below use string-concat (+) - otherwise xls added as path
+        if os.path.exists(os.path.join(root_dir, sctable_filename + ".xls")):
+            SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename + ".xls"))
+        elif os.path.exists(os.path.join(root_dir, sctable_filename + ".xlsx")):
+            SCdf = pd.read_excel(os.path.join(root_dir, sctable_filename + ".xlsx"))
+        else:
+            raise FileNotFoundError(
+                "No Annotation Table found! sctable_filename has to be @ root_dir"
+            )
     # see if table columns are labelled correctly (try a couple to allow user typos)
-    valid_col_flags = [False, False, False]
-    header_columns = ["", "", ""]
-    for h, header in enumerate([SCXLS_MOUSECOLS, SCXLS_RUNCOLS, SCXLS_SCCOLS]):
+    valid_col_flags = [False, False]
+    header_columns = ["", ""]
+    for h, header in enumerate([SCXLS_MOUSECOLS, SCXLS_SCCOLS]):
         for header_col in header:
             if header_col in SCdf.columns:
                 valid_col_flags[h] = True
@@ -66,10 +64,9 @@ def extract_stepcycles(data, info, folderinfo, cfg):
         return
     # find our info columns & rows
     mouse_col = SCdf.columns.get_loc(header_columns[0])  # INDEXING! (see list above)
-    run_col = SCdf.columns.get_loc(header_columns[1])
-    sc_col = SCdf.columns.get_loc(header_columns[2])
-    # mouse_row will always be start of this mouse's runs
-    mouse_row = SCdf.index[SCdf[header_columns[0]] == mouse_num]
+    sc_col = SCdf.columns.get_loc(header_columns[1])
+    SCdf[header_columns[0]] = SCdf[header_columns[0]].astype(str)
+    mouse_row = SCdf.index[SCdf[header_columns[0]] == name]  # find this mouse
     # this mouse was not included in sc xls
     if len(mouse_row) == 0:
         handle_issues("no_mouse", info)
@@ -79,49 +76,18 @@ def extract_stepcycles(data, info, folderinfo, cfg):
         handle_issues("double_mouse", info)
         return
 
-    next_mouse_idx = mouse_row  # search idx of first row of next mouse
+    # next_mouse_idx = mouse_row  # search idx of first row of next mouse
 
     # ..............................  main xls read  ...................................
-    # if while is False, we arrived at the next mouse/end & dont update next_mouse_idx
-    # 3 conditions (continue if true):
-    # 1) First row of this mouse
-    # 2) None means a different run of this mouse or an empty row
-    # 3) Last line of SC Table
-    # ==> Important that there are parentheses around mouse & runs cond!!!
-    while (
-        (SCdf.iloc[next_mouse_idx, mouse_col].values[0] == mouse_num)
-        | (np.isnan(SCdf.iloc[next_mouse_idx, mouse_col].values[0]))
-    ) & (next_mouse_idx[0] != len(SCdf) - 1):
-        next_mouse_idx += 1  # this becomes first idx of next mouse's runs
-    # slicing is exclusive, so indexing the first row of next mouse means we
-    # include (!) the last row of correct mouse
-    if next_mouse_idx[0] != (len(SCdf) - 1):
-        mouse_runs = SCdf.iloc[int(mouse_row[0]) : int(next_mouse_idx[0]), run_col]
-    else:
-        # SPECIAL CASE: the last row of SCdf is a mouse with only one run!!!
-        # ==> E.g.: SCdf's last idx is 25.
-        #     SCdf.iloc[25:25, run_col] == Empty Series (slicing exclusive)
-        # NOTE THAT: if this mouse should have two runs, e.g. 24 & 25:
-        #     SCdf.iloc[24:25, run_col] == Correct series because 25 is treated
-        #     as SCdf.iloc[24:, run_col]
-        # TO BE SURE: if our while loop broke out bc. we arrived at SCdf's end,
-        #     just index with a colon iloc[mouse_row:]
-        mouse_runs = SCdf.iloc[int(mouse_row[0]) :, run_col]
-    if run_num not in mouse_runs.values:
-        handle_issues("no_scs", info)
-        return  # return None and stop everything
-    # find out the total number of scs & see if it matches user-provided values
-    # => also exclude run if no scs found
-    info_row = mouse_runs[mouse_runs == run_num].index  # where is this run
     sc_num = 0
     for column in SCdf.columns:
         if STANCEEND_COL in column:
-            if np.isnan(SCdf[column][info_row].values[0]) == False:
+            if np.isnan(SCdf[column][mouse_row].values[0]) == False:
                 sc_num += 1
     if sc_num == 0:
         handle_issues("no_scs", info)
         return
-    user_scnum = SCdf.iloc[info_row, sc_col].values[0]  # sanity check input
+    user_scnum = SCdf.iloc[mouse_row, sc_col].values[0]  # sanity check input
     if user_scnum != sc_num:  # warn the user, take the values we found
         this_message = (
             "\n***********\n! WARNING !\n***********\n"
@@ -145,8 +111,8 @@ def extract_stepcycles(data, info, folderinfo, cfg):
             end_col = SCdf.columns.get_loc(STANCEEND_COL + "." + str(s))
         user_scnum += 1
         # extract the SC times
-        start_in_s = float(SCdf.iloc[info_row, start_col].values[0])
-        end_in_s = float(SCdf.iloc[info_row, end_col].values[0])
+        start_in_s = float(SCdf.iloc[mouse_row, start_col].values[0])
+        end_in_s = float(SCdf.iloc[mouse_row, end_col].values[0])
         # see if we are rounding to fix inaccurate user input
         # => account for python's float precision leading to inaccuracies
         # => two important steps here (sanity_check_vals only used for these checks)
@@ -169,24 +135,8 @@ def extract_stepcycles(data, info, folderinfo, cfg):
             print(round_message)
             write_issues_to_textfile(round_message, info)
         # assign to all_cycles (note int() rounds down!)
-        try:
-            all_cycles[s] = [
-                int(start_in_s * sampling_rate),
-                int(end_in_s * sampling_rate),
-            ]
-        except:
-            assign_error_message = (
-                "\n***********\n! WARNING !\n***********\n"
-                + "Unable to assign SC latencies of:"
-                + str(start_in_s)
-                + "s to "
-                + str(end_in_s)
-                + "\nThis could indicate that your Swing/Stance columns of your "
-                + "Annotation Table are not named correctly."
-                + "\nPlease double-check & re-run!"
-            )
-            print(assign_error_message)
-            write_issues_to_textfile(assign_error_message, info)
+        all_cycles[s][0] = int(start_in_s * sampling_rate)
+        all_cycles[s][1] = int(end_in_s * sampling_rate)
         # check if we are in data-bounds
         if (all_cycles[s][0] in data.index) & (all_cycles[s][1] in data.index):
             pass

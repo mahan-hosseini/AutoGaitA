@@ -1,11 +1,11 @@
-from autogaita.dlc.dlc_1_preparation import some_prep
 from autogaita.dlc.dlc_main import dlc
-from autogaita.dlc.dlc_2_sc_extraction import (
-    extract_stepcycles,
+from autogaita.dlc.dlc_1_preparation import some_prep
+from autogaita.dlc.dlc_2_sc_extraction import extract_stepcycles
+from autogaita.core2D.core2D_sc_extraction_utils import (
     check_cycle_out_of_bounds,
     check_cycle_duplicates,
     check_cycle_order,
-    check_DLC_tracking,
+    check_tracking,
 )
 from hypothesis import given, strategies as st, settings, HealthCheck
 import os
@@ -270,9 +270,9 @@ def test_clean_cycles_4_DLC_tracking(
         [[2, 50], [52, 100], [102, 150]],
         [[2, 50], [52, 100], [102, 150], [284, 317], [318, 359], [413, 441]],
     )
-    expected_cycles = ([None], [[284, 317], [318, 359], [413, 441]])
+    expected_cycles = (None, [[284, 317], [318, 359], [413, 441]])
     for c, this_cases_all_cycles in enumerate(all_cycles_of_the_two_cases):
-        expected_cycles[c] == check_DLC_tracking(
+        assert expected_cycles[c] == check_tracking(
             extract_data_using_some_prep,
             extract_info,
             this_cases_all_cycles,

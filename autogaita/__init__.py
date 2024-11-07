@@ -8,8 +8,9 @@ from .gui.universal3D_gui import (
 )  # autogaita.run_universal3D_gui()
 from .gui.group_gui import run_group_gui  # autogaita.run_group_gui()
 
-# 3 main functions
+# 4 main functions
 from .dlc.dlc_main import dlc  # autogaita.dlc(info, folderinfo, cfg)
+from .sleap.sleap_main import sleap  # autogaita.sleap(info, folderinfo, cfg)
 from .universal3D.universal3D_main import (
     universal3D,
 )  # autogaita.universal3D(info, folderinfo, cfg)

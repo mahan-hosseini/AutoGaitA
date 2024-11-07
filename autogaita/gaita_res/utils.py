@@ -1,6 +1,5 @@
 # ...................................  imports  ........................................
 import autogaita
-from autogaita.dlc.dlc_constants import ISSUES_TXT_FILENAME
 import pandas as pd
 import numpy as np
 import os
@@ -11,7 +10,7 @@ import customtkinter as ctk
 
 
 # .................................  constants  ........................................
-from autogaita.dlc.dlc_constants import FG_COLOR, HOVER_COLOR
+from autogaita.core2D.core2D_constants import ISSUES_TXT_FILENAME, FG_COLOR, HOVER_COLOR
 
 
 # ...............................  error handling  .....................................

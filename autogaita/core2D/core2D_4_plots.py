@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # %% constants
-from autogaita.dlc.dlc_constants import (
+from autogaita.core2D.core2D_constants import (
     TIME_COL,
     SC_LAT_LEGEND_FONTSIZE,
 )

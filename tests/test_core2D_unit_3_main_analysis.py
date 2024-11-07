@@ -1,6 +1,6 @@
 from autogaita.dlc.dlc_1_preparation import some_prep
 from autogaita.dlc.dlc_2_sc_extraction import extract_stepcycles
-from autogaita.dlc.dlc_3_analysis import (
+from autogaita.core2D.core2D_3_analysis import (
     analyse_and_export_stepcycles,
     add_step_separators,
     add_angles,

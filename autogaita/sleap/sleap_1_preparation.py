@@ -5,25 +5,23 @@ import shutil
 import json
 import pandas as pd
 import numpy as np
+import h5py
 
 # %% constants
-from autogaita.core2D.core2D_constants import (
-    DIRECTION_DLC_THRESHOLD,
-    TIME_COL,
-    ISSUES_TXT_FILENAME,
-    CONFIG_JSON_FILENAME,
-)
+from autogaita.core2D.core2D_constants import ISSUES_TXT_FILENAME, CONFIG_JSON_FILENAME
+
 
 # %% workflow step #1 - preparation
 
 
 def some_prep(info, folderinfo, cfg):
-    """Preparation of the data & cfg file for dlc analyses"""
+    """Preparation of the data & cfg file for later analyses"""
 
     # ............................  unpack stuff  ......................................
     # => DON'T unpack (joint) cfg-keys that are tested later by check_and_expand_cfg
     name = info["name"]
     results_dir = info["results_dir"]
+    postname_string = folderinfo["postname_string"]
     data_string = folderinfo["data_string"]
     beam_string = folderinfo["beam_string"]
     sampling_rate = cfg["sampling_rate"]
@@ -71,99 +69,24 @@ def some_prep(info, folderinfo, cfg):
             "\n******************\n! CRITICAL ERROR !\n******************\n"
             + "Unable to identify ANY RELEVANT FILES for "
             + name
-            + "!\nThis is likely due to issues with unique file name identifiers.. "
-            + "check capitalisation!"
         )
         write_issues_to_textfile(no_files_error, info)
         print(no_files_error)
         return
 
     # ............................  import data  .......................................
-    datadf = pd.DataFrame(data=None)  # prep stuff for error handling
-    datadf_duplicate_error = ""
-    if subtract_beam:
-        if data_string == beam_string:
-            beam_and_data_string_error_message = (
-                "\n******************\n! CRITICAL ERROR !\n******************\n"
-                + "Your data & baseline (beam) identifiers ([G] in our "
-                + "file  naming convention) are identical. "
-                + "\nNote that they must be different! \nTry again"
-            )
-            write_issues_to_textfile(beam_and_data_string_error_message, info)
-            return
-        beamdf = pd.DataFrame(data=None)
-        beamdf_duplicate_error = ""
-    for filename in os.listdir(results_dir):  # import
-        if filename.endswith(".csv"):
-            if data_string in filename:
-                if datadf.empty:
-                    datadf = pd.read_csv(os.path.join(results_dir, filename))
-                else:
-                    datadf_duplicate_error = (
-                        "\n******************\n! CRITICAL ERROR !\n******************\n"
-                        + "Two DATA csv-files found for "
-                        + name
-                        + "!\nPlease ensure your root directory only has one datafile "
-                        + "per video!"
-                    )
-            if subtract_beam:
-                if beam_string in filename:
-                    if beamdf.empty:
-                        beamdf = pd.read_csv(os.path.join(results_dir, filename))
-                    else:
-                        beamdf_duplicate_error = (
-                            "\n******************\n! CRITICAL ERROR !\n***************"
-                            + "***\nTwo BEAM csv-files found for "
-                            + name
-                            + "!\nPlease ensure your root directory only has one "
-                            + "beamfile per video!"
-                        )
-    # handle import errors
-    # => append to empty strings to handle multiple issues at once seemlessly
-    import_error_message = ""
-    if datadf_duplicate_error:
-        import_error_message += datadf_duplicate_error
-    if datadf.empty:
-        import_error_message += (  # if pd didn't raise errors but dfs still empty
-            "\n******************\n! CRITICAL ERROR !\n******************\n"
-            + "Unable to load a DATA csv file for "
-            + name
-            + "!\nTry again!"
-        )
-    if subtract_beam:
-        if beamdf_duplicate_error:
-            import_error_message += beamdf_duplicate_error
-        if beamdf.empty:
-            import_error_message += (
-                "\n******************\n! CRITICAL ERROR !\n******************\n"
-                + "Unable to load a BEAM csv file for "
-                + name
-                + "!\nTry again!"
-            )
-    if import_error_message:  # see if there was any issues with import, if so: stop
-        print(import_error_message)
-        write_issues_to_textfile(import_error_message, info)
-        return
-
-    # ....  finalise import: rename cols, get rid of unnecessary elements, floatit  ....
-    colnamesdata = list()  # data df
-    for j in range(datadf.shape[1]):
-        colnamesdata.append(datadf.iloc[0, j] + " " + datadf.iloc[1, j])
-    datadf.columns = colnamesdata
-    datadf = datadf.iloc[2:, 1:]
-    datadf.index = range(datadf.shape[0])
-    datadf = datadf.astype(float)
-    if subtract_beam:  # beam df
-        colnamesbeam = list()
-        for j in range(beamdf.shape[1]):
-            colnamesbeam.append(beamdf.iloc[0, j] + " " + beamdf.iloc[1, j])
-        beamdf.columns = colnamesbeam
-        beamdf = beamdf.iloc[2:, 1:]
-        beamdf.index = range(beamdf.shape[0])
-        beamdf = beamdf.astype(float)
-        data = pd.concat([datadf, beamdf], axis=1)
-    else:
-        data = datadf.copy(deep=True)
+    data = pd.DataFrame(data=None)
+    for filename in os.listdir(results_dir):
+        if name + postname_string + ".h5" in filename:
+            with h5py.File(os.path.join(results_dir, filename), "r") as f:
+                dset_names = list(f.keys())
+                locations = f["tracks"][:].T
+                node_names = [n.decode() for n in f["node_names"][:]]
+                data.index = np.arange(np.shape(locations)[0])
+                data["Time"] = data.index * (1 / sampling_rate)
+                for node_idx, node_name in enumerate(node_names):
+                    for c, coord in enumerate(["x", "y"]):
+                        data[node_name + " " + coord] = locations[:, node_idx, c, 0]
 
     # ................  final data checks, conversions & additions  ....................
     # IMPORTANT - MAIN TESTS OF USER-INPUT VALIDITY OCCUR HERE!
@@ -196,79 +119,11 @@ def some_prep(info, folderinfo, cfg):
         "hind_joints": hind_joints,
         "fore_joints": fore_joints,
         "angles": angles,
-        "tracking_software": "DLC",
+        "tracking_software": "SLEAP",
     }
     # note - using "w" will overwrite/truncate file, thus no need to remove it if exists
     with open(config_json_path, "w") as config_json_file:
         json.dump(config_vars_to_json, config_json_file, indent=4)
-    # a little test to see if columns make sense, i.e., same number of x/y/likelihood
-    x_col_count = len([c for c in data.columns if c.endswith(" x")])
-    y_col_count = len([c for c in data.columns if c.endswith(" y")])
-    likelihood_col_count = len([c for c in data.columns if c.endswith(" likelihood")])
-    if x_col_count == y_col_count == likelihood_col_count:
-        pass
-    else:
-        cols_are_weird_message = (
-            "\n***********\n! WARNING !\n***********\n"
-            + "We detected an unequal number of columns ending with x, y or "
-            + "likelihood!\nCounts were:\n"
-            + "x: "
-            + str(x_col_count)
-            + ", y: "
-            + str(y_col_count)
-            + ", likelihood: "
-            + str(likelihood_col_count)
-            + "!\n\n"
-            + "We continue with the analysis but we strongly suggest you have another "
-            + "look at your dataset, this should not happen.\n"
-        )
-        print(cols_are_weird_message)
-        write_issues_to_textfile(cols_are_weird_message, info)
-    # if wanted: fix that deeplabcut inverses y
-    if invert_y_axis:
-        for col in data.columns:
-            if col.endswith(" y"):
-                data[col] = data[col] * -1
-    # if we don't have a beam to subtract, standardise y to a joint's or global ymin = 0
-    if not subtract_beam:
-        y_min = float("inf")
-        y_cols = [col for col in data.columns if col.endswith("y")]
-        if standardise_y_to_a_joint:
-            y_min = data[y_standardisation_joint + "y"].min()
-        else:
-            y_min = data[y_cols].min().min()
-        data[y_cols] -= y_min
-    # convert pixels to millimeters
-    if convert_to_mm:
-        for column in data.columns:
-            if not column.endswith("likelihood"):
-                data[column] = data[column] / pixel_to_mm_ratio
-    # check gait direction & DLC file validity
-    data = check_gait_direction(data, direction_joint, flip_gait_direction, info)
-    if data is None:  # this means DLC file is broken
-        return
-    # subtract the beam from the joints to standardise y
-    # => bc. we simulate that all mice run from left to right, we can write:
-    #     (note that we also flip beam x columns, but never y-columns!)
-    # => & bc. we multiply y values by *-1 earlier, it's a neg_num - - neg_num
-    #    pushing it towards zero.
-    # => using list(set()) to ensure that we don't have duplicate values (if users
-    #    should have provided them in both cfg vars by misstake)
-    # => beam_col_left and right is provided by users
-    if subtract_beam:
-        # note beam_col_left/right are always lists in cfg!
-        beam_col_left = cfg["beam_col_left"][0]
-        beam_col_right = cfg["beam_col_right"][0]
-        for joint in list(set(hind_joints + beam_hind_jointadd)):
-            data[joint + "y"] = data[joint + "y"] - data[beam_col_left + "y"]
-        for joint in list(set(fore_joints + beam_fore_jointadd)):
-            data[joint + "y"] = data[joint + "y"] - data[beam_col_right + "y"]
-        data.drop(columns=list(beamdf.columns), inplace=True)  # beam not needed anymore
-    # add Time
-    data[TIME_COL] = data.index * (1 / sampling_rate)
-    # reorder the columns we added
-    cols = [TIME_COL, "Flipped"]
-    data = data[cols + [c for c in data.columns if c not in cols]]
     return data
 
 
@@ -276,74 +131,25 @@ def some_prep(info, folderinfo, cfg):
 
 
 def move_data_to_folders(info, folderinfo):
-    """Find files, copy data, video, beamdata & beamvideo to new results_dir"""
-    # unpack
-    results_dir = info["results_dir"]
-    postmouse_string = folderinfo["postmouse_string"]
-    postrun_string = folderinfo["postrun_string"]
-    os.makedirs(results_dir)  # important to do this outside of loop!
-    # check if user inputted "_" & "-" for postmouse & postrun strings - if not do it
-    # for them
-    for candidate_postmouse_string in [postmouse_string, "_" + postmouse_string]:
-        for candidate_postrun_string in [postrun_string, "-" + postrun_string]:
-            found_it = check_this_filename_configuration(
-                info,
-                folderinfo,
-                candidate_postmouse_string,
-                candidate_postrun_string,
-                results_dir,
-            )
-            if found_it:  # if our search was successful, stop searching and continue
-                break
-
-
-def check_this_filename_configuration(
-    info, folderinfo, postmouse_string, postrun_string, results_dir
-):
+    """Copy data to new results_dir"""
     # unpack
     name = info["name"]
-    mouse_num = info["mouse_num"]
-    run_num = info["run_num"]
+    results_dir = info["results_dir"]
     root_dir = folderinfo["root_dir"]
-    data_string = folderinfo["data_string"]
-    beam_string = folderinfo["beam_string"]
-    premouse_string = folderinfo["premouse_string"]
-    prerun_string = folderinfo["prerun_string"]
-    whichvideo = ""  # initialise
-    found_it = False
+    postname_string = folderinfo["postname_string"]
+    os.makedirs(results_dir)
+    # move csv or h5 files
     for filename in os.listdir(root_dir):
-        # the following condition is True for data & beam csv
-        if (
-            (premouse_string + str(mouse_num) + postmouse_string in filename)
-            and (prerun_string + str(run_num) + postrun_string in filename)
-            and (filename.endswith(".csv"))
-        ):
-            found_it = True
-            # Copy the Excel file to the new subfolder
+        if name + postname_string + ".csv" in filename:
             shutil.copy2(
-                os.path.join(root_dir, filename), os.path.join(results_dir, filename)
+                os.path.join(root_dir, filename),
+                os.path.join(results_dir, filename),
             )
-            # Check if there is a video and if so copy it too
-            vidname = filename[:-4] + "_labeled.mp4"
-            vidpath = os.path.join(root_dir, vidname)
-            if os.path.exists(vidpath):
-                shutil.copy2(vidpath, os.path.join(results_dir, vidname))
-            else:
-                if data_string in vidname:
-                    whichvideo = "Data"
-                elif beam_string in vidname:
-                    whichvideo = "Beam"
-                this_message = (
-                    "\n***********\n! WARNING !\n***********\n"
-                    + "No "
-                    + whichvideo
-                    + "video for "
-                    + name
-                    + "!"
-                )
-                print(this_message)
-                write_issues_to_textfile(this_message, info)
-    return found_it
+        elif name + postname_string + ".h5" in filename:
+            shutil.copy2(
+                os.path.join(root_dir, filename),
+                os.path.join(results_dir, filename),
+            )
 
 
 def check_and_expand_cfg(data, cfg, info):
@@ -602,95 +408,3 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
             write_issues_to_textfile(clean_angles_message, info)
 
     return string_variable
-
-
-def flip_mouse_body(data, info):
-    """If the mouse ran through the video frame from right to left simulate
-    that it ran from left to right. For this just subtract all x-values of
-    all x-columns from their respective maxima.
-    ==> This preserves time-information important for SC extraction via table
-    ==> This preserves y-information too
-    ==> All analyses & plots are therefore comparable to mice that did really
-        run from left to right
-    """
-
-    # 0) Tell the user that we are flipping their mouse
-    message = (
-        "\nDetermined gait direction of right => left - simulating it to be left => "
-        + "right"
-    )
-    print(message)
-    write_issues_to_textfile(message, info)
-
-    # 1) Flip all rows in x columns only and subtract max from all vals
-    flipped_data = data.copy()
-    x_cols = [col for col in flipped_data.columns if col.endswith(" x")]
-    for col in x_cols:
-        flipped_data[col] = max(flipped_data[col]) - flipped_data[col]
-    return flipped_data
-
-
-def check_gait_direction(data, direction_joint, flip_gait_direction, info):
-    """Check direction of gait - reverse it if needed
-
-    Note
-    ----
-    Also using this check to check for DLC files being broken
-    flip_gait_direction is only used after the check for DLC files being broken
-    """
-
-    data["Flipped"] = False
-    enterframe = 0
-    idx = 0
-    flip_error_message = ""
-    while enterframe == 0:  # first find out when mouse was in the video frame.
-        if (
-            np.mean(data[direction_joint + "likelihood"][idx : idx + 5])
-            > DIRECTION_DLC_THRESHOLD
-        ):  # +5 to increase conf.
-            enterframe = idx + 5
-        idx += 1
-        if (idx > len(data)) | (enterframe > len(data)):
-            flip_error_message += (
-                "\n******************\n! CRITICAL ERROR !\n******************\n"
-                + "Unable to determine gait direction!"
-                + "\nThis hints a critical issue with DLC tracking, e.g., likelihood "
-                + "\ncolumns being low everywhere or tables being suspiciously short!"
-                + "\nTo be sure, we cancel everything here."
-                + "\nPlease check your input DLC csv files for correctness & try again!"
-            )
-            break
-    leaveframe = 0
-    idx = 1
-    while leaveframe == 0:  # see where mouse left frame (same logic from back)
-        if (
-            np.mean(data[direction_joint + "likelihood"][-idx - 5 : -idx])
-            > DIRECTION_DLC_THRESHOLD
-        ):
-            leaveframe = len(data) - idx - 5
-        idx += 1
-        if idx > len(data):
-            if not flip_error_message:
-                flip_error_message += (
-                    "\n******************\n! CRITICAL ERROR !\n******************\n"
-                    + "Unable to determine gait direction!"
-                    + "\nThis hints a critical issue with DLC tracking, e.g., "
-                    + "likelihood \ncolumns being low everywhere or tables being "
-                    + "suspiciously short!\nTo be sure, we cancel everything here."
-                    + "\nPlease check your input DLC csv files for correctness & try "
-                    + "again!"
-                )
-            break
-    if flip_error_message:
-        write_issues_to_textfile(flip_error_message, info)
-        print(flip_error_message)
-        return
-    if (
-        data[direction_joint + "x"][enterframe]
-        > data[direction_joint + "x"][leaveframe]
-    ):  # i.e.: right to left
-        # simulate that mouse ran from left to right (only if user wants it)
-        if flip_gait_direction:
-            data = flip_mouse_body(data, info)
-            data["Flipped"] = True
-    return data

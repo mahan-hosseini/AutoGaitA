@@ -1,6 +1,6 @@
-# ...................................  imports  ........................................
-from autogaita.dlc.dlc_1_preparation import some_prep
-from autogaita.dlc.dlc_2_sc_extraction import extract_stepcycles
+# %% imports
+from autogaita.sleap.sleap_1_preparation import some_prep
+from autogaita.sleap.sleap_2_sc_extraction import extract_stepcycles
 from autogaita.core2D.core2D_sc_extraction_utils import handle_issues
 from autogaita.core2D.core2D_3_analysis import analyse_and_export_stepcycles
 from autogaita.core2D.core2D_4_plots import plot_results
@@ -17,8 +17,10 @@ plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
 
 
 # .................................  main program  .....................................
-def dlc(info, folderinfo, cfg):
-    """Runs the main program for a given mouse's run
+
+
+def sleap(info, folderinfo, cfg):
+    """Runs the main program for a given ID's run
 
     Procedure
     ---------
@@ -53,22 +55,22 @@ def dlc(info, folderinfo, cfg):
         return
 
     # .........  main analysis: sc-lvl y-norm, features, df-creation & export ..........
-    results = analyse_and_export_stepcycles(data, all_cycles, info, cfg)
+    results = analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg)
 
     # ................................  plots  .........................................
-    plot_results(info, results, cfg, plot_panel_instance)
+    plot_results(info, results, folderinfo, cfg, plot_panel_instance)
 
     # ............................  print finish  ......................................
-    print_finish(info)
+    print_finish(info, cfg)
 
 
-# ..................................  if we hit run  ...................................
+# %% what happens if we just hit run
 if __name__ == "__main__":
-    dlc_info_message = (
+    sleap_info_message = (
         "\n*************\nnot like this\n*************\n"
-        + "You are trying to execute autogaita.dlc as a script, but that is not "
+        + "You are trying to execute autogaita.sleap as a script, but that is not "
         + "possible.\nIf you prefer a non-GUI approach, please either: "
-        + "\n1. Call this as a function, i.e. autogaita.dlc(info, folderinfo, cfg)"
+        + "\n1. Call this as a function, i.e. autogaita.sleap(info, folderinfo, cfg)"
         + "\n2. Use the single or multirun scripts in the batchrun_scripts folder"
     )
-    print(dlc_info_message)
+    print(sleap_info_message)
