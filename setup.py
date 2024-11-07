@@ -15,6 +15,7 @@ install_requires = [
     "ffmpeg-python>=0.2",
     "openpyxl>=3.1",
     "pillow>=10.3",
+    "h5py>=3.11",
 ]
 
 # add platform-specific dependencies
