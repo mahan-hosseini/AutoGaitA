@@ -35,10 +35,12 @@ def try_to_run_gaita(which_gaita, info, folderinfo, cfg, multirun_flag):
     try:
         if which_gaita == "DLC":
             autogaita.dlc(info, folderinfo, cfg)
+        elif which_gaita == "SLEAP":
+            autogaita.sleap(info, folderinfo, cfg)
         elif which_gaita == "Universal 3D":
             autogaita.universal3D(info, folderinfo, cfg)
         else:
-            print("which_gaita has to be DLC or Universal 3D - try again.")
+            print("which_gaita has to be DLC, SLEAP or Universal 3D - try again.")
     # catch these errors (don't catch all possbile errors - bad practice!)
     except (
         KeyError,

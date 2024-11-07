@@ -55,13 +55,13 @@ def sleap(info, folderinfo, cfg):
         return
 
     # .........  main analysis: sc-lvl y-norm, features, df-creation & export ..........
-    results = analyse_and_export_stepcycles(data, all_cycles, info, folderinfo, cfg)
+    results = analyse_and_export_stepcycles(data, all_cycles, info, cfg)
 
     # ................................  plots  .........................................
-    plot_results(info, results, folderinfo, cfg, plot_panel_instance)
+    plot_results(info, results, cfg, plot_panel_instance)
 
     # ............................  print finish  ......................................
-    print_finish(info, cfg)
+    print_finish(info)
 
 
 # %% what happens if we just hit run
