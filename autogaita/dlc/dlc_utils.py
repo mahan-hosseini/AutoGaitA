@@ -4,6 +4,24 @@ import os
 import tkinter as tk
 
 
+def prepare_DLC_df(df, separator=" "):
+    """Prepare the DLC dataframe after loading w.r.t. column names & df-index
+    Note
+    ----
+    separator is used in universal3D_datafile_preparation
+    """
+    new_column_strings = list()  # data df
+    for j in range(df.shape[1]):
+        new_column_strings.append(df.iloc[0, j] + separator + df.iloc[1, j])
+    df.columns = new_column_strings
+    # next lines indices are because: scorer row becomes the column, bodypart row is row
+    # 0, coords row is row 1 and we thus include row 2 onwards. col 1 onwards is obvious
+    df = df.iloc[2:, 1:]
+    df.index = range(len(df))
+    df = df.astype(float)
+    return df
+
+
 def run_singlerun_in_multirun(idx, info, folderinfo, cfg):
     """When performing a multirun, either via Batch Analysis in GUI or batchrun scripts dlc.multirun, run the analysis for a given dataset"""
     # extract and pass info of this mouse/run (also update resdir)

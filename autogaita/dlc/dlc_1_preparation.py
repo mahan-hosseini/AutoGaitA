@@ -1,5 +1,6 @@
 # %% imports
 from autogaita.gaita_res.utils import write_issues_to_textfile
+from autogaita.dlc.dlc_utils import prepare_DLC_df
 from autogaita.core2D.core2D_constants import FILE_ID_STRING_ADDITIONS
 import os
 import shutil
@@ -147,21 +148,9 @@ def some_prep(info, folderinfo, cfg):
         return
 
     # ....  finalise import: rename cols, get rid of unnecessary elements, floatit  ....
-    colnamesdata = list()  # data df
-    for j in range(datadf.shape[1]):
-        colnamesdata.append(datadf.iloc[0, j] + " " + datadf.iloc[1, j])
-    datadf.columns = colnamesdata
-    datadf = datadf.iloc[2:, 1:]
-    datadf.index = range(datadf.shape[0])
-    datadf = datadf.astype(float)
+    datadf = prepare_DLC_df(datadf)
     if subtract_beam:  # beam df
-        colnamesbeam = list()
-        for j in range(beamdf.shape[1]):
-            colnamesbeam.append(beamdf.iloc[0, j] + " " + beamdf.iloc[1, j])
-        beamdf.columns = colnamesbeam
-        beamdf = beamdf.iloc[2:, 1:]
-        beamdf.index = range(beamdf.shape[0])
-        beamdf = beamdf.astype(float)
+        beamdf = prepare_DLC_df(beamdf)
         data = pd.concat([datadf, beamdf], axis=1)
     else:
         data = datadf.copy(deep=True)

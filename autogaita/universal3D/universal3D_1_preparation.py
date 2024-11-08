@@ -127,12 +127,15 @@ def some_prep(info, folderinfo, cfg):
             col.capitalize() if col.lower() == DF_TIME_COL.lower() else col
             for col in data.columns
         ]
+    # This either creates time col if not there already or sets its values
+    data[DF_TIME_COL] = data.index * (1 / sampling_rate)
     # If for some reason (we had this with simi files) there are two Time = 0s, take
     # the second/last.
     if len(np.where(data[DF_TIME_COL] == 0)[0]) > 1:
         real_start_idx = np.where(data[DF_TIME_COL] == 0)[0][-1]
         data = data.iloc[real_start_idx:, :]
         data.index = range(len(data))  # update index
+        data[DF_TIME_COL] = data.index * (1 / sampling_rate)  # update time col
     try:
         data = data.astype(float)
     except:
@@ -149,7 +152,6 @@ def some_prep(info, folderinfo, cfg):
         print(unable_to_convert_message)
         write_issues_to_textfile(unable_to_convert_message, info)
         raise ValueError(unable_to_convert_message)
-    data[DF_TIME_COL] = data.index * (1 / sampling_rate)
 
     # Standardise y columns to be positive & afterwards save global y_max for flipping
     y_cols = [col for col in data.columns if col.endswith("Y")]

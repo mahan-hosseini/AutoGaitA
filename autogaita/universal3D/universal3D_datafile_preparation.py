@@ -1,11 +1,13 @@
+from autogaita.dlc.dlc_utils import prepare_DLC_df
 import os
 import pandas as pd
+import pdb
 
 # user inputs
-TASK = "rename"  # can be clean or rename
-ROOT_DIR = ""  # path to the folder with the files to have columns cleaned/renamed
+TASK = "DLC"  # can be DLC, clean or rename
+ROOT_DIR = "/Users/mahan/sciebo/Research/AutoGaitA/Fly/3D Data"  # path to the folder with the files to have columns cleaned/renamed
 FILE_TYPE = "csv"  # can be csv, xls or xlsx
-POSTNAME_STRING = ""  # string that must be included in loading files
+POSTNAME_STRING = "_dlc"  # string that must be included in loading files
 RESULTS_DIR = ""
 SEPARATOR = "_"
 STRING_TO_REMOVE = "_xyz"  # string to remove from colnames before renaming
@@ -44,8 +46,10 @@ def prepare_3D(task, cfg, **kwargs):
     postname_string = cfg["postname_string"]
     if task == "clean":
         string_to_remove = kwargs["string_to_remove"]
-    elif task == "rename":
+    elif task in ["rename", "DLC"]:
         separator = kwargs["separator"]
+    if task == "DLC":  # DLC hard-coding file type
+        file_type = "csv"
 
     # loop over files in root dir
     counter = 0
@@ -61,6 +65,8 @@ def prepare_3D(task, cfg, **kwargs):
             elif task == "rename":
                 # main renaming function
                 df = rename_a_file(df, separator)  # note separator var
+            elif task == "DLC":
+                df = rename_DLC_file(df, separator)
             # save
             save_output_file(task, df, root_dir, results_dir, input_file, file_type)
             counter += 1
@@ -68,6 +74,24 @@ def prepare_3D(task, cfg, **kwargs):
         return f"\nCleaned {counter} file successfully!"
     elif task == "rename":
         return f"\nRenamed {counter} file successfully!"
+
+
+def rename_DLC_file(df, separator):
+    """Rename 3D DeepLabCut files to Universal 3D GaitA.
+    This takes the same function we use in gaita dlc's some_prep
+
+    Note
+    ----
+    Separator in this case means the string that is used to differentiate left/right side identifier from key point identifier in (!) the BODYPARTS row of original 3D DLC files only!
+    """
+
+    df = prepare_DLC_df(df, separator)
+    # at this point df has columns of the form "joint_side_coord" or "joint_coord" or
+    # any perturbation of this. Important is again the separator that has to be
+    # "constant" & "unique" in the columns we can use it as we do with the other
+    # datasets.
+    df = rename_a_file(df, separator)
+    return df
 
 
 # ..............................  cleaning function  ...................................
@@ -154,7 +178,7 @@ def load_input_file(full_input_file, file_type):
 
 def save_output_file(task, df, root_dir, results_dir, input_file, file_type):
     """Save the generated output file according to task and configuration."""
-    if task == "rename":
+    if task in ["rename", "DLC"]:
         output_file = input_file.split("." + file_type)[0] + "_renamed.xlsx"
     elif task == "clean":
         output_file = (
@@ -187,4 +211,6 @@ if __name__ == "__main__":
     if TASK == "clean":
         prepare_3D(TASK, cfg, string_to_remove=STRING_TO_REMOVE)
     elif TASK == "rename":
+        prepare_3D(TASK, cfg, separator=SEPARATOR)
+    elif TASK == "DLC":
         prepare_3D(TASK, cfg, separator=SEPARATOR)
