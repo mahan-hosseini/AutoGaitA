@@ -1,5 +1,6 @@
 # %% imports
 from autogaita import gui
+from autogaita.dlc.dlc_utils import extract_info, run_singlerun_in_multirun
 from autogaita.gaita_res.utils import try_to_run_gaita
 from autogaita.gaita_res.gui_utils import configure_the_icon
 import tkinter as tk
@@ -1555,27 +1556,14 @@ def analyse_multi_run(this_runs_results, this_runs_cfg):
         tk.messagebox.showerror(title="Try again", message=error_msg)
         print(error_msg)
         return
-    info = extract_info(folderinfo)  # folderinfo has info of individual runs - extract
-    for idx in range(len(info["name"])):
-        multirun_run_a_single_dataset(idx, info, folderinfo, this_runs_cfg)
-
-
-def multirun_run_a_single_dataset(idx, info, folderinfo, this_runs_cfg):
-    """Run the main code of individual run-analyses based on current this_runs_cfg"""
-    # extract and pass info of this mouse/run (also update resdir)
-    this_info = {}
-    for keyname in info.keys():
-        this_info[keyname] = info[keyname][idx]
-    if this_runs_cfg["results_dir"]:
-        this_info["results_dir"] = os.path.join(
-            this_runs_cfg["results_dir"], this_info["name"]
-        )
+    info = extract_info(
+        folderinfo, in_GUI=True
+    )  # folderinfo has info of individual runs - extract
+    if info:  # if extract_info failed with an error info will be None!
+        for idx in range(len(info["name"])):
+            run_singlerun_in_multirun(idx, info, folderinfo, this_runs_cfg)
     else:
-        this_info["results_dir"] = os.path.join(
-            folderinfo["root_dir"], "Results", this_info["name"]
-        )
-    # important to only pass this_info to main script here (1 run at a time!)
-    try_to_run_gaita("DLC", this_info, folderinfo, this_runs_cfg, True)
+        return
 
 
 # %%...............  LOCAL FUNCTION(S) #6 - VARIOUS HELPER FUNCTIONS  ..................
@@ -1724,76 +1712,6 @@ def prepare_folderinfo(this_runs_results):
     folderinfo["prerun_string"] = this_runs_results["prerun_string"]
     folderinfo["postrun_string"] = this_runs_results["postrun_string"]
     return folderinfo
-
-
-def extract_info(folderinfo):
-    """Prepare a dict of lists that include unique name/mouse/run infos"""
-    info = {"name": [], "mouse_num": [], "run_num": []}
-    for filename in os.listdir(folderinfo["root_dir"]):
-        # make sure we don't get wrong files
-        if (
-            (folderinfo["premouse_string"] in filename)
-            & (folderinfo["prerun_string"] in filename)
-            & (filename.endswith(".csv"))
-        ):
-            # ID number - fill in "_" for user if needed & throw error & stop if issues
-            this_mouse_num = False
-            for candidate_postmouse_string in [
-                folderinfo["postmouse_string"],
-                "_" + folderinfo["postmouse_string"],
-            ]:
-                try:
-                    this_mouse_num = find_number(
-                        filename,
-                        folderinfo["premouse_string"],
-                        candidate_postmouse_string,
-                    )
-                except:
-                    pass
-            if this_mouse_num is False:
-                no_ID_num_found_msg = (
-                    "Unable to extract ID numbers from file identifiers! "
-                    + "Check unique subject [B] and unique task [C] identifiers"
-                )
-                tk.messagebox.showerror(
-                    title="No ID number found!", message=no_ID_num_found_msg
-                )
-                return
-            # Do the same for run number
-            this_run_num = False
-            for candidate_postrun_string in [
-                folderinfo["postrun_string"],
-                "-" + folderinfo["postrun_string"],
-            ]:
-                try:
-                    this_run_num = find_number(
-                        filename, folderinfo["prerun_string"], candidate_postrun_string
-                    )
-                except:
-                    pass
-            if this_run_num is False:
-                no_run_num_found_msg = (
-                    "Unable to extract trial numbers from file identifiers! "
-                    + "Check unique trial [D] and unique camera [E] identifiers"
-                )
-                tk.messagebox.showerror(
-                    title="No Trial number found!", message=no_run_num_found_msg
-                )
-                return
-            # if we found both an ID and a run number, create this_name & add to dict
-            this_name = "ID " + str(this_mouse_num) + " - Run " + str(this_run_num)
-            if this_name not in info["name"]:  # no data/beam duplicates here
-                info["name"].append(this_name)
-                info["mouse_num"].append(this_mouse_num)
-                info["run_num"].append(this_run_num)
-    return info
-
-
-def find_number(fullstring, prestring, poststring):
-    """Find (mouse/run) number based on user-defined strings in filenames"""
-    start_idx = fullstring.find(prestring) + len(prestring)
-    end_idx = fullstring.find(poststring)
-    return int(fullstring[start_idx:end_idx])
 
 
 def update_config_file(results, cfg):

@@ -40,7 +40,7 @@ candidate_side_ids = st.sampled_from(
     ["l", "L", "left", "LEFT", "Left", "r", "R", "right", "RIGHT", "Right"]
 )
 candidate_coord_ids = st.sampled_from(["x", "y", "z", "X", "Y", "Z"])
-candidate_joint_ids = st.text(min_size=1)
+candidate_joint_ids = st.text(min_size=2)
 separators = st.sampled_from(["_", "-", ":", "."])
 
 

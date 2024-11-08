@@ -1,4 +1,4 @@
-from autogaita.gaita_res.utils import try_to_run_gaita
+from autogaita.dlc.dlc_utils import extract_info, run_singlerun_in_multirun
 import os
 
 # %% main function
@@ -12,7 +12,6 @@ def dlc_multirun():
     # folderinfo
     folderinfo = {}
     folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/"
-    folderinfo["results_dir"] = ""
     folderinfo["sctable_filename"] = "25mm.xlsx"
     folderinfo["data_string"] = "SIMINewOct"
     folderinfo["beam_string"] = "BeamTraining"
@@ -45,6 +44,7 @@ def dlc_multirun():
     cfg["analyse_average_x"] = True
     cfg["standardise_x_coordinates"] = True
     cfg["x_standardisation_joint"] = ["Hind paw tao"]
+    cfg["results_dir"] = ""
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",
@@ -65,85 +65,7 @@ def dlc_multirun():
     # run a single gaita run for each entry of info
     info = extract_info(folderinfo)
     for idx in range(len(info["name"])):
-        run_singlerun(idx, info, folderinfo, cfg)
-
-
-# %% local functions
-
-
-def run_singlerun(idx, info, folderinfo, cfg):
-    """Run the main code of individual run-analyses based on current cfg"""
-    # extract and pass info of this mouse/run (also update resdir)
-    this_info = {}
-    keynames = info.keys()
-    for keyname in keynames:
-        this_info[keyname] = info[keyname][idx]
-        if folderinfo["results_dir"]:
-            this_info["results_dir"] = os.path.join(
-                folderinfo["results_dir"], this_info["name"]
-            )
-        else:
-            this_info["results_dir"] = os.path.join(
-                folderinfo["root_dir"], "Results", this_info["name"]
-            )
-    # important to only pass this_info to main script here (1 run at a time!)
-    try_to_run_gaita("DLC", this_info, folderinfo, cfg, True)
-
-
-def extract_info(folderinfo):
-    """Prepare a dict of lists that include unique name/mouse/run infos"""
-    premouse_string = folderinfo["premouse_string"]
-    postmouse_string = folderinfo["postmouse_string"]
-    prerun_string = folderinfo["prerun_string"]
-    postrun_string = folderinfo["postrun_string"]
-    info = {"name": [], "mouse_num": [], "run_num": []}
-    for filename in os.listdir(folderinfo["root_dir"]):
-        # make sure we don't get wrong files
-        if (
-            (premouse_string in filename)
-            & (prerun_string in filename)
-            & (filename.endswith(".csv"))
-        ):
-            # ID number - fill in "_" for user if needed
-            this_mouse_num = False
-            for candidate_postmouse_string in [
-                postmouse_string,
-                "_" + postmouse_string,
-            ]:
-                try:
-                    this_mouse_num = find_number(
-                        filename,
-                        premouse_string,
-                        candidate_postmouse_string,
-                    )
-                except:
-                    pass
-            # Do the same for run number
-            this_run_num = False
-            for candidate_postrun_string in [
-                postrun_string,
-                "-" + postrun_string,
-            ]:
-                try:
-                    this_run_num = find_number(
-                        filename, prerun_string, candidate_postrun_string
-                    )
-                except:
-                    pass
-            # if we found both an ID and a run number, create this_name & add to dict
-            this_name = "ID " + str(this_mouse_num) + " - Run " + str(this_run_num)
-            if this_name not in info["name"]:  # no data/beam duplicates here
-                info["name"].append(this_name)
-                info["mouse_num"].append(this_mouse_num)
-                info["run_num"].append(this_run_num)
-    return info
-
-
-def find_number(fullstring, prestring, poststring):
-    """Find (mouse/run) number based on user-defined strings in filenames"""
-    start_idx = fullstring.find(prestring) + len(prestring)
-    end_idx = fullstring.find(poststring)
-    return int(fullstring[start_idx:end_idx])
+        run_singlerun_in_multirun(idx, info, folderinfo, cfg)
 
 
 # %% what happens if we just hit run

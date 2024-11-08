@@ -1,5 +1,6 @@
 # %% imports
 from autogaita.gaita_res.utils import write_issues_to_textfile
+from autogaita.core2D.core2D_constants import FILE_ID_STRING_ADDITIONS
 import os
 import shutil
 import json
@@ -282,10 +283,16 @@ def move_data_to_folders(info, folderinfo):
     postmouse_string = folderinfo["postmouse_string"]
     postrun_string = folderinfo["postrun_string"]
     os.makedirs(results_dir)  # important to do this outside of loop!
-    # check if user inputted "_" & "-" for postmouse & postrun strings - if not do it
-    # for them
-    for candidate_postmouse_string in [postmouse_string, "_" + postmouse_string]:
-        for candidate_postrun_string in [postrun_string, "-" + postrun_string]:
+    # check if user forgot some underscores or dashes in their filenames
+    # => two levels of string additions for two post FILE-ID strings
+    # => in theory if the user has some strange cases in which this double forloop
+    # would be true twice (because one file is called -6DLC and another is called _6DLC
+    # for some reason) it will break after the first time and always ignore the second
+    # one - keep this in mind if it should come up but it should be very unlikely
+    for mouse_string_addition in FILE_ID_STRING_ADDITIONS:
+        candidate_postmouse_string = mouse_string_addition + postmouse_string
+        for run_string_addition in FILE_ID_STRING_ADDITIONS:
+            candidate_postrun_string = run_string_addition + postrun_string
             found_it = check_this_filename_configuration(
                 info,
                 folderinfo,

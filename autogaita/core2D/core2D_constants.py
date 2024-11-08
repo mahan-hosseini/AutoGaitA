@@ -1,10 +1,11 @@
-# Configuration file for DLC-related global constants
+# Configuration file for DLC/SLEAP-related global constants
 
 # 1 - preparation
-DIRECTION_DLC_THRESHOLD = 0.95  # DLC confidence used for direction-detection
+DIRECTION_DLC_THRESHOLD = 0.95  # (dlc) confidence used for direction-detection
 TIME_COL = "Time"
 ISSUES_TXT_FILENAME = "Issues.txt"
 CONFIG_JSON_FILENAME = "config.json"  # filename to which we write cfg-infos
+FILE_ID_STRING_ADDITIONS = ["", "-", "_"]  # (dlc) postrun/postnum string additions
 
 # 2 - sc extraction
 SCXLS_MOUSECOLS = [
