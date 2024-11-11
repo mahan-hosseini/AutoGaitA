@@ -120,27 +120,31 @@ def some_prep(info, folderinfo, cfg):
     with open(config_json_path, "w") as config_json_file:
         json.dump(config_vars_to_json, config_json_file, indent=4)
 
-    # Check if data has some col sayin "Time" in any form of capitalisation and if so
+    # Check if data has some col saying "Time" in any form of capitalisation and if so
     # make sure it's capitalised
     if any(col.lower() == DF_TIME_COL.lower() for col in data.columns):
         data.columns = [
             col.capitalize() if col.lower() == DF_TIME_COL.lower() else col
             for col in data.columns
         ]
-    # This either creates time col if not there already or sets its values
-    data[DF_TIME_COL] = data.index * (1 / sampling_rate)
-    # If for some reason (we had this with simi files) there are two Time = 0s, take
-    # the second/last.
+
+    # Annoying thing 1 of our simi data: there were two Time = 0s, we take the second
+    # (i.e. last)
     if len(np.where(data[DF_TIME_COL] == 0)[0]) > 1:
         real_start_idx = np.where(data[DF_TIME_COL] == 0)[0][-1]
         data = data.iloc[real_start_idx:, :]
         data.index = range(len(data))  # update index
-        data[DF_TIME_COL] = data.index * (1 / sampling_rate)  # update time col
+
+    # Important: either create time col if not present or if present set its values
+    data[DF_TIME_COL] = data.index * (1 / sampling_rate)
+
+    # Annoying thing 2 of our simi data: it sometimes does weird things with their data
+    # (e.g., storing 99cm as 0,99 and 1 metre 10cm something something as 101.222.333
+    # or so) - catch it
     try:
         data = data.astype(float)
     except:
-        # simi sometimes does weird things with their data (e.g., storing 99cm as 0,99
-        # and 1 metre 10cm something something as 101.222.333 or so) - catch it
+
         unable_to_convert_message = (
             "\n******************\n! CRITICAL ERROR !\n******************\n"
             + "Unable to convert data to numbers for "
