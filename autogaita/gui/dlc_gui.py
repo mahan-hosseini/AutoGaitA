@@ -300,8 +300,8 @@ def run_dlc_gui():
     empty_label_two.grid(row=15, column=0)
 
     # close & exit button
-    close_button = gaita_widgets.exit_button(root, WIDGET_CFG)
-    close_button.configure(
+    exit_button = gaita_widgets.exit_button(root, WIDGET_CFG)
+    exit_button.configure(
         command=lambda: (
             # results variable is only defined later in populate_run_window()
             # therefore only cfg settings will be updated
@@ -310,7 +310,7 @@ def run_dlc_gui():
             root.after(5000, root.destroy),
         ),
     )
-    close_button.grid(row=16, column=0, columnspan=3)
+    exit_button.grid(row=16, column=0, columnspan=3)
 
     # # .........................  widget configuration  ...............................
 
@@ -1545,7 +1545,7 @@ def update_config_file(results, cfg):
     for i in range(len(output_dicts)):
         if i == 0:
             # in case update_config_file is called before results is defined
-            # as in the creation of the close_button in the dlc_gui() function
+            # as in the creation of the exit_button in the dlc_gui() function
             # the results dict of the last run is used and only cfg is updated
             if results == "results dict not defined yet":
                 # runwindow = None as we dont need the tk.Vars to refer to a specific window

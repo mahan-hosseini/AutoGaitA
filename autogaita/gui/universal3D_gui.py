@@ -1,5 +1,6 @@
 # %% imports
 from autogaita import gui
+import autogaita.gui.gaita_widgets as gaita_widgets
 from autogaita.gaita_res.utils import try_to_run_gaita
 from autogaita.universal3D.universal3D_datafile_preparation import prepare_3D
 from autogaita.gaita_res.gui_utils import configure_the_icon
@@ -24,10 +25,15 @@ from autogaita.gui.gui_constants import (
     CLOSE_HOVER_COLOR,
     COLOR_PALETTES_LIST,
     WINDOWS_TASKBAR_MAXHEIGHT,
+    WIDGET_CFG,
 )
 
+# these colors are GUI-specific - add to common widget cfg
 FG_COLOR = "#c0737a"  # dusty rose
 HOVER_COLOR = "#b5485d"  # dark rose
+WIDGET_CFG["FG_COLOR"] = FG_COLOR
+WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
+
 CONFIG_FILE_NAME = "universal3D_gui_config.json"
 INT_VARS = ["sampling_rate", "bin_num", "plot_joint_number"]
 LIST_VARS = ["joints"]
@@ -140,77 +146,60 @@ def run_universal3D_gui():
 
     # .........................  main configuration  ...................................
     # config header
-    cfgheader_label = ctk.CTkLabel(
-        root,
-        text="Main Configuration",
-        width=w,
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
-    )
+    cfgheader_label = gaita_widgets.header_label(root, "Main Configuration", WIDGET_CFG)
     cfgheader_label.grid(row=0, column=0, columnspan=2, sticky="nsew")
 
     # root directory
-    rootdir_string = "Directory containing the files to be analysed:"
-    rootdir_label = ctk.CTkLabel(
-        root, text=rootdir_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    rootdir_label, rootdir_entry = gaita_widgets.label_and_entry_pair(
+        root,
+        "Directory containing the files to be analysed:",
+        results["root_dir"],
+        WIDGET_CFG,
     )
     rootdir_label.grid(row=1, column=0, columnspan=2, sticky="w")
-    rootdir_entry = ctk.CTkEntry(
-        root, textvariable=results["root_dir"], font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
-    )
     rootdir_entry.grid(row=1, column=1)
 
     # stepcycle latency XLS
-    SCXLS_string = "Name of the Annotation Table Excel file:"
-    SCXLS_label = ctk.CTkLabel(
-        root, text=SCXLS_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    SCXLS_label, SCXLS_entry = gaita_widgets.label_and_entry_pair(
+        root,
+        "Name of the Annotation Table Excel file:",
+        results["sctable_filename"],
+        WIDGET_CFG,
     )
     SCXLS_label.grid(row=2, column=0, columnspan=2, sticky="w")
-    SCXLS_entry = ctk.CTkEntry(
-        root,
-        textvariable=results["sctable_filename"],
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-    )
     SCXLS_entry.grid(row=2, column=1)
+
     # sampling rate
-    samprate_label = ctk.CTkLabel(
+    samprate_label, samprate_entry = gaita_widgets.label_and_entry_pair(
         root,
-        text="Sampling rate of videos in Hertz (frames/second):",
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        "Sampling rate of videos in Hertz (frames/second):",
+        cfg["sampling_rate"],
+        WIDGET_CFG,
     )
     samprate_label.grid(row=3, column=0, columnspan=2, sticky="w")
-    samprate_entry = ctk.CTkEntry(
-        root, textvariable=cfg["sampling_rate"], font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
-    )
     samprate_entry.grid(row=3, column=1)
 
     # postname present checkbox
-    postname_flag_string = "I have a constant string that follows IDs in filenames."
-    postname_flag_checkbox = ctk.CTkCheckBox(
+    postname_flag_checkbox = gaita_widgets.checkbox(
         root,
-        text=postname_flag_string,
-        variable=results["postname_flag"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        "I have a constant string that follows IDs in filenames.",
+        results["postname_flag"],
+        WIDGET_CFG,
+    )
+    postname_flag_checkbox.configure(
         command=lambda: change_postname_entry_state(postname_entry, results),
     )
     postname_flag_checkbox.grid(row=4, column=0, columnspan=2)
-    # data string
-    postname_string = "The constant string is:"
-    postname_label = ctk.CTkLabel(
-        root, text=postname_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+
+    # postname string
+    postname_label, postname_entry = gaita_widgets.label_and_entry_pair(
+        root,
+        "The constant string is:",
+        results["postname_string"],
+        WIDGET_CFG,
     )
     postname_label.grid(row=5, column=0, sticky="e")
-    postname_entry = ctk.CTkEntry(
-        root,
-        textvariable=results["postname_string"],
-        state="disabled",
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-    )
+    postname_entry.configure(state="disabled")
     postname_entry.grid(row=5, column=1, sticky="w")
 
     # empty label 1 (for spacing)
@@ -220,48 +209,34 @@ def run_universal3D_gui():
     # ..........................  advanced cfg section  ................................
 
     # advanced header string
-    advanced_cfg_header_string = "Advanced Configuration"
-    advanced_cfg_header_label = ctk.CTkLabel(
-        root,
-        text=advanced_cfg_header_string,
-        width=w,
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    advanced_cfg_header_label = gaita_widgets.header_label(
+        root, "Advanced Configuration", WIDGET_CFG
     )
     advanced_cfg_header_label.grid(row=9, column=0, columnspan=2, sticky="nsew")
 
     # data file preparation window
-    datafile_prep_string = "Data File Preparation"
-    datafile_prep_button = ctk.CTkButton(
-        root,
-        text=datafile_prep_string,
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+    datafile_prep_button = gaita_widgets.header_button(
+        root, "Data File Preparation", WIDGET_CFG
+    )
+    datafile_prep_button.configure(
         command=lambda: build_datafile_prep_window(root, results, cfg),
     )
     datafile_prep_button.grid(row=10, column=0, columnspan=2)
 
     # column name information window
-    column_info_string = "Customise Joints & Angles"
-    column_info_button = ctk.CTkButton(
-        root,
-        text=column_info_string,
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+    column_info_button = gaita_widgets.header_button(
+        root, "Customise Joints & Angles", WIDGET_CFG
+    )
+    column_info_button.configure(
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
     column_info_button.grid(row=11, column=0, columnspan=2)
 
     # advanced cfg
-    cfg_window_button = ctk.CTkButton(
-        root,
-        text="Advanced Configuration",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+    cfg_window_button = gaita_widgets.header_button(
+        root, "Advanced Configuration", WIDGET_CFG
+    )
+    cfg_window_button.configure(
         command=lambda: (build_cfg_window(root, cfg)),
     )
     cfg_window_button.grid(row=12, column=0, columnspan=2)
@@ -273,56 +248,36 @@ def run_universal3D_gui():
     # ............................  run & exit section  ................................
 
     # run analysis label
-    runheader_label = ctk.CTkLabel(
-        root,
-        text="Run Analysis",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
-    )
-    runheader_label.grid(row=14, column=0, columnspan=3, sticky="nsew")
+    runheader_label = gaita_widgets.header_label(root, "Run Analysis", WIDGET_CFG)
+    runheader_label.grid(row=14, column=0, columnspan=2, sticky="nsew")
 
     # single video checkbox
-    singlevideo_string = "Only analyse a single dataset."
-    singlevideo_checkbox = ctk.CTkCheckBox(
+    singlevideo_checkbox = gaita_widgets.checkbox(
         root,
-        text=singlevideo_string,
-        variable=cfg["analyse_singlerun"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        "Only analyse a single dataset.",
+        cfg["analyse_singlerun"],
+        WIDGET_CFG,
+    )
+    singlevideo_checkbox.configure(
         command=lambda: change_ID_entry_state(ID_entry),
     )
     singlevideo_checkbox.grid(row=15, column=0, columnspan=2)
 
     # ID string info
-    ID_label = ctk.CTkLabel(
-        root,
-        text="ID to be analysed:",
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    ID_label, ID_entry = gaita_widgets.label_and_entry_pair(
+        root, "ID to be analysed:", results["name"], WIDGET_CFG
     )
     ID_label.grid(row=16, column=0, sticky="e")
-    ID_entry = ctk.CTkEntry(
-        root,
-        textvariable=results["name"],
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-    )
     ID_entry.grid(row=16, column=1, sticky="w")
     change_ID_entry_state(ID_entry)
 
     # run analysis button
-    run_button = ctk.CTkButton(
-        root,
-        text="Run Analysis!",
-        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+    run_button = gaita_widgets.header_button(root, "Run Analysis!", WIDGET_CFG)
+    run_button.configure(
         command=lambda: (
             update_config_file(results, cfg),
             build_donewindow(results, root, root_dimensions),
-        ),
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
+        )
     )
     run_button.grid(row=17, column=0, columnspan=2, padx=10, pady=(10, 5))
 
@@ -331,19 +286,18 @@ def run_universal3D_gui():
     empty_label_three.grid(row=18, column=0)
 
     # close program button
-    close_button = ctk.CTkButton(
+    exit_button = gaita_widgets.exit_button(
         root,
-        text="Exit",
-        fg_color=CLOSE_COLOR,
-        hover_color=CLOSE_HOVER_COLOR,
-        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        WIDGET_CFG,
+    )
+    exit_button.configure(
         command=lambda: (
             update_config_file(results, cfg),
             root.withdraw(),
             root.after(5000, root.destroy),
         ),
     )
-    close_button.grid(row=19, column=0, columnspan=2, padx=10, pady=(10, 5))
+    exit_button.grid(row=19, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # maximise widgets
     maximise_widgets(root)
@@ -368,28 +322,21 @@ def build_datafile_prep_window(root, results, cfg):
     fix_window_after_its_creation(fileprep_window)
 
     # fileprep header
-    fileprep_header_label = ctk.CTkLabel(
-        fileprep_window,
-        text="Datafile Preparation",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    fileprep_header_label = gaita_widgets.header_label(
+        fileprep_window, "Datafile Preparation", WIDGET_CFG
     )
     fileprep_header_label.grid(row=0, column=0, rowspan=2, columnspan=2, sticky="nsew")
     # root dir
-    fileprep_root_dir_string = "Directory containing files:"
-    fileprep_root_dir_label = ctk.CTkLabel(
-        fileprep_window,
-        text=fileprep_root_dir_string,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    fileprep_root_dir_label, fileprep_root_dir_entry = (
+        gaita_widgets.label_and_entry_pair(
+            fileprep_window,
+            "Directory containing files:",
+            cfg["fileprep_root_dir"],
+            WIDGET_CFG,
+        )
     )
     fileprep_root_dir_label.grid(row=2, column=0, sticky="e")
-    fileprep_entry = ctk.CTkEntry(
-        fileprep_window,
-        textvariable=cfg["fileprep_root_dir"],
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-    )
-    fileprep_entry.grid(row=2, column=1)
+    fileprep_root_dir_entry.grid(row=2, column=1)
     # file type
     filetype_string = "File type:"
     filetype_label = ctk.CTkLabel(
@@ -415,32 +362,26 @@ def build_datafile_prep_window(root, results, cfg):
         filetype_buttons[i].grid(row=4 + i, column=0, columnspan=2)
     row_num = 4 + len(filetype_strings)  # 7
     # postname string
-    postname_string = "Constant string present in file names:"
-    postname_label = ctk.CTkLabel(
-        fileprep_window,
-        text=postname_string,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    fileprep_postname_label, fileprep_postname_entry = (
+        gaita_widgets.label_and_entry_pair(
+            fileprep_window,
+            "Constant string present in file names:",
+            cfg["fileprep_postname_string"],
+            WIDGET_CFG,
+        )
     )
-    postname_label.grid(row=row_num, column=0, sticky="e")
-    postname_entry = ctk.CTkEntry(
-        fileprep_window,
-        textvariable=cfg["fileprep_postname_string"],
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-    )
-    postname_entry.grid(row=row_num, column=1)
+    fileprep_postname_label.grid(row=row_num, column=0, sticky="e")
+    fileprep_postname_entry.grid(row=row_num, column=1)
     # results dir
-    fileprep_results_dir_string = "Directory to save results to:"
-    fileprep_results_dir_label = ctk.CTkLabel(
-        fileprep_window,
-        text=fileprep_results_dir_string,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    fileprep_results_dir_label, fileprep_results_dir_entry = (
+        gaita_widgets.label_and_entry_pair(
+            fileprep_window,
+            "Directory to save results to:",
+            cfg["fileprep_results_dir"],
+            WIDGET_CFG,
+        )
     )
     fileprep_results_dir_label.grid(row=row_num + 1, column=0, sticky="e")
-    fileprep_results_dir_entry = ctk.CTkEntry(
-        fileprep_window,
-        textvariable=cfg["fileprep_results_dir"],
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-    )
     fileprep_results_dir_entry.grid(row=row_num + 1, column=1)
     # empty label for spacing
     empty_label_one = ctk.CTkLabel(fileprep_window, text="")
@@ -448,77 +389,51 @@ def build_datafile_prep_window(root, results, cfg):
 
     # ............................  left section: clean  ...............................
     # cleaning header
-    clean_header_label = ctk.CTkLabel(
-        fileprep_window,
-        text="Clean Columns",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    clean_header_label = gaita_widgets.header_label(
+        fileprep_window, "Clean Columns", WIDGET_CFG
     )
     clean_header_label.grid(row=row_num + 3, column=0, sticky="nsew")
     # string to remove
-    string_to_remove_string = "Substring to remove"
-    string_to_remove_label = ctk.CTkLabel(
+    string_to_remove_label, string_to_remove_entry = gaita_widgets.label_and_entry_pair(
         fileprep_window,
-        text=string_to_remove_string,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        "Substring to remove:",
+        cfg["fileprep_string_to_remove"],
+        WIDGET_CFG,
     )
     string_to_remove_label.grid(row=row_num + 4, column=0)
-    string_to_remove_entry = ctk.CTkEntry(
-        fileprep_window,
-        textvariable=cfg["fileprep_string_to_remove"],
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-    )
     string_to_remove_entry.grid(row=row_num + 5, column=0)
     # cleaning run button
-    clean_button = ctk.CTkButton(
-        fileprep_window,
-        text="Clean!",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+    clean_button = gaita_widgets.header_button(fileprep_window, "Clean!", WIDGET_CFG)
+    clean_button.configure(
         command=lambda: (
             update_config_file(results, cfg),
             run_universal_3D_preparation("clean", cfg),
-        ),
+        )
     )
     clean_button.grid(row=row_num + 6, column=0, sticky="nsew", padx=10, pady=(10, 5))
 
     # ............................  right section: rename  .............................
     # renaming header
-    rename_header_label = ctk.CTkLabel(
-        fileprep_window,
-        text="Rename Columns",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    rename_header_label = gaita_widgets.header_label(
+        fileprep_window, "Rename Columns", WIDGET_CFG
     )
     rename_header_label.grid(row=row_num + 3, column=1, sticky="nsew")
     # separator
-    separator_string = "Separator substring (must be unique!)"
-    separator_label = ctk.CTkLabel(
+    separator_label, separator_entry = gaita_widgets.label_and_entry_pair(
         fileprep_window,
-        text=separator_string,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        "Separator substring (must be unique!):",
+        cfg["fileprep_separator"],
+        WIDGET_CFG,
     )
     separator_label.grid(row=row_num + 4, column=1)
-    separator_entry = ctk.CTkEntry(
-        fileprep_window,
-        textvariable=cfg["fileprep_separator"],
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-    )
     separator_entry.grid(row=row_num + 5, column=1)
     # renaming run button
-    rename_button = ctk.CTkButton(
-        fileprep_window,
-        text="Rename!",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+    rename_button = gaita_widgets.header_button(fileprep_window, "Rename!", WIDGET_CFG)
+    rename_button.configure(
         command=lambda: (
             update_config_file(results, cfg),
             run_universal_3D_preparation("rename", cfg),
-        ),
+        )
     )
     rename_button.grid(row=row_num + 6, column=1, sticky="nsew", padx=10, pady=(10, 5))
 
@@ -580,128 +495,89 @@ def build_cfg_window(root, cfg):
 
     #  ...........................  advanced analysis  .................................
     # advanced analysis header
-    adv_cfg_analysis_header_label = ctk.CTkLabel(
-        cfg_window,
-        text="Analysis",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    adv_cfg_analysis_header_label = gaita_widgets.header_label(
+        cfg_window, "Analysis", WIDGET_CFG
     )
     adv_cfg_analysis_header_label.grid(row=0, column=0, rowspan=2, sticky="nsew")
     # bin_num
-    bin_num_string = "Number of bins to use for normalising the step cycle"
-    bin_num_label = ctk.CTkLabel(
-        cfg_window, text=bin_num_string, font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+    bin_num_label, bin_num_entry = gaita_widgets.label_and_entry_pair(
+        cfg_window,
+        "Number of bins to use for normalising the step cycle:",
+        cfg["bin_num"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
     )
     bin_num_label.grid(row=2, column=0)
-    bin_num_entry = ctk.CTkEntry(
-        cfg_window,
-        textvariable=cfg["bin_num"],
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
-    )
     bin_num_entry.grid(row=3, column=0)
     # x acceleration
-    x_accel_string = "Compute, plot & export joints' y-accelerations"
-    x_accel_box = ctk.CTkCheckBox(
+    x_accel_box = gaita_widgets.checkbox(
         cfg_window,
-        text=x_accel_string,
-        variable=cfg["y_acceleration"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        "Compute, plot & export joints' x-accelerations",
+        cfg["y_acceleration"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
     )
     x_accel_box.grid(row=4, column=0)
     # angular acceleration
-    angular_accel_string = "Compute, plot & export angular accelerations"
-    angular_accel_box = ctk.CTkCheckBox(
+    angular_accel_box = gaita_widgets.checkbox(
         cfg_window,
-        text=angular_accel_string,
-        variable=cfg["angular_acceleration"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        "Compute, plot & export angular accelerations",
+        cfg["angular_acceleration"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
     )
     angular_accel_box.grid(row=5, column=0)
     # height normalisation at each step cycle separately
-    height_normalisation_string = "Normalise heights of all step cycles separately"
-    height_normalisation_box = ctk.CTkCheckBox(
+    height_normalisation_box = gaita_widgets.checkbox(
         cfg_window,
-        text=height_normalisation_string,
-        variable=cfg["normalise_height_at_SC_level"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        "Normalise heights of all step cycles separately",
+        cfg["normalise_height_at_SC_level"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
     )
     height_normalisation_box.grid(row=6, column=0)
     # export average y coordinates
-    analyse_average_y_string = "Analyse y-coordinate averages"
-    analyse_average_y_box = ctk.CTkCheckBox(
+    analyse_average_y_box = gaita_widgets.checkbox(
         cfg_window,
-        text=analyse_average_y_string,
-        variable=cfg["analyse_average_y"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        "Analyse y-coordinate averages",
+        cfg["analyse_average_y"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
     )
     analyse_average_y_box.grid(row=7, column=0)
 
     #  .............................  advanced output  .................................
     # advanced output header
-    adv_cfg_output_header_label = ctk.CTkLabel(
-        cfg_window,
-        text="Output",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    adv_cfg_output_header_label = gaita_widgets.header_label(
+        cfg_window, "Output", WIDGET_CFG
     )
     adv_cfg_output_header_label.grid(row=8, column=0, rowspan=2, sticky="nsew")
     # number of joints to plot
-    plot_joint_num_string = "Number of joints to plot in detail"
-    plot_joint_num_label = ctk.CTkLabel(
+    plot_joint_num_label, plot_joint_num_entry = gaita_widgets.label_and_entry_pair(
         cfg_window,
-        text=plot_joint_num_string,
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        "Number of joints to plot in detail:",
+        cfg["plot_joint_number"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
     )
     plot_joint_num_label.grid(row=10, column=0)
-    plot_joint_num_entry = ctk.CTkEntry(
-        cfg_window,
-        textvariable=cfg["plot_joint_number"],
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
-    )
     plot_joint_num_entry.grid(row=11, column=0)
     # plot plots to python
-    showplots_string = "Don't show plots in GUI (save only)"
-    showplots_checkbox = ctk.CTkCheckBox(
+    showplots_checkbox = gaita_widgets.checkbox(
         cfg_window,
-        text=showplots_string,
-        variable=cfg["dont_show_plots"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        "Don't show plots in GUI (save only)",
+        cfg["dont_show_plots"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
     )
     showplots_checkbox.grid(row=12, column=0)
-
     # plot SE
-    plot_SE_string = "Use standard error instead of standard deviation for plots"
-    plot_SE_box = ctk.CTkCheckBox(
+    plot_SE_box = gaita_widgets.checkbox(
         cfg_window,
-        text=plot_SE_string,
-        variable=cfg["plot_SE"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        "Use standard error instead of standard deviation for plots",
+        cfg["plot_SE"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
     )
     plot_SE_box.grid(row=13, column=0)
     # color palette
@@ -723,34 +599,24 @@ def build_cfg_window(root, cfg):
     )
     color_palette_entry.grid(row=15, column=0)
     # legend outside
-    legend_outside_string = "Plot legends outside of figures' panels"
-    legend_outside_checkbox = ctk.CTkCheckBox(
+    legend_outside_checkbox = gaita_widgets.checkbox(
         cfg_window,
-        text=legend_outside_string,
-        variable=cfg["legend_outside"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        "Plot legends outside of figures' panels",
+        cfg["legend_outside"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
     )
     legend_outside_checkbox.grid(row=16, column=0)
 
     # results dir
-    results_dir_string = (
-        "Save Results subfolders to directory below instead of to data's"
-    )
-    results_dir_label = ctk.CTkLabel(
+    results_dir_label, results_dir_entry = gaita_widgets.label_and_entry_pair(
         cfg_window,
-        text=results_dir_string,
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        "Save Results subfolders to directory below instead of to data's",
+        cfg["results_dir"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
     )
     results_dir_label.grid(row=17, column=0)
-    results_dir_entry = ctk.CTkEntry(
-        cfg_window,
-        textvariable=cfg["results_dir"],
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
-    )
     results_dir_entry.grid(row=18, column=0)
 
     # done button
@@ -791,15 +657,13 @@ def build_column_info_window(root, cfg, root_dimensions):
         nrows = window.grid_size()[1]
         # add stuff based on to which case we are adding
         if key == "joints":
-            label = ctk.CTkLabel(
+            label, entry = gaita_widgets.label_and_entry_pair(
                 window,
-                text="Joint #" + str(len(cfg[key])),
-                font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+                "Joint #" + str(len(cfg[key])),
+                cfg[key][-1],
+                WIDGET_CFG,
             )
             label.grid(row=nrows + 1, column=0, sticky="ew")
-            entry = ctk.CTkEntry(
-                window, textvariable=cfg[key][-1], font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
-            )
             entry.grid(row=nrows + 2, column=0)
         elif key == "angles":
             for a, angle_key in enumerate(cfg[key]):
@@ -809,17 +673,13 @@ def build_column_info_window(root, cfg, root_dimensions):
                     this_case = "Lower Joint"
                 elif angle_key == "upper_joint":
                     this_case = "Upper Joint"
-                label = ctk.CTkLabel(
+                label, entry = gaita_widgets.label_and_entry_pair(
                     window,
-                    text=this_case + " #" + str(len(cfg[key][angle_key])),
-                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+                    this_case + " #" + str(len(cfg[key][angle_key])),
+                    cfg[key][angle_key][-1],
+                    WIDGET_CFG,
                 )
                 label.grid(row=nrows + 1, column=angle_column + a, sticky="ew")
-                entry = ctk.CTkEntry(
-                    window,
-                    textvariable=cfg[key][angle_key][-1],
-                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-                )
                 entry.grid(row=nrows + 2, column=angle_column + a)
         # maximise columns
         for c in range(window.grid_size()[0]):
@@ -831,26 +691,18 @@ def build_column_info_window(root, cfg, root_dimensions):
     # ...................  Column 0: hind limb joint names  ............................
     joint_column = 0
     # header label
-    joint_label = ctk.CTkLabel(
-        columnwindow,
-        text="Joints",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
-    )
+    joint_label = gaita_widgets.header_label(columnwindow, "Joints", WIDGET_CFG)
     joint_label.grid(row=0, column=joint_column, sticky="nsew", pady=(0, 5))
-    # initialise scrollable frame for hindlimb
+    # initialise scrollable frame for joints
     joint_frame = ctk.CTkScrollableFrame(columnwindow)
     joint_frame.grid(row=1, column=joint_column, rowspan=scrollable_rows, sticky="nsew")
-    # initialise labels & entries with hind limb defaults
+    # initialise labels & entries with joint defaults
     initialise_labels_and_entries(joint_frame, "joints", "Joint ")
     # add joint button
-    add_joint_button = ctk.CTkButton(
-        columnwindow,
-        text="Add joint",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+    add_joint_button = gaita_widgets.header_button(
+        columnwindow, "Add joint", WIDGET_CFG
+    )
+    add_joint_button.configure(
         command=lambda: (add_joint(joint_frame, "joints")),  # 2nd input = cfg's key
     )
     add_joint_button.grid(
@@ -864,12 +716,8 @@ def build_column_info_window(root, cfg, root_dimensions):
     # .........  Column 1: angle names/joint-definitions & done button  ................
     angle_column = 1
     # header label
-    angle_label = ctk.CTkLabel(
-        columnwindow,
-        text="Angle Configuration",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+    angle_label = gaita_widgets.header_label(
+        columnwindow, "Angle Configuration", WIDGET_CFG
     )
     angle_label.grid(
         row=0, column=angle_column, columnspan=3, sticky="nsew", pady=(0, 5)
@@ -891,12 +739,10 @@ def build_column_info_window(root, cfg, root_dimensions):
             angle_frame, ["angles", angle_key], this_case, angle_column + a
         )
     # add angle trio button
-    add_angle_button = ctk.CTkButton(
-        columnwindow,
-        text="Add angle",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+    add_angle_button = gaita_widgets.header_button(
+        columnwindow, "Add angle", WIDGET_CFG
+    )
+    add_angle_button.configure(
         command=lambda: add_joint(angle_frame, "angles"),  # 2nd input = cfg's key
     )
     add_angle_button.grid(
