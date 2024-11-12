@@ -23,8 +23,6 @@ from autogaita.gui.gui_constants import (
     TEXT_FONT_NAME,
     TEXT_FONT_SIZE,
     ADV_CFG_TEXT_FONT_SIZE,
-    CLOSE_COLOR,
-    CLOSE_HOVER_COLOR,
     COLOR_PALETTES_LIST,
     WINDOWS_TASKBAR_MAXHEIGHT,
     get_widget_cfg_dict,  # function!
@@ -33,9 +31,9 @@ from autogaita.gui.gui_constants import (
 # these colors are GUI-specific - add to common widget cfg
 FG_COLOR = "#5a7d9a"  # steel blue
 HOVER_COLOR = "#8ab8fe"  # carolina blue
-widget_cfg = get_widget_cfg_dict()
-widget_cfg["FG_COLOR"] = FG_COLOR
-widget_cfg["HOVER_COLOR"] = HOVER_COLOR
+WIDGET_CFG = get_widget_cfg_dict()
+WIDGET_CFG["FG_COLOR"] = FG_COLOR
+WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
 
 # group GUI specific constants
 MIN_GROUP_NUM = 2
@@ -47,7 +45,7 @@ LIST_VARS = [
     "stats_variables",  #  stats/PCA variables are also TK_BOOL_VARS but this will be
     "PCA_variables",  #  handled within the ---PCA / STATS FEATURE FRAMES--- part
 ]
-INT_VARS = ["permutation_number", "number_of_PCs", "number_of_PCs"]
+INT_VARS = ["permutation_number", "number_of_PCs"]
 # TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file
 # (note that numbers are initialised as strings)
 TK_BOOL_VARS = [
@@ -62,6 +60,7 @@ TK_STR_VARS = [
     "anova_design",
     "permutation_number",
     "stats_threshold",
+    "number_of_PCs",
     "which_leg",
     "results_dir",
     "color_palette",
@@ -303,15 +302,14 @@ def build_mainwindow(root, group_number, root_dimensions):
             mainwindow,
             extract_results_dir_from_json_file(),
         )
-        results_dir_string = "Path to save group-analysis results to"
-        results_dir_label = ctk.CTkLabel(
-            mainwindow, text=results_dir_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+        results_dir_label, results_dir_entry = gaita_widgets.label_and_entry_pair(
+            mainwindow,
+            "Path to save group-analysis results to",
+            results_dir,
+            WIDGET_CFG,
         )
         results_dir_label.grid(
             row=last_group_row + 1, column=0, columnspan=3, sticky="ew"
-        )
-        results_dir_entry = ctk.CTkEntry(
-            mainwindow, textvariable=results_dir, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
         )
         results_dir_entry.grid(
             row=last_group_row + 2, column=0, columnspan=3, sticky="ew"
@@ -322,29 +320,21 @@ def build_mainwindow(root, group_number, root_dimensions):
             row=last_group_row + 3, column=0, columnspan=3, sticky="nsew"
         )
         # Perm Test
-        perm_string = "Run cluster-extent permutation test"
-        perm_checkbox = ctk.CTkCheckBox(
+        perm_checkbox = gaita_widgets.checkbox(
             mainwindow,
-            text=perm_string,
-            variable=cfg["do_permtest"],
-            onvalue=True,
-            offvalue=False,
-            fg_color=FG_COLOR,
-            hover_color=HOVER_COLOR,
-            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+            "Run cluster-extent permutation test",
+            cfg["do_permtest"],
+            WIDGET_CFG,
         )
         perm_checkbox.grid(row=last_group_row + 4, column=0, columnspan=3, pady=10)
         # ANOVA info
-        ANOVA_string = "Run ANOVA - if yes: choose design below"
-        ANOVA_checkbox = ctk.CTkCheckBox(
+        ANOVA_checkbox = gaita_widgets.checkbox(
             mainwindow,
-            text=ANOVA_string,
-            variable=cfg["do_anova"],
-            onvalue=True,
-            offvalue=False,
-            fg_color=FG_COLOR,
-            hover_color=HOVER_COLOR,
-            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+            "Run ANOVA - if yes: choose design below",
+            cfg["do_anova"],
+            WIDGET_CFG,
+        )
+        ANOVA_checkbox.configure(
             command=lambda: change_ANOVA_buttons_state(ANOVA_buttons),
         )
         ANOVA_checkbox.grid(row=last_group_row + 5, column=0, columnspan=3, pady=10)
@@ -377,12 +367,10 @@ def build_mainwindow(root, group_number, root_dimensions):
         )
 
         # advanced cfg
-        cfgwindow_button = ctk.CTkButton(
-            mainwindow,
-            text="Advanced Configuration",
-            fg_color=FG_COLOR,
-            hover_color=HOVER_COLOR,
-            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        cfgwindow_button = gaita_widgets.header_button(
+            mainwindow, "Advanced Configuration", WIDGET_CFG
+        )
+        cfgwindow_button.configure(
             command=lambda: (advanced_cfgwindow(mainwindow, root_dimensions)),
         )
         cfgwindow_button.grid(
@@ -392,12 +380,10 @@ def build_mainwindow(root, group_number, root_dimensions):
         )
 
         # define features button
-        definefeatures_button = ctk.CTkButton(
-            mainwindow,
-            text="I am ready - define features!",
-            fg_color=FG_COLOR,
-            hover_color=HOVER_COLOR,
-            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        definefeatures_button = gaita_widgets.header_button(
+            mainwindow, "I am ready - define features!", WIDGET_CFG
+        )
+        definefeatures_button.configure(
             command=lambda: (
                 definefeatures_window(
                     mainwindow,
@@ -405,7 +391,6 @@ def build_mainwindow(root, group_number, root_dimensions):
                     group_dirs,
                     results_dir,
                     root,
-                    root_dimensions,
                 ),
             ),
         )
@@ -417,20 +402,16 @@ def build_mainwindow(root, group_number, root_dimensions):
             row=last_group_row + 10, column=1, columnspan=3, sticky="ns"
         )
 
-        # close & exit button
-        close_button = ctk.CTkButton(
-            mainwindow,
-            text="Exit",
-            fg_color=CLOSE_COLOR,
-            hover_color=CLOSE_HOVER_COLOR,
-            font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
+        # exit button
+        exit_button = gaita_widgets.exit_button(mainwindow, WIDGET_CFG)
+        exit_button.configure(
             command=lambda: (
                 mainwindow.withdraw(),
                 root.deiconify(),
                 mainwindow.after(5000, mainwindow.destroy),
             ),
         )
-        close_button.grid(row=last_group_row + 11, column=0, columnspan=3)
+        exit_button.grid(row=last_group_row + 11, column=0, columnspan=3)
 
         # maximise widgets to fit fullscreen
         maximise_widgets(mainwindow)
@@ -451,42 +432,35 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     fix_window_after_its_creation(cfgwindow)
 
     # number of permutations
-    permutation_number_string = "Number of permutations of the cluster-extent test"
-    permutation_number_label = ctk.CTkLabel(
-        cfgwindow, text=permutation_number_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    permutation_number_label, permutation_number_entry = (
+        gaita_widgets.label_and_entry_pair(
+            cfgwindow,
+            "Number of permutations of the cluster-extent test",
+            cfg["permutation_number"],
+            WIDGET_CFG,
+        )
     )
     permutation_number_label.grid(row=0, column=0)
-    permutation_number_entry = ctk.CTkEntry(
-        cfgwindow,
-        textvariable=cfg["permutation_number"],
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-    )
     permutation_number_entry.grid(row=1, column=0, sticky="n")
 
     # statistical threshold of significance
-    stats_threshold_string = "Alpha level of statistical significance (as a decimal)"
-    stats_threshold_label = ctk.CTkLabel(
-        cfgwindow, text=stats_threshold_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    stats_threshold_label, stats_threshold_entry = gaita_widgets.label_and_entry_pair(
+        cfgwindow,
+        "Alpha level of statistical significance (as a decimal)",
+        cfg["stats_threshold"],
+        WIDGET_CFG,
     )
     stats_threshold_label.grid(row=2, column=0)
-    stats_threshold_entry = ctk.CTkEntry(
-        cfgwindow,
-        textvariable=cfg["stats_threshold"],
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-    )
     stats_threshold_entry.grid(row=3, column=0, sticky="n")
 
     # number of PCs
-    number_of_PCs_string = "How many principal components to compute?"
-    number_of_PCs_label = ctk.CTkLabel(
-        cfgwindow, text=number_of_PCs_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    number_of_PCs_label, number_of_PCs_entry = gaita_widgets.label_and_entry_pair(
+        cfgwindow,
+        "How many principal components to compute?",
+        cfg["number_of_PCs"],
+        WIDGET_CFG,
     )
     number_of_PCs_label.grid(row=4, column=0)
-    number_of_PCs_entry = ctk.CTkEntry(
-        cfgwindow,
-        textvariable=cfg["number_of_PCs"],
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-    )
     number_of_PCs_entry.grid(row=5, column=0, sticky="n")
 
     # color palette
@@ -507,58 +481,38 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     color_palette_entry.grid(row=7, column=0, sticky="n")
 
     # plot SE
-    plot_SE_string = "Plot standard error instead of standard deviation as error bars"
-    plot_SE_box = ctk.CTkCheckBox(
+    plot_SE_box = gaita_widgets.checkbox(
         cfgwindow,
-        text=plot_SE_string,
-        variable=cfg["plot_SE"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        "Plot standard error instead of standard deviation as error bars",
+        cfg["plot_SE"],
+        WIDGET_CFG,
     )
     plot_SE_box.grid(row=8, column=0)
 
     # legend outside
-    legend_outside_string = "Plot legends outside of figures' panels"
-    legend_outside_checkbox = ctk.CTkCheckBox(
+    legend_outside_checkbox = gaita_widgets.checkbox(
         cfgwindow,
-        text=legend_outside_string,
-        variable=cfg["legend_outside"],
-        onvalue=True,
-        offvalue=False,
-        hover_color=HOVER_COLOR,
-        fg_color=FG_COLOR,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        "Plot legends outside of figures' panels",
+        cfg["legend_outside"],
+        WIDGET_CFG,
     )
     legend_outside_checkbox.grid(row=9, column=0)
 
     # save 3D PCA video
-    save_PCA_video_string = "Save video of 3D PCA Scatterplot (requires ffmpeg!)"
-    save_PCA_video_checkbox = ctk.CTkCheckBox(
+    save_PCA_video_checkbox = gaita_widgets.checkbox(
         cfgwindow,
-        text=save_PCA_video_string,
-        variable=cfg["save_3D_PCA_video"],
-        onvalue=True,
-        offvalue=False,
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        "Save video of 3D PCA Scatterplot (requires ffmpeg!)",
+        cfg["save_3D_PCA_video"],
+        WIDGET_CFG,
     )
     save_PCA_video_checkbox.grid(row=10, column=0)
 
     # dont show plots
-    dont_show_plots_string = "Don't show plots in GUI (save only)"
-    dont_show_plots_checkbox = ctk.CTkCheckBox(
+    dont_show_plots_checkbox = gaita_widgets.checkbox(
         cfgwindow,
-        text=dont_show_plots_string,
-        variable=cfg["dont_show_plots"],
-        onvalue=True,
-        offvalue=False,
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        "Don't show plots in GUI (save only)",
+        cfg["dont_show_plots"],
+        WIDGET_CFG,
     )
     dont_show_plots_checkbox.grid(row=11, column=0)
 
@@ -600,9 +554,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
 # %%..............  LOCAL FUNCTION(S) #3 - BUILD ADD FEATURES WINDOW  ..................
 
 
-def definefeatures_window(
-    mainwindow, group_names, group_dirs, results_dir, root, root_dimensions
-):
+def definefeatures_window(mainwindow, group_names, group_dirs, results_dir, root):
     """Build define features window"""
 
     # nested function (called by run-button): extract boolean checkbox vars and store
@@ -686,22 +638,10 @@ def definefeatures_window(
     scrollbar_grid_nrows = math.ceil(len(feature_strings) / scrollbar_grid_ncols) + 5
 
     # stats label
-    stats_label = ctk.CTkLabel(
-        featureswindow,
-        text="Statistics",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
-    )
+    stats_label = gaita_widgets.header_label(featureswindow, "Statistics", WIDGET_CFG)
     stats_label.grid(row=0, column=0, sticky="nsew")
     # PCA label
-    PCA_label = ctk.CTkLabel(
-        featureswindow,
-        text="PCA",
-        fg_color=FG_COLOR,
-        text_color=HEADER_TXT_COLOR,
-        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
-    )
+    PCA_label = gaita_widgets.header_label(featureswindow, "PCA", WIDGET_CFG)
     PCA_label.grid(row=0, column=1, sticky="nsew")
 
     # .........................  PCA / STATS FEATURE FRAMES  ...........................
@@ -732,14 +672,7 @@ def definefeatures_window(
             # else set it to false as by default
             else:
                 checkbox_vars[key][feature] = var = tk.BooleanVar()
-            this_checkbox = ctk.CTkCheckBox(
-                frame,
-                text=feature,
-                variable=var,
-                fg_color=FG_COLOR,
-                hover_color=HOVER_COLOR,
-                font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-            )
+            this_checkbox = gaita_widgets.checkbox(frame, feature, var, WIDGET_CFG)
             this_checkbox.grid(row=row_counter, column=col_counter, sticky="nsew")
             # if user doesn't want to do stats, dont have them choose features
             if frame == stats_frame:
@@ -757,12 +690,10 @@ def definefeatures_window(
         maximise_widgets(frame)
 
     # run
-    run_button = ctk.CTkButton(
-        featureswindow,
-        text="I am ready - run analysis!",
-        fg_color=FG_COLOR,
-        hover_color=HOVER_COLOR,
-        font=(HEADER_FONT_NAME, MAIN_HEADER_FONT_SIZE),
+    run_button = gaita_widgets.header_button(
+        featureswindow, "I am ready - run analysis!", WIDGET_CFG
+    )
+    run_button.configure(
         command=lambda: (
             build_donewindow(
                 group_names,
@@ -1144,8 +1075,6 @@ def extract_cfg_from_json_file(root):
     for key in last_runs_cfg.keys():
         if key in TK_BOOL_VARS:
             cfg[key] = tk.BooleanVar(root, last_runs_cfg[key])
-        elif key in INT_VARS:
-            cfg[key] = tk.IntVar(root, last_runs_cfg[key])
         elif key in TK_STR_VARS:
             cfg[key] = tk.StringVar(root, last_runs_cfg[key])
         # PCA/stats_variable are not needed as tkStringVars
