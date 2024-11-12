@@ -31,9 +31,9 @@ from autogaita.gui.gui_constants import (
 # these colors are GUI-specific - add to common widget cfg
 FG_COLOR = "#789b73"  # grey green
 HOVER_COLOR = "#287c37"  # darkish green
-widget_cfg = get_widget_cfg_dict()
-widget_cfg["FG_COLOR"] = FG_COLOR
-widget_cfg["HOVER_COLOR"] = HOVER_COLOR
+WIDGET_CFG = get_widget_cfg_dict()
+WIDGET_CFG["FG_COLOR"] = FG_COLOR
+WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
 
 # gaita-variable related constants
 CONFIG_FILE_NAME = "dlc_gui_config.json"
@@ -156,7 +156,7 @@ def run_dlc_gui():
     main_cfg_header_label = gaita_widgets.header_label(
         root,
         "Main Configuration",
-        widget_cfg,
+        WIDGET_CFG,
     )
     main_cfg_header_label.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
@@ -166,7 +166,7 @@ def run_dlc_gui():
         root,
         "Sampling rate of videos in Hertz (frames/second):",
         cfg["sampling_rate"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     samprate_label.grid(row=1, column=0, columnspan=2, sticky="w")
     samprate_entry.grid(row=1, column=2, sticky="w")
@@ -176,7 +176,7 @@ def run_dlc_gui():
         root,
         "Convert pixels to millimetres:",
         cfg["convert_to_mm"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     convert_checkbox.configure(
         command=lambda: change_ratio_entry_state(ratio_entry, cfg),
@@ -203,7 +203,7 @@ def run_dlc_gui():
         root,
         "Standardise y-coordinates to baseline height (requires to be tracked)",
         cfg["subtract_beam"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     subtract_beam_checkbox.grid(row=3, column=0, columnspan=3, sticky="w")
 
@@ -212,7 +212,7 @@ def run_dlc_gui():
         root,
         "Adjust x-coordinates to follow direction of movement",
         cfg["flip_gait_direction"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     flip_gait_direction_box.grid(row=4, column=0, columnspan=3, sticky="w")
 
@@ -221,7 +221,7 @@ def run_dlc_gui():
         root,
         "Don't show plots in Figure GUI (save only)",
         cfg["dont_show_plots"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     showplots_checkbox.grid(row=5, column=0, columnspan=2, sticky="w")
 
@@ -230,7 +230,7 @@ def run_dlc_gui():
         root,
         "Number of bins used to normalise the step cycle:",
         cfg["bin_num"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     bin_num_label.grid(row=6, column=0, columnspan=2, sticky="w")
     bin_num_entry.grid(row=6, column=2, sticky="w")
@@ -244,13 +244,13 @@ def run_dlc_gui():
     advanced_cfg_header_label = gaita_widgets.header_label(
         root,
         "Advanced Configuration",
-        widget_cfg,
+        WIDGET_CFG,
     )
     advanced_cfg_header_label.grid(row=8, column=0, columnspan=3, sticky="nsew")
 
     # column name information window
     column_info_button = gaita_widgets.header_button(
-        root, "Customise Joints & Angles", widget_cfg
+        root, "Customise Joints & Angles", WIDGET_CFG
     )
     column_info_button.configure(
         command=lambda: build_column_info_window(root, cfg, root_dimensions)
@@ -259,7 +259,7 @@ def run_dlc_gui():
 
     # advanced cfg
     cfg_window_button = gaita_widgets.header_button(
-        root, "Advanced Configuration", widget_cfg
+        root, "Advanced Configuration", WIDGET_CFG
     )
     cfg_window_button.configure(
         command=lambda: build_cfg_window(root, cfg, root_dimensions)
@@ -271,18 +271,18 @@ def run_dlc_gui():
     empty_label_two.grid(row=11, column=0)
 
     # run analysis label
-    runheader_label = gaita_widgets.header_label(root, "Run Analysis", widget_cfg)
+    runheader_label = gaita_widgets.header_label(root, "Run Analysis", WIDGET_CFG)
     runheader_label.grid(row=12, column=0, columnspan=3, sticky="nsew")
 
     # single gaita button
-    onevid_button = gaita_widgets.header_button(root, "One Video", widget_cfg)
+    onevid_button = gaita_widgets.header_button(root, "One Video", WIDGET_CFG)
     onevid_button.configure(
         command=lambda: build_run_and_done_windows(root, cfg, "single", root_dimensions)
     )
     onevid_button.grid(row=13, column=1, sticky="ew")
 
     # multi gaita button
-    multivid_button = gaita_widgets.header_button(root, "Batch Analysis", widget_cfg)
+    multivid_button = gaita_widgets.header_button(root, "Batch Analysis", WIDGET_CFG)
     multivid_button.configure(
         command=lambda: build_run_and_done_windows(root, cfg, "multi", root_dimensions)
     )
@@ -293,7 +293,7 @@ def run_dlc_gui():
     empty_label_two.grid(row=15, column=0)
 
     # close & exit button
-    exit_button = gaita_widgets.exit_button(root, widget_cfg)
+    exit_button = gaita_widgets.exit_button(root, WIDGET_CFG)
     exit_button.configure(
         command=lambda: (
             # results variable is only defined later in populate_run_window()
@@ -340,7 +340,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     adv_cfg_analysis_header_label = gaita_widgets.header_label(
         cfg_window,
         "Analysis",
-        widget_cfg,
+        WIDGET_CFG,
     )
     adv_cfg_analysis_header_label.grid(
         row=0, column=0, rowspan=2, columnspan=2, sticky="nsew"
@@ -416,7 +416,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         cfg_window,
         "Standardise y-coordinates separately for all step cycles",
         cfg["standardise_y_at_SC_level"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     standardise_y_at_SC_level_box.grid(row=7, column=0, columnspan=2)
@@ -426,7 +426,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         cfg_window,
         "Standardise y to a joint instead of to global minimum",
         cfg["standardise_y_to_a_joint"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     standardise_y_to_joint_box.configure(
@@ -442,7 +442,7 @@ def build_cfg_window(root, cfg, root_dimensions):
             cfg_window,
             "Y-standardisation joint:",
             cfg["y_standardisation_joint"][0],
-            widget_cfg,
+            WIDGET_CFG,
             adv_cfg_textsize=True,
         )
     )
@@ -456,7 +456,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         cfg_window,
         "Analyse x-coordinate averages",
         cfg["analyse_average_x"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     analyse_average_x_box.configure(
@@ -471,7 +471,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         cfg_window,
         "Standardise x-coordinates",
         cfg["standardise_x_coordinates"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     standardise_x_coordinates_box.configure(
@@ -488,7 +488,7 @@ def build_cfg_window(root, cfg, root_dimensions):
             cfg_window,
             "X-standardisation joint:",
             cfg["x_standardisation_joint"][0],
-            widget_cfg,
+            WIDGET_CFG,
             adv_cfg_textsize=True,
         )
     )
@@ -501,7 +501,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         cfg_window,
         "Invert y-axis",
         cfg["invert_y_axis"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     invert_y_axis_box.grid(row=12, column=0, columnspan=2)
@@ -511,7 +511,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     adv_cfg_output_header_label = gaita_widgets.header_label(
         cfg_window,
         "Output",
-        widget_cfg,
+        WIDGET_CFG,
     )
     adv_cfg_output_header_label.grid(
         row=13, column=0, rowspan=2, columnspan=2, sticky="nsew"
@@ -522,7 +522,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         cfg_window,
         "Number of primary joints to plot in detail:",
         cfg["plot_joint_number"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     plot_joint_num__label.grid(row=15, column=0, columnspan=2)
@@ -533,7 +533,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         cfg_window,
         "Save results as .xlsx instead of .csv files",
         cfg["save_to_xls"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     save_to_xls_box.grid(row=17, column=0, columnspan=2)
@@ -543,7 +543,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         cfg_window,
         "Use standard error instead of standard deviation for plots",
         cfg["plot_SE"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     plot_SE_box.grid(row=18, column=0, columnspan=2)
@@ -572,7 +572,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         cfg_window,
         "Plot legends outside of figures' panels",
         cfg["legend_outside"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     legend_outside_checkbox.grid(row=21, column=0, columnspan=2)
@@ -582,7 +582,7 @@ def build_cfg_window(root, cfg, root_dimensions):
         cfg_window,
         "Save Results subfolders to directory below instead of to data's",
         cfg["results_dir"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     results_dir_label.grid(row=22, column=0, columnspan=2)
@@ -647,7 +647,7 @@ def build_column_info_window(root, cfg, root_dimensions):
             elif key == "beam_fore_jointadd":
                 label_string = "Right beam-subtraction joint #" + str(len(cfg[key]))
             label, entry = gaita_widgets.label_and_entry_pair(
-                window, label_string, cfg[key][-1], widget_cfg
+                window, label_string, cfg[key][-1], WIDGET_CFG
             )
             label.grid(row=nrows + 1, column=0, sticky="ew")
             entry.grid(row=nrows + 2, column=0)
@@ -663,7 +663,7 @@ def build_column_info_window(root, cfg, root_dimensions):
                     window,
                     this_case + " #" + str(len(cfg[key][angle_key])),
                     cfg[key][angle_key][-1],
-                    widget_cfg,
+                    WIDGET_CFG,
                 )
                 label.grid(row=nrows + 1, column=angle_column + a, sticky="ew")
                 entry.grid(row=nrows + 2, column=angle_column + a)
@@ -694,7 +694,7 @@ def build_column_info_window(root, cfg, root_dimensions):
             beamwindow,
             "Left beam column (primary joints')",
             cfg["beam_col_left"][0],
-            widget_cfg,
+            WIDGET_CFG,
         )
         beam_left_label.grid(row=0, column=0, sticky="nsew")
         beam_left_entry.grid(row=1, column=0)
@@ -730,7 +730,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         add_hindjoint_button = gaita_widgets.header_button(
             beamwindow,
             "Add left beam-subtraction joint",
-            widget_cfg,
+            WIDGET_CFG,
         )
         add_hindjoint_button.configure(
             command=lambda: add_joint(
@@ -750,7 +750,7 @@ def build_column_info_window(root, cfg, root_dimensions):
             beamwindow,
             "Right beam column (secondary joints')",
             cfg["beam_col_right"][0],
-            widget_cfg,
+            WIDGET_CFG,
         )
         beam_right_label.grid(row=0, column=1, sticky="nsew")
         beam_right_entry.grid(row=1, column=1)
@@ -786,7 +786,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         add_forejoint_button = gaita_widgets.header_button(
             beamwindow,
             "Add right beam-subtraction joint",
-            widget_cfg,
+            WIDGET_CFG,
         )
         add_forejoint_button.configure(
             command=lambda: add_joint(
@@ -852,7 +852,7 @@ def build_column_info_window(root, cfg, root_dimensions):
     add_hind_joint_button = gaita_widgets.header_button(
         columnwindow,
         "Add Primary Joint",
-        widget_cfg,
+        WIDGET_CFG,
     )
     add_hind_joint_button.configure(
         command=lambda: add_joint(
@@ -876,7 +876,7 @@ def build_column_info_window(root, cfg, root_dimensions):
     beam_window_button = gaita_widgets.header_button(
         columnwindow,
         "Baseline (Beam) Configuration",
-        widget_cfg,
+        WIDGET_CFG,
     )
     beam_window_button.configure(
         command=lambda: build_beam_window(),
@@ -916,7 +916,7 @@ def build_column_info_window(root, cfg, root_dimensions):
     add_fore_joint_button = gaita_widgets.header_button(
         columnwindow,
         "Add Secondary Joint",
-        widget_cfg,
+        WIDGET_CFG,
     )
     add_fore_joint_button.configure(
         command=lambda: add_joint(
@@ -960,7 +960,7 @@ def build_column_info_window(root, cfg, root_dimensions):
     add_angle_button = gaita_widgets.header_button(
         columnwindow,
         "Add Angle",
-        widget_cfg,
+        WIDGET_CFG,
     )
     add_angle_button.configure(
         command=lambda: add_joint(angle_frame, "angles"),  # 2nd input = cfg's key
@@ -1174,7 +1174,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
             runwindow,
             "What is the number of the animal/subject?",
             results["mouse_num"],
-            widget_cfg,
+            WIDGET_CFG,
             adv_cfg_textsize=True,
         )
         mousenum_label.grid(row=0, column=0)
@@ -1184,7 +1184,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
             runwindow,
             "What is the number of the trial?",
             results["run_num"],
-            widget_cfg,
+            WIDGET_CFG,
             adv_cfg_textsize=True,
         )
         runnum_label.grid(row=2, column=0)
@@ -1199,7 +1199,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         runwindow,
         "Directory containing the files to be analysed",
         results["root_dir"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     rootdir_label.grid(row=r + 0, column=0)
@@ -1209,7 +1209,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         runwindow,
         "Filename of the Annotation Table Excel file",
         results["sctable_filename"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     SCXLS_label.grid(row=r + 2, column=0)
@@ -1243,7 +1243,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         runwindow,
         "[G] What is the identifier of the DLC-tracked coordinate file?",
         results["data_string"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     data_label.grid(row=r + 8, column=0)
@@ -1253,7 +1253,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         runwindow,
         "[G] What is the identifier of the DLC-tracked baseline file? (optional)",
         results["beam_string"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     beam_label.grid(row=r + 10, column=0)
@@ -1263,7 +1263,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         runwindow,
         "[B] Define the 'unique subject identifier' preceding the number",
         results["premouse_string"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     premouse_label.grid(row=r + 12, column=0)
@@ -1273,7 +1273,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         runwindow,
         "[C] Define the 'unique task identifier",
         results["postmouse_string"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     postmouse_label.grid(row=r + 14, column=0)
@@ -1283,7 +1283,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         runwindow,
         "[D] Define the 'unique trial identifier",
         results["prerun_string"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     prerun_label.grid(row=r + 16, column=0)
@@ -1293,7 +1293,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         runwindow,
         "[E] Define the 'unique camera identifier",
         results["postrun_string"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     postrun_label.grid(row=r + 18, column=0)

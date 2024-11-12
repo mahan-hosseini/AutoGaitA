@@ -31,9 +31,9 @@ from autogaita.gui.gui_constants import (
 # these colors are GUI-specific - add to common widget cfg
 FG_COLOR = "#c0737a"  # dusty rose
 HOVER_COLOR = "#b5485d"  # dark rose
-widget_cfg = get_widget_cfg_dict()
-widget_cfg["FG_COLOR"] = FG_COLOR
-widget_cfg["HOVER_COLOR"] = HOVER_COLOR
+WIDGET_CFG = get_widget_cfg_dict()
+WIDGET_CFG["FG_COLOR"] = FG_COLOR
+WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
 
 CONFIG_FILE_NAME = "universal3D_gui_config.json"
 INT_VARS = ["sampling_rate", "bin_num", "plot_joint_number"]
@@ -147,7 +147,7 @@ def run_universal3D_gui():
 
     # .........................  main configuration  ...................................
     # config header
-    cfgheader_label = gaita_widgets.header_label(root, "Main Configuration", widget_cfg)
+    cfgheader_label = gaita_widgets.header_label(root, "Main Configuration", WIDGET_CFG)
     cfgheader_label.grid(row=0, column=0, columnspan=2, sticky="nsew")
 
     # root directory
@@ -155,7 +155,7 @@ def run_universal3D_gui():
         root,
         "Directory containing the files to be analysed:",
         results["root_dir"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     rootdir_label.grid(row=1, column=0, columnspan=2, sticky="w")
     rootdir_entry.grid(row=1, column=1)
@@ -165,7 +165,7 @@ def run_universal3D_gui():
         root,
         "Name of the Annotation Table Excel file:",
         results["sctable_filename"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     SCXLS_label.grid(row=2, column=0, columnspan=2, sticky="w")
     SCXLS_entry.grid(row=2, column=1)
@@ -175,7 +175,7 @@ def run_universal3D_gui():
         root,
         "Sampling rate of videos in Hertz (frames/second):",
         cfg["sampling_rate"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     samprate_label.grid(row=3, column=0, columnspan=2, sticky="w")
     samprate_entry.grid(row=3, column=1)
@@ -185,7 +185,7 @@ def run_universal3D_gui():
         root,
         "I have a constant string that follows IDs in filenames.",
         results["postname_flag"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     postname_flag_checkbox.configure(
         command=lambda: change_postname_entry_state(postname_entry, results),
@@ -197,7 +197,7 @@ def run_universal3D_gui():
         root,
         "The constant string is:",
         results["postname_string"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     postname_label.grid(row=5, column=0, sticky="e")
     postname_entry.configure(state="disabled")
@@ -211,13 +211,13 @@ def run_universal3D_gui():
 
     # advanced header string
     advanced_cfg_header_label = gaita_widgets.header_label(
-        root, "Advanced Configuration", widget_cfg
+        root, "Advanced Configuration", WIDGET_CFG
     )
     advanced_cfg_header_label.grid(row=9, column=0, columnspan=2, sticky="nsew")
 
     # data file preparation window
     datafile_prep_button = gaita_widgets.header_button(
-        root, "Data File Preparation", widget_cfg
+        root, "Data File Preparation", WIDGET_CFG
     )
     datafile_prep_button.configure(
         command=lambda: build_datafile_prep_window(root, results, cfg),
@@ -226,7 +226,7 @@ def run_universal3D_gui():
 
     # column name information window
     column_info_button = gaita_widgets.header_button(
-        root, "Customise Joints & Angles", widget_cfg
+        root, "Customise Joints & Angles", WIDGET_CFG
     )
     column_info_button.configure(
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
@@ -235,7 +235,7 @@ def run_universal3D_gui():
 
     # advanced cfg
     cfg_window_button = gaita_widgets.header_button(
-        root, "Advanced Configuration", widget_cfg
+        root, "Advanced Configuration", WIDGET_CFG
     )
     cfg_window_button.configure(
         command=lambda: (build_cfg_window(root, cfg)),
@@ -249,7 +249,7 @@ def run_universal3D_gui():
     # ............................  run & exit section  ................................
 
     # run analysis label
-    runheader_label = gaita_widgets.header_label(root, "Run Analysis", widget_cfg)
+    runheader_label = gaita_widgets.header_label(root, "Run Analysis", WIDGET_CFG)
     runheader_label.grid(row=14, column=0, columnspan=2, sticky="nsew")
 
     # single video checkbox
@@ -257,7 +257,7 @@ def run_universal3D_gui():
         root,
         "Only analyse a single dataset.",
         cfg["analyse_singlerun"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     singlevideo_checkbox.configure(
         command=lambda: change_ID_entry_state(ID_entry),
@@ -266,14 +266,14 @@ def run_universal3D_gui():
 
     # ID string info
     ID_label, ID_entry = gaita_widgets.label_and_entry_pair(
-        root, "ID to be analysed:", results["name"], widget_cfg
+        root, "ID to be analysed:", results["name"], WIDGET_CFG
     )
     ID_label.grid(row=16, column=0, sticky="e")
     ID_entry.grid(row=16, column=1, sticky="w")
     change_ID_entry_state(ID_entry)
 
     # run analysis button
-    run_button = gaita_widgets.header_button(root, "Run Analysis!", widget_cfg)
+    run_button = gaita_widgets.header_button(root, "Run Analysis!", WIDGET_CFG)
     run_button.configure(
         command=lambda: (
             update_config_file(results, cfg),
@@ -289,7 +289,7 @@ def run_universal3D_gui():
     # close program button
     exit_button = gaita_widgets.exit_button(
         root,
-        widget_cfg,
+        WIDGET_CFG,
     )
     exit_button.configure(
         command=lambda: (
@@ -324,7 +324,7 @@ def build_datafile_prep_window(root, results, cfg):
 
     # fileprep header
     fileprep_header_label = gaita_widgets.header_label(
-        fileprep_window, "Datafile Preparation", widget_cfg
+        fileprep_window, "Datafile Preparation", WIDGET_CFG
     )
     fileprep_header_label.grid(row=0, column=0, rowspan=2, columnspan=2, sticky="nsew")
     # root dir
@@ -333,7 +333,7 @@ def build_datafile_prep_window(root, results, cfg):
             fileprep_window,
             "Directory containing files:",
             cfg["fileprep_root_dir"],
-            widget_cfg,
+            WIDGET_CFG,
         )
     )
     fileprep_root_dir_label.grid(row=2, column=0, sticky="e")
@@ -368,7 +368,7 @@ def build_datafile_prep_window(root, results, cfg):
             fileprep_window,
             "Constant string present in file names:",
             cfg["fileprep_postname_string"],
-            widget_cfg,
+            WIDGET_CFG,
         )
     )
     fileprep_postname_label.grid(row=row_num, column=0, sticky="e")
@@ -379,7 +379,7 @@ def build_datafile_prep_window(root, results, cfg):
             fileprep_window,
             "Directory to save results to:",
             cfg["fileprep_results_dir"],
-            widget_cfg,
+            WIDGET_CFG,
         )
     )
     fileprep_results_dir_label.grid(row=row_num + 1, column=0, sticky="e")
@@ -391,7 +391,7 @@ def build_datafile_prep_window(root, results, cfg):
     # ............................  left section: clean  ...............................
     # cleaning header
     clean_header_label = gaita_widgets.header_label(
-        fileprep_window, "Clean Columns", widget_cfg
+        fileprep_window, "Clean Columns", WIDGET_CFG
     )
     clean_header_label.grid(row=row_num + 3, column=0, sticky="nsew")
     # string to remove
@@ -399,12 +399,12 @@ def build_datafile_prep_window(root, results, cfg):
         fileprep_window,
         "Substring to remove:",
         cfg["fileprep_string_to_remove"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     string_to_remove_label.grid(row=row_num + 4, column=0)
     string_to_remove_entry.grid(row=row_num + 5, column=0)
     # cleaning run button
-    clean_button = gaita_widgets.header_button(fileprep_window, "Clean!", widget_cfg)
+    clean_button = gaita_widgets.header_button(fileprep_window, "Clean!", WIDGET_CFG)
     clean_button.configure(
         command=lambda: (
             update_config_file(results, cfg),
@@ -416,7 +416,7 @@ def build_datafile_prep_window(root, results, cfg):
     # ............................  right section: rename  .............................
     # renaming header
     rename_header_label = gaita_widgets.header_label(
-        fileprep_window, "Rename Columns", widget_cfg
+        fileprep_window, "Rename Columns", WIDGET_CFG
     )
     rename_header_label.grid(row=row_num + 3, column=1, sticky="nsew")
     # separator
@@ -424,12 +424,12 @@ def build_datafile_prep_window(root, results, cfg):
         fileprep_window,
         "Separator substring (must be unique!):",
         cfg["fileprep_separator"],
-        widget_cfg,
+        WIDGET_CFG,
     )
     separator_label.grid(row=row_num + 4, column=1)
     separator_entry.grid(row=row_num + 5, column=1)
     # renaming run button
-    rename_button = gaita_widgets.header_button(fileprep_window, "Rename!", widget_cfg)
+    rename_button = gaita_widgets.header_button(fileprep_window, "Rename!", WIDGET_CFG)
     rename_button.configure(
         command=lambda: (
             update_config_file(results, cfg),
@@ -497,7 +497,7 @@ def build_cfg_window(root, cfg):
     #  ...........................  advanced analysis  .................................
     # advanced analysis header
     adv_cfg_analysis_header_label = gaita_widgets.header_label(
-        cfg_window, "Analysis", widget_cfg
+        cfg_window, "Analysis", WIDGET_CFG
     )
     adv_cfg_analysis_header_label.grid(row=0, column=0, rowspan=2, sticky="nsew")
     # bin_num
@@ -505,7 +505,7 @@ def build_cfg_window(root, cfg):
         cfg_window,
         "Number of bins to use for normalising the step cycle:",
         cfg["bin_num"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     bin_num_label.grid(row=2, column=0)
@@ -515,7 +515,7 @@ def build_cfg_window(root, cfg):
         cfg_window,
         "Compute, plot & export joints' x-accelerations",
         cfg["y_acceleration"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     x_accel_box.grid(row=4, column=0)
@@ -524,7 +524,7 @@ def build_cfg_window(root, cfg):
         cfg_window,
         "Compute, plot & export angular accelerations",
         cfg["angular_acceleration"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     angular_accel_box.grid(row=5, column=0)
@@ -533,7 +533,7 @@ def build_cfg_window(root, cfg):
         cfg_window,
         "Normalise heights of all step cycles separately",
         cfg["normalise_height_at_SC_level"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     height_normalisation_box.grid(row=6, column=0)
@@ -542,7 +542,7 @@ def build_cfg_window(root, cfg):
         cfg_window,
         "Analyse y-coordinate averages",
         cfg["analyse_average_y"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     analyse_average_y_box.grid(row=7, column=0)
@@ -550,7 +550,7 @@ def build_cfg_window(root, cfg):
     #  .............................  advanced output  .................................
     # advanced output header
     adv_cfg_output_header_label = gaita_widgets.header_label(
-        cfg_window, "Output", widget_cfg
+        cfg_window, "Output", WIDGET_CFG
     )
     adv_cfg_output_header_label.grid(row=8, column=0, rowspan=2, sticky="nsew")
     # number of joints to plot
@@ -558,7 +558,7 @@ def build_cfg_window(root, cfg):
         cfg_window,
         "Number of joints to plot in detail:",
         cfg["plot_joint_number"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     plot_joint_num_label.grid(row=10, column=0)
@@ -568,7 +568,7 @@ def build_cfg_window(root, cfg):
         cfg_window,
         "Don't show plots in GUI (save only)",
         cfg["dont_show_plots"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     showplots_checkbox.grid(row=12, column=0)
@@ -577,7 +577,7 @@ def build_cfg_window(root, cfg):
         cfg_window,
         "Use standard error instead of standard deviation for plots",
         cfg["plot_SE"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     plot_SE_box.grid(row=13, column=0)
@@ -604,7 +604,7 @@ def build_cfg_window(root, cfg):
         cfg_window,
         "Plot legends outside of figures' panels",
         cfg["legend_outside"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     legend_outside_checkbox.grid(row=16, column=0)
@@ -614,7 +614,7 @@ def build_cfg_window(root, cfg):
         cfg_window,
         "Save Results subfolders to directory below instead of to data's",
         cfg["results_dir"],
-        widget_cfg,
+        WIDGET_CFG,
         adv_cfg_textsize=True,
     )
     results_dir_label.grid(row=17, column=0)
@@ -662,7 +662,7 @@ def build_column_info_window(root, cfg, root_dimensions):
                 window,
                 "Joint #" + str(len(cfg[key])),
                 cfg[key][-1],
-                widget_cfg,
+                WIDGET_CFG,
             )
             label.grid(row=nrows + 1, column=0, sticky="ew")
             entry.grid(row=nrows + 2, column=0)
@@ -678,7 +678,7 @@ def build_column_info_window(root, cfg, root_dimensions):
                     window,
                     this_case + " #" + str(len(cfg[key][angle_key])),
                     cfg[key][angle_key][-1],
-                    widget_cfg,
+                    WIDGET_CFG,
                 )
                 label.grid(row=nrows + 1, column=angle_column + a, sticky="ew")
                 entry.grid(row=nrows + 2, column=angle_column + a)
@@ -692,7 +692,7 @@ def build_column_info_window(root, cfg, root_dimensions):
     # ...................  Column 0: hind limb joint names  ............................
     joint_column = 0
     # header label
-    joint_label = gaita_widgets.header_label(columnwindow, "Joints", widget_cfg)
+    joint_label = gaita_widgets.header_label(columnwindow, "Joints", WIDGET_CFG)
     joint_label.grid(row=0, column=joint_column, sticky="nsew", pady=(0, 5))
     # initialise scrollable frame for joints
     joint_frame = ctk.CTkScrollableFrame(columnwindow)
@@ -701,7 +701,7 @@ def build_column_info_window(root, cfg, root_dimensions):
     initialise_labels_and_entries(joint_frame, "joints", "Joint ")
     # add joint button
     add_joint_button = gaita_widgets.header_button(
-        columnwindow, "Add joint", widget_cfg
+        columnwindow, "Add joint", WIDGET_CFG
     )
     add_joint_button.configure(
         command=lambda: (add_joint(joint_frame, "joints")),  # 2nd input = cfg's key
@@ -718,7 +718,7 @@ def build_column_info_window(root, cfg, root_dimensions):
     angle_column = 1
     # header label
     angle_label = gaita_widgets.header_label(
-        columnwindow, "Angle Configuration", widget_cfg
+        columnwindow, "Angle Configuration", WIDGET_CFG
     )
     angle_label.grid(
         row=0, column=angle_column, columnspan=3, sticky="nsew", pady=(0, 5)
@@ -741,7 +741,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         )
     # add angle trio button
     add_angle_button = gaita_widgets.header_button(
-        columnwindow, "Add angle", widget_cfg
+        columnwindow, "Add angle", WIDGET_CFG
     )
     add_angle_button.configure(
         command=lambda: add_joint(angle_frame, "angles"),  # 2nd input = cfg's key
