@@ -8,18 +8,6 @@ ADV_CFG_TEXT_FONT_SIZE = TEXT_FONT_SIZE - 4
 CLOSE_COLOR = "#840000"  # dark red
 CLOSE_HOVER_COLOR = "#650021"  # maroon
 
-WIDGET_CFG = {
-    "HEADER_FONT_NAME": HEADER_FONT_NAME,
-    "HEADER_FONT_SIZE": HEADER_FONT_SIZE,
-    "HEADER_TXT_COLOR": HEADER_TXT_COLOR,
-    "MAIN_HEADER_FONT_SIZE": MAIN_HEADER_FONT_SIZE,
-    "TEXT_FONT_NAME": TEXT_FONT_NAME,
-    "TEXT_FONT_SIZE": TEXT_FONT_SIZE,
-    "ADV_CFG_TEXT_FONT_SIZE": ADV_CFG_TEXT_FONT_SIZE,
-    "CLOSE_COLOR": CLOSE_COLOR,
-    "CLOSE_HOVER_COLOR": CLOSE_HOVER_COLOR,
-}
-
 # For how the look like refer to https://r02b.github.io/seaborn_palettes/
 COLOR_PALETTES_LIST = [
     "Set1",
@@ -50,3 +38,20 @@ COLOR_PALETTES_LIST = [
     "cividis_r",  # uniform palettes in reversed order
 ]
 WINDOWS_TASKBAR_MAXHEIGHT = 72
+
+
+def get_widget_cfg_dict():
+    """Return a copy of the widget_cfg dictionary for usage outside of this module
+    (prevents changes to the original dictionary)
+    """
+    return {
+        "HEADER_FONT_NAME": HEADER_FONT_NAME,
+        "HEADER_FONT_SIZE": HEADER_FONT_SIZE,
+        "HEADER_TXT_COLOR": HEADER_TXT_COLOR,
+        "MAIN_HEADER_FONT_SIZE": MAIN_HEADER_FONT_SIZE,
+        "TEXT_FONT_NAME": TEXT_FONT_NAME,
+        "TEXT_FONT_SIZE": TEXT_FONT_SIZE,
+        "ADV_CFG_TEXT_FONT_SIZE": ADV_CFG_TEXT_FONT_SIZE,
+        "CLOSE_COLOR": CLOSE_COLOR,
+        "CLOSE_HOVER_COLOR": CLOSE_HOVER_COLOR,
+    }

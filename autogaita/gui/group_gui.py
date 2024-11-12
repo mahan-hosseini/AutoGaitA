@@ -27,14 +27,15 @@ from autogaita.gui.gui_constants import (
     CLOSE_HOVER_COLOR,
     COLOR_PALETTES_LIST,
     WINDOWS_TASKBAR_MAXHEIGHT,
-    WIDGET_CFG,
+    get_widget_cfg_dict,  # function!
 )
 
 # these colors are GUI-specific - add to common widget cfg
 FG_COLOR = "#5a7d9a"  # steel blue
 HOVER_COLOR = "#8ab8fe"  # carolina blue
-WIDGET_CFG["FG_COLOR"] = FG_COLOR
-WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
+widget_cfg = get_widget_cfg_dict()
+widget_cfg["FG_COLOR"] = FG_COLOR
+widget_cfg["HOVER_COLOR"] = HOVER_COLOR
 
 # group GUI specific constants
 MIN_GROUP_NUM = 2
