@@ -145,16 +145,6 @@ def run_dlc_gui():
     fix_window_after_its_creation(root)
     configure_the_icon(root)
 
-    # nested function: advanced configuration
-    def advanced_cfg_window(cfg):
-        """Advanced configuration window"""
-        build_cfg_window(root, cfg, root_dimensions)
-
-    # nested function: run windows
-    def run_window(cfg, analysis):
-        """Run and done windows"""
-        build_run_and_done_windows(root, cfg, analysis, root_dimensions)
-
     # .....................  load cfg dict from config .....................
     # use the values in the config json file for the results dictionary
     global cfg
@@ -270,7 +260,9 @@ def run_dlc_gui():
     cfg_window_button = gaita_widgets.header_button(
         root, "Advanced Configuration", WIDGET_CFG
     )
-    cfg_window_button.configure(command=lambda: advanced_cfg_window(cfg))
+    cfg_window_button.configure(
+        command=lambda: build_cfg_window(root, cfg, root_dimensions)
+    )
     cfg_window_button.grid(row=10, column=0, columnspan=3)
 
     # empty label 2 (for spacing)
@@ -284,14 +276,14 @@ def run_dlc_gui():
     # single gaita button
     onevid_button = gaita_widgets.header_button(root, "One Video", WIDGET_CFG)
     onevid_button.configure(
-        command=lambda: run_window(cfg, "single"),
+        command=lambda: build_run_and_done_windows(root, cfg, "single", root_dimensions)
     )
     onevid_button.grid(row=13, column=1, sticky="ew")
 
     # multi gaita button
     multivid_button = gaita_widgets.header_button(root, "Batch Analysis", WIDGET_CFG)
     multivid_button.configure(
-        command=lambda: run_window(cfg, "multi"),
+        command=lambda: build_run_and_done_windows(root, cfg, "multi", root_dimensions)
     )
     multivid_button.grid(row=14, column=1, sticky="ew")
 

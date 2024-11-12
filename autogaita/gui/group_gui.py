@@ -1,6 +1,7 @@
 # %% imports
 import autogaita
 from autogaita import gui
+import autogaita.gui.gaita_widgets as gaita_widgets
 from autogaita.gaita_res.gui_utils import configure_the_icon
 import tkinter as tk
 import customtkinter as ctk
@@ -14,17 +15,28 @@ import copy
 
 
 # %% global constants
+from autogaita.gui.gui_constants import (
+    HEADER_FONT_NAME,
+    HEADER_FONT_SIZE,
+    HEADER_TXT_COLOR,
+    MAIN_HEADER_FONT_SIZE,
+    TEXT_FONT_NAME,
+    TEXT_FONT_SIZE,
+    ADV_CFG_TEXT_FONT_SIZE,
+    CLOSE_COLOR,
+    CLOSE_HOVER_COLOR,
+    COLOR_PALETTES_LIST,
+    WINDOWS_TASKBAR_MAXHEIGHT,
+    WIDGET_CFG,
+)
+
+# these colors are GUI-specific - add to common widget cfg
 FG_COLOR = "#5a7d9a"  # steel blue
 HOVER_COLOR = "#8ab8fe"  # carolina blue
-HEADER_FONT_NAME = "Calibri Bold"
-HEADER_TXT_COLOR = "#ffffff"  # white
-HEADER_FONT_SIZE = 30
-MAIN_HEADER_FONT_SIZE = 35
-TEXT_FONT_NAME = "Calibri"
-TEXT_FONT_SIZE = 20
-ADV_CFG_TEXT_FONT_SIZE = TEXT_FONT_SIZE - 4
-CLOSE_COLOR = "#840000"  # dark red
-CLOSE_HOVER_COLOR = "#650021"  # maroon
+WIDGET_CFG["FG_COLOR"] = FG_COLOR
+WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
+
+# group GUI specific constants
 MIN_GROUP_NUM = 2
 MAX_GROUP_NUM = 6
 CONFIG_FILE_NAME = "group_gui_config.json"
@@ -53,38 +65,9 @@ TK_STR_VARS = [
     "results_dir",
     "color_palette",
 ]
-# For how the look like refer to https://r02b.github.io/seaborn_palettes/
-COLOR_PALETTES_LIST = [
-    "Set1",
-    "Set2",
-    "Set3",
-    "Dark2",
-    "Paired",
-    "Accent",  # qualitative palettes
-    "hls",
-    "husl",  # circular palettes
-    "rocket",
-    "mako",
-    "flare",
-    "crest",
-    "viridis",
-    "plasma",
-    "inferno",
-    "magma",
-    "cividis",  # Perceptually uniform palettes
-    "rocket_r",
-    "mako_r",
-    "flare_r",
-    "crest_r",
-    "viridis_r",
-    "plasma_r",
-    "inferno_r",
-    "magma_r",
-    "cividis_r",  # uniform palettes in reversed order
-]
 EXCLUDED_VARS_FROM_CFG_FILE = ["last_runs_stats_variables", "last_runs_PCA_variables"]
 NORM_SHEET_NAME = "Normalised Stepcycle"
-WINDOWS_TASKBAR_MAXHEIGHT = 72
+
 
 # To get the path of the autogaita gui folder I use __file__
 # which returns the path of the autogaita gui module imported above.
@@ -137,11 +120,6 @@ def run_group_gui():
     root.geometry("%dx%d+%d+%d" % root_dimensions)
     root.title("Group GaitA")
 
-    # nested function: main window
-    def mainwindow(root, group_number, root_dimensions):
-        """Main window"""
-        build_mainwindow(root, group_number, root_dimensions)
-
     # ..................................................................................
     # .......................  root (intro) window population  .........................
     # ..................................................................................
@@ -192,7 +170,7 @@ def run_group_gui():
         hover_color=HOVER_COLOR,
         font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: (
-            mainwindow(root, group_number, root_dimensions),
+            build_mainwindow(root, group_number, root_dimensions),
             root.withdraw(),
         ),
     )
