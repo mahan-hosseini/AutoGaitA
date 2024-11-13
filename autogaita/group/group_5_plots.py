@@ -500,7 +500,7 @@ def plot_x_velocities_by_average_SC(
                 unit = "x in cm"
             else:
                 unit = "x in pixels"
-            ax.set_title(group_name + " - Joint velocities over average step cycle")
+            ax.set_title(joint + " - Joint velocities over average step cycle")
         elif tracking_software == "Universal 3D":
             unit = "Y in (your units)"
             if joint + "Velocity" in g_avg_dfs[g].columns:
