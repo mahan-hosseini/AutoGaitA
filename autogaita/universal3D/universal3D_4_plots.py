@@ -791,7 +791,9 @@ def plot_y_velocities_by_average_SC(
     elif legend_outside is False:
         ax.legend()
     ax.set_xlabel("Percentage")
-    ax.set_ylabel("Velocity (Y in m / " + str(int((1 / sampling_rate) * 1000)) + "ms)")
+    # NU: improve handling of different units
+    # ax.set_ylabel("Velocity (Y in m / " + str(int((1 / sampling_rate) * 1000)) + "ms")
+    ax.set_ylabel("Velocity")
     figure_file_string = (
         name + " - " + legname + " - Joint y-velocities over average step cycle"
     )
@@ -897,7 +899,9 @@ def plot_y_acceleration_by_average_SC(
         ax.legend()
     ax.set_xlabel("Percentage")
     ax.set_ylabel(
-        "Acceleration (Y in m / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
+        # NU: improve handling of different units
+        # "Acceleration (Y in m / " + str(int((1 / sampling_rate) * 1000)) + "ms)"
+        "Acceleration"
     )
     figure_file_string = (
         name + " - " + legname + " - Joint y-accelerations over average step cycle"
