@@ -1,6 +1,10 @@
 # %% imports
-from autogaita import gui
 import autogaita.gui.gaita_widgets as gaita_widgets
+from autogaita.gui.first_level_gui_utils import (
+    update_config_file,
+    extract_cfg_from_json_file,
+    extract_results_from_json_file,
+)
 from autogaita.dlc.dlc_utils import extract_info, run_singlerun_in_multirun
 from autogaita.gaita_res.utils import try_to_run_gaita
 from autogaita.gaita_res.gui_utils import configure_the_icon
@@ -9,11 +13,12 @@ import customtkinter as ctk
 import os
 from threading import Thread
 import platform
-import json
 
 
 # %% global constants
 from autogaita.gui.gui_constants import (
+    DLC_FG_COLOR,
+    DLC_HOVER_COLOR,
     HEADER_FONT_NAME,
     HEADER_FONT_SIZE,
     HEADER_TXT_COLOR,
@@ -25,12 +30,13 @@ from autogaita.gui.gui_constants import (
     CLOSE_HOVER_COLOR,
     COLOR_PALETTES_LIST,
     WINDOWS_TASKBAR_MAXHEIGHT,
+    AUTOGAITA_FOLDER_PATH,
     get_widget_cfg_dict,  # function!
 )
 
 # these colors are GUI-specific - add to common widget cfg
-FG_COLOR = "#789b73"  # grey green
-HOVER_COLOR = "#287c37"  # darkish green
+FG_COLOR = DLC_FG_COLOR
+HOVER_COLOR = DLC_HOVER_COLOR
 WIDGET_CFG = get_widget_cfg_dict()
 WIDGET_CFG["FG_COLOR"] = FG_COLOR
 WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
@@ -87,11 +93,6 @@ TK_STR_VARS = [
     "results_dir",
 ]
 
-# To get the path of the autogaita gui folder I use __file__
-# which returns the path of the autogaita gui module imported above.
-# Removing the 11 letter long "__init__.py" return the folder path
-autogaita_utils_path = gui.__file__
-AUTOGAITA_FOLDER_PATH = autogaita_utils_path[:-11]
 
 # %% An important Note
 # I am using a global variable called cfg because I need its info to be shared
@@ -149,7 +150,15 @@ def run_dlc_gui():
     # .....................  load cfg dict from config .....................
     # use the values in the config json file for the results dictionary
     global cfg
-    cfg = extract_cfg_from_json_file(root)
+    cfg = extract_cfg_from_json_file(
+        root,
+        AUTOGAITA_FOLDER_PATH,
+        CONFIG_FILE_NAME,
+        LIST_VARS,
+        DICT_VARS,
+        TK_STR_VARS,
+        TK_BOOL_VARS,
+    )
 
     # ...............................  header ..........................................
     # main configuration header
@@ -298,7 +307,16 @@ def run_dlc_gui():
         command=lambda: (
             # results variable is only defined later in populate_run_window()
             # therefore only cfg settings will be updated
-            update_config_file("results dict not defined yet", cfg),
+            update_config_file(
+                "results dict not defined yet",
+                cfg,
+                AUTOGAITA_FOLDER_PATH,
+                CONFIG_FILE_NAME,
+                LIST_VARS,
+                DICT_VARS,
+                TK_STR_VARS,
+                TK_BOOL_VARS,
+            ),
             root.withdraw(),
             root.after(5000, root.destroy),
         ),
@@ -1165,7 +1183,9 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
 
     # ..................... load results dict from config.....................
     # use the values in the config json file for the results dictionary
-    results = extract_results_from_json_file(runwindow)
+    results = extract_results_from_json_file(
+        runwindow, AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME, TK_STR_VARS, TK_BOOL_VARS
+    )
 
     # ........................  build the frame  ...............................
     if analysis == "single":
@@ -1307,7 +1327,16 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
         hover_color=HOVER_COLOR,
         font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: (
-            update_config_file(results, cfg),
+            update_config_file(
+                results,
+                cfg,
+                AUTOGAITA_FOLDER_PATH,
+                CONFIG_FILE_NAME,
+                LIST_VARS,
+                DICT_VARS,
+                TK_STR_VARS,
+                TK_BOOL_VARS,
+            ),
             user_ready.set(1),
         ),
     )
@@ -1529,98 +1558,6 @@ def prepare_folderinfo(this_runs_results):
     folderinfo["prerun_string"] = this_runs_results["prerun_string"]
     folderinfo["postrun_string"] = this_runs_results["postrun_string"]
     return folderinfo
-
-
-def update_config_file(results, cfg):
-    """updates the dlc_gui_config file with this runs parameters"""
-    # transform tkVars into normal strings and bools
-    output_dicts = [{}, {}]
-    for i in range(len(output_dicts)):
-        if i == 0:
-            # in case update_config_file is called before results is defined
-            # as in the creation of the exit_button in the dlc_gui() function
-            # the results dict of the last run is used and only cfg is updated
-            if results == "results dict not defined yet":
-                # runwindow = None as we dont need the tk.Vars to refer to a specific window
-                input_dict = extract_results_from_json_file(runwindow=None)
-            else:
-                input_dict = results
-        elif i == 1:
-            input_dict = cfg
-        for key in input_dict.keys():
-            if key in LIST_VARS:
-                # if list of strings, initialise output empty list and get & append vals
-                output_dicts[i][key] = []
-                for list_idx in range(len(input_dict[key])):
-                    output_dicts[i][key].append(input_dict[key][list_idx].get())
-            elif key in DICT_VARS:
-                # if dict of list of strings, initialise as empty dict and assign stuff
-                # key = "angles" or other DICT_VAR
-                # inner_key = "name" & "lower_ / upper_joint"
-                # list_idx = idx of list of strings of inner_key
-                output_dicts[i][key] = {}
-                for inner_key in input_dict[key]:
-                    output_dicts[i][key][inner_key] = []
-                    for list_idx in range(len(input_dict[key][inner_key])):
-                        output_dicts[i][key][inner_key].append(
-                            input_dict[key][inner_key][list_idx].get()
-                        )
-            else:
-                output_dicts[i][key] = input_dict[key].get()
-
-    # merge the two configuration dictionaries
-    configs_list = [output_dicts[0], output_dicts[1]]  # 0 = results, 1 = cfg, see above
-    # write the configuration file
-    with open(
-        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "w"
-    ) as config_json_file:
-        json.dump(configs_list, config_json_file, indent=4)
-
-
-def extract_cfg_from_json_file(root):
-    """loads the cfg dictionary from the config file"""
-    # load the configuration file
-    with open(
-        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "r"
-    ) as config_json_file:
-        # config_json contains list with 0 -> result and 1 -> cfg data
-        last_runs_cfg = json.load(config_json_file)[1]
-
-    cfg = {}
-    # assign values to the cfg dict
-    for key in last_runs_cfg.keys():
-        if key in TK_BOOL_VARS:
-            cfg[key] = tk.BooleanVar(root, last_runs_cfg[key])
-        elif key in LIST_VARS:
-            cfg[key] = []
-            for entry in last_runs_cfg[key]:
-                cfg[key].append(tk.StringVar(root, entry))
-        elif key in DICT_VARS:
-            cfg[key] = {}
-            for subkey in last_runs_cfg[key]:
-                cfg[key][subkey] = []
-                for entry in last_runs_cfg[key][subkey]:
-                    cfg[key][subkey].append(tk.StringVar(root, entry))
-        elif key in TK_STR_VARS:  # Integers are also saved as strings
-            cfg[key] = tk.StringVar(root, last_runs_cfg[key])
-    return cfg
-
-
-def extract_results_from_json_file(runwindow):
-    """loads the results dictionary from the config file"""
-
-    # load the configuration file
-    with open(
-        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "r"
-    ) as config_json_file:
-        # config_json contains list with 0 -> result and 1 -> cfg data
-        last_runs_results = json.load(config_json_file)[0]
-
-    results = {}
-    for key in last_runs_results.keys():
-        results[key] = tk.StringVar(runwindow, last_runs_results[key])
-
-    return results
 
 
 # %% what happens if we hit run

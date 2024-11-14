@@ -1,6 +1,10 @@
 # %% imports
-from autogaita import gui
 import autogaita.gui.gaita_widgets as gaita_widgets
+from autogaita.gui.first_level_gui_utils import (
+    update_config_file,
+    extract_cfg_from_json_file,
+    extract_results_from_json_file,
+)
 from autogaita.gaita_res.utils import try_to_run_gaita
 from autogaita.universal3D.universal3D_datafile_preparation import prepare_3D
 from autogaita.gaita_res.gui_utils import configure_the_icon
@@ -9,14 +13,14 @@ import customtkinter as ctk
 import os
 from threading import Thread
 import platform
-import json
 
 
 # %% global constants
 from autogaita.gui.gui_constants import (
+    UNIVERSAL3D_FG_COLOR,
+    UNIVERSAL3D_HOVER_COLOR,
     HEADER_FONT_NAME,
     HEADER_FONT_SIZE,
-    HEADER_TXT_COLOR,
     MAIN_HEADER_FONT_SIZE,
     TEXT_FONT_NAME,
     TEXT_FONT_SIZE,
@@ -25,12 +29,13 @@ from autogaita.gui.gui_constants import (
     CLOSE_HOVER_COLOR,
     COLOR_PALETTES_LIST,
     WINDOWS_TASKBAR_MAXHEIGHT,
+    AUTOGAITA_FOLDER_PATH,
     get_widget_cfg_dict,  # function!
 )
 
 # these colors are GUI-specific - add to common widget cfg
-FG_COLOR = "#c0737a"  # dusty rose
-HOVER_COLOR = "#b5485d"  # dark rose
+FG_COLOR = UNIVERSAL3D_FG_COLOR
+HOVER_COLOR = UNIVERSAL3D_HOVER_COLOR
 WIDGET_CFG = get_widget_cfg_dict()
 WIDGET_CFG["FG_COLOR"] = FG_COLOR
 WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
@@ -69,12 +74,6 @@ TK_STR_VARS = [
     "fileprep_separator",
     "fileprep_string_to_remove",
 ]
-
-# To get the path of the autogaita gui folder I use __file__
-# which returns the path of the autogaita gui module imported above.
-# Removing the 11 letter long "__init__.py" return the folder path
-autogaita_utils_path = gui.__file__
-AUTOGAITA_FOLDER_PATH = autogaita_utils_path[:-11]
 
 
 # %% An important Note
@@ -142,8 +141,18 @@ def run_universal3D_gui():
     #     like proper programmers do it (nice)
     global cfg  # global cfg variable
 
-    cfg = extract_cfg_from_json_file(root)
-    results = extract_results_from_json_file(root)
+    cfg = extract_cfg_from_json_file(
+        root,
+        AUTOGAITA_FOLDER_PATH,
+        CONFIG_FILE_NAME,
+        LIST_VARS,
+        DICT_VARS,
+        TK_STR_VARS,
+        TK_BOOL_VARS,
+    )
+    results = extract_results_from_json_file(
+        root, AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME, TK_STR_VARS, TK_BOOL_VARS
+    )
 
     # .........................  main configuration  ...................................
     # config header
@@ -276,7 +285,16 @@ def run_universal3D_gui():
     run_button = gaita_widgets.header_button(root, "Run Analysis!", WIDGET_CFG)
     run_button.configure(
         command=lambda: (
-            update_config_file(results, cfg),
+            update_config_file(
+                results,
+                cfg,
+                AUTOGAITA_FOLDER_PATH,
+                CONFIG_FILE_NAME,
+                LIST_VARS,
+                DICT_VARS,
+                TK_STR_VARS,
+                TK_BOOL_VARS,
+            ),
             build_donewindow(results, root, root_dimensions),
         )
     )
@@ -293,7 +311,16 @@ def run_universal3D_gui():
     )
     exit_button.configure(
         command=lambda: (
-            update_config_file(results, cfg),
+            update_config_file(
+                results,
+                cfg,
+                AUTOGAITA_FOLDER_PATH,
+                CONFIG_FILE_NAME,
+                LIST_VARS,
+                DICT_VARS,
+                TK_STR_VARS,
+                TK_BOOL_VARS,
+            ),
             root.withdraw(),
             root.after(5000, root.destroy),
         ),
@@ -407,7 +434,16 @@ def build_datafile_prep_window(root, results, cfg):
     clean_button = gaita_widgets.header_button(fileprep_window, "Clean!", WIDGET_CFG)
     clean_button.configure(
         command=lambda: (
-            update_config_file(results, cfg),
+            update_config_file(
+                results,
+                cfg,
+                AUTOGAITA_FOLDER_PATH,
+                CONFIG_FILE_NAME,
+                LIST_VARS,
+                DICT_VARS,
+                TK_STR_VARS,
+                TK_BOOL_VARS,
+            ),
             run_universal_3D_preparation("clean", cfg),
         )
     )
@@ -432,7 +468,16 @@ def build_datafile_prep_window(root, results, cfg):
     rename_button = gaita_widgets.header_button(fileprep_window, "Rename!", WIDGET_CFG)
     rename_button.configure(
         command=lambda: (
-            update_config_file(results, cfg),
+            update_config_file(
+                results,
+                cfg,
+                AUTOGAITA_FOLDER_PATH,
+                CONFIG_FILE_NAME,
+                LIST_VARS,
+                DICT_VARS,
+                TK_STR_VARS,
+                TK_BOOL_VARS,
+            ),
             run_universal_3D_preparation("rename", cfg),
         )
     )
@@ -510,15 +555,15 @@ def build_cfg_window(root, cfg):
     )
     bin_num_label.grid(row=2, column=0)
     bin_num_entry.grid(row=3, column=0)
-    # x acceleration
-    x_accel_box = gaita_widgets.checkbox(
+    # y acceleration
+    y_accel_box = gaita_widgets.checkbox(
         cfg_window,
-        "Compute, plot & export joints' x-accelerations",
+        "Compute, plot & export joints' Y-accelerations",
         cfg["y_acceleration"],
         WIDGET_CFG,
         adv_cfg_textsize=True,
     )
-    x_accel_box.grid(row=4, column=0)
+    y_accel_box.grid(row=4, column=0)
     # angular acceleration
     angular_accel_box = gaita_widgets.checkbox(
         cfg_window,
@@ -1139,99 +1184,6 @@ def multirun_extract_info(folderinfo):
                         )
                     )
     return info
-
-
-def update_config_file(results, cfg):
-    """
-    Updates the universal3D_gui_config file with current parameters
-    Note
-    ----
-    It's called when 1) running program, 2) preparing data files (cleaning/renaming) or 3) closing the program
-    """
-    # transform tkVars into normal strings and bools
-    output_dicts = [{}, {}]
-    for i in range(len(output_dicts)):
-        if i == 0:
-            input_dict = results
-        elif i == 1:
-            input_dict = cfg
-        for key in input_dict.keys():
-            if key in LIST_VARS:
-                # if list of strings, initialise output empty list and get & append vals
-                output_dicts[i][key] = []
-                for list_idx in range(len(input_dict[key])):
-                    output_dicts[i][key].append(input_dict[key][list_idx].get())
-            elif key in DICT_VARS:
-                # if dict of list of strings, initialise as empty dict and assign stuff
-                # key = "angles" or other DICT_VAR
-                # inner_key = "name" & "lower_ / upper_joint"
-                # list_idx = idx of list of strings of inner_key
-                output_dicts[i][key] = {}
-                for inner_key in input_dict[key]:
-                    output_dicts[i][key][inner_key] = []
-                    for list_idx in range(len(input_dict[key][inner_key])):
-                        output_dicts[i][key][inner_key].append(
-                            input_dict[key][inner_key][list_idx].get()
-                        )
-            else:
-                output_dicts[i][key] = input_dict[key].get()
-
-    # merge the two configuration dictionaries
-    configs_list = [output_dicts[0], output_dicts[1]]  # 0 = results, 1 = cfg, see above
-    # write the configuration file
-    with open(
-        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "w"
-    ) as config_json_file:
-        json.dump(configs_list, config_json_file, indent=4)
-
-
-def extract_cfg_from_json_file(root):
-    """loads the cfg dictionary from the config file"""
-    # load the configuration file
-    with open(
-        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "r"
-    ) as config_json_file:
-        # config_json contains list with 0 -> result and 1 -> cfg data
-        last_runs_cfg = json.load(config_json_file)[1]
-
-    cfg = {}
-    # assign values to the cfg dict
-    for key in last_runs_cfg.keys():
-        if key in TK_BOOL_VARS:
-            cfg[key] = tk.BooleanVar(root, last_runs_cfg[key])
-        elif key in LIST_VARS:
-            cfg[key] = []
-            for entry in last_runs_cfg[key]:
-                cfg[key].append(tk.StringVar(root, entry))
-        elif key in DICT_VARS:
-            cfg[key] = {}
-            for subkey in last_runs_cfg[key]:
-                cfg[key][subkey] = []
-                for entry in last_runs_cfg[key][subkey]:
-                    cfg[key][subkey].append(tk.StringVar(root, entry))
-        elif key in TK_STR_VARS:
-            cfg[key] = tk.StringVar(root, last_runs_cfg[key])
-    return cfg
-
-
-def extract_results_from_json_file(root):
-    """loads the results dictionary from the config file"""
-
-    # load the configuration file
-    with open(
-        os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME), "r"
-    ) as config_json_file:
-        # config_json contains list with 0 -> result and 1 -> cfg data
-        last_runs_results = json.load(config_json_file)[0]
-
-    results = {}
-    for key in last_runs_results.keys():
-        if key in TK_STR_VARS:
-            results[key] = tk.StringVar(root, last_runs_results[key])
-        elif key in TK_BOOL_VARS:
-            results[key] = tk.BooleanVar(root, last_runs_results[key])
-
-    return results
 
 
 # %% what happens if we hit run

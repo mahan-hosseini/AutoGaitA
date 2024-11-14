@@ -1,3 +1,13 @@
+from autogaita import gui
+
+DLC_FG_COLOR = "#789b73"  # grey green
+DLC_HOVER_COLOR = "#287c37"  # darkish green
+SLEAP_FG_COLOR = "#8f8ce7"  # perrywinkle
+SLEAP_HOVER_COLOR = "#665fd1"  # dark periwinkle
+UNIVERSAL3D_FG_COLOR = "#c0737a"  # dusty rose
+UNIVERSAL3D_HOVER_COLOR = "#b5485d"  # dark rose
+GROUP_FG_COLOR = "#5a7d9a"  # steel blue
+GROUP_HOVER_COLOR = "#016795"  # peacock blue
 HEADER_FONT_NAME = "Calibri Bold"
 HEADER_FONT_SIZE = 30
 HEADER_TXT_COLOR = "#ffffff"  # white
@@ -38,6 +48,13 @@ COLOR_PALETTES_LIST = [
     "cividis_r",  # uniform palettes in reversed order
 ]
 WINDOWS_TASKBAR_MAXHEIGHT = 72
+
+
+# To get the path of the autogaita gui folder I use __file__
+# which returns the path of the autogaita gui module imported above.
+# Removing the 11 letter long "__init__.py" return the folder path
+autogaita_utils_path = gui.__file__
+AUTOGAITA_FOLDER_PATH = autogaita_utils_path[:-11]
 
 
 def get_widget_cfg_dict():
