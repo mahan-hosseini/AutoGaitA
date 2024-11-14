@@ -130,7 +130,7 @@ def some_prep(info, folderinfo, cfg):
 
     # Annoying thing 1 of our simi data: there were two Time = 0s, we take the second
     # (i.e. last)
-    if len(np.where(data[DF_TIME_COL] == 0)[0]) > 1:
+    if DF_TIME_COL in data.columns and len(np.where(data[DF_TIME_COL] == 0)[0]) > 1:
         real_start_idx = np.where(data[DF_TIME_COL] == 0)[0][-1]
         data = data.iloc[real_start_idx:, :]
         data.index = range(len(data))  # update index

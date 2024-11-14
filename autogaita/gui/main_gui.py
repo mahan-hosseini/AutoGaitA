@@ -1,20 +1,26 @@
 # %% imports
 import autogaita
-from autogaita.gaita_res.gui_utils import configure_the_icon
+import autogaita.gui.gaita_widgets as gaita_widgets
+import autogaita.gui.gui_utils as gui_utils
 import tkinter as tk
 import customtkinter as ctk
 from PIL import Image, ImageTk
 from importlib import resources
 
 # %% global constants
-TXT_COLOR = "#ffffff"  # white
-FONT_SIZE = 35
-DLC_FG_COLOR = "#789b73"  # grey green
-DLC_HOVER_COLOR = "#287c37"  # darkish green
-UNIVERSAL3D_FG_COLOR = "#c0737a"  # dusty rose
-UNIVERSAL3D_HOVER_COLOR = "#b5485d"  # dark rose
-GROUP_FG_COLOR = "#5a7d9a"  # steel blue
-GROUP_HOVER_COLOR = "#016795"  # peacock blue
+from autogaita.gui.gui_constants import (
+    DLC_FG_COLOR,
+    DLC_HOVER_COLOR,
+    SLEAP_FG_COLOR,
+    SLEAP_HOVER_COLOR,
+    UNIVERSAL3D_FG_COLOR,
+    UNIVERSAL3D_HOVER_COLOR,
+    GROUP_FG_COLOR,
+    GROUP_HOVER_COLOR,
+    get_widget_cfg_dict,  # function!
+)
+
+WIDGET_CFG = get_widget_cfg_dict()
 
 
 # %%...............................  MAIN PROGRAM  .....................................
@@ -47,7 +53,7 @@ def run_gui():
     # set the dimensions of the screen and where it is placed
     root.geometry("%dx%d+%d+%d" % root_dimensions)
     root.title("AutoGaitA")
-    configure_the_icon(root)
+    gui_utils.configure_the_icon(root)
     # Set minimum and maximum sizes for the window (if user tries to resize manually)
     # => Prevents users from resizing the window because we decided against dynamically
     #    resizing logo image because it was really annoying (and slowed down stuff)
@@ -73,38 +79,45 @@ def run_gui():
     image_label = tk.Label(root, image=photo)
     image_label.grid(row=0, column=0, sticky="nsew")
     # 2 - DLC Button
-    dlc_button = ctk.CTkButton(
+    WIDGET_CFG["FG_COLOR"] = DLC_FG_COLOR
+    WIDGET_CFG["HOVER_COLOR"] = DLC_HOVER_COLOR
+    dlc_button = gaita_widgets.header_button(
         root,
-        text="DeepLabCut",
-        fg_color=DLC_FG_COLOR,
-        hover_color=DLC_HOVER_COLOR,
-        text_color=TXT_COLOR,
-        font=("Britannic Bold", FONT_SIZE),
-        command=lambda: autogaita.run_dlc_gui(),
+        "DeepLabCut",
+        WIDGET_CFG,
     )
+    dlc_button.configure(command=lambda: autogaita.run_dlc_gui())
     dlc_button.grid(row=1, column=0, sticky="nsew")
-    # 3 - Universal 3D Button
-    universal3D_button = ctk.CTkButton(
+    # 3 - SLEAP Button
+    WIDGET_CFG["FG_COLOR"] = SLEAP_FG_COLOR
+    WIDGET_CFG["HOVER_COLOR"] = SLEAP_HOVER_COLOR
+    sleap_button = gaita_widgets.header_button(
         root,
-        text="Universal 3D",
-        fg_color=UNIVERSAL3D_FG_COLOR,
-        hover_color=UNIVERSAL3D_HOVER_COLOR,
-        text_color=TXT_COLOR,
-        font=("Britannic Bold", FONT_SIZE),
-        command=lambda: autogaita.run_universal3D_gui(),
+        "SLEAP",
+        WIDGET_CFG,
     )
-    universal3D_button.grid(row=2, column=0, sticky="nsew")
-    # 4 - Group Button
-    group_button = ctk.CTkButton(
+    sleap_button.configure(command=lambda: autogaita.run_sleap_gui())
+    sleap_button.grid(row=2, column=0, sticky="nsew")
+    # 4 - Universal 3D Button
+    WIDGET_CFG["FG_COLOR"] = UNIVERSAL3D_FG_COLOR
+    WIDGET_CFG["HOVER_COLOR"] = UNIVERSAL3D_HOVER_COLOR
+    universal3D_button = gaita_widgets.header_button(
         root,
-        text="Group",
-        fg_color=GROUP_FG_COLOR,
-        hover_color=GROUP_HOVER_COLOR,
-        text_color=TXT_COLOR,
-        font=("Britannic Bold", FONT_SIZE),
-        command=lambda: autogaita.run_group_gui(),
+        "Universal 3D",
+        WIDGET_CFG,
     )
-    group_button.grid(row=3, column=0, sticky="nsew")
+    universal3D_button.configure(command=lambda: autogaita.run_universal3D_gui())
+    universal3D_button.grid(row=3, column=0, sticky="nsew")
+    # 5 - Group Button
+    WIDGET_CFG["FG_COLOR"] = GROUP_FG_COLOR
+    WIDGET_CFG["HOVER_COLOR"] = GROUP_HOVER_COLOR
+    group_button = gaita_widgets.header_button(
+        root,
+        "Group",
+        WIDGET_CFG,
+    )
+    group_button.configure(command=lambda: autogaita.run_group_gui())
+    group_button.grid(row=4, column=0, sticky="nsew")
     # maximise buttons
     num_rows = root.grid_size()[1]  # maximise rows
     for r in range(1, num_rows):

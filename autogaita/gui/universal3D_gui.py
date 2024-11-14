@@ -1,5 +1,6 @@
 # %% imports
 import autogaita.gui.gaita_widgets as gaita_widgets
+import autogaita.gui.gui_utils as gui_utils
 from autogaita.gui.first_level_gui_utils import (
     update_config_file,
     extract_cfg_from_json_file,
@@ -7,7 +8,6 @@ from autogaita.gui.first_level_gui_utils import (
 )
 from autogaita.gaita_res.utils import try_to_run_gaita
 from autogaita.universal3D.universal3D_datafile_preparation import prepare_3D
-from autogaita.gaita_res.gui_utils import configure_the_icon
 import tkinter as tk
 import customtkinter as ctk
 import os
@@ -126,8 +126,8 @@ def run_universal3D_gui():
     # => have it half-wide starting at 1/4 of screen's width (dont change w & x!)
     root.geometry(f"{int(screen_width / 2)}x{screen_height}+{int(screen_width / 4)}+0")
     root.title("Universal 3D GaitA")
-    fix_window_after_its_creation(root)
-    configure_the_icon(root)
+    gui_utils.fix_window_after_its_creation(root)
+    gui_utils.configure_the_icon(root)
 
     # ..........................................................................
     # ........................  root window population .........................
@@ -197,7 +197,7 @@ def run_universal3D_gui():
         WIDGET_CFG,
     )
     postname_flag_checkbox.configure(
-        command=lambda: change_postname_entry_state(postname_entry, results),
+        command=lambda: gui_utils.change_postname_entry_state(results, postname_entry),
     )
     postname_flag_checkbox.grid(row=4, column=0, columnspan=2)
 
@@ -269,7 +269,7 @@ def run_universal3D_gui():
         WIDGET_CFG,
     )
     singlevideo_checkbox.configure(
-        command=lambda: change_ID_entry_state(ID_entry),
+        command=lambda: gui_utils.change_ID_entry_state(cfg, ID_entry),
     )
     singlevideo_checkbox.grid(row=15, column=0, columnspan=2)
 
@@ -279,7 +279,7 @@ def run_universal3D_gui():
     )
     ID_label.grid(row=16, column=0, sticky="e")
     ID_entry.grid(row=16, column=1, sticky="w")
-    change_ID_entry_state(ID_entry)
+    gui_utils.change_ID_entry_state(cfg, ID_entry)
 
     # run analysis button
     run_button = gaita_widgets.header_button(root, "Run Analysis!", WIDGET_CFG)
@@ -328,7 +328,7 @@ def run_universal3D_gui():
     exit_button.grid(row=19, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # maximise widgets
-    maximise_widgets(root)
+    gui_utils.maximise_widgets(root)
     root.columnconfigure(list(range(2)), weight=1, uniform="Silent_Creme")
 
     # main loop
@@ -347,7 +347,7 @@ def build_datafile_prep_window(root, results, cfg):
     fileprep_window.geometry(
         f"{int(screen_width / 2)}x{int(screen_height / 1.5)}+{int(screen_width / 4)}+{int(screen_height / 6)}"
     )
-    fix_window_after_its_creation(fileprep_window)
+    gui_utils.fix_window_after_its_creation(fileprep_window)
 
     # fileprep header
     fileprep_header_label = gaita_widgets.header_label(
@@ -500,7 +500,7 @@ def build_datafile_prep_window(root, results, cfg):
         row=row_num + 7, column=0, columnspan=2, padx=30, pady=(10, 5), sticky="ew"
     )
     # maximise widgets
-    maximise_widgets(fileprep_window)
+    gui_utils.maximise_widgets(fileprep_window)
 
 
 def run_universal_3D_preparation(task, cfg):
@@ -537,7 +537,7 @@ def build_cfg_window(root, cfg):
     cfg_window.geometry(
         f"{int(screen_width / 2)}x{screen_height}+{int(screen_width / 4)}+0"
     )
-    fix_window_after_its_creation(cfg_window)
+    gui_utils.fix_window_after_its_creation(cfg_window)
 
     #  ...........................  advanced analysis  .................................
     # advanced analysis header
@@ -688,7 +688,7 @@ def build_column_info_window(root, cfg, root_dimensions):
     columnwindow = ctk.CTkToplevel(root)
     columnwindow.geometry("%dx%d+%d+%d" % root_dimensions)
     columnwindow.title("Custom column names & features")
-    fix_window_after_its_creation(columnwindow)
+    gui_utils.fix_window_after_its_creation(columnwindow)
 
     # .............  Nested Function: Add joint label & entry  .........................
     def add_joint(window, key):
@@ -817,7 +817,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         pady=10,
     )
     # maximise everything in columnwindow
-    maximise_widgets(columnwindow)
+    gui_utils.maximise_widgets(columnwindow)
 
 
 def initialise_labels_and_entries(window, key, which_case_string, *args):
@@ -895,7 +895,7 @@ def build_donewindow(results, root, root_dimensions):
     donewindow.geometry(
         "%dx%d+%d+%d" % (donewindow_w, donewindow_h, donewindow_x, donewindow_y)
     )
-    fix_window_after_its_creation(donewindow)
+    gui_utils.fix_window_after_its_creation(donewindow)
 
     # labels
     done_label1_string = "Your results will be saved as your data is processed"
@@ -949,7 +949,7 @@ def build_donewindow(results, root, root_dimensions):
     )
     done_button.grid(row=4, column=0, sticky="nsew", pady=10, padx=200)
 
-    maximise_widgets(donewindow)
+    gui_utils.maximise_widgets(donewindow)
 
 
 # %%..........  LOCAL FUNCTION(S) #5 - PREPARE & CALL AUTOGAITA  ....................
@@ -1025,44 +1025,6 @@ def multirun_run_a_single_dataset(idx, multirun_info, this_folderinfo, this_runs
 
 
 # %%..............  LOCAL FUNCTION(S) #6 - VARIOUS HELPER FUNCTIONS  ...................
-
-
-def change_ID_entry_state(ID_entry):
-    """Change the state of ID entry widget based on whether user wants to only analyse
-    a single dataset.
-    """
-    if cfg["analyse_singlerun"].get() is True:
-        ID_entry.configure(state="normal")
-    elif cfg["analyse_singlerun"].get() is False:
-        ID_entry.configure(state="disabled")
-
-
-def fix_window_after_its_creation(window):
-    """Perform some quality of life things after creating a window (root or Toplevel)"""
-    window.attributes("-topmost", True)
-    window.focus_set()
-    window.after(100, lambda: window.attributes("-topmost", False))  # 100 ms
-
-
-def change_postname_entry_state(postname_entry, results):
-    """Change the state of ID entry widget based on whether user wants to only analyse
-    a single dataset.
-    """
-    if results["postname_flag"].get() is True:
-        postname_entry.configure(state="normal")
-    elif results["postname_flag"].get() is False:
-        postname_entry.configure(state="disabled")
-
-
-def maximise_widgets(window):
-    """Maximises all widgets to look good in fullscreen"""
-    # fix the grid to fill the window
-    num_rows = window.grid_size()[1]  # maximise rows
-    for r in range(num_rows):
-        window.grid_rowconfigure(r, weight=1)
-    num_cols = window.grid_size()[0]  # maximise cols
-    for c in range(num_cols):
-        window.grid_columnconfigure(c, weight=1)
 
 
 def get_results_and_cfg(results, cfg):

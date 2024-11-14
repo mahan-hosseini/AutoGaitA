@@ -1,8 +1,7 @@
 # %% imports
 import autogaita
-from autogaita import gui
 import autogaita.gui.gaita_widgets as gaita_widgets
-from autogaita.gaita_res.gui_utils import configure_the_icon
+import autogaita.gui.gui_utils as gui_utils
 import tkinter as tk
 import customtkinter as ctk
 import pandas as pd
@@ -16,6 +15,8 @@ import copy
 
 # %% global constants
 from autogaita.gui.gui_constants import (
+    GROUP_FG_COLOR,
+    GROUP_HOVER_COLOR,
     HEADER_FONT_NAME,
     HEADER_FONT_SIZE,
     HEADER_TXT_COLOR,
@@ -25,12 +26,13 @@ from autogaita.gui.gui_constants import (
     ADV_CFG_TEXT_FONT_SIZE,
     COLOR_PALETTES_LIST,
     WINDOWS_TASKBAR_MAXHEIGHT,
+    AUTOGAITA_FOLDER_PATH,
     get_widget_cfg_dict,  # function!
 )
 
 # these colors are GUI-specific - add to common widget cfg
-FG_COLOR = "#5a7d9a"  # steel blue
-HOVER_COLOR = "#8ab8fe"  # carolina blue
+FG_COLOR = GROUP_FG_COLOR
+HOVER_COLOR = GROUP_HOVER_COLOR
 WIDGET_CFG = get_widget_cfg_dict()
 WIDGET_CFG["FG_COLOR"] = FG_COLOR
 WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
@@ -68,14 +70,6 @@ TK_STR_VARS = [
 EXCLUDED_VARS_FROM_CFG_FILE = ["last_runs_stats_variables", "last_runs_PCA_variables"]
 NORM_SHEET_NAME = "Normalised Stepcycle"
 
-
-# To get the path of the autogaita gui folder I use __file__
-# which returns the path of the autogaita gui module imported above.
-# Removing the 11 letter long "__init__.py" return the folder path
-autogaita_utils_path = gui.__file__
-AUTOGAITA_FOLDER_PATH = autogaita_utils_path[:-11]
-
-
 # %%...............................  MAIN PROGRAM ......................................
 
 
@@ -102,7 +96,7 @@ def run_group_gui():
     # root
     root = ctk.CTk()
     fix_window_after_its_creation(root)
-    configure_the_icon(root)
+    gui_utils.configure_the_icon(root)
 
     # prepare screen width / height for later windows
     global screen_width, screen_height

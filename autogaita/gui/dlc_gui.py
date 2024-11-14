@@ -1,5 +1,6 @@
 # %% imports
 import autogaita.gui.gaita_widgets as gaita_widgets
+import autogaita.gui.gui_utils as gui_utils
 from autogaita.gui.first_level_gui_utils import (
     update_config_file,
     extract_cfg_from_json_file,
@@ -7,13 +8,11 @@ from autogaita.gui.first_level_gui_utils import (
 )
 from autogaita.dlc.dlc_utils import extract_info, run_singlerun_in_multirun
 from autogaita.gaita_res.utils import try_to_run_gaita
-from autogaita.gaita_res.gui_utils import configure_the_icon
 import tkinter as tk
 import customtkinter as ctk
 import os
 from threading import Thread
 import platform
-
 
 # %% global constants
 from autogaita.gui.gui_constants import (
@@ -83,7 +82,17 @@ TK_BOOL_VARS = [
     "legend_outside",
 ]
 TK_STR_VARS = [
-    "sampling_rate",
+    "mouse_num",  # (config file's) results dict
+    "run_num",
+    "root_dir",
+    "sctable_filename",
+    "data_string",
+    "beam_string",
+    "premouse_string",
+    "postmouse_string",
+    "prerun_string",
+    "postrun_string",
+    "sampling_rate",  # (config file's) cfg dict
     "pixel_to_mm_ratio",
     "x_sc_broken_threshold",
     "y_sc_broken_threshold",
@@ -144,8 +153,8 @@ def run_dlc_gui():
     # => have it half-wide starting at 1/4 of screen's width (dont change w & x!)
     root.geometry(f"{int(screen_width / 2)}x{screen_height}+{int(screen_width / 4)}+0")
     root.title("DLC GaitA")
-    fix_window_after_its_creation(root)
-    configure_the_icon(root)
+    gui_utils.fix_window_after_its_creation(root)
+    gui_utils.configure_the_icon(root)
 
     # .....................  load cfg dict from config .....................
     # use the values in the config json file for the results dictionary
@@ -188,7 +197,7 @@ def run_dlc_gui():
         WIDGET_CFG,
     )
     convert_checkbox.configure(
-        command=lambda: change_ratio_entry_state(ratio_entry, cfg),
+        command=lambda: gui_utils.change_ratio_entry_state(cfg, ratio_entry),
     )
     convert_checkbox.grid(row=2, column=0, columnspan=2, sticky="w")
 
@@ -205,7 +214,7 @@ def run_dlc_gui():
     )
     ratio_right_label.grid(row=2, column=2, sticky="w")
     # to initialise the widget correctly, run this function once
-    change_ratio_entry_state(ratio_entry)
+    gui_utils.change_ratio_entry_state(cfg, ratio_entry)
 
     # subtract beam
     subtract_beam_checkbox = gaita_widgets.checkbox(
@@ -350,7 +359,7 @@ def build_cfg_window(root, cfg, root_dimensions):
     cfg_window = ctk.CTkToplevel(root)
     cfg_window.title("Advanced Configuration")
     cfg_window.geometry(f"{int(w / 2)}x{h}+{int(w / 4)}+0")
-    fix_window_after_its_creation(cfg_window)
+    gui_utils.fix_window_after_its_creation(cfg_window)
 
     #  ...........................  advanced analysis  .................................
 
@@ -448,8 +457,8 @@ def build_cfg_window(root, cfg, root_dimensions):
         adv_cfg_textsize=True,
     )
     standardise_y_to_joint_box.configure(
-        command=lambda: change_y_standardisation_joint_entry_state(
-            y_standardisation_joint_entry
+        command=lambda: gui_utils.change_y_standardisation_joint_entry_state(
+            cfg, y_standardisation_joint_entry
         ),
     )
     standardise_y_to_joint_box.grid(row=8, column=0, columnspan=2)
@@ -467,7 +476,9 @@ def build_cfg_window(root, cfg, root_dimensions):
     y_standardisation_joint_label.grid(row=9, column=0, sticky="e")
     y_standardisation_joint_entry.grid(row=9, column=1, sticky="w")
     # to initialise the widget correctly, run this function once
-    change_y_standardisation_joint_entry_state(y_standardisation_joint_entry)
+    gui_utils.change_y_standardisation_joint_entry_state(
+        cfg, y_standardisation_joint_entry
+    )
 
     # analyse average x coordinates
     analyse_average_x_box = gaita_widgets.checkbox(
@@ -478,8 +489,8 @@ def build_cfg_window(root, cfg, root_dimensions):
         adv_cfg_textsize=True,
     )
     analyse_average_x_box.configure(
-        command=lambda: change_x_standardisation_box_state(
-            standardise_x_coordinates_box
+        command=lambda: gui_utils.change_x_standardisation_box_state(
+            cfg, standardise_x_coordinates_box
         ),
     )
     analyse_average_x_box.grid(row=10, column=0)
@@ -493,12 +504,12 @@ def build_cfg_window(root, cfg, root_dimensions):
         adv_cfg_textsize=True,
     )
     standardise_x_coordinates_box.configure(
-        command=lambda: change_x_standardisation_joint_entry_state(
-            x_standardisation_joint_entry
+        command=lambda: gui_utils.change_x_standardisation_joint_entry_state(
+            cfg, x_standardisation_joint_entry
         ),
     )
     standardise_x_coordinates_box.grid(row=10, column=1)
-    change_x_standardisation_box_state(standardise_x_coordinates_box)
+    gui_utils.change_x_standardisation_box_state(cfg, standardise_x_coordinates_box)
 
     # x standardisation joint string label & entry
     x_standardisation_joint_label, x_standardisation_joint_entry = (
@@ -512,7 +523,9 @@ def build_cfg_window(root, cfg, root_dimensions):
     )
     x_standardisation_joint_label.grid(row=11, column=0, sticky="e")
     x_standardisation_joint_entry.grid(row=11, column=1, sticky="w")
-    change_x_standardisation_joint_entry_state(x_standardisation_joint_entry)
+    gui_utils.change_x_standardisation_joint_entry_state(
+        cfg, x_standardisation_joint_entry
+    )
 
     # invert y-axis
     invert_y_axis_box = gaita_widgets.checkbox(
@@ -636,7 +649,7 @@ def build_column_info_window(root, cfg, root_dimensions):
     columnwindow = ctk.CTkToplevel(root)
     columnwindow.geometry("%dx%d+%d+%d" % root_dimensions)
     columnwindow.title("Custom column names & features")
-    fix_window_after_its_creation(columnwindow)
+    gui_utils.fix_window_after_its_creation(columnwindow)
 
     # .............  Nested Function: Add joint label & entry  .........................
     def add_joint(window, key):
@@ -701,7 +714,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         beamwindow = ctk.CTkToplevel(columnwindow)
         beamwindow.geometry("%dx%d+%d+%d" % (root_dimensions))
         beamwindow.title("Beam Configuration")
-        fix_window_after_its_creation(beamwindow)
+        gui_utils.fix_window_after_its_creation(beamwindow)
         beam_scrollable_rows = 1
         total_padx = 20
         left_padx = (total_padx, total_padx / 2)
@@ -840,7 +853,7 @@ def build_column_info_window(root, cfg, root_dimensions):
             pady=20,
         )
         # maximise widgets
-        maximise_widgets(beamwindow)
+        gui_utils.maximise_widgets(beamwindow)
 
     # ...................  Scrollable Window Configuration  ............................
     scrollable_rows = 7
@@ -1019,7 +1032,7 @@ def build_column_info_window(root, cfg, root_dimensions):
         pady=(10, 5),
     )
     # maximise everything in columnwindow
-    maximise_widgets(columnwindow)
+    gui_utils.maximise_widgets(columnwindow)
 
 
 def initialise_labels_and_entries(window, key, which_case_string, *args):
@@ -1080,7 +1093,7 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
         runwindow.title("Batch GaitA")
     # runwindow.geometry("%dx%d+%d+%d" % root_dimensions)
     runwindow.geometry(f"{int(w / 2)}x{h}+{int(w / 4)}+0")
-    fix_window_after_its_creation(runwindow)
+    gui_utils.fix_window_after_its_creation(runwindow)
     # fill window with required info labels & entries - then get results
     results = populate_run_window(runwindow, w, analysis, user_ready)
 
@@ -1120,7 +1133,7 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
     donewindow.geometry(
         "%dx%d+%d+%d" % (donewindow_w, donewindow_h, donewindow_x, donewindow_y)
     )
-    fix_window_after_its_creation(donewindow)
+    gui_utils.fix_window_after_its_creation(donewindow)
 
     # labels
     done_label1_string = "Your results will be saved as your data is processed"
@@ -1174,7 +1187,7 @@ def build_run_and_done_windows(root, cfg, analysis, root_dimensions):
     )
     done_button.grid(row=4, column=0, sticky="nsew", pady=10, padx=200)
 
-    maximise_widgets(donewindow)
+    gui_utils.maximise_widgets(donewindow)
 
 
 # %%..........  LOCAL FUNCTION(S) #4 - POPULATE RUN WINDOW ....................
@@ -1342,7 +1355,7 @@ def populate_run_window(runwindow, runwindow_w, analysis, user_ready):
     )
     finishbutton.grid(row=r + 20, column=0, rowspan=2, sticky="nsew", pady=5, padx=70)
     # maximise widgets
-    maximise_widgets(runwindow)
+    gui_utils.maximise_widgets(runwindow)
     # wait until user is ready before returning
     runwindow.wait_variable(user_ready)
     return results
@@ -1413,55 +1426,6 @@ def analyse_multi_run(this_runs_results, this_runs_cfg):
 
 
 # %%...............  LOCAL FUNCTION(S) #6 - VARIOUS HELPER FUNCTIONS  ..................
-
-
-def change_ratio_entry_state(ratio_entry):
-    """Change the state of ratio entry widget based on whether user wants
-    to convert pixels to mm or not.
-    """
-    if cfg["convert_to_mm"].get() is True:
-        ratio_entry.configure(state="normal")
-    elif cfg["convert_to_mm"].get() is False:
-        ratio_entry.configure(state="disabled")
-
-
-def change_y_standardisation_joint_entry_state(y_standardisation_joint_entry):
-    if cfg["standardise_y_to_a_joint"].get() is True:
-        y_standardisation_joint_entry.configure(state="normal")
-    elif cfg["standardise_y_to_a_joint"].get() is False:
-        y_standardisation_joint_entry.configure(state="disabled")
-
-
-def change_x_standardisation_box_state(standardise_x_coordinates_box):
-    if cfg["analyse_average_x"].get() is True:
-        standardise_x_coordinates_box.configure(state="normal")
-    elif cfg["analyse_average_x"].get() is False:
-        standardise_x_coordinates_box.configure(state="disabled")
-
-
-def change_x_standardisation_joint_entry_state(x_standardisation_joint_entry):
-    if cfg["standardise_x_coordinates"].get() is True:
-        x_standardisation_joint_entry.configure(state="normal")
-    elif cfg["standardise_x_coordinates"].get() is False:
-        x_standardisation_joint_entry.configure(state="disabled")
-
-
-def maximise_widgets(window):
-    """Maximises all widgets to look good in fullscreen"""
-    # fix the grid to fill the window
-    num_rows = window.grid_size()[1]  # maximise rows
-    for r in range(num_rows):
-        window.grid_rowconfigure(r, weight=1)
-    num_cols = window.grid_size()[0]  # maximise cols
-    for c in range(num_cols):
-        window.grid_columnconfigure(c, weight=1)
-
-
-def fix_window_after_its_creation(window):
-    """Perform some quality of life things after creating a window (root or Toplevel)"""
-    window.attributes("-topmost", True)
-    window.focus_set()
-    window.after(100, lambda: window.attributes("-topmost", False))  # 100 ms
 
 
 def get_results_and_cfg(results, cfg, analysis):
