@@ -3,6 +3,7 @@ from .gui.main_gui import run_gui  # autogaita.run_gui()
 
 # 3 sub-guis
 from .gui.dlc_gui import run_dlc_gui  # autogaita.run_dlc_gui()
+from .gui.sleap_gui import run_sleap_gui  # autogaita.run_sleap_gui()
 from .gui.universal3D_gui import (
     run_universal3D_gui,
 )  # autogaita.run_universal3D_gui()

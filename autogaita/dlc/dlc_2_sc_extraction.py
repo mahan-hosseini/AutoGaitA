@@ -1,6 +1,6 @@
 # %% imports
 from autogaita.gaita_res.utils import write_issues_to_textfile
-from autogaita.core2D.core2D_sc_extraction_utils import (
+from autogaita.common2D.common2D_utils import (
     check_cycle_out_of_bounds,
     check_cycle_duplicates,
     check_cycle_order,
@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 
 # %% constants
-from autogaita.core2D.core2D_constants import (
+from autogaita.common2D.common2D_constants import (
     SCXLS_MOUSECOLS,
     SCXLS_RUNCOLS,
     SCXLS_SCCOLS,

@@ -36,8 +36,8 @@ def dlc_singlerun():
     cfg["standardise_y_at_SC_level"] = False
     cfg["standardise_y_to_a_joint"] = True
     cfg["y_standardisation_joint"] = ["Hind paw tao"]
-    cfg["plot_joint_number"] = 3
-    cfg["color_palette"] = "viridis"
+    cfg["plot_joint_number"] = 5
+    cfg["color_palette"] = "Set2"
     cfg["legend_outside"] = True
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
@@ -63,7 +63,7 @@ def dlc_singlerun():
     }
     # info
     info = {}
-    info["mouse_num"] = 12
+    info["mouse_num"] = 17
     info["run_num"] = 3
     info["name"] = "ID " + str(info["mouse_num"]) + " - Run " + str(info["run_num"])
     if folderinfo["results_dir"]:

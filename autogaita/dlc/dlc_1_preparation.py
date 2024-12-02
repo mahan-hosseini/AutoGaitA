@@ -1,7 +1,7 @@
 # %% imports
 from autogaita.gaita_res.utils import write_issues_to_textfile
 from autogaita.dlc.dlc_utils import prepare_DLC_df
-from autogaita.core2D.core2D_constants import FILE_ID_STRING_ADDITIONS
+from autogaita.common2D.common2D_constants import FILE_ID_STRING_ADDITIONS
 import os
 import shutil
 import json
@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 
 # %% constants
-from autogaita.core2D.core2D_constants import (
+from autogaita.common2D.common2D_constants import (
     DIRECTION_DLC_THRESHOLD,
     TIME_COL,
     ISSUES_TXT_FILENAME,
@@ -427,11 +427,9 @@ def check_and_expand_cfg(data, cfg, info):
             write_issues_to_textfile(beam_col_error_message, info)
             print(beam_col_error_message)
             return
-
     # never standardise @ SC level if user subtracted a beam
-    if cfg["subtract_beam"]:
+    if cfg["subtract_beam"] is True:
         cfg["standardise_y_at_SC_level"] = False
-
     # test x/y standardisation joints if needed
     broken_standardisation_joint = ""
     if cfg["standardise_x_coordinates"]:

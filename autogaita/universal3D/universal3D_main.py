@@ -16,6 +16,7 @@ matplotlib.use("agg")
 # this is used to generate and save the plot figures
 # later a tkinter backend (FigureCanvasTkAgg) is used for the plot panel
 plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
+from autogaita.gui.gui_constants import UNIVERSAL3D_FG_COLOR, UNIVERSAL3D_HOVER_COLOR
 
 # %%
 # ......................................................................................
@@ -49,7 +50,7 @@ def universal3D(info, folderinfo, cfg):
     """
     # .............. initiate plot panel class and build loading screen ................
     # create class instance independently of "dont_show_plots" to not break the code
-    plot_panel_instance = PlotPanel()
+    plot_panel_instance = PlotPanel(UNIVERSAL3D_FG_COLOR, UNIVERSAL3D_HOVER_COLOR)
 
     if cfg["dont_show_plots"] is True:
         pass  # going on without building the loading screen

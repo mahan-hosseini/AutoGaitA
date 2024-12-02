@@ -15,8 +15,6 @@ def sleap_singlerun():
     )
     folderinfo["results_dir"] = ""
     folderinfo["sctable_filename"] = "Annotation Table"
-    folderinfo["postname_string"] = ""
-    # BECAUSE SLEAP IS TOO MUCH LIKE DLC STILL
     folderinfo["data_string"] = ""
     folderinfo["beam_string"] = ""
 
@@ -42,7 +40,7 @@ def sleap_singlerun():
     cfg["plot_joint_number"] = 3
     cfg["color_palette"] = "viridis"
     cfg["legend_outside"] = True
-    cfg["invert_y_axis"] = False
+    # cfg["invert_y_axis"] = False
     cfg["flip_gait_direction"] = False
     cfg["analyse_average_x"] = False
     cfg["standardise_x_coordinates"] = False

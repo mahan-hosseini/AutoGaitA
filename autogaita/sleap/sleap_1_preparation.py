@@ -8,7 +8,11 @@ import numpy as np
 import h5py
 
 # %% constants
-from autogaita.core2D.core2D_constants import ISSUES_TXT_FILENAME, CONFIG_JSON_FILENAME
+from autogaita.common2D.common2D_constants import (
+    TIME_COL,
+    ISSUES_TXT_FILENAME,
+    CONFIG_JSON_FILENAME,
+)
 
 
 # %% workflow step #1 - preparation
@@ -19,17 +23,22 @@ def some_prep(info, folderinfo, cfg):
 
     # ............................  unpack stuff  ......................................
     # => DON'T unpack (joint) cfg-keys that are tested later by check_and_expand_cfg
+    # SLEAP-specific NOTE
+    # => I commented out vars that we dont need but might need in the future
     name = info["name"]
     results_dir = info["results_dir"]
-    postname_string = folderinfo["postname_string"]
     data_string = folderinfo["data_string"]
     beam_string = folderinfo["beam_string"]
     sampling_rate = cfg["sampling_rate"]
+    # IMPORTANT NOTE
+    # => subtract_beam is hardcoded to False until I have data that allows me to test
+    #    it properly (same for gait direction flipping @ end of this function)
+    cfg["subtract_beam"] = False
     subtract_beam = cfg["subtract_beam"]
     convert_to_mm = cfg["convert_to_mm"]
     pixel_to_mm_ratio = cfg["pixel_to_mm_ratio"]
     standardise_y_at_SC_level = cfg["standardise_y_at_SC_level"]
-    invert_y_axis = cfg["invert_y_axis"]
+    # invert_y_axis = cfg["invert_y_axis"]
     flip_gait_direction = cfg["flip_gait_direction"]
     analyse_average_x = cfg["analyse_average_x"]
     standardise_x_coordinates = cfg["standardise_x_coordinates"]
@@ -75,18 +84,64 @@ def some_prep(info, folderinfo, cfg):
         return
 
     # ............................  import data  .......................................
-    data = pd.DataFrame(data=None)
+    # initialise dfs for user error handling
+    datadf = pd.DataFrame(data=None)
+    datadf_duplicate_error = ""
+    beamdf = pd.DataFrame(data=None)
+    beamdf_duplicate_error = ""
+    # loop through folder and import data
     for filename in os.listdir(results_dir):
-        if name + postname_string + ".h5" in filename:
-            with h5py.File(os.path.join(results_dir, filename), "r") as f:
-                dset_names = list(f.keys())
-                locations = f["tracks"][:].T
-                node_names = [n.decode() for n in f["node_names"][:]]
-                data.index = np.arange(np.shape(locations)[0])
-                data["Time"] = data.index * (1 / sampling_rate)
-                for node_idx, node_name in enumerate(node_names):
-                    for c, coord in enumerate(["x", "y"]):
-                        data[node_name + " " + coord] = locations[:, node_idx, c, 0]
+        if name + data_string + ".h5" in filename:
+            if datadf.empty:
+                datadf = h5_to_df(results_dir, filename)
+            else:
+                datadf_duplicate_error = (
+                    "\n******************\n! CRITICAL ERROR !\n******************\n"
+                    + "Multiple DATA .h5 files found for "
+                    + name
+                    + "!\nPlease make sure to only have one data file per ID."
+                )
+        if subtract_beam and name + beam_string + ".h5" in filename:
+            if beamdf.empty:
+                beamdf = h5_to_df(results_dir, filename)
+            else:
+                beamdf_duplicate_error = (
+                    "\n******************\n! CRITICAL ERROR !\n******************\n"
+                    + "Multiple BEAM .h5 files found for "
+                    + name
+                    + "!\nPlease make sure to only have one beam file per ID."
+                )
+    # handle errors now
+    import_error_message = ""
+    if datadf_duplicate_error:
+        import_error_message += datadf_duplicate_error
+    if datadf.empty:
+        import_error_message += (
+            "\n******************\n! CRITICAL ERROR !\n******************\n"
+            + "No DATA .h5 file found for "
+            + name
+            + "!\nTry again!"
+        )
+    if subtract_beam:
+        if beamdf_duplicate_error:
+            import_error_message += beamdf_duplicate_error
+        if beamdf.empty:
+            import_error_message += (
+                "\n******************\n! CRITICAL ERROR !\n******************\n"
+                + "No BEAM .h5 file found for "
+                + name
+                + "!\nTry again!"
+            )
+    if import_error_message:
+        write_issues_to_textfile(import_error_message, info)
+        print(import_error_message)
+        return  # make sure to stop execution if there is an issue!
+    # create "data" as floats and depending on whether we subtracted beam or not
+    if subtract_beam:
+        data = pd.concat([datadf, beamdf], axis=1)
+    else:
+        data = datadf.copy(deep=True)
+    data = data.astype(float)
 
     # ................  final data checks, conversions & additions  ....................
     # IMPORTANT - MAIN TESTS OF USER-INPUT VALIDITY OCCUR HERE!
@@ -124,6 +179,53 @@ def some_prep(info, folderinfo, cfg):
     # note - using "w" will overwrite/truncate file, thus no need to remove it if exists
     with open(config_json_path, "w") as config_json_file:
         json.dump(config_vars_to_json, config_json_file, indent=4)
+    # if we don't have a beam to subtract, standardise y to a joint's or global ymin = 0
+    if not subtract_beam:
+        y_min = float("inf")
+        y_cols = [col for col in data.columns if col.endswith("y")]
+        if standardise_y_to_a_joint:
+            y_min = data[y_standardisation_joint + "y"].min()
+        else:
+            y_min = data[y_cols].min().min()
+        data[y_cols] -= y_min
+    # convert pixels to millimeters
+    if convert_to_mm:
+        for column in data.columns:
+            # if might be unnecessary but I'm cautious as I don't know SLEAP data much
+            if column.endswith("x") or column.endswith("y"):
+                data[column] = data[column] / pixel_to_mm_ratio
+
+    # IMPORTANT NOTE
+    # => I keep gait direction flipping commented out until receiving data that allows
+    #    me to test it properly
+    # => Note that subtract_beam is hardcoded to False above for the same reason
+
+    # check gait direction & DLC file validity
+    # data = check_gait_direction(data, direction_joint, flip_gait_direction, info)
+    data["Flipped"] = False  # because of IMPORTANT NOTE above
+
+    # subtract the beam from the joints to standardise y
+    # => bc. we simulate that all mice run from left to right, we can write:
+    #     (note that we also flip beam x columns, but never y-columns!)
+    # => & bc. we multiply y values by *-1 earlier, it's a neg_num - - neg_num
+    #    pushing it towards zero.
+    # => using list(set()) to ensure that we don't have duplicate values (if users
+    #    should have provided them in both cfg vars by misstake)
+    # => beam_col_left and right is provided by users
+    if subtract_beam:
+        # note beam_col_left/right are always lists in cfg!
+        beam_col_left = cfg["beam_col_left"][0]
+        beam_col_right = cfg["beam_col_right"][0]
+        for joint in list(set(hind_joints + beam_hind_jointadd)):
+            data[joint + "y"] = data[joint + "y"] - data[beam_col_left + "y"]
+        for joint in list(set(fore_joints + beam_fore_jointadd)):
+            data[joint + "y"] = data[joint + "y"] - data[beam_col_right + "y"]
+        data.drop(columns=list(beamdf.columns), inplace=True)  # beam not needed anymore
+    # add Time
+    data[TIME_COL] = data.index * (1 / sampling_rate)
+    # reorder the columns we added
+    cols = [TIME_COL, "Flipped"]
+    data = data[cols + [c for c in data.columns if c not in cols]]
     return data
 
 
@@ -136,20 +238,33 @@ def move_data_to_folders(info, folderinfo):
     name = info["name"]
     results_dir = info["results_dir"]
     root_dir = folderinfo["root_dir"]
-    postname_string = folderinfo["postname_string"]
+    data_string = folderinfo["data_string"]
     os.makedirs(results_dir)
     # move csv or h5 files
     for filename in os.listdir(root_dir):
-        if name + postname_string + ".csv" in filename:
+        if name + data_string + ".csv" in filename:
             shutil.copy2(
                 os.path.join(root_dir, filename),
                 os.path.join(results_dir, filename),
             )
-        elif name + postname_string + ".h5" in filename:
+        elif name + data_string + ".h5" in filename:
             shutil.copy2(
                 os.path.join(root_dir, filename),
                 os.path.join(results_dir, filename),
             )
+
+
+def h5_to_df(results_dir, filename):
+    """Convert a SLEAP h5 file to a pandas dataframe used in gaita"""
+    df = pd.DataFrame(data=None)
+    with h5py.File(os.path.join(results_dir, filename), "r") as f:
+        locations = f["tracks"][:].T
+        node_names = [n.decode() for n in f["node_names"][:]]
+        df.index = np.arange(np.shape(locations)[0])
+        for node_idx, node_name in enumerate(node_names):
+            for c, coord in enumerate(["x", "y"]):
+                df[node_name + " " + coord] = locations[:, node_idx, c, 0]
+    return df
 
 
 def check_and_expand_cfg(data, cfg, info):
@@ -237,11 +352,9 @@ def check_and_expand_cfg(data, cfg, info):
             write_issues_to_textfile(beam_col_error_message, info)
             print(beam_col_error_message)
             return
-
     # never standardise @ SC level if user subtracted a beam
-    if cfg["subtract_beam"]:
+    if cfg["subtract_beam"] is True:
         cfg["standardise_y_at_SC_level"] = False
-
     # test x/y standardisation joints if needed
     broken_standardisation_joint = ""
     if cfg["standardise_x_coordinates"]:
@@ -408,3 +521,54 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
             write_issues_to_textfile(clean_angles_message, info)
 
     return string_variable
+
+
+def flip_mouse_body(data, info):
+    """If the mouse ran through the video frame from right to left simulate
+    that it ran from left to right. For this just subtract all x-values of
+    all x-columns from their respective maxima.
+    ==> This preserves time-information important for SC extraction via table
+    ==> This preserves y-information too
+    ==> All analyses & plots are therefore comparable to mice that did really
+        run from left to right
+    """
+
+    # 0) Tell the user that we are flipping their mouse
+    message = (
+        "\nDetermined gait direction of right => left - simulating it to be left => "
+        + "right"
+    )
+    print(message)
+    write_issues_to_textfile(message, info)
+
+    # 1) Flip all rows in x columns only and subtract max from all vals
+    flipped_data = data.copy()
+    x_cols = [col for col in flipped_data.columns if col.endswith(" x")]
+    for col in x_cols:
+        flipped_data[col] = max(flipped_data[col]) - flipped_data[col]
+    return flipped_data
+
+
+def check_gait_direction(data, direction_joint, flip_gait_direction, info):
+    """Check direction of gait - reverse it if needed
+
+    Note
+    ----
+    Also using this check to check for DLC files being broken
+    flip_gait_direction is only used after the check for DLC files being broken
+    """
+
+    data["Flipped"] = False
+    enterframe = 0
+    idx = 0
+    flip_error_message = ""
+
+    # beloow == True means that the mouse ran from right to left
+    # => in this case we flip
+    if np.median(data[direction_joint + "x"][: len(data) // 2]) > np.median(
+        data[direction_joint + "x"][len(data) // 2 :]
+    ):
+        if flip_gait_direction:
+            data = flip_mouse_body(data, info)
+            data["Flipped"] = True
+    return data

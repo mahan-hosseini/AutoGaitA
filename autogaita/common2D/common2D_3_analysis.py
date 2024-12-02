@@ -6,7 +6,7 @@ import numpy as np
 import math
 
 # %% constants
-from autogaita.core2D.core2D_constants import (
+from autogaita.common2D.common2D_constants import (
     TIME_COL,
     ORIGINAL_XLS_FILENAME,
     NORMALISED_XLS_FILENAME,

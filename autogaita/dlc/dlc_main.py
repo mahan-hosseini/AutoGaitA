@@ -1,9 +1,9 @@
 # ...................................  imports  ........................................
 from autogaita.dlc.dlc_1_preparation import some_prep
 from autogaita.dlc.dlc_2_sc_extraction import extract_stepcycles
-from autogaita.core2D.core2D_sc_extraction_utils import handle_issues
-from autogaita.core2D.core2D_3_analysis import analyse_and_export_stepcycles
-from autogaita.core2D.core2D_4_plots import plot_results
+from autogaita.common2D.common2D_utils import handle_issues
+from autogaita.common2D.common2D_3_analysis import analyse_and_export_stepcycles
+from autogaita.common2D.common2D_4_plots import plot_results
 from autogaita.gaita_res.utils import print_finish, PlotPanel
 import matplotlib
 import matplotlib.pyplot as plt
@@ -14,6 +14,7 @@ matplotlib.use("agg")
 # this is used to generate and save the plot figures
 # later a tkinter backend (FigureCanvasTkAgg) is used for the plot panel
 plt.rcParams["figure.dpi"] = 300  # increase resolution of figures
+from autogaita.gui.gui_constants import DLC_FG_COLOR, DLC_HOVER_COLOR
 
 
 # .................................  main program  .....................................
@@ -30,7 +31,7 @@ def dlc(info, folderinfo, cfg):
     """
     # .............. initiate plot panel class and build loading screen ................
     # create class instance independently of "dont_show_plots" to not break the code
-    plot_panel_instance = PlotPanel()
+    plot_panel_instance = PlotPanel(DLC_FG_COLOR, DLC_HOVER_COLOR)
 
     if cfg["dont_show_plots"] is True:
         pass  # going on without building the loading screen

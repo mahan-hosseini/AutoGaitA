@@ -11,6 +11,7 @@ def universal3D_singlerun():
     # folderinfo
     folderinfo = {}
     folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Human/Testing2/"
+    # folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Fly/3D Data/"
     folderinfo["results_dir"] = ""
     folderinfo["sctable_filename"] = "SC Latency Table"
     folderinfo["postname_string"] = ""
@@ -23,11 +24,20 @@ def universal3D_singlerun():
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
     cfg["normalise_height_at_SC_level"] = True
-    cfg["plot_joint_number"] = 7
-    cfg["color_palette"] = "viridis"
+    cfg["plot_joint_number"] = 5
+    cfg["color_palette"] = "Set2"
     cfg["legend_outside"] = True
     cfg["analyse_average_y"] = False
-    cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis", "Shoulder", "Neck"]
+    cfg["joints"] = [
+        # "R1-ThCx",
+        "Midfoot",
+        "Ankle",
+        "Knee",
+        "Hip",
+        "Pelvis",
+        "Shoulder",
+        "Neck",
+    ]
     cfg["angles"] = {
         "name": ["Ankle", "Knee"],
         "lower_joint": ["Midfoot", "Ankle"],
@@ -35,7 +45,7 @@ def universal3D_singlerun():
     }
     # info
     info = {}
-    info["name"] = "SK"  # analyse this dataset
+    info["name"] = "SK" # "A1"  #  # analyse this dataset
     if folderinfo["results_dir"]:
         info["results_dir"] = os.path.join(folderinfo["results_dir"], info["name"])
     else:

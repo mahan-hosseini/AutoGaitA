@@ -14,10 +14,11 @@ import customtkinter as ctk
 import os
 import platform
 
+
 # %% global constants
 from autogaita.gui.gui_constants import (
-    DLC_FG_COLOR,
-    DLC_HOVER_COLOR,
+    SLEAP_FG_COLOR,
+    SLEAP_HOVER_COLOR,
     TEXT_FONT_NAME,
     TEXT_FONT_SIZE,
     WINDOWS_TASKBAR_MAXHEIGHT,
@@ -26,22 +27,21 @@ from autogaita.gui.gui_constants import (
 )
 
 # these colors are GUI-specific - add to common widget cfg
-FG_COLOR = DLC_FG_COLOR
-HOVER_COLOR = DLC_HOVER_COLOR
+FG_COLOR = SLEAP_FG_COLOR
+HOVER_COLOR = SLEAP_HOVER_COLOR
 WIDGET_CFG = get_widget_cfg_dict()
 WIDGET_CFG["FG_COLOR"] = FG_COLOR
 WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
 
-# gaita-variable related constants
-CONFIG_FILE_NAME = "dlc_gui_config.json"
+CONFIG_FILE_NAME = "sleap_gui_config.json"
 FLOAT_VARS = ["pixel_to_mm_ratio"]
 INT_VARS = [
     "sampling_rate",
     "x_sc_broken_threshold",
     "y_sc_broken_threshold",
     "bin_num",
-    "mouse_num",
-    "run_num",
+    # "mouse_num",
+    # "run_num",
     "plot_joint_number",
 ]
 LIST_VARS = [
@@ -68,30 +68,25 @@ TK_BOOL_VARS = [
     "standardise_y_at_SC_level",
     "standardise_y_to_a_joint",
     "standardise_x_coordinates",
-    "invert_y_axis",
+    # "invert_y_axis",
     "flip_gait_direction",
     "analyse_average_x",
     "legend_outside",
 ]
 TK_STR_VARS = [
-    "mouse_num",  # (config file's) results dict
-    "run_num",
+    "name",
     "root_dir",
+    "results_dir",
     "sctable_filename",
     "data_string",
     "beam_string",
-    "premouse_string",
-    "postmouse_string",
-    "prerun_string",
-    "postrun_string",
-    "sampling_rate",  # (config file's) cfg dict
+    "sampling_rate",
     "pixel_to_mm_ratio",
     "x_sc_broken_threshold",
     "y_sc_broken_threshold",
     "bin_num",
     "plot_joint_number",
     "color_palette",
-    "results_dir",
 ]
 GUI_SPECIFIC_VARS = {
     "CONFIG_FILE_NAME": CONFIG_FILE_NAME,
@@ -103,12 +98,11 @@ GUI_SPECIFIC_VARS = {
     "TK_STR_VARS": TK_STR_VARS,
 }
 
-
 # %% An important Note
 # I am using a global variable called cfg because I need its info to be shared
-# between root and advanced_cfg windows. This is not the object-oriented way
+# between root and columnconfiguration window. This is not the object-oriented way
 # that one would do this typically. However, it works as expected since:
-# 1) cfg's values are only ever modified except @ initialisation & by widgets
+# 1) cfg's values are only ever modified @ initialisation & by widgets
 # 2) cfg's values are shared for analysis of a single and multiple video(s)
 # 3) cfg's values are passed to all functions that need them
 # 4) and (IMPORTANTLY!) just before running either (i.e. single/multi) analysis, cfg's
@@ -120,7 +114,7 @@ GUI_SPECIFIC_VARS = {
 # %%............................  MAIN PROGRAM ................................
 
 
-def run_dlc_gui():
+def run_sleap_gui():
     # ..........................................................................
     # ......................  root window initialisation .......................
     # ..........................................................................
@@ -128,7 +122,7 @@ def run_dlc_gui():
     config_file_path = os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME)
     if not os.path.isfile(config_file_path):
         config_file_error_msg = (
-            "dlc_gui_config.json file not found in autogaita folder.\n"
+            "sleap_gui_config.json file not found in autogaita folder.\n"
             "Confirm that the file exists and is named correctly.\n"
             "If not, download it again from the GitHub repository."
         )
@@ -153,7 +147,7 @@ def run_dlc_gui():
     # set the dimensions of the screen and where it is placed
     # => have it half-wide starting at 1/4 of screen's width (dont change w & x!)
     root.geometry(f"{int(screen_width / 2)}x{screen_height}+{int(screen_width / 4)}+0")
-    root.title("DLC GaitA")
+    root.title("SLEAP GaitA")
     gui_utils.fix_window_after_its_creation(root)
     gui_utils.configure_the_icon(root)
 
@@ -217,23 +211,29 @@ def run_dlc_gui():
     # to initialise the widget correctly, run this function once
     gui_utils.change_ratio_entry_state(cfg, ratio_entry)
 
+    # NU - I'll implement beam subtraction and gait direction flipping after having
+    #      data for testing
+
     # subtract beam
     subtract_beam_checkbox = gaita_widgets.checkbox(
         root,
-        "Standardise y-coordinates to baseline height (requires to be tracked)",
+        "(not supported yet) - Standardise y-coordinates to baseline height",
+        # "Standardise y-coordinates to baseline height (requires to be tracked),"
         cfg["subtract_beam"],
         WIDGET_CFG,
     )
     subtract_beam_checkbox.grid(row=3, column=0, columnspan=3, sticky="w")
+    subtract_beam_checkbox.configure(state="disabled")
 
     # flip gait direction
     flip_gait_direction_box = gaita_widgets.checkbox(
         root,
-        "Adjust x-coordinates to follow direction of movement",
+        "(not supported yet) - Adjust x-coordinates to follow direction of movement",
         cfg["flip_gait_direction"],
         WIDGET_CFG,
     )
     flip_gait_direction_box.grid(row=4, column=0, columnspan=3, sticky="w")
+    flip_gait_direction_box.configure(state="disabled")
 
     # plot plots to python
     showplots_checkbox = gaita_widgets.checkbox(
@@ -297,7 +297,7 @@ def run_dlc_gui():
     onevid_button = gaita_widgets.header_button(root, "One Video", WIDGET_CFG)
     onevid_button.configure(
         command=lambda: build_run_and_done_windows(
-            "DLC", "single", root, cfg, WIDGET_CFG, GUI_SPECIFIC_VARS, root_dimensions
+            "SLEAP", "single", root, cfg, WIDGET_CFG, GUI_SPECIFIC_VARS, root_dimensions
         )
     )
     onevid_button.grid(row=13, column=1, sticky="ew")
@@ -306,7 +306,7 @@ def run_dlc_gui():
     multivid_button = gaita_widgets.header_button(root, "Batch Analysis", WIDGET_CFG)
     multivid_button.configure(
         command=lambda: build_run_and_done_windows(
-            "DLC", "multi", root, cfg, WIDGET_CFG, GUI_SPECIFIC_VARS, root_dimensions
+            "SLEAP", "multi", root, cfg, WIDGET_CFG, GUI_SPECIFIC_VARS, root_dimensions
         )
     )
     multivid_button.grid(row=14, column=1, sticky="ew")
@@ -354,4 +354,4 @@ def run_dlc_gui():
 
 # %% what happens if we hit run
 if __name__ == "__main__":
-    run_dlc_gui()
+    run_sleap_gui()

@@ -80,7 +80,7 @@ TK_STR_VARS = [
 # I am using a global variable called cfg because I need its info to be shared
 # between root and columnconfiguration window. This is not the object-oriented way
 # that one would do this typically. However, it works as expected since:
-# 1) cfg's values are only ever modified except @ initialisation & by widgets
+# 1) cfg's values are only ever modified @ initialisation & by widgets
 # 2) cfg's values are shared for analysis of a single and multiple video(s)
 # 3) cfg's values are passed to all functions that need them
 # 4) and (IMPORTANTLY!) just before running either (i.e. single/multi) analysis, cfg's

@@ -1,4 +1,4 @@
-from autogaita.dlc.dlc_utils import extract_info, run_singlerun_in_multirun
+from autogaita.common2D.common2D_utils import extract_info, run_singlerun_in_multirun
 import os
 
 # %% main function
@@ -65,7 +65,7 @@ def dlc_multirun():
     # run a single gaita run for each entry of info
     info = extract_info(folderinfo)
     for idx in range(len(info["name"])):
-        run_singlerun_in_multirun(idx, info, folderinfo, cfg)
+        run_singlerun_in_multirun("DLC", idx, info, folderinfo, cfg)
 
 
 # %% what happens if we just hit run
