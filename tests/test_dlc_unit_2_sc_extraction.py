@@ -1,7 +1,7 @@
 from autogaita.dlc.dlc_main import dlc
 from autogaita.dlc.dlc_1_preparation import some_prep
 from autogaita.dlc.dlc_2_sc_extraction import extract_stepcycles
-from autogaita.core2D.core2D_sc_extraction_utils import (
+from autogaita.common2D.common2D_utils import (
     check_cycle_out_of_bounds,
     check_cycle_duplicates,
     check_cycle_order,
