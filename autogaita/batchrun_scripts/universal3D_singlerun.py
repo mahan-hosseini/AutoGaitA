@@ -45,7 +45,7 @@ def universal3D_singlerun():
     }
     # info
     info = {}
-    info["name"] = "SK" # "A1"  #  # analyse this dataset
+    info["name"] = "SK"  # "A1"  #  # analyse this dataset
     if folderinfo["results_dir"]:
         info["results_dir"] = os.path.join(folderinfo["results_dir"], info["name"])
     else:
