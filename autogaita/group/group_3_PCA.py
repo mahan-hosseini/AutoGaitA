@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import openpyxl
+import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter
 import pdb
@@ -15,6 +16,8 @@ import pdb
 from autogaita.group.group_constants import (
     ID_COL,
     GROUP_COL,
+    PCA_BARPLOT_BARCOLOR,
+    PCA_BARPLOT_LINECOLOR,
     PCA_CUSTOM_SCATTER_OUTER_SEPARATOR,
     PCA_CUSTOM_SCATTER_INNER_SEPARATOR,
 )
@@ -47,6 +50,8 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
         print(PCA_error_message_1)
         write_issues_to_textfile(PCA_error_message_1, results_dir)
         return
+    # plot barplot of cumulative explained variance
+    plot_PCA_barplot(PCA_info, folderinfo, cfg, plot_panel_instance)
     # plot the standard scatterplot
     print("\n*************** Generating Standard PCA Scatterplots ***************\n")
     plot_PCA_scatterplots(
@@ -178,6 +183,42 @@ def PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg):
             sheet.cell(row=i + 5, column=pc + 2, value=PCA_info["components"][pc, i])
     # save
     workbook.save(os.path.join(results_dir, "PCA Info.xlsx"))
+
+
+def plot_PCA_barplot(PCA_info, folderinfo, cfg, plot_panel_instance):
+    """Plot a barplot illustrating PCs explained variance"""
+
+    # unpack
+    number_of_PCs = PCA_info["number_of_PCs"]  # PCA info!
+    explained_vars = PCA_info["explained_vars"]
+    results_dir = folderinfo["results_dir"]
+    dont_show_plots = cfg["dont_show_plots"]
+
+    # plot
+    df = pd.DataFrame(
+        data=explained_vars * 100,
+        columns=["Explained Variance"],
+        index=np.arange(1, PCA_info["number_of_PCs"] + 1),
+    )
+    cumulative_explained_var = []
+    for i in range(number_of_PCs):
+        cumulative_explained_var.append(np.sum(explained_vars[: i + 1]) * 100)
+    f, ax = plt.subplots(1, 1)
+    sns.barplot(df["Explained Variance"], color=PCA_BARPLOT_BARCOLOR, ax=ax)
+    ax.set_xlabel("Principal Components")
+    ax.set_ylabel("Explained Variance (%)")
+    ax.plot(
+        cumulative_explained_var,
+        color=PCA_BARPLOT_LINECOLOR,
+        linestyle=":",
+        marker="o",
+        label="Cumulative Explained Variance",
+    )
+    info_string = "PCA Explained Variance"
+    save_figures(f, results_dir, info_string)
+    # add figure to plot panel figures list
+    if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f)
 
 
 def plot_PCA_scatterplots(
