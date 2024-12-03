@@ -51,7 +51,7 @@ def extract_cfg():
     cfg["permutation_number"] = 100
     cfg["PCA_n_components"] = 3
     cfg["PCA_custom_scatter_PCs"] = ""
-    cfg["PCA_save_3D_video"] = True
+    cfg["PCA_save_3D_video"] = False
     cfg["stats_threshold"] = 0.05
     cfg["plot_SE"] = False
     cfg["color_palette"] = "viridis"
