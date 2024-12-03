@@ -27,8 +27,8 @@ def group_universal3Drun():
         cfg["do_permtest"] = True
         cfg["do_anova"] = True
         cfg["permutation_number"] = 10
-        cfg["number_of_PCs"] = 3
-        cfg["save_3D_PCA_video"] = False
+        cfg["PCA_n_components"] = 3
+        cfg["PCA_save_3D_video"] = False
         cfg["stats_threshold"] = 0.05
         cfg["plot_SE"] = False
         cfg["color_palette"] = "viridis"

@@ -71,3 +71,9 @@ def test_Mixed_ANOVA(extract_cfg):
     assert math.isclose(result["p-unc"][0], stats_df["p(A)"][0], abs_tol=1e-05)
     assert math.isclose(result["p-unc"][1], stats_df["p(B)"][0], abs_tol=1e-05)
     assert math.isclose(result["p-unc"][2], stats_df["p(AxB)"][0], abs_tol=1e-05)
+
+
+# PCA TESTS
+# 1. check with example (eg iris data) that values are correct
+# => check that n components is working as expected (being >1 or between 0 and 1)
+# 2. check that scatter PCs are extracted as expected from string

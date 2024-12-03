@@ -165,8 +165,10 @@ def extract_cfg_vars(folderinfo, cfg):
     cfg["save_to_xls"] = save_to_xls
 
     # .........................  test if PCA config is valid  ..........................
-    if cfg["PCA_variables"]:  # only test if user wants PCA (ie. selected any features)
-        if len(cfg["PCA_variables"]) < cfg["number_of_PCs"]:
+    # only test if user wants PCA (ie. selected any features) and is not using the
+    # var-explained appproiach
+    if cfg["PCA_variables"] and cfg["PCA_n_components"] > 1:
+        if len(cfg["PCA_variables"]) < cfg["PCA_n_components"]:
             PCA_variable_num = len(cfg["PCA_variables"])
             PCA_variables_str = "\n".join(cfg["PCA_variables"])
             PCA_error_message = (
@@ -177,18 +179,18 @@ def extract_cfg_vars(folderinfo, cfg):
                 + " PCA variables: \n"
                 + PCA_variables_str
                 + "\n & Number of wanted PCs: "
-                + str(cfg["number_of_PCs"])
+                + str(cfg["PCA_n_components"])
                 + "\n Fix & re-run!"
             )
             write_issues_to_textfile(PCA_error_message, results_dir)
             raise ValueError(PCA_error_message)
-        if cfg["number_of_PCs"] < 2:
+        if cfg["PCA_n_components"] < 2:
             print(
                 "\n***********\n! WARNING !\n***********\n"
-                + "Number of principal components of PCA cannot be smaller than 2!"
+                + "Number of principal components of PCA cannot be 0 or 1!"
                 + "\nRunning PCA on 2 components - if you do not want to perform PCA, "
                 + "just don't choose any variables for it."
             )
-            cfg["number_of_PCs"] = 2  # make sure to update in cfg dict
+            cfg["PCA_n_components"] = 2  # make sure to update in cfg dict
 
     return cfg

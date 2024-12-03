@@ -1,6 +1,9 @@
 import os
 
-from autogaita.group.group_constants import ISSUES_TXT_FILENAME
+from autogaita.group.group_constants import (
+    ISSUES_TXT_FILENAME,
+    PCA_CUSTOM_SCATTER_OUTER_SEPARATOR,
+)
 
 
 # %% .........................  print start and finish  ................................
@@ -21,9 +24,25 @@ def print_start(folderinfo, cfg):
         start_string += "\n\nFeatures:"
         for PCA_var in cfg["PCA_variables"]:
             start_string += "\n" + PCA_var
-        start_string += (
-            "\n\nConfiguration:\n" + str(cfg["number_of_PCs"]) + " principal components"
-        )
+        if cfg["PCA_n_components"] > 0 and cfg["PCA_n_components"] < 1:
+            start_string += (
+                "\n\nPC-Number Configuration:\n"
+                + str(cfg["PCA_n_components"] * 100)
+                + "% of variance explained"
+            )
+        else:
+            start_string += (
+                "\n\nPC-Number Configuration:\n"
+                + str(cfg["PCA_n_components"])
+                + " principal components"
+            )
+        if cfg["PCA_custom_scatter_PCs"]:
+            start_string += "\n\nCustom Scatterplot Configuration::"
+            for i, custom_scatter_PCs in enumerate(
+                cfg["PCA_custom_scatter_PCs"].split(PCA_CUSTOM_SCATTER_OUTER_SEPARATOR)
+            ):
+                start_string += "\nPlot " + str(i + 1) + " - " + custom_scatter_PCs
+
     else:
         start_string += "\n\nNo PCA wanted!"
     # stats

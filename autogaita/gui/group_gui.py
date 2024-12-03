@@ -47,13 +47,13 @@ LIST_VARS = [
     "stats_variables",  #  stats/PCA variables are also TK_BOOL_VARS but this will be
     "PCA_variables",  #  handled within the ---PCA / STATS FEATURE FRAMES--- part
 ]
-INT_VARS = ["permutation_number", "number_of_PCs"]
+INT_VARS = ["permutation_number", "PCA_n_components"]
 # TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file
 # (note that numbers are initialised as strings)
 TK_BOOL_VARS = [
     "do_permtest",
     "do_anova",
-    "save_3D_PCA_video",
+    "PCA_save_3D_video",
     "plot_SE",
     "legend_outside",
     "dont_show_plots",
@@ -62,7 +62,8 @@ TK_STR_VARS = [
     "anova_design",
     "permutation_number",
     "stats_threshold",
-    "number_of_PCs",
+    "PCA_n_components",
+    "PCA_custom_scatter_PCs",
     "which_leg",
     "results_dir",
     "color_palette",
@@ -448,14 +449,25 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     stats_threshold_entry.grid(row=3, column=0, sticky="n")
 
     # number of PCs
-    number_of_PCs_label, number_of_PCs_entry = gaita_widgets.label_and_entry_pair(
+    PCA_n_components_string = "How many principal components (PC) to compute? 0<PC<1 for var-explained approach!"
+    PCA_n_components_label, PCA_n_components_entry = gaita_widgets.label_and_entry_pair(
         cfgwindow,
-        "How many principal components to compute?",
-        cfg["number_of_PCs"],
+        PCA_n_components_string,
+        cfg["PCA_n_components"],
         WIDGET_CFG,
     )
-    number_of_PCs_label.grid(row=4, column=0)
-    number_of_PCs_entry.grid(row=5, column=0, sticky="n")
+    PCA_n_components_label.grid(row=4, column=0)
+    PCA_n_components_entry.grid(row=5, column=0, sticky="n")
+
+    # custom scatter info
+    custom_scatter_label, custom_scatter_entry = gaita_widgets.label_and_entry_pair(
+        cfgwindow,
+        "Enter PC numbers for custom scatterplot (e.g. 2, 3, 5)",
+        cfg["PCA_custom_scatter_PCs"],
+        WIDGET_CFG,
+    )
+    custom_scatter_label.grid(row=6, column=0)
+    custom_scatter_entry.grid(row=7, column=0, sticky="n")
 
     # color palette
     color_palette_string = "Choose figures' color palette"
@@ -496,7 +508,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     save_PCA_video_checkbox = gaita_widgets.checkbox(
         cfgwindow,
         "Save video of 3D PCA Scatterplot (requires ffmpeg!)",
-        cfg["save_3D_PCA_video"],
+        cfg["PCA_save_3D_video"],
         WIDGET_CFG,
     )
     save_PCA_video_checkbox.grid(row=10, column=0)

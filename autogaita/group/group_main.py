@@ -5,7 +5,7 @@ from autogaita.group.group_2_data_processing import (
     avg_and_std,
     grand_avg_and_std,
 )
-from autogaita.group.group_3_PCA import PCA_on_a_limb
+from autogaita.group.group_3_PCA import PCA_main
 from autogaita.group.group_4_stats import (
     create_stats_df,
     cluster_extent_test,
@@ -81,7 +81,7 @@ def group(folderinfo, cfg):
 
     # ...................................  PCA  ........................................
     if cfg["PCA_variables"]:  # empty lists are falsey!
-        PCA_on_a_limb(avg_dfs, folderinfo, cfg, plot_panel_instance)
+        PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance)
     plt.close("all")  # OK since all figures passed to save-funcs & PlotPanel
 
     # ..............................  prepare statistics  ..............................

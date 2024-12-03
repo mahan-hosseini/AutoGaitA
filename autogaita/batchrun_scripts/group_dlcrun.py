@@ -51,8 +51,10 @@ def group_dlcrun():
     cfg["do_permtest"] = True
     cfg["do_anova"] = True
     cfg["permutation_number"] = 100
-    cfg["number_of_PCs"] = 3
-    cfg["save_3D_PCA_video"] = True
+    cfg["PCA_n_components"] = 6
+    # cfg["PCA_n_components"] = 0.33
+    cfg["PCA_custom_scatter_PCs"] = "4,5,6;4,5;2,4,6"
+    cfg["PCA_save_3D_video"] = True
     cfg["stats_threshold"] = 0.05
     cfg["plot_SE"] = False
     cfg["color_palette"] = "viridis"
@@ -61,7 +63,23 @@ def group_dlcrun():
     cfg["which_leg"] = "left"
     cfg["anova_design"] = "Mixed ANOVA"
     cfg["permutation_number"] = 100
-    cfg["PCA_variables"] = ["Hind paw tao y", "Ankle y", "Knee y"]
+    cfg["PCA_variables"] = [
+        "Hind paw tao y",
+        "Ankle y",
+        "Knee y",
+        "Ankle Angle",
+        "Knee Angle",
+        "Nose x",
+        "Knee y",
+        "Knee x",
+        "Knee Velocity",
+        "Knee Acceleration",
+        "Knee Angle",
+        "Knee Angle Velocity",
+        "Knee Angle Acceleration",
+        "Hip Angle",
+        # "Elbow Angle"
+    ]
     cfg["stats_variables"] = [
         # "Hind paw tao y",
         # "Ankle y",
