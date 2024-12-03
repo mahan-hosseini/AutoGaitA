@@ -449,7 +449,9 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     stats_threshold_entry.grid(row=3, column=0, sticky="n")
 
     # number of PCs
-    PCA_n_components_string = "How many principal components (PC) to compute? 0<PC<1 for var-explained approach!"
+    PCA_n_components_string = (
+        "Number of principal components (PCs). 0<PCs<1 for var-explained approach."
+    )
     PCA_n_components_label, PCA_n_components_entry = gaita_widgets.label_and_entry_pair(
         cfgwindow,
         PCA_n_components_string,
@@ -462,7 +464,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     # custom scatter info
     custom_scatter_label, custom_scatter_entry = gaita_widgets.label_and_entry_pair(
         cfgwindow,
-        "Enter PC numbers for custom scatterplot (e.g. 2, 3, 5)",
+        "Enter PCs for custom scatterplots (e.g. 2,3,5;4,6;3,4,5)",
         cfg["PCA_custom_scatter_PCs"],
         WIDGET_CFG,
     )
@@ -474,7 +476,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     color_palette_label = ctk.CTkLabel(
         cfgwindow, text=color_palette_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
     )
-    color_palette_label.grid(row=6, column=0)
+    color_palette_label.grid(row=8, column=0)
     color_palette_entry = ctk.CTkOptionMenu(
         cfgwindow,
         values=COLOR_PALETTES_LIST,
@@ -484,7 +486,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         button_hover_color=HOVER_COLOR,
         font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    color_palette_entry.grid(row=7, column=0, sticky="n")
+    color_palette_entry.grid(row=9, column=0, sticky="n")
 
     # plot SE
     plot_SE_box = gaita_widgets.checkbox(
@@ -493,7 +495,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         cfg["plot_SE"],
         WIDGET_CFG,
     )
-    plot_SE_box.grid(row=8, column=0)
+    plot_SE_box.grid(row=10, column=0)
 
     # legend outside
     legend_outside_checkbox = gaita_widgets.checkbox(
@@ -502,7 +504,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         cfg["legend_outside"],
         WIDGET_CFG,
     )
-    legend_outside_checkbox.grid(row=9, column=0)
+    legend_outside_checkbox.grid(row=11, column=0)
 
     # save 3D PCA video
     save_PCA_video_checkbox = gaita_widgets.checkbox(
@@ -511,7 +513,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         cfg["PCA_save_3D_video"],
         WIDGET_CFG,
     )
-    save_PCA_video_checkbox.grid(row=10, column=0)
+    save_PCA_video_checkbox.grid(row=12, column=0)
 
     # dont show plots
     dont_show_plots_checkbox = gaita_widgets.checkbox(
@@ -520,7 +522,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         cfg["dont_show_plots"],
         WIDGET_CFG,
     )
-    dont_show_plots_checkbox.grid(row=11, column=0)
+    dont_show_plots_checkbox.grid(row=13, column=0)
 
     # which leg of human data to analyse
     which_leg_string = (
@@ -529,7 +531,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     which_leg_label = ctk.CTkLabel(
         cfgwindow, text=which_leg_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
     )
-    which_leg_label.grid(row=12, column=0)
+    which_leg_label.grid(row=14, column=0)
     which_leg_options = ["left", "right"]  # !!! NU - "both" functionality
     which_leg_optionmenu = ctk.CTkOptionMenu(
         cfgwindow,
@@ -540,7 +542,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         button_hover_color=HOVER_COLOR,
         font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    which_leg_optionmenu.grid(row=13, column=0, sticky="n")
+    which_leg_optionmenu.grid(row=15, column=0, sticky="n")
 
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -551,7 +553,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: cfgwindow.destroy(),
     )
-    adv_cfg_done_button.grid(row=14, column=0, sticky="nsew", pady=20, padx=80)
+    adv_cfg_done_button.grid(row=16, column=0, sticky="nsew", pady=20, padx=80)
 
     # maximise widgets to fit fullscreen
     maximise_widgets(cfgwindow)

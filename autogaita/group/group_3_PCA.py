@@ -288,7 +288,7 @@ def plot_PCA_scatterplots(
         save_figures(f_3d, results_dir, info_string_3d)
         # add figure to plot panel figures list
         if dont_show_plots is False:  # -> show plot panel
-            plot_panel_instance.figures.append(f)
+            plot_panel_instance.figures.append(f_3d)
 
         # 3d scatterplot rotating video file
         if PCA_save_3D_video:
