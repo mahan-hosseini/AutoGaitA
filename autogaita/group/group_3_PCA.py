@@ -304,4 +304,6 @@ def plot_PCA_scatterplots(
                 f_3d, animate, frames=np.arange(0, 360, 1), interval=20, blit=True
             )
             writervideo = FFMpegWriter(fps=30)  # save to m4 using ffmpeg writer
-            anim.save(results_dir + info_string_3d + ".mp4", writer=writervideo)
+            anim.save(
+                os.path.join(results_dir, info_string_3d + ".mp4"), writer=writervideo
+            )
