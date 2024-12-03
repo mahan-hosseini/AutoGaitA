@@ -72,7 +72,7 @@ def prepare_3D(task, cfg, **kwargs):
             counter += 1
     if task == "clean":
         return f"\nCleaned {counter} file successfully!"
-    elif task == "rename":
+    elif task in ["rename", "DLC"]:
         return f"\nRenamed {counter} file successfully!"
 
 

@@ -56,6 +56,7 @@ TK_BOOL_VARS = [
     "postname_flag",
     "analyse_average_y",
     "legend_outside",
+    "fileprep_3D_DLC",
 ]
 TK_STR_VARS = [
     "sampling_rate",
@@ -447,7 +448,7 @@ def build_datafile_prep_window(root, results, cfg):
             run_universal_3D_preparation("clean", cfg),
         )
     )
-    clean_button.grid(row=row_num + 6, column=0, sticky="nsew", padx=10, pady=(10, 5))
+    clean_button.grid(row=row_num + 7, column=0, sticky="nsew", padx=10, pady=(10, 5))
 
     # ............................  right section: rename  .............................
     # renaming header
@@ -464,6 +465,14 @@ def build_datafile_prep_window(root, results, cfg):
     )
     separator_label.grid(row=row_num + 4, column=1)
     separator_entry.grid(row=row_num + 5, column=1)
+    # 3D DLC checkbox
+    DLC_checkbox = gaita_widgets.checkbox(
+        fileprep_window,
+        "3D DeepLabCut files",
+        cfg["fileprep_3D_DLC"],
+        WIDGET_CFG,
+    )
+    DLC_checkbox.grid(row=row_num + 6, column=1)
     # renaming run button
     rename_button = gaita_widgets.header_button(fileprep_window, "Rename!", WIDGET_CFG)
     rename_button.configure(
@@ -481,7 +490,7 @@ def build_datafile_prep_window(root, results, cfg):
             run_universal_3D_preparation("rename", cfg),
         )
     )
-    rename_button.grid(row=row_num + 6, column=1, sticky="nsew", padx=10, pady=(10, 5))
+    rename_button.grid(row=row_num + 7, column=1, sticky="nsew", padx=10, pady=(10, 5))
 
     # ............................  bottom section: done  ..............................
     # empty label two
@@ -497,7 +506,7 @@ def build_datafile_prep_window(root, results, cfg):
         command=lambda: fileprep_window.destroy(),
     )
     done_button.grid(
-        row=row_num + 7, column=0, columnspan=2, padx=30, pady=(10, 5), sticky="ew"
+        row=row_num + 8, column=0, columnspan=2, padx=30, pady=(10, 5), sticky="ew"
     )
     # maximise widgets
     gui_utils.maximise_widgets(fileprep_window)
@@ -511,11 +520,14 @@ def run_universal_3D_preparation(task, cfg):
     fileprep_cfg["file_type"] = cfg["fileprep_filetype"].get()
     fileprep_cfg["postname_string"] = cfg["fileprep_postname_string"].get()
     fileprep_cfg["results_dir"] = cfg["fileprep_results_dir"].get()
+    fileprep_cfg["3D_DLC"] = cfg["fileprep_3D_DLC"].get()
+    if fileprep_cfg["3D_DLC"] is True:
+        task = "DLC"
     # set the appropriate kwargs based on the task
     if task == "clean":
         string_to_remove = cfg["fileprep_string_to_remove"].get()
         kwargs = {"string_to_remove": string_to_remove}
-    elif task == "rename":
+    elif task in ["rename", "DLC"]:
         separator = cfg["fileprep_separator"].get()
         kwargs = {"separator": separator}
     # run the function, with kwargs depending on task, & show info for users
