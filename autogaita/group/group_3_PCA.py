@@ -38,7 +38,7 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
     PCA_df, features = create_PCA_df(avg_dfs, folderinfo, cfg)
     # run the PCA
     PCA_df, PCA_info = run_PCA(PCA_df, features, cfg)
-    # save PCA info to xlsx file
+    # save PCA info to xlsx files
     PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg)
     if PCA_info["number_of_PCs"] < 2:
         PCA_error_message_1 = (
@@ -131,11 +131,16 @@ def run_PCA(PCA_df, features, cfg):
         PCA_model = PCA(n_components=PCA_n_components, svd_solver="full")
     else:
         PCA_model = PCA(n_components=PCA_n_components)
-    x = PCA_df.loc[:, features].values
+    x = PCA_df.loc[:, features]
     # standardise here so that EACH FEATURE has mean=0 & std=1
     # => you can check this with np.mean/std
     # => you can also check that this operates on columns (features) and not rows (IDs)
     x = StandardScaler().fit_transform(x)
+    # now create a df with the standardised features to add features to it (this gives
+    # us the feature_names_in attribute of PCA_model which we will use for PCA info
+    # excel files)
+    x = pd.DataFrame(x, columns=features)
+    # NOTE that this next line changes the PCA_model variable!
     PCs = PCA_model.fit_transform(x)
     # NOTE! we use number_of_PCs from here onwards (in info/plots/etc) to differentiate
     #       between n_components which can be smaller than 1!
@@ -143,21 +148,31 @@ def run_PCA(PCA_df, features, cfg):
     for i in range(number_of_PCs):
         PCA_df["PC " + str(i + 1)] = PCs[:, i]
     PCA_info = {
+        "features": PCA_model.feature_names_in_,
         "number_of_PCs": number_of_PCs,
         "explained_vars": PCA_model.explained_variance_ratio_,
-        "components": PCA_model.components_,
+        "eigenvectors": PCA_model.components_,
     }
     return PCA_df, PCA_info
 
 
 def PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg):
-    """Save the explained_var & eigenvectors of PCs to an xlsx file"""
+    """Save three PCA info excel files:
+    1) explained_var & eigenvectors of PCs
+    2) ID x PC values
+    3) top 20 features for each PC using eigenvectors
+    """
 
     # unpack
     results_dir = folderinfo["results_dir"]
-    number_of_PCs = PCA_info["number_of_PCs"]  # PCA info!
+    features = PCA_info["features"]  # PCA info!
+    number_of_PCs = PCA_info["number_of_PCs"]
+    explained_vars = PCA_info["explained_vars"]
+    eigenvectors = PCA_info["eigenvectors"]
 
-    # initialise
+    # 1) PCs' explained variances & eigenvectors
+
+    #  initialise
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     sheet.title = "PCA Info"
@@ -168,21 +183,38 @@ def PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg):
     # add cell values: explained variance
     sheet.cell(row=2, column=1, value="Explained Var. (%)")
     for pc in range(number_of_PCs):
-        sheet.cell(
-            row=2, column=pc + 2, value=round(PCA_info["explained_vars"][pc] * 100, 2)
-        )
+        sheet.cell(row=2, column=pc + 2, value=round(explained_vars[pc] * 100, 2))
     # add cell values: eigenvectors
     sheet.cell(row=4, column=1, value="Features")
-    features = PCA_df.columns[2:-number_of_PCs].values
     for i in range(len(features)):
         # row i + 5 because excel starts counting at 1 and: row2=var_exp/row3=empty/
         # row5=feature heading
         sheet.cell(row=i + 5, column=1, value=features[i])
         for pc in range(number_of_PCs):
             # column is pc+2 because we want pc=0 to be in xlsx column 2 etc.
-            sheet.cell(row=i + 5, column=pc + 2, value=PCA_info["components"][pc, i])
+            sheet.cell(row=i + 5, column=pc + 2, value=eigenvectors[pc, i])
     # save
     workbook.save(os.path.join(results_dir, "PCA Info.xlsx"))
+
+    # 2) ID x PC value information
+    PCA_ID_info_df = PCA_df[[GROUP_COL, ID_COL] + list(PCA_df.columns[-number_of_PCs:])]
+    PCA_ID_info_df.to_excel(os.path.join(results_dir, "PCA ID Info.xlsx"), index=False)
+
+    # 3) Find the biggest 20 values of eigenvectors for each PC
+    if len(features) < 20:
+        top_number = len(features)
+    else:
+        top_number = 20
+    top_features_df = pd.DataFrame()
+    for pc in range(number_of_PCs):
+        # argsort returns idxs that would sort in ascending order, so we reverse it
+        # (::-1)
+        top_features = np.argsort(np.abs(eigenvectors[pc]))[::-1][:top_number]
+        top_values = eigenvectors[pc, top_features]
+        top_features_df["PC " + str(pc + 1) + " Features"] = features[top_features]
+        top_features_df["PC " + str(pc + 1) + " Value"] = top_values
+    filename = f"PCA Feature Summary.xlsx"
+    top_features_df.to_excel(os.path.join(results_dir, filename), index=False)
 
 
 def plot_PCA_barplot(PCA_info, folderinfo, cfg, plot_panel_instance):

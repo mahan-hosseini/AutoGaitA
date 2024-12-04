@@ -192,5 +192,24 @@ def extract_cfg_vars(folderinfo, cfg):
                 + "just don't choose any variables for it."
             )
             cfg["PCA_n_components"] = 2  # make sure to update in cfg dict
+    # small fix to ensure that PCA vars don't have duplicates (this would have severe
+    # consequences for run_PCA since features of PCA_model output and "my" features var
+    # would not match)
+    # => it should never happen via GUI really but I did this myself using group_dlcrun #    while not paying attention...
+    unique_PCA_vars = list(set(cfg["PCA_variables"]))
+    if len(unique_PCA_vars) != len(cfg["PCA_variables"]):
+        duplicate_vars = [
+            var for var in cfg["PCA_variables"] if cfg["PCA_variables"].count(var) > 1
+        ]
+        PCA_duplicates_error_message = (
+            "\n*********\n! WARNING !\n*********\n"
+            + "\nWe found duplicates in your PCA variables list!"
+            + "\nWe removed them for you!"
+            + "\n\nDuplicate variables were:\n"
+            + "\n".join(list(set(duplicate_vars)))
+        )
+        print(PCA_duplicates_error_message)
+        write_issues_to_textfile(PCA_duplicates_error_message, results_dir)
+        cfg["PCA_variables"] = unique_PCA_vars
 
     return cfg
