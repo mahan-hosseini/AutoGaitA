@@ -106,6 +106,11 @@ def print_finish(info):
     print("***************************************************")
 
 
+def bin_num_to_percentages(bin_num):
+    """Convert bin_num to a list of percentages"""
+    return [int(((s + 1) / bin_num) * 100) for s in range(bin_num)]
+
+
 # ................................  plot panel  ........................................
 class PlotPanel:
     def __init__(self, fg_color, hover_color):

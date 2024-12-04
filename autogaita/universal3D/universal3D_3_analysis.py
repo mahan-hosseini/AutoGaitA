@@ -1,5 +1,8 @@
 # %% imports
-from autogaita.gaita_res.utils import write_issues_to_textfile
+from autogaita.gaita_res.utils import (
+    write_issues_to_textfile,
+    bin_num_to_percentages,
+)
 import os
 import pandas as pd
 import numpy as np
@@ -17,7 +20,7 @@ from autogaita.universal3D.universal3D_constants import (
     STD_XLS_FILENAME,
     SEPARATOR_IDX,
     DF_LEG_COL,
-    DF_SCPERCENTAGE_COL,
+    SC_PERCENTAGE_COL,
     EXCLUDED_COLS_IN_AV_STD_DFS,
     REORDER_COLS_IN_STEP_NORMDATA,
 )
@@ -489,8 +492,9 @@ def define_bins(triallength, bin_num):
 def compute_average_and_std_data(normalised_steps_data, bin_num, analyse_average_y):
     """Export XLS tables that store all averages & std of y-coords & angles"""
     # initialise data & columns of average & std dataframes (fill vals in loop)
-    initialisation_data = [[int(((s + 1) / bin_num) * 100) for s in range(bin_num)]]
-    initialisation_columns = [DF_SCPERCENTAGE_COL]
+
+    initialisation_data = bin_num_to_percentages(bin_num)
+    initialisation_columns = [SC_PERCENTAGE_COL]
     if analyse_average_y:
         cols_to_include = [
             c
@@ -549,12 +553,12 @@ def combine_legs(dataframe_list, combination_procedure):
     elif combination_procedure == "average":
         if (
             len(dataframe_list[0].columns) == 1
-            and dataframe_list[0].columns[0] == DF_SCPERCENTAGE_COL
+            and dataframe_list[0].columns[0] == SC_PERCENTAGE_COL
         ):
             only_one_valid_leg = "right"
         if (
             len(dataframe_list[1].columns) == 1
-            and dataframe_list[1].columns[0] == DF_SCPERCENTAGE_COL
+            and dataframe_list[1].columns[0] == SC_PERCENTAGE_COL
         ):
             only_one_valid_leg = "left"
     if combination_procedure == "concatenate":

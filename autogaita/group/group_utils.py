@@ -37,6 +37,9 @@ def print_start(folderinfo, cfg):
                 + " principal components"
             )
         if cfg["PCA_custom_scatter_PCs"]:
+            cfg["PCA_custom_scatter_PCs"] = cfg["PCA_custom_scatter_PCs"].replace(
+                " ", ""  # remove spaces for user if they included them (not allowed!)
+            )
             start_string += "\n\nCustom Scatterplot Configuration::"
             for i, custom_scatter_PCs in enumerate(
                 cfg["PCA_custom_scatter_PCs"].split(PCA_CUSTOM_SCATTER_OUTER_SEPARATOR)

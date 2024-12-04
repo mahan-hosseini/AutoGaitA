@@ -31,8 +31,7 @@ NORMALISED_XLS_FILENAME = " - Normalised Stepcycles"
 AVERAGE_XLS_FILENAME = " - Average Stepcycle"
 STD_XLS_FILENAME = " - Standard Devs. Stepcycle"
 X_STANDARDISED_XLS_FILENAME = " - X-Standardised Stepcycles"
+SC_PERCENTAGE_COL = "SC Percentage"
 
 # 4 - plots
 SC_LAT_LEGEND_FONTSIZE = 8
-FG_COLOR = "#789b73"  # grey green
-HOVER_COLOR = "#287c37"  # darkish green

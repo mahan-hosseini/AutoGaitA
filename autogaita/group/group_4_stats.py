@@ -1,4 +1,5 @@
 # %% imports
+from autogaita.gaita_res.utils import bin_num_to_percentages
 from autogaita.group.group_utils import (
     check_mouse_conversion,
     save_figures,
@@ -50,7 +51,7 @@ def create_stats_df(avg_dfs, folderinfo, cfg):
 
     # unpack
     group_names = folderinfo["group_names"]
-    one_bin_in_sc_percent = cfg["one_bin_in_sc_percent"]
+    bin_num = cfg["bin_num"]
 
     for g, group_name in enumerate(group_names):
         avg_dfs[g][GROUP_COL] = group_name
@@ -58,13 +59,13 @@ def create_stats_df(avg_dfs, folderinfo, cfg):
             stats_df = avg_dfs[g]
         else:
             stats_df = pd.concat([stats_df, avg_dfs[g]], axis=0)
-    stats_df[SC_PERCENTAGE_COL] = 0
-    sc_percentage_col_idx = stats_df.columns.get_loc(SC_PERCENTAGE_COL)
-    for i in range(len(stats_df)):
-        this_index = stats_df.index[i]
-        stats_df.iloc[i, sc_percentage_col_idx] = one_bin_in_sc_percent + (
-            this_index * one_bin_in_sc_percent
-        )
+    # note that we have to repeat percentages_list to match the number of rows in
+    # stats_df
+    percentages_list = bin_num_to_percentages(bin_num)
+    how_often_to_repeat_percentages_list = len(stats_df) // len(percentages_list)
+    stats_df[SC_PERCENTAGE_COL] = np.tile(
+        percentages_list, how_often_to_repeat_percentages_list
+    )
     return stats_df
 
 

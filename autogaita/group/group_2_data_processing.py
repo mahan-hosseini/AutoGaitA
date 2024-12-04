@@ -1,4 +1,5 @@
 # %% imports
+from autogaita.gaita_res.utils import bin_num_to_percentages
 from autogaita.group.group_utils import write_issues_to_textfile
 import os
 import pandas as pd
@@ -108,7 +109,6 @@ def import_data(folderinfo, cfg):
     cfg["bin_num"] = test_bin_num_consistency(
         df_dict["Normalised"], group_names, results_dir
     )
-    cfg["one_bin_in_sc_percent"] = 100 / cfg["bin_num"]
     dfs = df_dict["Normalised"]
     raw_dfs = df_dict["Original"]
     return dfs, raw_dfs, cfg
@@ -412,7 +412,7 @@ def avg_and_std(dfs, folderinfo, cfg):
     # unpack
     group_names = folderinfo["group_names"]
     results_dir = folderinfo["results_dir"]
-    one_bin_in_sc_percent = cfg["one_bin_in_sc_percent"]
+    bin_num = cfg["bin_num"]
     save_to_xls = cfg["save_to_xls"]
     tracking_software = cfg["tracking_software"]
     if tracking_software == "DLC":
@@ -479,20 +479,8 @@ def avg_and_std(dfs, folderinfo, cfg):
             this_ID_avg_df[SC_NUM_COL] = SC_num
             this_ID_std_df[SC_NUM_COL] = SC_num
             # SC Percentage column
-            this_ID_avg_df[SC_PERCENTAGE_COL] = 0
-            sc_percentage_col_idx = this_ID_avg_df.columns.get_loc(SC_PERCENTAGE_COL)
-            for i in range(len(this_ID_avg_df)):
-                this_index = this_ID_avg_df.index[i]
-                this_ID_avg_df.iloc[i, sc_percentage_col_idx] = (
-                    one_bin_in_sc_percent + (this_index * one_bin_in_sc_percent)
-                )
-            this_ID_std_df[SC_PERCENTAGE_COL] = 0
-            sc_percentage_col_idx = this_ID_std_df.columns.get_loc(SC_PERCENTAGE_COL)
-            for i in range(len(this_ID_std_df)):
-                this_index = this_ID_std_df.index[i]
-                this_ID_std_df.iloc[i, sc_percentage_col_idx] = (
-                    one_bin_in_sc_percent + (this_index * one_bin_in_sc_percent)
-                )
+            this_ID_avg_df[SC_PERCENTAGE_COL] = bin_num_to_percentages(bin_num)
+            this_ID_std_df[SC_PERCENTAGE_COL] = bin_num_to_percentages(bin_num)
             # add ID-level avg & std dfs to group-level dfs
             if avg_dfs[g].empty:
                 avg_dfs[g] = this_ID_avg_df
@@ -560,7 +548,6 @@ def grand_avg_and_std(avg_dfs, folderinfo, cfg):
     group_names = folderinfo["group_names"]
     results_dir = folderinfo["results_dir"]
     bin_num = cfg["bin_num"]
-    one_bin_in_sc_percent = cfg["one_bin_in_sc_percent"]
     save_to_xls = cfg["save_to_xls"]
 
     # preparation, initialise g_avg/std dfs
@@ -586,20 +573,8 @@ def grand_avg_and_std(avg_dfs, folderinfo, cfg):
         g_avg_dfs[g][N_COL] = ID_num  # N column
         g_std_dfs[g][N_COL] = ID_num
         # SC Percentage column
-        g_avg_dfs[g][SC_PERCENTAGE_COL] = 0
-        sc_percentage_col_idx = g_avg_dfs[g].columns.get_loc(SC_PERCENTAGE_COL)
-        for i in range(len(g_avg_dfs[g])):
-            this_index = g_avg_dfs[g].index[i]
-            g_avg_dfs[g].iloc[i, sc_percentage_col_idx] = one_bin_in_sc_percent + (
-                this_index * one_bin_in_sc_percent
-            )
-        g_std_dfs[g][SC_PERCENTAGE_COL] = 0
-        sc_percentage_col_idx = g_std_dfs[g].columns.get_loc(SC_PERCENTAGE_COL)
-        for i in range(len(g_std_dfs[g])):
-            this_index = g_std_dfs[g].index[i]
-            g_std_dfs[g].iloc[i, sc_percentage_col_idx] = one_bin_in_sc_percent + (
-                this_index * one_bin_in_sc_percent
-            )
+        g_avg_dfs[g][SC_PERCENTAGE_COL] = bin_num_to_percentages(bin_num)
+        g_std_dfs[g][SC_PERCENTAGE_COL] = bin_num_to_percentages(bin_num)
         # reorder columns (N & SC% first)
         first_cols = [N_COL, SC_PERCENTAGE_COL]
         g_avg_dfs[g] = g_avg_dfs[g][

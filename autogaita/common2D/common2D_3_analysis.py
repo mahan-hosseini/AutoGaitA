@@ -1,4 +1,5 @@
 # %% imports
+from autogaita.gaita_res.utils import bin_num_to_percentages
 import os
 import warnings
 import pandas as pd
@@ -8,6 +9,7 @@ import math
 # %% constants
 from autogaita.common2D.common2D_constants import (
     TIME_COL,
+    SC_PERCENTAGE_COL,
     ORIGINAL_XLS_FILENAME,
     NORMALISED_XLS_FILENAME,
     AVERAGE_XLS_FILENAME,
@@ -362,12 +364,12 @@ def define_bins(triallength, bin_num):
 def compute_average_and_std_data(normalised_steps_data, bin_num, analyse_average_x):
     """Export XLS tables that store all averages & std of y-coords & angles"""
     # initialise col of % of SC over time for plotting first
-    percentages = [int(((s + 1) / bin_num) * 100) for s in range(bin_num)]
+    percentages = bin_num_to_percentages(bin_num)
     average_data = pd.DataFrame(
-        data=percentages, index=range(bin_num), columns=["SC Percentages"]
+        data=percentages, index=range(bin_num), columns=[SC_PERCENTAGE_COL]
     )
     std_data = pd.DataFrame(
-        data=percentages, index=range(bin_num), columns=["SC Percentages"]
+        data=percentages, index=range(bin_num), columns=[SC_PERCENTAGE_COL]
     )
     sc_num = len(np.where(normalised_steps_data.index == 0)[0])
     for c, col in enumerate(normalised_steps_data.columns):
