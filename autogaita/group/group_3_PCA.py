@@ -39,7 +39,7 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
     print("\n*************** Computing PCA ***************\n")
     # convert PCA_bins string to list of ints
     if PCA_bins:
-        cfg = convert_PCA_bins_to_list(cfg)
+        cfg = convert_PCA_bins_to_list(folderinfo, cfg)
         info_string = "Desired PCA bins applied to cycle-bins resulted in:\n|"
         for bin in cfg["PCA_bins"]:
             info_string += str(bin) + "|"
@@ -84,7 +84,7 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
             )
 
 
-def convert_PCA_bins_to_list(cfg):
+def convert_PCA_bins_to_list(folderinfo, cfg):
     """Create PCA bin variable (list of to-be-included bin_num ints) from user input
     (string).
     Approach
@@ -98,6 +98,7 @@ def convert_PCA_bins_to_list(cfg):
     for this
     """
     # unpack
+    results_dir = folderinfo["results_dir"]
     PCA_bins = cfg["PCA_bins"]
     bin_num = cfg["bin_num"]
 
@@ -107,12 +108,24 @@ def convert_PCA_bins_to_list(cfg):
         if "-" in bin:
             bin_range = bin.split("-")
             # +1 in indexing of bin_range [1] ensures including user input fully!
-            PCA_bin_int_list = np.concatenate(
-                [
-                    PCA_bin_int_list,
-                    np.arange(int(bin_range[0]), int(bin_range[1]) + 1),
-                ]
-            )
+            try:
+                PCA_bin_int_list = np.concatenate(
+                    [
+                        PCA_bin_int_list,
+                        np.arange(int(bin_range[0]), int(bin_range[1]) + 1),
+                    ]
+                )
+            except ValueError:
+                PCA_bins_error_message = (
+                    "\n*********\n! ERROR !\n*********\n"
+                    + "\nPCA bin range input invalid."
+                    + "\nSeems like you used a hyphen without numbers around it."
+                    + "\nPlease check your input and try again!"
+                )
+                print(PCA_bins_error_message)
+                write_issues_to_textfile(PCA_bins_error_message, results_dir)
+                raise ValueError(PCA_bins_error_message)
+
         else:
             PCA_bin_int_list = np.concatenate([PCA_bin_int_list, [int(bin)]])
         PCA_bin_int_list = PCA_bin_int_list.astype(int)  # for intersect below
@@ -122,6 +135,9 @@ def convert_PCA_bins_to_list(cfg):
     # Now using intersect 1d that returns the sorted unique values that are in both
     # arrays
     cfg["PCA_bins"] = np.intersect1d(PCA_bin_int_list, percentages_list)
+    # Just in case... remove everything over 100 (our error above ensures nothing
+    # smaller than 0 already)
+    cfg["PCA_bins"] = cfg["PCA_bins"][cfg["PCA_bins"] <= 100]
     return cfg
 
 
@@ -196,7 +212,7 @@ def run_PCA(PCA_df, features, cfg):
     if 0 < PCA_n_components < 1:  # n_components until % explained var.
         PCA_model = PCA(n_components=PCA_n_components, svd_solver="full")
     else:
-        PCA_model = PCA(n_components=PCA_n_components)
+        PCA_model = PCA(n_components=int(PCA_n_components))
     x = PCA_df.loc[:, features]
     # standardise here so that EACH FEATURE has mean=0 & std=1
     # => you can check this with np.mean/std

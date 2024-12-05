@@ -42,12 +42,14 @@ MIN_GROUP_NUM = 2
 MAX_GROUP_NUM = 6
 CONFIG_FILE_NAME = "group_gui_config.json"
 STRING_VARS = ["group_names", "group_dirs", "results_dir"]
-FLOAT_VARS = ["stats_threshold"]
+# note n_components can be float only for this input-check since we convert to int when
+# fitting the PCA model if it is equal to or greater than 1
+FLOAT_VARS = ["stats_threshold", "PCA_n_components"]
 LIST_VARS = [
     "stats_variables",  #  stats/PCA variables are also TK_BOOL_VARS but this will be
     "PCA_variables",  #  handled within the ---PCA / STATS FEATURE FRAMES--- part
 ]
-INT_VARS = ["permutation_number", "PCA_n_components"]
+INT_VARS = ["permutation_number"]
 # TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file
 # (note that numbers are initialised as strings)
 TK_BOOL_VARS = [
@@ -64,6 +66,7 @@ TK_STR_VARS = [
     "stats_threshold",
     "PCA_n_components",
     "PCA_custom_scatter_PCs",
+    "PCA_bins",
     "which_leg",
     "results_dir",
     "color_palette",
@@ -471,12 +474,22 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     custom_scatter_label.grid(row=6, column=0)
     custom_scatter_entry.grid(row=7, column=0, sticky="n")
 
+    # PCA bins
+    PCA_bins_label, PCA_bins_entry = gaita_widgets.label_and_entry_pair(
+        cfgwindow,
+        "Restrict PCA features to following cycle bins (e.g. 0-10, 24, 50-75)",
+        cfg["PCA_bins"],
+        WIDGET_CFG,
+    )
+    PCA_bins_label.grid(row=8, column=0)
+    PCA_bins_entry.grid(row=9, column=0, sticky="n")
+
     # color palette
     color_palette_string = "Choose figures' color palette"
     color_palette_label = ctk.CTkLabel(
         cfgwindow, text=color_palette_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
     )
-    color_palette_label.grid(row=8, column=0)
+    color_palette_label.grid(row=10, column=0)
     color_palette_entry = ctk.CTkOptionMenu(
         cfgwindow,
         values=COLOR_PALETTES_LIST,
@@ -486,7 +499,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         button_hover_color=HOVER_COLOR,
         font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    color_palette_entry.grid(row=9, column=0, sticky="n")
+    color_palette_entry.grid(row=11, column=0, sticky="n")
 
     # plot SE
     plot_SE_box = gaita_widgets.checkbox(
@@ -495,7 +508,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         cfg["plot_SE"],
         WIDGET_CFG,
     )
-    plot_SE_box.grid(row=10, column=0)
+    plot_SE_box.grid(row=12, column=0)
 
     # legend outside
     legend_outside_checkbox = gaita_widgets.checkbox(
@@ -504,7 +517,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         cfg["legend_outside"],
         WIDGET_CFG,
     )
-    legend_outside_checkbox.grid(row=11, column=0)
+    legend_outside_checkbox.grid(row=13, column=0)
 
     # save 3D PCA video
     save_PCA_video_checkbox = gaita_widgets.checkbox(
@@ -513,7 +526,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         cfg["PCA_save_3D_video"],
         WIDGET_CFG,
     )
-    save_PCA_video_checkbox.grid(row=12, column=0)
+    save_PCA_video_checkbox.grid(row=14, column=0)
 
     # dont show plots
     dont_show_plots_checkbox = gaita_widgets.checkbox(
@@ -522,7 +535,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         cfg["dont_show_plots"],
         WIDGET_CFG,
     )
-    dont_show_plots_checkbox.grid(row=13, column=0)
+    dont_show_plots_checkbox.grid(row=15, column=0)
 
     # which leg of human data to analyse
     which_leg_string = (
@@ -531,7 +544,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     which_leg_label = ctk.CTkLabel(
         cfgwindow, text=which_leg_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
     )
-    which_leg_label.grid(row=14, column=0)
+    which_leg_label.grid(row=16, column=0)
     which_leg_options = ["left", "right"]  # !!! NU - "both" functionality
     which_leg_optionmenu = ctk.CTkOptionMenu(
         cfgwindow,
@@ -542,7 +555,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         button_hover_color=HOVER_COLOR,
         font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    which_leg_optionmenu.grid(row=15, column=0, sticky="n")
+    which_leg_optionmenu.grid(row=17, column=0, sticky="n")
 
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -553,7 +566,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         font=(HEADER_FONT_NAME, HEADER_FONT_SIZE),
         command=lambda: cfgwindow.destroy(),
     )
-    adv_cfg_done_button.grid(row=16, column=0, sticky="nsew", pady=20, padx=80)
+    adv_cfg_done_button.grid(row=18, column=0, sticky="nsew", pady=20, padx=80)
 
     # maximise widgets to fit fullscreen
     maximise_widgets(cfgwindow)

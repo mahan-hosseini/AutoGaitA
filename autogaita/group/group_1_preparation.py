@@ -174,8 +174,8 @@ def extract_cfg_vars(folderinfo, cfg):
             PCA_variables_str = "\n".join(cfg["PCA_variables"])
             PCA_error_message = (
                 "\n*********\n! ERROR !\n*********\n"
-                + "\nPCA Configuration invalid, number of input features cannot exceed "
-                + "number of principal components to compute!\n"
+                + "\nPCA Configuration invalid, number of input features must exceed "
+                + "the number of principal components to compute!\n"
                 + str(PCA_variable_num)
                 + " PCA variables: \n"
                 + PCA_variables_str
@@ -244,7 +244,9 @@ def extract_cfg_vars(folderinfo, cfg):
             print(PCA_bins_error_message)
             write_issues_to_textfile(PCA_bins_error_message, results_dir)
             raise ValueError(PCA_bins_error_message)
-        # fix for users: remove last characters if not digit
+        # fix for users: remove first and last characters if not digits
+        while not cfg["PCA_bins"][0].isdigit():
+            cfg["PCA_bins"] = cfg["PCA_bins"][1:]
         while not cfg["PCA_bins"][-1].isdigit():
             cfg["PCA_bins"] = cfg["PCA_bins"][:-1]
 
