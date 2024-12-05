@@ -62,11 +62,12 @@ def group(folderinfo, cfg):
         # build loading screen
         plot_panel_instance.build_plot_panel_loading_screen()
 
-    # ..............................  print start  ....................................
-    print_start(folderinfo, cfg)
-
     # ..................................  unpack  ......................................
     folderinfo, cfg = some_prep(folderinfo, cfg)
+
+    # ..............................  print start  ....................................
+    # => print start after some_prep since we do some stuff to cfg["PCA_bins"] there
+    print_start(folderinfo, cfg)
 
     # ...................................  import  .....................................
     # => DLC ONLY: dfs is x-standardised automatically if 1st-level standardised x

@@ -2,6 +2,7 @@
 from autogaita.group.group_utils import write_issues_to_textfile
 import os
 import json
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -42,7 +43,7 @@ def some_prep(folderinfo, cfg):
     if os.path.exists(stats_txt_path):
         os.remove(stats_txt_path)
 
-    # extracted_cfg_vars: save_to_xls, PCA tests & dont show plots
+    # extracted_cfg_vars: save_to_xls, PCA stuff & dont show plots
     cfg = extract_cfg_vars(folderinfo, cfg)
 
     # see if there's a config json file and add to cfg dict
@@ -96,8 +97,8 @@ def some_prep(folderinfo, cfg):
 
 
 def extract_cfg_vars(folderinfo, cfg):
-    """Extract bin_num and save_to_xls from example Normalised dfs and sanity check
-    that they match between groups!
+    """Extract save_to_xls from example Normalised dfs and sanity check
+    that they match between groups. Also some stuff for PCA!
     """
 
     group_names = folderinfo["group_names"]
@@ -211,5 +212,40 @@ def extract_cfg_vars(folderinfo, cfg):
         print(PCA_duplicates_error_message)
         write_issues_to_textfile(PCA_duplicates_error_message, results_dir)
         cfg["PCA_variables"] = unique_PCA_vars
+    # check if PCA bin num is valid, two tests and 1 fix
+    # => note there is separate code that transforms this string input into an int-list
+    if cfg["PCA_bins"]:
+        PCA_bins_error_message = ""
+        cfg["PCA_bins"] = cfg["PCA_bins"].replace(" ", "")  # remove spaces
+        # test 1: only digits, commas and dashes allowed
+        for char in cfg["PCA_bins"]:
+            if char.isdigit() or char in ["-", ","]:
+                pass
+            else:
+                PCA_bins_error_message = (
+                    "\n*********\n! ERROR !\n*********\n"
+                    + "\nPCA Bin Number invalid!"
+                    + "\nPlease use only numbers, commas and dashes in your input!"
+                    + "\nFix & re-run!"
+                )
+        # test 2: no comma next to dash
+        if ",-" in cfg["PCA_bins"] or "-," in cfg["PCA_bins"]:
+            PCA_bins_error_message = (
+                "\n*********\n! ERROR !\n*********\n"
+                + "\nPCA Bin Number invalid!"
+                + "\nCommas cannot be next to dashes in your input!"
+                + "\nFix & re-run!"
+            )
+        # if any test failed we raise an error
+        # => note we could continue execution without custom PCA bins but if the user
+        #    tried to set them, it's likely important to them to have custom bins
+        #    so we just stop everything and help them fix it
+        if PCA_bins_error_message:
+            print(PCA_bins_error_message)
+            write_issues_to_textfile(PCA_bins_error_message, results_dir)
+            raise ValueError(PCA_bins_error_message)
+        # fix for users: remove last characters if not digit
+        while not cfg["PCA_bins"][-1].isdigit():
+            cfg["PCA_bins"] = cfg["PCA_bins"][:-1]
 
     return cfg

@@ -15,9 +15,11 @@ def print_start(folderinfo, cfg):
         "\n******************\n AutoGaitA_Group \n******************"
         + "\n\nContrasting Groups:"
     )
+
     # groups
     for group_name in folderinfo["group_names"]:
         start_string += "\n" + group_name
+
     # pca
     start_string += "\n\n\n*****\n PCA \n*****"
     if cfg["PCA_variables"]:
@@ -40,14 +42,17 @@ def print_start(folderinfo, cfg):
             cfg["PCA_custom_scatter_PCs"] = cfg["PCA_custom_scatter_PCs"].replace(
                 " ", ""  # remove spaces for user if they included them (not allowed!)
             )
-            start_string += "\n\nCustom Scatterplot Configuration::"
+            start_string += "\n\nCustom Scatterplot Configuration:"
             for i, custom_scatter_PCs in enumerate(
                 cfg["PCA_custom_scatter_PCs"].split(PCA_CUSTOM_SCATTER_OUTER_SEPARATOR)
             ):
                 start_string += "\nPlot " + str(i + 1) + " - " + custom_scatter_PCs
-
+        if cfg["PCA_bins"]:
+            start_string += "\n\nCustom Bin Configuration:"
+            start_string += "\n" + cfg["PCA_bins"]
     else:
         start_string += "\n\nNo PCA wanted!"
+
     # stats
     start_string += "\n\n\n*************\n Statistics \n*************"
     if cfg["stats_variables"]:

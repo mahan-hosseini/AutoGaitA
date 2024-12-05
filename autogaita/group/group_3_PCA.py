@@ -1,4 +1,5 @@
 # %% imports
+from autogaita.gaita_res.utils import bin_num_to_percentages
 from autogaita.group.group_utils import save_figures, write_issues_to_textfile
 import os
 import string
@@ -16,6 +17,7 @@ import pdb
 from autogaita.group.group_constants import (
     ID_COL,
     GROUP_COL,
+    SC_PERCENTAGE_COL,
     PCA_BARPLOT_BARCOLOR,
     PCA_BARPLOT_LINECOLOR,
     PCA_CUSTOM_SCATTER_OUTER_SEPARATOR,
@@ -31,9 +33,17 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
     # unpack
     results_dir = folderinfo["results_dir"]
     PCA_custom_scatter_PCs = cfg["PCA_custom_scatter_PCs"]
+    PCA_bins = cfg["PCA_bins"]
 
     # print info
     print("\n*************** Computing PCA ***************\n")
+    # convert PCA_bins string to list of ints
+    if PCA_bins:
+        cfg = convert_PCA_bins_to_list(cfg)
+        info_string = "Desired PCA bins applied to cycle-bins resulted in:\n|"
+        for bin in cfg["PCA_bins"]:
+            info_string += str(bin) + "|"
+        print(info_string)
     # create the input dataframe
     PCA_df, features = create_PCA_df(avg_dfs, folderinfo, cfg)
     # run the PCA
@@ -60,16 +70,6 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
     # plot custom scatterplots if user wanted
     # => loop over outer separator of PC-duos/trios
     if PCA_custom_scatter_PCs:
-        if " " in PCA_custom_scatter_PCs:
-            PCA_error_message_2 = (
-                "\n*********\n! ERROR !\n*********\n"
-                + "\nCustom PCA scatterplots were not generated since we detected "
-                + "spaces in your separators."
-                + " \nPlease adhere to '1,2,3;4,5,6;7,8;etc' notation & try again!"
-            )
-            print(PCA_error_message_2)
-            write_issues_to_textfile(PCA_error_message_2, results_dir)
-            return
         print("\n*************** Generating Custom PCA Scatterplots ***************\n")
         for i in range(
             len(PCA_custom_scatter_PCs.split(PCA_CUSTOM_SCATTER_OUTER_SEPARATOR))
@@ -84,30 +84,86 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
             )
 
 
+def convert_PCA_bins_to_list(cfg):
+    """Create PCA bin variable (list of to-be-included bin_num ints) from user input
+    (string).
+    Approach
+    --------
+    1. (Note we already removed spaces in group_1_prep). Also initialise a string list that has all bins (, separated) and an empty list
+    2. Iterate over string list and extract start and end indices if it's a range (idenfying range by "-")
+    3. Concatenate the range to the int list, make sure that you add a 1 to end idx
+    to have user input be inclusive
+    4. If it's not a range, just add the int to the int list
+    5. Now remove all values that are not part of our SC Percentages (use bin_num)
+    for this
+    """
+    # unpack
+    PCA_bins = cfg["PCA_bins"]
+    bin_num = cfg["bin_num"]
+
+    PCA_bin_str_list = PCA_bins.split(",")
+    PCA_bin_int_list = []
+    for bin in PCA_bin_str_list:
+        if "-" in bin:
+            bin_range = bin.split("-")
+            # +1 in indexing of bin_range [1] ensures including user input fully!
+            PCA_bin_int_list = np.concatenate(
+                [
+                    PCA_bin_int_list,
+                    np.arange(int(bin_range[0]), int(bin_range[1]) + 1),
+                ]
+            )
+        else:
+            PCA_bin_int_list = np.concatenate([PCA_bin_int_list, [int(bin)]])
+        PCA_bin_int_list = PCA_bin_int_list.astype(int)  # for intersect below
+    # Note that we can be sure that this is the same list that was used at the first
+    # level since it's the same function used there
+    percentages_list = bin_num_to_percentages(bin_num)
+    # Now using intersect 1d that returns the sorted unique values that are in both
+    # arrays
+    cfg["PCA_bins"] = np.intersect1d(PCA_bin_int_list, percentages_list)
+    return cfg
+
+
 def create_PCA_df(avg_dfs, folderinfo, cfg):
     """Create a ID x ID_COL + features dataframe to be used by PCA"""
 
     # unpack
+    results_dir = folderinfo["results_dir"]
     group_names = folderinfo["group_names"]
     PCA_vars = cfg["PCA_variables"]
     bin_num = cfg["bin_num"]
+    PCA_bins = cfg["PCA_bins"]
 
     PCA_df = pd.DataFrame(data=None)
     # create a list of features for series & dfs (features are vars @ each SC % bin)
     features = []
     for var in PCA_vars:
-        for b in range(bin_num):
-            bin_in_percent = int(((1 + b) / bin_num) * 100)
-            features.append(var + " " + str(bin_in_percent))
+        if len(PCA_bins) > 0:
+            for bin in PCA_bins:
+                features.append(var + " " + str(bin))
+        else:
+            for b in range(bin_num):
+                bin_in_percent = int(((1 + b) / bin_num) * 100)
+                features.append(var + " " + str(bin_in_percent))
+
     # for each mouse, create a series to concat to PCA_df
     for g, group_name in enumerate(group_names):
         for ID in pd.unique(avg_dfs[g][ID_COL]):
             this_list = [group_name, ID]
-            ID_row_idx = np.where(avg_dfs[g][ID_COL] == ID)[0]
+            if len(PCA_bins) > 0:  # empty strings are len = 0
+                # first line gives True and False but we need indexes so it's
+                # compatible with my (previous) approach of using iloc and lists
+                row_idxs = (avg_dfs[g][ID_COL] == ID) & (
+                    avg_dfs[g][SC_PERCENTAGE_COL].isin(PCA_bins)
+                )
+                row_idxs = np.where(row_idxs == True)[0]
+            else:
+                row_idxs = np.where(avg_dfs[g][ID_COL] == ID)[0]
             for var in PCA_vars:
                 joint_col_idx = avg_dfs[g].columns.get_loc(var)
-                # get data of this ID x joint combo
-                this_data = list(avg_dfs[g].iloc[ID_row_idx, joint_col_idx].values)
+                # this data is of current ID or IDxSC% combo and current feature
+                this_data = list(avg_dfs[g].iloc[row_idxs, joint_col_idx].values)
                 this_list.extend(this_data)  # so we have ID_COL as 1st value
             this_series = pd.Series(this_list)
             if PCA_df.empty:
@@ -115,6 +171,16 @@ def create_PCA_df(avg_dfs, folderinfo, cfg):
             else:
                 # transpose series, transform to df and concat to row-axis
                 PCA_df = pd.concat([PCA_df, this_series.to_frame().T], axis=0)
+    # this check is me being paranoid but whatever let's just leave it in
+    if len(PCA_df.columns) != len(features) + 2:
+        critical_PCA_df_error_message = (
+            "\n*********\n! ERROR !\n*********\n"
+            + "PCA_df creation failed since columns did not match features!\n"
+            + "This should never happen, please contact me!"
+        )
+        print(critical_PCA_df_error_message)
+        write_issues_to_textfile(critical_PCA_df_error_message, results_dir)
+        raise ValueError(critical_PCA_df_error_message)
     # add colnames after the last mouse (makes concat'ing series 2 df easier)
     PCA_df.columns = [GROUP_COL] + [ID_COL] + features
     return PCA_df, features
