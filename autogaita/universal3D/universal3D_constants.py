@@ -29,7 +29,7 @@ STD_XLS_FILENAME = " - Standard Devs. Stepcycle"
 SEPARATOR_IDX = 1  # idx of dfs whenever we have separator rows
 DF_TIME_COL = "Time"
 DF_LEG_COL = "Leg"
-SC_PERCENTAGE_COL = "SC Percentages"
+SC_PERCENTAGE_COL = "SC Percentage"
 EXCLUDED_COLS_IN_AV_STD_DFS = [DF_TIME_COL, DF_LEG_COL]
 REORDER_COLS_IN_STEP_NORMDATA = [DF_TIME_COL, DF_LEG_COL]
 # plot stuff

@@ -492,8 +492,9 @@ def define_bins(triallength, bin_num):
 def compute_average_and_std_data(normalised_steps_data, bin_num, analyse_average_y):
     """Export XLS tables that store all averages & std of y-coords & angles"""
     # initialise data & columns of average & std dataframes (fill vals in loop)
-
     initialisation_data = bin_num_to_percentages(bin_num)
+    # only for 3D - make a list of the percentages list that is output
+    initialisation_data = [initialisation_data]
     initialisation_columns = [SC_PERCENTAGE_COL]
     if analyse_average_y:
         cols_to_include = [
