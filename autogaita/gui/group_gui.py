@@ -484,12 +484,21 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     PCA_bins_label.grid(row=8, column=0)
     PCA_bins_entry.grid(row=9, column=0, sticky="n")
 
+    # save 3D PCA video
+    save_PCA_video_checkbox = gaita_widgets.checkbox(
+        cfgwindow,
+        "Save video of 3D PCA Scatterplot (requires ffmpeg!)",
+        cfg["PCA_save_3D_video"],
+        WIDGET_CFG,
+    )
+    save_PCA_video_checkbox.grid(row=10, column=0)
+
     # color palette
     color_palette_string = "Choose figures' color palette"
     color_palette_label = ctk.CTkLabel(
         cfgwindow, text=color_palette_string, font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
     )
-    color_palette_label.grid(row=10, column=0)
+    color_palette_label.grid(row=11, column=0)
     color_palette_entry = ctk.CTkOptionMenu(
         cfgwindow,
         values=COLOR_PALETTES_LIST,
@@ -499,7 +508,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         button_hover_color=HOVER_COLOR,
         font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    color_palette_entry.grid(row=11, column=0, sticky="n")
+    color_palette_entry.grid(row=12, column=0, sticky="n")
 
     # plot SE
     plot_SE_box = gaita_widgets.checkbox(
@@ -508,7 +517,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         cfg["plot_SE"],
         WIDGET_CFG,
     )
-    plot_SE_box.grid(row=12, column=0)
+    plot_SE_box.grid(row=13, column=0)
 
     # legend outside
     legend_outside_checkbox = gaita_widgets.checkbox(
@@ -517,16 +526,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
         cfg["legend_outside"],
         WIDGET_CFG,
     )
-    legend_outside_checkbox.grid(row=13, column=0)
-
-    # save 3D PCA video
-    save_PCA_video_checkbox = gaita_widgets.checkbox(
-        cfgwindow,
-        "Save video of 3D PCA Scatterplot (requires ffmpeg!)",
-        cfg["PCA_save_3D_video"],
-        WIDGET_CFG,
-    )
-    save_PCA_video_checkbox.grid(row=14, column=0)
+    legend_outside_checkbox.grid(row=14, column=0)
 
     # dont show plots
     dont_show_plots_checkbox = gaita_widgets.checkbox(
