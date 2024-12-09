@@ -1,6 +1,7 @@
 import os
 
 from autogaita.group.group_constants import (
+    INFO_TEXT_WIDTH,
     ISSUES_TXT_FILENAME,
     PCA_CUSTOM_SCATTER_OUTER_SEPARATOR,
 )
@@ -11,9 +12,18 @@ def print_start(folderinfo, cfg):
     """Print some info about starting this analysis"""
 
     # header
+    gaita_string = "A U T O G A I T A | G R O U P"
+    space_add = " " * ((INFO_TEXT_WIDTH - len(gaita_string)) // 2)
     start_string = (
-        "\n******************\n AutoGaitA_Group \n******************"
-        + "\n\nContrasting Groups:"
+        "\n"
+        + "-" * INFO_TEXT_WIDTH
+        + "\n"
+        + space_add
+        + gaita_string
+        + space_add
+        + "\n"
+        + "-" * INFO_TEXT_WIDTH
+        + "\n\nGroup Names\n-----------"
     )
 
     # groups
@@ -21,20 +31,31 @@ def print_start(folderinfo, cfg):
         start_string += "\n" + group_name
 
     # pca
-    start_string += "\n\n\n*****\n PCA \n*****"
+    PCA_string = "P R I N C I P A L | C O M P O N E N T | A N A L Y S I S"
+    space_add = " " * ((INFO_TEXT_WIDTH - len(PCA_string)) // 2)
+    start_string += (
+        "\n\n\n"
+        + "-" * INFO_TEXT_WIDTH
+        + "\n"
+        + space_add
+        + PCA_string
+        + space_add
+        + "\n"
+        + "-" * INFO_TEXT_WIDTH
+    )
     if cfg["PCA_variables"]:
-        start_string += "\n\nFeatures:"
+        start_string += "\n\nFeatures\n--------"
         for PCA_var in cfg["PCA_variables"]:
             start_string += "\n" + PCA_var
         if cfg["PCA_n_components"] > 0 and cfg["PCA_n_components"] < 1:
             start_string += (
-                "\n\nPC-Number Configuration:\n"
+                "\n\nPC-Number Configuration\n-----------------------\n"
                 + str(cfg["PCA_n_components"] * 100)
                 + "% of variance explained"
             )
         else:
             start_string += (
-                "\n\nPC-Number Configuration:\n"
+                "\n\nPC-Number Configuration\n-----------------------\n"
                 + str(cfg["PCA_n_components"])
                 + " principal components"
             )
@@ -48,18 +69,29 @@ def print_start(folderinfo, cfg):
             ):
                 start_string += "\nPlot " + str(i + 1) + " - " + custom_scatter_PCs
         if cfg["PCA_bins"]:
-            start_string += "\n\nCustom Bin Configuration:"
+            start_string += "\n\nCustom Bin Configuration\n----------------------"
             start_string += "\n" + cfg["PCA_bins"]
     else:
         start_string += "\n\nNo PCA wanted!"
 
     # stats
-    start_string += "\n\n\n*************\n Statistics \n*************"
+    stats_string = "S T A T I S T I C S"
+    space_add = " " * ((INFO_TEXT_WIDTH - len(stats_string)) // 2)
+    start_string += (
+        "\n\n\n"
+        + "-" * INFO_TEXT_WIDTH
+        + "\n"
+        + space_add
+        + stats_string
+        + space_add
+        + "\n"
+        + "-" * INFO_TEXT_WIDTH
+    )
     if cfg["stats_variables"]:
-        start_string += "\n\nFeatures:"
+        start_string += "\n\nFeatures\n--------"
         for stats_var in cfg["stats_variables"]:
             start_string += "\n" + stats_var
-        start_string += "\n\nConfiguration:"
+        start_string += "\n\nConfiguration\n-------------"
         if cfg["do_anova"]:
             start_string += "\n" + cfg["anova_design"]
         else:

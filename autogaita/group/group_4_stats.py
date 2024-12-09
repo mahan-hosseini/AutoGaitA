@@ -18,6 +18,7 @@ from scipy import stats
 
 # %% constants
 from autogaita.group.group_constants import (
+    INFO_TEXT_WIDTH,
     STATS_TXT_FILENAME,
     ID_COL,
     GROUP_COL,
@@ -83,6 +84,8 @@ def cluster_extent_test(
     # unpack
     permutation_number = cfg["permutation_number"]
     stats_threshold = cfg["stats_threshold"]
+    # initialise the text file
+    initial_stats_textfile(stats_var, "Permutation Test", folderinfo)
     # true observed
     trueobs_df = stats_df.copy()
     trueobs_results_df = initialise_results_df(folderinfo, cfg)
@@ -116,8 +119,7 @@ def cluster_extent_test(
     # print & save exact numerical results (significant SC % clusters) to a textfile
     save_stats_results_to_text(
         trueobs_results_df,
-        stats_var,
-        "Cluster-extent permutation test",
+        "Permutation Test",
         folderinfo,
         cfg,
     )
@@ -557,41 +559,43 @@ def twoway_RMANOVA(
     # unpack
     anova_design = cfg["anova_design"]
 
-    # run the (fully) RM or Mixed ANOVA
+    # initialise text file
+    initial_stats_textfile(stats_var, anova_design, folderinfo)
+
+    # run the 1-way RM or Mixed ANOVA
+    # => note pingouin checks both or sphericity by default
     ANOVA_result = run_ANOVA(stats_df, stats_var, cfg)
 
-    # check if sphericity is given to see if p vals have to be GG corrected
-    # => even though this is done automatically for mixed anovas, you always get the GG
-    #    col in results of rm anovas so we have to test it ourselves
-    sphericity_flag = sphericity(
-        stats_df, dv=stats_var, within=SC_PERCENTAGE_COL, subject=ID_COL
-    )[0]
-    if sphericity_flag:  # sphericity is given, no need to correct
-        interaction_effect_pval = ANOVA_result["p-unc"][2]
-    else:
-        interaction_effect_pval = ANOVA_result["p-GG-corr"][2]
-        # NU - understand why its nan sometimes. For now use uncorrected int pval
-        if np.isnan(interaction_effect_pval):
-            interaction_effect_pval = ANOVA_result["p-unc"][2]
-    if interaction_effect_pval < 0.05:  # if interaction effect is sig, do multcomps
-        multcomp_df = multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg)
-        save_stats_results_to_text(
-            multcomp_df, stats_var, anova_design, folderinfo, cfg
+    # run Tukeys for pairwise comparisons
+    multcomp_df = multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg)
+    save_stats_results_to_text(multcomp_df, anova_design, folderinfo, cfg, ANOVA_result)
+    plot_multcomp_results(
+        g_avg_dfs,
+        g_std_dfs,
+        multcomp_df,
+        stats_var,
+        folderinfo,
+        cfg,
+        plot_panel_instance,
+    )
+
+
+# ..............................  main ANOVA  computation  .............................
+def run_ANOVA(stats_df, stats_var, cfg):
+    """Run the RM-ANOVA using pingouin"""
+
+    # unpack
+    anova_design = cfg["anova_design"]
+    if anova_design == "Mixed ANOVA":
+        result = stats_df.mixed_anova(
+            dv=stats_var,
+            between=GROUP_COL,
+            within=SC_PERCENTAGE_COL,
+            subject=ID_COL,
         )
-        plot_multcomp_results(
-            g_avg_dfs,
-            g_std_dfs,
-            multcomp_df,
-            stats_var,
-            folderinfo,
-            cfg,
-            plot_panel_instance,
-        )
-    else:  # if interaction effect not sig, inform user that we didn't perform Tukey's!
-        nonsig_multcomp_df = pd.DataFrame()
-        save_stats_results_to_text(
-            nonsig_multcomp_df, stats_var, "non-significant ANOVA", folderinfo, cfg
-        )
+    elif anova_design == "RM ANOVA":
+        result = stats_df.rm_anova(dv=stats_var, within=GROUP_COL, subject=ID_COL)
+    return result
 
 
 # .............................  multiple comparison test  .............................
@@ -637,23 +641,6 @@ def multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg):
                 )
                 multcomp_df.iloc[sc_perc_row_idx, contrast_col_idx] = ps[i, j]
     return multcomp_df
-
-
-# ..............................  main ANOVA  computation  .............................
-def run_ANOVA(stats_df, stats_var, cfg):
-    """Run the RM-ANOVA using pingouin"""
-
-    # unpack
-    anova_design = cfg["anova_design"]
-    if anova_design == "Mixed ANOVA":
-        result = stats_df.mixed_anova(
-            dv=stats_var, between=GROUP_COL, within=SC_PERCENTAGE_COL, subject=ID_COL
-        )
-    elif anova_design == "RM ANOVA":
-        result = stats_df.rm_anova(
-            dv=stats_var, within=[GROUP_COL, SC_PERCENTAGE_COL], subject=ID_COL
-        )
-    return result
 
 
 # ...................................  plot results  ...................................
@@ -857,13 +844,47 @@ def extract_multcomp_significance_clusters(multcomp_df, contrast, stats_threshol
 
 
 # ...............................  utils - save to txt  ................................
-def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cfg):
+def initial_stats_textfile(stats_var, which_test, folderinfo):
+    """Initialise the stats results based on current contrast & analysis"""
+
+    # unpack
+    results_dir = folderinfo["results_dir"]
+
+    # initial message
+    INFO_TEXT_WIDTH = 64
+    star_row = "*" * INFO_TEXT_WIDTH
+    info_string = "  Results of " + which_test + " for " + stats_var + "  "
+    info_width = len(info_string)
+    if info_width < INFO_TEXT_WIDTH:
+        side_stars = "*" * ((INFO_TEXT_WIDTH - info_width) // 2)
+    else:
+        side_stars = ""  # dont bother for extremely long features
+    message = (
+        "\n\n"
+        + star_row
+        + "\n\n"
+        + side_stars
+        + info_string
+        + side_stars
+        + "\n\n"
+        + star_row
+    )
+
+    # print & save
+    print(message)
+    stats_textfile = os.path.join(results_dir, STATS_TXT_FILENAME)
+    with open(stats_textfile, "a") as f:
+        f.write(message)
+
+
+def save_stats_results_to_text(
+    results_df, which_test, folderinfo, cfg, ANOVA_result=None
+):
     """Save the numerical results of our cluster extent or ANOVA results to a text file
     Note
     ----
     which_test can either be:
-        "RM ANOVA", "Mixed ANOVA", "non-significant ANOVA",
-        or "Cluster-extent permutation test"
+        "RM ANOVA", "Mixed ANOVA" or "Permutation Test"
         If in the future you want to have some other test be mindful about the:
             if "ANOVA" in which_test lines!
     """
@@ -873,15 +894,18 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
     bin_num = cfg["bin_num"]
     stats_threshold = cfg["stats_threshold"]
 
-    # initial message
-    message = (
-        "\n\n**************************************************************************"
-        + "\n\n*****  Results of "
-        + which_test
-        + " for "
-        + stats_var
-        + "  ****"
-    )
+    # initialise the message variable
+    message = ""
+
+    # only for ANOVA - add the table above contrast loop
+    if "ANOVA" in which_test:
+        message = (
+            message
+            + "\n\n--------------------\nA N O V A  T A B L E"
+            + "\n--------------------"
+            + "\n"
+            + str(ANOVA_result)
+        )
 
     # contrast specific info
     for contrast in contrasts:
@@ -890,41 +914,23 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
         #    both cases it returns a list of lists of indices with range(bin_num)
         #   - which is why we can use rounded_sc_percentages as we do below
         if "ANOVA" in which_test:
-            if "non-significant" in which_test:  # interaction nonsig - no multcomps
-                clusters = []
-            else:
-                # interaction significant (which_test is either RM ANOVA or Mixed ANOVA)
-                clusters = extract_multcomp_significance_clusters(
-                    results_df, contrast, stats_threshold
-                )
+            clusters = extract_multcomp_significance_clusters(
+                results_df, contrast, stats_threshold
+            )
         else:
             clusters = extract_all_clusters(results_df, contrast)
         # write message
+        message = (
+            message
+            + "\n\n---------------\nC O N T R A S T\n"
+            + contrast
+            + "\n---------------\n"
+        )
         if len(clusters) == 0:  # no sig clusters were found!
-            if "non-significant" in which_test:
-                message = (
-                    message
-                    + "\n\nContrast: "
-                    + contrast
-                    + " - interaction effect "
-                    + "not significant. Tukey's test was not performed!"
-                )
-            else:
-                message = (
-                    message
-                    + "\n\nContrast: "
-                    + contrast
-                    + " - No significant clusters"
-                    + "!"
-                )
+            message = message + "No significant clusters!"
         else:
             rounded_sc_percentages = np.linspace(0, 100, bin_num).round(2)
-            message = (
-                message
-                + "\n\nContrast: "
-                + contrast
-                + " - Significant clusters found at (in SC Percentage):"
-            )
+            message = message + "Significant clusters at:"
             for cluster in clusters:
                 message = (
                     message
@@ -966,13 +972,6 @@ def save_stats_results_to_text(results_df, stats_var, which_test, folderinfo, cf
                             this_contrast_results_df.iloc[cluster[0], cluster_p_colidx]
                         )
                     )
-
-    # message end
-    message = (
-        message
-        + "\n\n***********************************************************************"
-        + "***\n\n"
-    )
 
     # print & save
     print(message)

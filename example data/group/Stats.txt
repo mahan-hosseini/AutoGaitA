@@ -1,52 +1,175 @@
 
 
-**************************************************************************
+****************************************************************
 
-*****  Results of non-significant ANOVA for Knee y  ****
+***************  Results of RM ANOVA for Knee y  ***************
 
-Contrast: 5 mm & 12 mm - interaction effect not significant. Tukey's test was not performed!
+****************************************************************
 
-Contrast: 5 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
+--------------------
+A N O V A  T A B L E
+--------------------
+  Source  ddof1  ddof2         F     p-unc      ng2       eps
+0  Group      2      4  2.522463  0.195573  0.33195  0.580282
 
-Contrast: 12 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
+---------------
+C O N T R A S T
+5 mm & 12 mm
+---------------
+No significant clusters!
 
-**************************************************************************
+---------------
+C O N T R A S T
+5 mm & 25 mm
+---------------
+Significant clusters at:
 
-
-
-**************************************************************************
-
-*****  Results of non-significant ANOVA for Ankle y  ****
-
-Contrast: 5 mm & 12 mm - interaction effect not significant. Tukey's test was not performed!
-
-Contrast: 5 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
-
-Contrast: 12 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
-
-**************************************************************************
-
-
-
-**************************************************************************
-
-*****  Results of non-significant ANOVA for Hind paw tao y  ****
-
-Contrast: 5 mm & 12 mm - interaction effect not significant. Tukey's test was not performed!
-
-Contrast: 5 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
-
-Contrast: 12 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
-
-**************************************************************************
+100.0-100.0%, p values:
 
 
+100.0% - p = 0.0404
 
-**************************************************************************
+---------------
+C O N T R A S T
+12 mm & 25 mm
+---------------
+No significant clusters!
 
-*****  Results of RM ANOVA for Ankle Angle  ****
+****************************************************************
 
-Contrast: 5 mm & 12 mm - Significant clusters found at (in SC Percentage):
+**************  Results of RM ANOVA for Ankle y  **************
+
+****************************************************************
+
+--------------------
+A N O V A  T A B L E
+--------------------
+  Source  ddof1  ddof2          F     p-unc       ng2       eps
+0  Group      2      4  15.370426  0.013257  0.842182  0.518022
+
+---------------
+C O N T R A S T
+5 mm & 12 mm
+---------------
+Significant clusters at:
+
+0.0-8.33%, p values:
+
+
+0.0% - p = 0.0122
+4.17% - p = 0.0016
+8.33% - p = 0.0007
+
+---------------
+C O N T R A S T
+5 mm & 25 mm
+---------------
+Significant clusters at:
+
+0.0-8.33%, p values:
+
+
+0.0% - p = 0.0403
+4.17% - p = 0.0028
+8.33% - p = 0.0015
+
+---------------
+C O N T R A S T
+12 mm & 25 mm
+---------------
+No significant clusters!
+
+****************************************************************
+
+***********  Results of RM ANOVA for Hind paw tao y  ***********
+
+****************************************************************
+
+--------------------
+A N O V A  T A B L E
+--------------------
+  Source  ddof1  ddof2          F     p-unc       ng2       eps
+0  Group      2      4  22.099956  0.006887  0.915896  0.509885
+
+---------------
+C O N T R A S T
+5 mm & 12 mm
+---------------
+Significant clusters at:
+
+0.0-41.67%, p values:
+
+
+0.0% - p = 0.0022
+4.17% - p = 0.02
+8.33% - p = 0.0236
+12.5% - p = 0.0047
+16.67% - p = 0.0
+20.83% - p = 0.0
+25.0% - p = 0.0022
+29.17% - p = 0.0017
+33.33% - p = 0.0058
+37.5% - p = 0.0356
+41.67% - p = 0.047
+
+---------------
+C O N T R A S T
+5 mm & 25 mm
+---------------
+Significant clusters at:
+
+0.0-100.0%, p values:
+
+
+0.0% - p = 0.0018
+4.17% - p = 0.0122
+8.33% - p = 0.0055
+12.5% - p = 0.0015
+16.67% - p = 0.0
+20.83% - p = 0.0
+25.0% - p = 0.0007
+29.17% - p = 0.0003
+33.33% - p = 0.0053
+37.5% - p = 0.032
+41.67% - p = 0.0269
+45.83% - p = 0.0164
+50.0% - p = 0.0184
+54.17% - p = 0.0144
+58.33% - p = 0.004
+62.5% - p = 0.0048
+66.67% - p = 0.0118
+70.83% - p = 0.0129
+75.0% - p = 0.0109
+79.17% - p = 0.0067
+83.33% - p = 0.0106
+87.5% - p = 0.0208
+91.67% - p = 0.0298
+95.83% - p = 0.029
+100.0% - p = 0.0225
+
+---------------
+C O N T R A S T
+12 mm & 25 mm
+---------------
+No significant clusters!
+
+****************************************************************
+
+************  Results of RM ANOVA for Ankle Angle  ************
+
+****************************************************************
+
+--------------------
+A N O V A  T A B L E
+--------------------
+  Source  ddof1  ddof2        F     p-unc       ng2       eps
+0  Group      2      4  1.91676  0.260739  0.219196  0.515871
+
+---------------
+C O N T R A S T
+5 mm & 12 mm
+---------------
+Significant clusters at:
 
 8.33-16.67%, p values:
 
@@ -55,7 +178,11 @@ Contrast: 5 mm & 12 mm - Significant clusters found at (in SC Percentage):
 12.5% - p = 0.0014
 16.67% - p = 0.0011
 
-Contrast: 5 mm & 25 mm - Significant clusters found at (in SC Percentage):
+---------------
+C O N T R A S T
+5 mm & 25 mm
+---------------
+Significant clusters at:
 
 8.33-16.67%, p values:
 
@@ -64,41 +191,106 @@ Contrast: 5 mm & 25 mm - Significant clusters found at (in SC Percentage):
 12.5% - p = 0.0011
 16.67% - p = 0.0046
 
-Contrast: 12 mm & 25 mm - No significant clusters!
+---------------
+C O N T R A S T
+12 mm & 25 mm
+---------------
+No significant clusters!
 
-**************************************************************************
+****************************************************************
+
+*************  Results of RM ANOVA for Knee Angle  *************
+
+****************************************************************
+
+--------------------
+A N O V A  T A B L E
+--------------------
+  Source  ddof1  ddof2         F     p-unc       ng2      eps
+0  Group      2      4  6.695186  0.052906  0.674259  0.50105
+
+---------------
+C O N T R A S T
+5 mm & 12 mm
+---------------
+Significant clusters at:
+
+4.17-12.5%, p values:
 
 
+4.17% - p = 0.0288
+8.33% - p = 0.0073
+12.5% - p = 0.0311
 
-**************************************************************************
+---------------
+C O N T R A S T
+5 mm & 25 mm
+---------------
+Significant clusters at:
 
-*****  Results of non-significant ANOVA for Knee Angle  ****
-
-Contrast: 5 mm & 12 mm - interaction effect not significant. Tukey's test was not performed!
-
-Contrast: 5 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
-
-Contrast: 12 mm & 25 mm - interaction effect not significant. Tukey's test was not performed!
-
-**************************************************************************
-
+4.17-12.5%, p values:
 
 
-**************************************************************************
+4.17% - p = 0.0218
+8.33% - p = 0.0095
+12.5% - p = 0.042
 
-*****  Results of RM ANOVA for Hip Angle  ****
+41.67-62.5%, p values:
 
-Contrast: 5 mm & 12 mm - No significant clusters!
 
-Contrast: 5 mm & 25 mm - No significant clusters!
+41.67% - p = 0.0311
+45.83% - p = 0.022
+50.0% - p = 0.0124
+54.17% - p = 0.0186
+58.33% - p = 0.0271
+62.5% - p = 0.0404
 
-Contrast: 12 mm & 25 mm - Significant clusters found at (in SC Percentage):
+---------------
+C O N T R A S T
+12 mm & 25 mm
+---------------
+Significant clusters at:
+
+41.67-54.17%, p values:
+
+
+41.67% - p = 0.0218
+45.83% - p = 0.0168
+50.0% - p = 0.0139
+54.17% - p = 0.0335
+
+****************************************************************
+
+*************  Results of RM ANOVA for Hip Angle  *************
+
+****************************************************************
+
+--------------------
+A N O V A  T A B L E
+--------------------
+  Source  ddof1  ddof2         F     p-unc       ng2       eps
+0  Group      2      4  0.785518  0.515523  0.260197  0.628944
+
+---------------
+C O N T R A S T
+5 mm & 12 mm
+---------------
+No significant clusters!
+
+---------------
+C O N T R A S T
+5 mm & 25 mm
+---------------
+No significant clusters!
+
+---------------
+C O N T R A S T
+12 mm & 25 mm
+---------------
+Significant clusters at:
 
 91.67-95.83%, p values:
 
 
 91.67% - p = 0.042
 95.83% - p = 0.0371
-
-**************************************************************************
-

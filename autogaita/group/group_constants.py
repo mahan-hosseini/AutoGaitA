@@ -3,6 +3,9 @@ ISSUES_TXT_FILENAME = "Issues.txt"
 STATS_TXT_FILENAME = "Stats.txt"
 CONFIG_JSON_FILENAME = "config.json"
 
+# Info text width
+INFO_TEXT_WIDTH = 64
+
 # EXPORT XLS
 NORM_SHEET_NAME = "Normalised Stepcycles"
 ORIG_SHEET_NAME = "Original Stepcycles"

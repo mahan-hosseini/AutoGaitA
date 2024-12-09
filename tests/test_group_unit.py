@@ -45,22 +45,32 @@ def extract_cfg():
 
 
 # %%..............................  statistics  ........................................
-def test_RM_ANOVA(extract_cfg):
-    # Adopted example data from https://real-statistics.com/
-    # See the RM ANOVA xlsx file for complete link
-    extract_cfg["do_anova"] = True
-    extract_cfg["anova_design"] = "RM ANOVA"
-    stats_df = pd.read_excel("tests/test_data/group_data/RM ANOVA Example Data.xlsx")
-    stats_var = "Value"
-    result = run_ANOVA(stats_df, stats_var, extract_cfg)
-    # Note that the last 2 assert statements have a different tolerance because those
-    # p-values differed a bit. Not sure why but it's a tiny amount and tolerable IMO
-    assert math.isclose(result["p-unc"][0], stats_df["p(A)"][0], abs_tol=1e-05)
-    assert math.isclose(result["p-unc"][1], stats_df["p(B)"][0], abs_tol=1e-05)
-    assert math.isclose(result["p-unc"][2], stats_df["p(AxB)"][0], abs_tol=1e-05)
-    assert math.isclose(result["p-GG-corr"][0], stats_df["GG-p(A)"][0], abs_tol=1e-05)
-    assert math.isclose(result["p-GG-corr"][1], stats_df["GG-p(B)"][0], abs_tol=1e-04)
-    assert math.isclose(result["p-GG-corr"][2], stats_df["GG-p(AxB)"][0], abs_tol=1e-02)
+
+
+# NOTE !!!
+# => This test is outdated and wrong because it is for two within subject factors (for
+#    example 3 separate behavioural tests and pre/post medication treatment or so -
+#    done by each subject)
+# => I will not delete this since I might want to re-use it if I should support such
+#    designs
+#
+# def test_twoway_RM_ANOVA(extract_cfg):
+#     # Adopted example data from https://real-statistics.com/
+#     # See the RM ANOVA xlsx file for complete link
+#     extract_cfg["do_anova"] = True
+#     extract_cfg["anova_design"] = "RM ANOVA"
+#     stats_df = pd.read_excel("tests/test_data/group_data/RM ANOVA Example Data.xlsx")
+#     stats_var = "Value"
+#     result = run_ANOVA(stats_df, stats_var, extract_cfg)
+#     # Note that the last 2 assert statements have a different tolerance because those
+#     # p-values differed a bit. Not sure why but it's a tiny amount and tolerable IMO
+#     pytest.set_trace()
+#     assert math.isclose(result["p-unc"][0], stats_df["p(A)"][0], abs_tol=1e-05)
+#     assert math.isclose(result["p-unc"][1], stats_df["p(B)"][0], abs_tol=1e-05)
+#     assert math.isclose(result["p-unc"][2], stats_df["p(AxB)"][0], abs_tol=1e-05)
+#     assert math.isclose(result["p-GG-corr"][0], stats_df["GG-p(A)"][0], abs_tol=1e-05)
+#     assert math.isclose(result["p-GG-corr"][1], stats_df["GG-p(B)"][0], abs_tol=1e-04)
+#     assert math.isclose(result["p-GG-corr"][2], stats_df["GG-p(AxB)"][0], abs_tol=1e-02)
 
 
 def test_Mixed_ANOVA(extract_cfg):
