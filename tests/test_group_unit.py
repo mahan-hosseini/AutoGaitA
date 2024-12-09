@@ -1,5 +1,7 @@
+from autogaita.group.group_3_PCA import run_PCA, convert_PCA_bins_to_list
 from autogaita.group.group_4_stats import run_ANOVA
 import pytest
+from sklearn import datasets
 import pandas as pd
 import numpy as np
 import math
@@ -26,8 +28,10 @@ def extract_cfg():
         "do_permtest": True,
         "do_anova": True,
         "permutation_number": 100,
-        "number_of_PCs": 3,
-        "save_3D_PCA_video": False,
+        "PCA_n_components": 3,
+        "PCA_custom_scatter_PCs": "",
+        "PCA_save_3D_video": False,  # True
+        "PCA_bins": "",
         "stats_threshold": 0.05,
         "plot_SE": False,
         "color_palette": "viridis",
@@ -73,7 +77,52 @@ def test_Mixed_ANOVA(extract_cfg):
     assert math.isclose(result["p-unc"][2], stats_df["p(AxB)"][0], abs_tol=1e-05)
 
 
-# PCA TESTS
-# 1. check with example (eg iris data) that values are correct
-# => check that n components is working as expected (being >1 or between 0 and 1)
-# 2. check that scatter PCs are extracted as expected from string
+# %%..................................  PCA  ...........................................
+def test_run_PCA(extract_cfg):
+    # Replicate the example found in https://www.kdnuggets.com/2023/05/
+    # principal-component-analysis-pca-scikitlearn.html using our PCA df and PCA_info
+    # structure
+    # fmt: off
+    true_results_PCA_eigenvectors = [[0.1443294, -0.24518758, -0.00205106, -0.23932041,  0.14199204,  0.39466085, 0.4229343, -0.2985331, 0.31342949, -0.0886167,0.29671456,  0.37616741, 0.28675223],
+    [-0.48365155, -0.22493093, -0.31606881,  0.0105905,  -0.299634,   -0.06503951
+    , 0.00335981, -0.02877949, -0.03930172, -0.52999567,  0.27923515,  0.16449619,
+    -0.36490283],
+    [-0.20738262,  0.08901289,  0.6262239,   0.61208035,  0.13075693,  0.14617896,
+    0.1506819,   0.17036816,  0.14945431, -0.13730621,  0.08522192,  0.16600459,
+    -0.12674592]]
+    true_results_PCA_explained_var = [0.36198848, 0.1920749 , 0.11123631]
+    # fmt: on
+    wine_data = datasets.load_wine(as_frame=True)
+    wine_df = wine_data.data
+    features = wine_df.columns
+    PCA_df, PCA_info = run_PCA(wine_df, features, extract_cfg)
+    for i in range(3):
+        # absolute values are compared because the signs can be different w. eigenvecs
+        assert np.allclose(
+            np.absolute(PCA_info["eigenvectors"][i]),
+            np.absolute(true_results_PCA_eigenvectors[i]),
+            atol=1e-05,
+        )
+    assert np.allclose(
+        PCA_info["explained_vars"], true_results_PCA_explained_var, atol=1e-05
+    )
+
+
+cases = (
+    (
+        "1-30,50,70-100",
+        100,
+        np.arange(1, 31).tolist() + [50] + np.arange(70, 101).tolist(),
+    ),
+    ("1-70", 25, [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68]),
+    ("2, 10, 22, 44, 50, 79", 50, [2, 10, 22, 44, 50]),
+    ("1-50,70-80", 10, [10, 20, 30, 40, 50, 70, 80]),
+)  # fmt: skip
+@pytest.mark.parametrize("PCA_bins, bin_num, expected_bins_list", cases)
+def test_convert_PCA_bins_to_list(
+    PCA_bins, bin_num, expected_bins_list, extract_folderinfo, extract_cfg
+):
+    extract_cfg["PCA_bins"] = PCA_bins
+    extract_cfg["bin_num"] = bin_num
+    updated_cfg = convert_PCA_bins_to_list(extract_folderinfo, extract_cfg)
+    assert np.array_equal(updated_cfg["PCA_bins"], np.array(expected_bins_list))

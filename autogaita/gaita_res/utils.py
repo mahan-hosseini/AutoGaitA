@@ -108,7 +108,15 @@ def print_finish(info):
 
 def bin_num_to_percentages(bin_num):
     """Convert bin_num to a list of percentages"""
-    return [int(((s + 1) / bin_num) * 100) for s in range(bin_num)]
+    # smaller than 100 means we know its integers and there are no duplicates
+    if bin_num < 100:
+        return [int(((s + 1) / bin_num) * 100) for s in range(bin_num)]
+    # special case for 100
+    elif bin_num == 100:  #
+        return [s for s in range(1, 101)]
+    # use floats to avoid integer duplicates for more than 100 bins
+    else:
+        return [round((((s + 1) / bin_num) * 100), 2) for s in range(bin_num)]
 
 
 # ................................  plot panel  ........................................

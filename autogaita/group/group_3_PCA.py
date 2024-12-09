@@ -295,7 +295,7 @@ def PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg):
         top_values = eigenvectors[pc, top_features]
         top_features_df["PC " + str(pc + 1) + " Features"] = features[top_features]
         top_features_df["PC " + str(pc + 1) + " Value"] = top_values
-    filename = f"PCA Feature Summary.xlsx"
+    filename = "PCA Feature Summary.xlsx"
     top_features_df.to_excel(os.path.join(results_dir, filename), index=False)
 
 
