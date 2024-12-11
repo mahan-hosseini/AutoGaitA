@@ -1,4 +1,5 @@
 from autogaita import group
+from autogaita.group.group_constants import STATS_TXT_FILENAME
 import pandas as pd
 import pandas.testing as pdt
 import filecmp
@@ -122,6 +123,9 @@ def test_group_approval(extract_true_dir, extract_folderinfo, extract_cfg):
     # ......................  4) TEST EQUIVALENCE OF STATS.TXT  ........................
     shallow = False  # if True compares only the metadata, not the contents!
     match, mismatch, errors = filecmp.cmpfiles(
-        extract_true_dir, extract_folderinfo["results_dir"], ["Stats.txt"], shallow
+        extract_true_dir,
+        extract_folderinfo["results_dir"],
+        [STATS_TXT_FILENAME],
+        shallow,
     )
-    assert match == ["Stats.txt"]
+    assert match == [STATS_TXT_FILENAME]

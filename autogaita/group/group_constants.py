@@ -1,6 +1,6 @@
 # Issues & stats results are stored in these textfiles (config json from mouseanalysis)
 ISSUES_TXT_FILENAME = "Issues.txt"
-STATS_TXT_FILENAME = "Stats.txt"
+STATS_TXT_FILENAME = "Stats Summary.txt"
 CONFIG_JSON_FILENAME = "config.json"
 
 # Info text width
@@ -28,6 +28,7 @@ SC_PERCENTAGE_COL = "SC Percentage"
 
 # STATS
 CONTRASTS_COL = "Contrasts"
+CONTRAST_SPLIT_STR = " & "
 TTEST_MASK_THRESHOLD = 0.05
 TTEST_P_COL = "Ttest p"
 TTEST_T_COL = "Ttest t"
@@ -35,6 +36,17 @@ TTEST_MASK_COL = "Ttest Mask"
 CLUSTER_TMASS_COL = "Cluster Tmass"
 CLUSTER_P_COL = "Cluster p"
 CLUSTER_MASK_COL = "Cluster Mask"
+MULTCOMP_RESULT_TYPES = ["q", "p", "CI low", "CI high"]
+MULTCOMP_RESULT_P_IDENTIFIER = "p"
+MULTCOMP_RESULT_SPLIT_STR = " | "
+MULTCOMP_EXCEL_COLS = [
+    "Tukey's HSD Test",
+    "Tukey's q",
+    "p value",
+    "CI",
+    "reject",
+    "sig. level",
+]
 
 # PLOTS
 PCA_BARPLOT_BARCOLOR = "#c74767"  # deep rose

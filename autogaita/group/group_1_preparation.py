@@ -12,6 +12,7 @@ from autogaita.group.group_constants import (
     STATS_TXT_FILENAME,
     CONFIG_JSON_FILENAME,
     ORIG_SHEET_NAME,
+    CONTRAST_SPLIT_STR,
 )
 
 
@@ -32,7 +33,7 @@ def some_prep(folderinfo, cfg):
     folderinfo["contrasts"] = []
     for i in range(len(group_names)):
         for j in range(i + 1, len(group_names)):
-            contrast = group_names[i] + " & " + group_names[j]
+            contrast = group_names[i] + CONTRAST_SPLIT_STR + group_names[j]
             folderinfo["contrasts"].append(contrast)
 
     # check if we previously had saved issues & stats textfiles, if so delete them

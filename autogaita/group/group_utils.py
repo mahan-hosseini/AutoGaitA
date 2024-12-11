@@ -95,12 +95,15 @@ def print_start(folderinfo, cfg):
         if cfg["do_anova"]:
             start_string += "\n" + cfg["anova_design"]
         else:
-            start_string += "\nNo Anova"
-        start_string += (
-            "\nCluster-extent permutation test with "
-            + str(cfg["permutation_number"])
-            + " permutations"
-        )
+            start_string += "\nNo ANOVA"
+        if cfg["do_permtest"]:
+            start_string += (
+                "\nCluster-extent permutation test with "
+                + str(cfg["permutation_number"])
+                + " permutations"
+            )
+        else:
+            start_string += "\nNo Permutation Test"
         start_string += (
             "\nAlpha Level of " + str(cfg["stats_threshold"] * 100) + "%\n\n"
         )

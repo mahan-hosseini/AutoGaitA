@@ -11,10 +11,12 @@ import os
 import sys
 import pandas as pd
 import numpy as np
+import string
+import openpyxl
 from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
-from pingouin import sphericity
 from scipy import stats
+import pingouin as pg
 
 # %% constants
 from autogaita.group.group_constants import (
@@ -24,6 +26,7 @@ from autogaita.group.group_constants import (
     GROUP_COL,
     SC_PERCENTAGE_COL,
     CONTRASTS_COL,
+    CONTRAST_SPLIT_STR,
     TTEST_MASK_THRESHOLD,  # STATS
     TTEST_P_COL,
     TTEST_T_COL,
@@ -31,6 +34,10 @@ from autogaita.group.group_constants import (
     CLUSTER_TMASS_COL,
     CLUSTER_P_COL,
     CLUSTER_MASK_COL,
+    MULTCOMP_RESULT_TYPES,
+    MULTCOMP_RESULT_P_IDENTIFIER,
+    MULTCOMP_RESULT_SPLIT_STR,
+    MULTCOMP_EXCEL_COLS,
     STATS_PLOT_LEGEND_SIZE,  # PLOTS
     STATS_PLOTS_SUPLABEL_SIZE,
     BOX_COLOR,
@@ -117,7 +124,7 @@ def cluster_extent_test(
         trueobs_results_df, max_tmass, permutation_number, stats_threshold
     )
     # print & save exact numerical results (significant SC % clusters) to a textfile
-    save_stats_results_to_text(
+    save_stats_summary_to_text(
         trueobs_results_df,
         "Permutation Test",
         folderinfo,
@@ -165,8 +172,8 @@ def compute_first_level_results(stats_df, results_df, stats_var, folderinfo):
     # populate true observed results df
     idx = 0
     for contrast in contrasts:
-        group1 = contrast.split(" & ")[0]
-        group2 = contrast.split(" & ")[1]
+        group1 = contrast.split(CONTRAST_SPLIT_STR)[0]
+        group2 = contrast.split(CONTRAST_SPLIT_STR)[1]
         # SC percentage & ttest results
         for s, sc_percentage in enumerate(np.unique(stats_df[SC_PERCENTAGE_COL])):
             results_df = run_and_assign_ttest(
@@ -325,7 +332,7 @@ def plot_permutation_test_results(
     x = np.linspace(0, 100, bin_num)
     for c, contrast in enumerate(contrasts):
         # prepare group strings and (importantly!) index of current groups from _NAMES
-        groups = [group_name for group_name in contrast.split(" & ")]
+        groups = [group_name for group_name in contrast.split(CONTRAST_SPLIT_STR)]
         group_indices = [group_names.index(group_name) for group_name in groups]
         # plot observed g_avgs & g_stds
         for g, group_name in enumerate(groups):
@@ -567,8 +574,14 @@ def twoway_RMANOVA(
     ANOVA_result = run_ANOVA(stats_df, stats_var, cfg)
 
     # run Tukeys for pairwise comparisons
+    # => always running multiple comparison tests as well. see Prism's doc for why
+    # => https://www.graphpad.com/guides/prism/latest/statistics/
+    #    stat_relationship_between_overall_a.htm
     multcomp_df = multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg)
-    save_stats_results_to_text(multcomp_df, anova_design, folderinfo, cfg, ANOVA_result)
+
+    # save results to text, excel and image files
+    save_stats_summary_to_text(multcomp_df, anova_design, folderinfo, cfg, ANOVA_result)
+    save_multcomp_pvalues_to_excel(multcomp_df, folderinfo, cfg)
     plot_multcomp_results(
         g_avg_dfs,
         g_std_dfs,
@@ -607,6 +620,7 @@ def multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg):
     group_names = folderinfo["group_names"]
     contrasts = folderinfo["contrasts"]
     bin_num = cfg["bin_num"]
+    stats_threshold = cfg["stats_threshold"]
 
     # prepare multcomp dataframe where we'll store results
     multcomp_df = pd.DataFrame(
@@ -614,12 +628,20 @@ def multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg):
         index=range(bin_num),
         columns=[SC_PERCENTAGE_COL],
     )
+    result_cols = []  # initialise cols based on different result types and contrasts
+    for result_type in MULTCOMP_RESULT_TYPES:
+        for contrast in contrasts:
+            result_cols.append(result_type + MULTCOMP_RESULT_SPLIT_STR + contrast)
     multcomp_df = pd.concat(
-        [multcomp_df, pd.DataFrame(data=None, index=range(bin_num), columns=contrasts)],
+        [
+            multcomp_df,
+            pd.DataFrame(data=None, index=range(bin_num), columns=result_cols),
+        ],
         axis=1,
     )
     # loop over SC Percentages & first prepare depvar_values of current SC % for testing
-    for sc_perc in np.unique(stats_df[SC_PERCENTAGE_COL]):
+    # => see below for another 3 for loops when building multcomp_df
+    for sc_perc in np.unique(stats_df[SC_PERCENTAGE_COL]):  # loop 1: sc percentage
         depvar_values = [[] for _ in range(len(group_names))]
         for g, group_name in enumerate(group_names):
             sc_perc_condition = stats_df[SC_PERCENTAGE_COL] == sc_perc
@@ -627,19 +649,44 @@ def multcompare_SC_Percentages(stats_df, stats_var, folderinfo, cfg):
             mask = sc_perc_condition & group_condition
             depvar_values[g] = stats_df.loc[mask, stats_var].to_numpy()
         # perform the multcomps test and extract p values
+        # =>
         result = stats.tukey_hsd(*depvar_values)  # using * for group_num flexibility
+        test_stat = result.statistic
         ps = result.pvalue
-        # assign p values to multcomp results df
+        CI = result.confidence_interval(1 - stats_threshold)
+        CI_low = CI[0]
+        CI_high = CI[1]
+        # assign Tukey results to multcomp results df
         # ==> see TukeyHSDResult class of scipy, according to their doc:
         #     "The element at index (i, j) is the p-value for the comparison between
         #     groups i and j." - so i & j matches contrasts as well as ps!
+        # ==> This is the case for test_stat and CI_low/high as well
         sc_perc_row_idx = np.where(multcomp_df[SC_PERCENTAGE_COL] == sc_perc)[0][0]
-        for i in range(len(group_names)):
-            for j in range(i + 1, len(group_names)):
-                contrast_col_idx = multcomp_df.columns.get_loc(
-                    group_names[i] + " & " + group_names[j]
-                )
-                multcomp_df.iloc[sc_perc_row_idx, contrast_col_idx] = ps[i, j]
+        for i in range(len(group_names)):  # loop 2: group 1
+            for j in range(i + 1, len(group_names)):  # loop 3: group 2
+                for result_type in MULTCOMP_RESULT_TYPES:  # loop 4: result type
+                    # note that cols were initialised appropriately above
+                    result_col_idx = multcomp_df.columns.get_loc(
+                        result_type
+                        + MULTCOMP_RESULT_SPLIT_STR
+                        + group_names[i]
+                        + CONTRAST_SPLIT_STR
+                        + group_names[j]
+                    )
+                    # strings here have to match list in group_constants
+                    if result_type == "q":
+                        multcomp_df.iloc[sc_perc_row_idx, result_col_idx] = test_stat[
+                            i, j
+                        ]
+                    # global constant var for p val identifier since used more than once
+                    elif result_type == MULTCOMP_RESULT_P_IDENTIFIER:
+                        multcomp_df.iloc[sc_perc_row_idx, result_col_idx] = ps[i, j]
+                    elif result_type == "CI low":
+                        multcomp_df.iloc[sc_perc_row_idx, result_col_idx] = CI_low[i, j]
+                    elif result_type == "CI high":
+                        multcomp_df.iloc[sc_perc_row_idx, result_col_idx] = CI_high[
+                            i, j
+                        ]
     return multcomp_df
 
 
@@ -667,7 +714,7 @@ def plot_multcomp_results(
     x = np.linspace(0, 100, bin_num)
     for c, contrast in enumerate(contrasts):
         # prepare group strings and (importantly!) index of current groups from _NAMES
-        groups = [group_name for group_name in contrast.split(" & ")]
+        groups = [group_name for group_name in contrast.split(CONTRAST_SPLIT_STR)]
         group_indices = [group_names.index(group_name) for group_name in groups]
         # plot observed g_avgs & g_stds
         for g, group_name in enumerate(groups):
@@ -825,7 +872,10 @@ def extract_multcomp_significance_clusters(multcomp_df, contrast, stats_threshol
     """Extract clusters of significance after multiple comparison test"""
     # the df structure of this is different to permutation results df so we have to do
     # something slightly different here too
-    significance_mask = multcomp_df[contrast] < stats_threshold
+    significance_mask = (
+        multcomp_df[MULTCOMP_RESULT_P_IDENTIFIER + MULTCOMP_RESULT_SPLIT_STR + contrast]
+        < stats_threshold
+    )
     all_clusters = []
     cluster = []
     for i, mask in enumerate(significance_mask):
@@ -843,7 +893,7 @@ def extract_multcomp_significance_clusters(multcomp_df, contrast, stats_threshol
     return all_clusters
 
 
-# ...............................  utils - save to txt  ................................
+# ...........................  utils - save to txt & excel  ............................
 def initial_stats_textfile(stats_var, which_test, folderinfo):
     """Initialise the stats results based on current contrast & analysis"""
 
@@ -851,7 +901,6 @@ def initial_stats_textfile(stats_var, which_test, folderinfo):
     results_dir = folderinfo["results_dir"]
 
     # initial message
-    INFO_TEXT_WIDTH = 64
     star_row = "*" * INFO_TEXT_WIDTH
     info_string = "  Results of " + which_test + " for " + stats_var + "  "
     info_width = len(info_string)
@@ -877,7 +926,7 @@ def initial_stats_textfile(stats_var, which_test, folderinfo):
         f.write(message)
 
 
-def save_stats_results_to_text(
+def save_stats_summary_to_text(
     results_df, which_test, folderinfo, cfg, ANOVA_result=None
 ):
     """Save the numerical results of our cluster extent or ANOVA results to a text file
@@ -951,7 +1000,17 @@ def save_stats_results_to_text(
                             + "\n"
                             + str(rounded_sc_percentages[i])
                             + "% - p = "
-                            + str(round(results_df.loc[i, contrast], 4))
+                            + str(
+                                round(
+                                    results_df.loc[
+                                        i,
+                                        MULTCOMP_RESULT_P_IDENTIFIER
+                                        + MULTCOMP_RESULT_SPLIT_STR
+                                        + contrast,
+                                    ],
+                                    4,
+                                )
+                            )
                         )
                 else:
                     # extract subset df of only this contrast because cluster variables
@@ -978,3 +1037,111 @@ def save_stats_results_to_text(
     stats_textfile = os.path.join(results_dir, STATS_TXT_FILENAME)
     with open(stats_textfile, "a") as f:
         f.write(message)
+
+
+def save_multcomp_pvalues_to_excel(multcomp_df, folderinfo, cfg):
+    """Save all p-values of all contrasts to an excel file"""
+
+    # unpack
+    stats_threshold = cfg["stats_threshold"]
+    contrasts = folderinfo["contrasts"]
+    results_dir = folderinfo["results_dir"]
+
+    #  initialise
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Multiple Comparison Results"
+
+    # this row idx used throughout excel table
+    this_row_idx = 1
+    row_height_per_sc = len(contrasts) + 2  # +2 for an 1) empty start row & 2) sc % row
+
+    # add column header
+    for c, col in enumerate(MULTCOMP_EXCEL_COLS):
+        cell = sheet[string.ascii_uppercase[c] + str(this_row_idx)]
+        cell.value = col
+        cell.font = openpyxl.styles.Font(bold=True)
+
+    # add cell values: loop over sc percentage and contrasts and fill results correctly
+    # from multcomp_df as you go
+    # => make sure to use empty rows as well
+    for sc_idx, sc_val in enumerate(multcomp_df[SC_PERCENTAGE_COL]):
+        if sc_idx > 0:  # update row index of the excel file correctly
+            this_row_idx += row_height_per_sc
+        sheet.cell(row=this_row_idx + 1, column=1, value="")  # empty row
+        # pdb.set_trace()
+        sheet.cell(row=this_row_idx + 2, column=1, value=f"{sc_val}% cycle")  # sc % row
+        for contrast_idx, contrast in enumerate(contrasts):
+            # initialise this contrast's row index
+            this_contrast_row_idx = this_row_idx + contrast_idx + 3
+            # col 1: just a string of the contrast
+            sheet.cell(
+                row=this_contrast_row_idx,
+                column=1,
+                value=contrast,
+            )
+            # col 2: Tukey's q
+            this_q = multcomp_df.loc[sc_idx, "q" + MULTCOMP_RESULT_SPLIT_STR + contrast]
+            sheet.cell(
+                row=this_contrast_row_idx,
+                column=2,
+                value=this_q,
+            )
+            # col 3: p value (rounded to 4 decimals)
+            this_p = multcomp_df.loc[
+                sc_idx, "p" + MULTCOMP_RESULT_SPLIT_STR + contrast
+            ].round(4)
+            sheet.cell(
+                row=this_contrast_row_idx,
+                column=3,
+                value=this_p,
+            )
+            # col 4: Confidence Interval
+            this_CI_list = []
+            for CI_col_str in ["CI low", "CI high"]:
+                this_CI_list.append(
+                    multcomp_df.loc[
+                        sc_idx, CI_col_str + MULTCOMP_RESULT_SPLIT_STR + contrast
+                    ].round(4)
+                )
+            this_CI = str(this_CI_list[0]) + " to " + str(this_CI_list[1])
+            sheet.cell(
+                row=this_contrast_row_idx,
+                column=4,
+                value=this_CI,
+            )
+            # col 5: reject H0
+            if this_p < stats_threshold:
+                this_mask = "Yes"
+            else:
+                this_mask = "No"
+            sheet.cell(
+                row=this_contrast_row_idx,
+                column=5,
+                value=this_mask,
+            )
+            # col 6: significance level
+            if this_p < 0.05:
+                this_sig_level = "*"
+            elif this_p < 0.01:
+                this_sig_level = "**"
+            elif this_p < 0.001:
+                this_sig_level = "***"
+            else:
+                this_sig_level = "n.s."
+            sheet.cell(
+                row=this_contrast_row_idx,
+                column=6,
+                value=this_sig_level,
+            )
+
+    # save
+    workbook.save(
+        os.path.join(results_dir, "Stats Multiple Comparison - Version 1.xlsx")
+    )
+
+    # also save multcomp_df in case some people prefer that version
+    multcomp_df.to_excel(
+        os.path.join(results_dir, "Stats Multiple Comparison - Version 2.xlsx"),
+        index=False,
+    )
