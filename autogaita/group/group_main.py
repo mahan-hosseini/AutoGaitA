@@ -10,7 +10,7 @@ from autogaita.group.group_4_stats import (
     create_stats_df,
     cluster_extent_test,
     anova_design_sanity_check,
-    twoway_RMANOVA,
+    ANOVA_main,
 )
 from autogaita.group.group_5_plots import plot_results
 from autogaita.group.group_utils import print_start, print_finish
@@ -107,7 +107,7 @@ def group(folderinfo, cfg):
         if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
             if anova_design_sanity_check(stats_df, folderinfo, cfg):
                 for stats_var in cfg["stats_variables"]:
-                    twoway_RMANOVA(
+                    ANOVA_main(
                         stats_df,
                         g_avg_dfs,
                         g_std_dfs,

@@ -1,6 +1,7 @@
 import os
 
 from autogaita.group.group_constants import (
+    GROUP_CONFIG_TXT_FILENAME,
     INFO_TEXT_WIDTH,
     ISSUES_TXT_FILENAME,
     PCA_CUSTOM_SCATTER_OUTER_SEPARATOR,
@@ -110,8 +111,12 @@ def print_start(folderinfo, cfg):
     else:
         start_string += "\n\nNo stats wanted!\n\n"
 
-    # done - print
+    # done - print & save
     print(start_string)
+    with open(
+        os.path.join(folderinfo["results_dir"], GROUP_CONFIG_TXT_FILENAME), "w"
+    ) as f:
+        f.write(start_string)
 
 
 def print_finish(folderinfo):

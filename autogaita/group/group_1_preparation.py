@@ -8,8 +8,11 @@ import seaborn as sns
 
 # %% constants
 from autogaita.group.group_constants import (
+    GROUP_CONFIG_TXT_FILENAME,
     ISSUES_TXT_FILENAME,
     STATS_TXT_FILENAME,
+    MULTCOMP_EXCEL_FILENAME_1,
+    MULTCOMP_EXCEL_FILENAME_2,
     CONFIG_JSON_FILENAME,
     ORIG_SHEET_NAME,
     CONTRAST_SPLIT_STR,
@@ -36,13 +39,17 @@ def some_prep(folderinfo, cfg):
             contrast = group_names[i] + CONTRAST_SPLIT_STR + group_names[j]
             folderinfo["contrasts"].append(contrast)
 
-    # check if we previously had saved issues & stats textfiles, if so delete them
-    issues_txt_path = os.path.join(results_dir, ISSUES_TXT_FILENAME)
-    if os.path.exists(issues_txt_path):
-        os.remove(issues_txt_path)
-    stats_txt_path = os.path.join(results_dir, STATS_TXT_FILENAME)
-    if os.path.exists(stats_txt_path):
-        os.remove(stats_txt_path)
+    # check if we previously had saved info files, if so delete them
+    for info_file_name in [
+        GROUP_CONFIG_TXT_FILENAME,
+        ISSUES_TXT_FILENAME,
+        STATS_TXT_FILENAME,
+        MULTCOMP_EXCEL_FILENAME_1,
+        MULTCOMP_EXCEL_FILENAME_2,
+    ]:
+        info_file_path = os.path.join(results_dir, info_file_name)
+        if os.path.exists(info_file_path):
+            os.remove(info_file_path)
 
     # extracted_cfg_vars: save_to_xls, PCA stuff & dont show plots
     cfg = extract_cfg_vars(folderinfo, cfg)

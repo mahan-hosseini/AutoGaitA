@@ -1,6 +1,9 @@
 # Issues & stats results are stored in these textfiles (config json from mouseanalysis)
+GROUP_CONFIG_TXT_FILENAME = "Group Analysis Configuration.txt"
 ISSUES_TXT_FILENAME = "Issues.txt"
 STATS_TXT_FILENAME = "Stats Summary.txt"
+MULTCOMP_EXCEL_FILENAME_1 = "Stats Multiple Comparison - Version 1.xlsx"
+MULTCOMP_EXCEL_FILENAME_2 = "Stats Multiple Comparison - Version 2.xlsx"
 CONFIG_JSON_FILENAME = "config.json"
 
 # Info text width
@@ -40,7 +43,6 @@ MULTCOMP_RESULT_TYPES = ["q", "p", "CI low", "CI high"]
 MULTCOMP_RESULT_P_IDENTIFIER = "p"
 MULTCOMP_RESULT_SPLIT_STR = " | "
 MULTCOMP_EXCEL_COLS = [
-    "Tukey's HSD Test",
     "Tukey's q",
     "p value",
     "CI",

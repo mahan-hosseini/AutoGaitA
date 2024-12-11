@@ -477,7 +477,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
     # PCA bins
     PCA_bins_label, PCA_bins_entry = gaita_widgets.label_and_entry_pair(
         cfgwindow,
-        "Restrict PCA features to following cycle bins (e.g. 0-10, 24, 50-75)",
+        "Restrict PCA features to following cycle percentages (e.g. 0-10, 24, 50-75)",
         cfg["PCA_bins"],
         WIDGET_CFG,
     )

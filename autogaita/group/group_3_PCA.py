@@ -35,8 +35,6 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
     PCA_custom_scatter_PCs = cfg["PCA_custom_scatter_PCs"]
     PCA_bins = cfg["PCA_bins"]
 
-    # print info
-    print("\n*************** Computing PCA ***************\n")
     # convert PCA_bins string to list of ints
     if PCA_bins:
         cfg = convert_PCA_bins_to_list(folderinfo, cfg)
@@ -63,14 +61,12 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
     # plot barplot of cumulative explained variance
     plot_PCA_barplot(PCA_info, folderinfo, cfg, plot_panel_instance)
     # plot the standard scatterplot
-    print("\n*************** Generating Standard PCA Scatterplots ***************\n")
     plot_PCA_scatterplots(
         "Standard", PCA_df, PCA_info, folderinfo, cfg, plot_panel_instance
     )
     # plot custom scatterplots if user wanted
     # => loop over outer separator of PC-duos/trios
     if PCA_custom_scatter_PCs:
-        print("\n*************** Generating Custom PCA Scatterplots ***************\n")
         for i in range(
             len(PCA_custom_scatter_PCs.split(PCA_CUSTOM_SCATTER_OUTER_SEPARATOR))
         ):

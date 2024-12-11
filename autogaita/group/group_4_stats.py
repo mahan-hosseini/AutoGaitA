@@ -34,6 +34,8 @@ from autogaita.group.group_constants import (
     CLUSTER_TMASS_COL,
     CLUSTER_P_COL,
     CLUSTER_MASK_COL,
+    MULTCOMP_EXCEL_FILENAME_1,
+    MULTCOMP_EXCEL_FILENAME_2,
     MULTCOMP_RESULT_TYPES,
     MULTCOMP_RESULT_P_IDENTIFIER,
     MULTCOMP_RESULT_SPLIT_STR,
@@ -443,7 +445,7 @@ def plot_permutation_test_results(
             if "Angle" in stats_var:
                 unit = "degrees"
             else:
-                if tracking_software == "DLC":
+                if tracking_software in ["DLC", "SLEAP"]:
                     unit = "x in pixels"
                 elif tracking_software == "Universal 3D":
                     unit = "Y in (your units)"
@@ -556,7 +558,7 @@ def anova_design_sanity_check(stats_df, folderinfo, cfg):
 
 
 # ...............................  main function  ......................................
-def twoway_RMANOVA(
+def ANOVA_main(
     stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg, plot_panel_instance
 ):
     """Perform a two-way RM-ANOVA with the factors group (between or within) & SC
@@ -581,7 +583,7 @@ def twoway_RMANOVA(
 
     # save results to text, excel and image files
     save_stats_summary_to_text(multcomp_df, anova_design, folderinfo, cfg, ANOVA_result)
-    save_multcomp_pvalues_to_excel(multcomp_df, folderinfo, cfg)
+    save_multcomp_pvalues_to_excel(multcomp_df, stats_var, folderinfo, cfg)
     plot_multcomp_results(
         g_avg_dfs,
         g_std_dfs,
@@ -599,15 +601,36 @@ def run_ANOVA(stats_df, stats_var, cfg):
 
     # unpack
     anova_design = cfg["anova_design"]
-    if anova_design == "Mixed ANOVA":
+    if "2-way" in anova_design:
+        if "RM" in anova_design:
+            factor_1_col = cfg["factor_1_col"]
+            factor_2_col = cfg["factor_2_col"]
+        elif "Mixed" in anova_design:
+            within_factor_col = cfg["within_factor_col"]
+            between_factor_col = cfg["between_factor_col"]
+
+    # run 4 different ANOVAs based on user input
+    # => note that 2-way fully between ANOVAs are not supported by Pingouin
+    if anova_design == "RM ANOVA":
+        result = stats_df.rm_anova(dv=stats_var, within=GROUP_COL, subject=ID_COL)
+    elif anova_design == "Mixed ANOVA":
         result = stats_df.mixed_anova(
             dv=stats_var,
             between=GROUP_COL,
             within=SC_PERCENTAGE_COL,
             subject=ID_COL,
         )
-    elif anova_design == "RM ANOVA":
-        result = stats_df.rm_anova(dv=stats_var, within=GROUP_COL, subject=ID_COL)
+    elif anova_design == "2-way RM ANOVA":
+        result = stats_df.rm_anova(
+            dv=stats_var, within=[factor_1_col, factor_2_col], subject=ID_COL
+        )
+    elif anova_design == "2-way Mixed ANOVA":
+        result = stats_df.mixed_anova(
+            dv=stats_var,
+            within=within_factor_col,
+            between=between_factor_col,
+            subject=ID_COL,
+        )
     return result
 
 
@@ -846,7 +869,7 @@ def plot_multcomp_results(
             if "Angle" in stats_var:
                 unit = "degrees"
             else:
-                if tracking_software == "DLC":
+                if tracking_software in ["DLC", "SLEAP"]:
                     unit = "x in pixels"
                 elif tracking_software == "Universal 3D":
                     unit = "Y in (your units)"
@@ -887,6 +910,9 @@ def extract_multcomp_significance_clusters(multcomp_df, contrast, stats_threshol
             else:
                 if significance_mask[i + 1] == False:
                     cluster.append(i)
+        # NU - to handle only 1 sig p value:
+        # if len(cluster) == 1 or len(cluster) == 2:....
+        # and then handle in plot multcomp with a dashed vertical line or so instead of # a transparent box for
         if len(cluster) == 2:
             all_clusters.append(cluster)
             cluster = []
@@ -901,22 +927,22 @@ def initial_stats_textfile(stats_var, which_test, folderinfo):
     results_dir = folderinfo["results_dir"]
 
     # initial message
-    star_row = "*" * INFO_TEXT_WIDTH
-    info_string = "  Results of " + which_test + " for " + stats_var + "  "
+    line_row = "-" * INFO_TEXT_WIDTH
+    info_string = which_test + " - " + stats_var
     info_width = len(info_string)
     if info_width < INFO_TEXT_WIDTH:
-        side_stars = "*" * ((INFO_TEXT_WIDTH - info_width) // 2)
+        side_space = " " * ((INFO_TEXT_WIDTH - info_width) // 2)
     else:
-        side_stars = ""  # dont bother for extremely long features
+        side_space = ""  # dont bother for extremely long features
     message = (
         "\n\n"
-        + star_row
+        + line_row
         + "\n\n"
-        + side_stars
+        + side_space
         + info_string
-        + side_stars
+        + side_space
         + "\n\n"
-        + star_row
+        + line_row
     )
 
     # print & save
@@ -969,11 +995,18 @@ def save_stats_summary_to_text(
         else:
             clusters = extract_all_clusters(results_df, contrast)
         # write message
+        this_width = len("C O M P A R I S O N")
+        if len(contrast) < this_width:
+            side_spaces = " " * ((this_width - len(contrast)) // 2)
+        else:
+            side_spaces = ""  # dont bother if it's long
         message = (
             message
-            + "\n\n---------------\nC O N T R A S T\n"
+            + "\n\n-------------------\nC O M P A R I S O N\n"
+            + side_spaces
             + contrast
-            + "\n---------------\n"
+            + side_spaces
+            + "\n-------------------\n"
         )
         if len(clusters) == 0:  # no sig clusters were found!
             message = message + "No significant clusters!"
@@ -1039,7 +1072,7 @@ def save_stats_summary_to_text(
         f.write(message)
 
 
-def save_multcomp_pvalues_to_excel(multcomp_df, folderinfo, cfg):
+def save_multcomp_pvalues_to_excel(multcomp_df, stats_var, folderinfo, cfg):
     """Save all p-values of all contrasts to an excel file"""
 
     # unpack
@@ -1048,17 +1081,29 @@ def save_multcomp_pvalues_to_excel(multcomp_df, folderinfo, cfg):
     results_dir = folderinfo["results_dir"]
 
     #  initialise
-    workbook = openpyxl.Workbook()
-    sheet = workbook.active
-    sheet.title = "Multiple Comparison Results"
+    if os.path.exists(os.path.join(results_dir, MULTCOMP_EXCEL_FILENAME_1)):
+        workbook = openpyxl.load_workbook(
+            os.path.join(results_dir, MULTCOMP_EXCEL_FILENAME_1)
+        )
+        # create a new sheet for this var and make it active
+        new_sheet = workbook.create_sheet(title=stats_var)
+        sheet = new_sheet
+    else:
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+    sheet.title = stats_var
 
     # this row idx used throughout excel table
     this_row_idx = 1
     row_height_per_sc = len(contrasts) + 2  # +2 for an 1) empty start row & 2) sc % row
 
-    # add column header
+    # add column headers
+    # => add stats var manually before looping over cols 2:end using constant var
+    cell = sheet["A" + str(this_row_idx)]
+    cell.value = stats_var
+    cell.font = openpyxl.styles.Font(bold=True)
     for c, col in enumerate(MULTCOMP_EXCEL_COLS):
-        cell = sheet[string.ascii_uppercase[c] + str(this_row_idx)]
+        cell = sheet[string.ascii_uppercase[c + 1] + str(this_row_idx)]  # note the c+1!
         cell.value = col
         cell.font = openpyxl.styles.Font(bold=True)
 
@@ -1069,7 +1114,6 @@ def save_multcomp_pvalues_to_excel(multcomp_df, folderinfo, cfg):
         if sc_idx > 0:  # update row index of the excel file correctly
             this_row_idx += row_height_per_sc
         sheet.cell(row=this_row_idx + 1, column=1, value="")  # empty row
-        # pdb.set_trace()
         sheet.cell(row=this_row_idx + 2, column=1, value=f"{sc_val}% cycle")  # sc % row
         for contrast_idx, contrast in enumerate(contrasts):
             # initialise this contrast's row index
@@ -1136,12 +1180,16 @@ def save_multcomp_pvalues_to_excel(multcomp_df, folderinfo, cfg):
             )
 
     # save
-    workbook.save(
-        os.path.join(results_dir, "Stats Multiple Comparison - Version 1.xlsx")
-    )
+    workbook.save(os.path.join(results_dir, MULTCOMP_EXCEL_FILENAME_1))
 
     # also save multcomp_df in case some people prefer that version
-    multcomp_df.to_excel(
-        os.path.join(results_dir, "Stats Multiple Comparison - Version 2.xlsx"),
-        index=False,
-    )
+    multcomp_excel_file_2 = os.path.join(results_dir, MULTCOMP_EXCEL_FILENAME_2)
+    if os.path.exists(multcomp_excel_file_2):
+        with pd.ExcelWriter(multcomp_excel_file_2, mode="a") as writer:
+            multcomp_df.to_excel(writer, sheet_name=stats_var, index=False)
+    else:
+        multcomp_df.to_excel(
+            multcomp_excel_file_2,
+            sheet_name=stats_var,
+            index=False,
+        )
