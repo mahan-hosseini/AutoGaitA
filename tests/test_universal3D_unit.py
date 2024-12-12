@@ -5,16 +5,6 @@ from autogaita.universal3D.universal3D_datafile_preparation import (
 from hypothesis import given, strategies as st
 import pandas as pd
 
-# global constants from group gaita
-ID_COL = "ID"
-SC_PERCENTAGE_COL = "SC Percentage"
-GROUP_COL = "Group"
-
-# import pytest
-# import pandas as pd
-# from hypothesis import given, strategies as st
-# from autogaita_3D_preparation import clean_a_file
-
 
 # %%..............................  preparation  .......................................
 

@@ -1,8 +1,9 @@
+from autogaita.resources.constants import TIME_COL
+
+# LEG stuff
 LEGS = ["left", "right"]
 LEGS_COLFORMAT = [", left ", ", right "]
 OUTPUTS = LEGS + ["both"]
-ISSUES_TXT_FILENAME = "Issues.txt"  # filename to which we write issues-info
-CONFIG_JSON_FILENAME = "config.json"  # filename to which we write cfg-infos
 # sc extraction
 SCXLS_SUBJCOLS = [
     "Participant",
@@ -27,11 +28,9 @@ NORMALISED_XLS_FILENAME = " - Normalised Stepcycles"
 AVERAGE_XLS_FILENAME = " - Average Stepcycle"
 STD_XLS_FILENAME = " - Standard Devs. Stepcycle"
 SEPARATOR_IDX = 1  # idx of dfs whenever we have separator rows
-DF_TIME_COL = "Time"
-DF_LEG_COL = "Leg"
-SC_PERCENTAGE_COL = "SC Percentage"
-EXCLUDED_COLS_IN_AV_STD_DFS = [DF_TIME_COL, DF_LEG_COL]
-REORDER_COLS_IN_STEP_NORMDATA = [DF_TIME_COL, DF_LEG_COL]
+LEG_COL = "Leg"
+EXCLUDED_COLS_IN_AV_STD_DFS = [TIME_COL, LEG_COL]
+REORDER_COLS_IN_STEP_NORMDATA = [TIME_COL, LEG_COL]
 # plot stuff
 SC_LAT_LEGEND_FONTSIZE = 6
 ANGLE_PLOTS_YLIMITS = [80, 190]

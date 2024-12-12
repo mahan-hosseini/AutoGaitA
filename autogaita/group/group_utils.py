@@ -1,9 +1,8 @@
 import os
 
+from autogaita.resources.constants import ISSUES_TXT_FILENAME, INFO_TEXT_WIDTH
 from autogaita.group.group_constants import (
     GROUP_CONFIG_TXT_FILENAME,
-    INFO_TEXT_WIDTH,
-    ISSUES_TXT_FILENAME,
     PCA_CUSTOM_SCATTER_OUTER_SEPARATOR,
 )
 

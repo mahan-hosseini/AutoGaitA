@@ -6,11 +6,6 @@ import pandas as pd
 import numpy as np
 import math
 
-# global constants from group gaita
-ID_COL = "ID"
-SC_PERCENTAGE_COL = "SC Percentage"
-GROUP_COL = "Group"
-
 
 # %%................................  fixtures  ........................................
 @pytest.fixture

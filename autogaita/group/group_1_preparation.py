@@ -7,13 +7,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # %% constants
+from autogaita.resources.constants import ISSUES_TXT_FILENAME, CONFIG_JSON_FILENAME
 from autogaita.group.group_constants import (
     GROUP_CONFIG_TXT_FILENAME,
-    ISSUES_TXT_FILENAME,
     STATS_TXT_FILENAME,
     MULTCOMP_EXCEL_FILENAME_1,
     MULTCOMP_EXCEL_FILENAME_2,
-    CONFIG_JSON_FILENAME,
     ORIG_SHEET_NAME,
     CONTRAST_SPLIT_STR,
 )
