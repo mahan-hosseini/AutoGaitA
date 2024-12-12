@@ -10,7 +10,7 @@ import customtkinter as ctk
 
 
 # .................................  constants  ........................................
-from autogaita.resources.constants import ISSUES_TXT_FILENAME
+from autogaita.resources.constants import ISSUES_TXT_FILENAME, INFO_TEXT_WIDTH
 
 
 # ...............................  error handling  .....................................
@@ -20,18 +20,27 @@ def try_to_run_gaita(tracking_software, info, folderinfo, cfg, multirun_flag):
 
     Note
     ----
-    Needs to know "which gaita" (DLC or Universal 3D) should be run and if "this run" is part
+    Needs to know "which gaita" (DLC, SLEAP or Universal 3D) should be run and if "this run" is part
     of a call to one of our multiruns!
     """
-    # print info
-    message = (
-        "\n\n\n*********************************************"
-        + "\n*              "
-        + info["name"]
-        + "                *"
-        + "\n*********************************************"
-    )
+
+    # first print some info
+    line_row = "-" * INFO_TEXT_WIDTH
+    empty_row = " " * INFO_TEXT_WIDTH
+    message_1 = "G A I T A | S T A R T"
+    message_2 = "Analysing"
+    message_3 = info["name"]
+    side_space_1 = " " * ((INFO_TEXT_WIDTH - len(message_1)) // 2)
+    side_space_2 = " " * ((INFO_TEXT_WIDTH - len(message_2)) // 2)
+    if len(message_3) >= INFO_TEXT_WIDTH:
+        side_space_3 = ""
+    else:
+        side_space_3 = " " * ((INFO_TEXT_WIDTH - len(message_3)) // 2)
+    # wow
+    message = f"\n\n\n{line_row}\n{side_space_1}{message_1}{side_space_1}\n{empty_row}\n{side_space_2}{message_2}{side_space_2}\n{side_space_3}{message_3}{side_space_3}\n{line_row}\n"
     print(message)
+
+    # try to run gaita
     try:
         if tracking_software == "DLC":
             autogaita.dlc(info, folderinfo, cfg)
@@ -100,10 +109,32 @@ def write_issues_to_textfile(message, info):
 
 def print_finish(info):
     """Print that we finished this program"""
-    print("\n***************************************************")
-    print("* GAITA FINISHED - RESULTS WERE SAVED HERE:       *")
-    print("* " + info["results_dir"] + " *")
-    print("***************************************************")
+    line_row = "-" * INFO_TEXT_WIDTH
+    empty_row = " " * INFO_TEXT_WIDTH
+    finished_message_1 = "G A I T A | D O N E"
+    finished_message_2 = "Result location"
+    side_space_1 = " " * ((INFO_TEXT_WIDTH - len(finished_message_1)) // 2)
+    side_space_2 = " " * ((INFO_TEXT_WIDTH - len(finished_message_2)) // 2)
+    message = (
+        line_row
+        + "\n"
+        + side_space_1
+        + finished_message_1
+        + side_space_2
+        # + "\n"
+        # + line_row
+        + "\n"
+        + empty_row
+        + "\n"
+        + side_space_2
+        + finished_message_2
+        + side_space_2
+        + "\n"
+        + info["results_dir"]
+        + "\n"
+        + line_row
+    )
+    print(message)
 
 
 def bin_num_to_percentages(bin_num):
