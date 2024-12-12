@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.gaita_res.utils import bin_num_to_percentages
+from autogaita.resources.utils import bin_num_to_percentages
 from autogaita.group.group_utils import (
     check_mouse_conversion,
     save_figures,
@@ -19,12 +19,11 @@ from scipy import stats
 import pingouin as pg
 
 # %% constants
+from autogaita.resources.constants import INFO_TEXT_WIDTH, ID_COL, SC_PERCENTAGE_COL
+
 from autogaita.group.group_constants import (
-    INFO_TEXT_WIDTH,
     STATS_TXT_FILENAME,
-    ID_COL,
     GROUP_COL,
-    SC_PERCENTAGE_COL,
     CONTRASTS_COL,
     CONTRAST_SPLIT_STR,
     TTEST_MASK_THRESHOLD,  # STATS

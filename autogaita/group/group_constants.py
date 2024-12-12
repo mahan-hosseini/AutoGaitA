@@ -1,13 +1,8 @@
 # Issues & stats results are stored in these textfiles (config json from mouseanalysis)
 GROUP_CONFIG_TXT_FILENAME = "Group Analysis Configuration.txt"
-ISSUES_TXT_FILENAME = "Issues.txt"
 STATS_TXT_FILENAME = "Stats Summary.txt"
 MULTCOMP_EXCEL_FILENAME_1 = "Stats Multiple Comparison - Version 1.xlsx"
 MULTCOMP_EXCEL_FILENAME_2 = "Stats Multiple Comparison - Version 2.xlsx"
-CONFIG_JSON_FILENAME = "config.json"
-
-# Info text width
-INFO_TEXT_WIDTH = 64
 
 # EXPORT XLS
 NORM_SHEET_NAME = "Normalised Stepcycles"
@@ -23,11 +18,9 @@ G_STD_GROUP_SHEET_NAME = "Grand Standard Deviation Group Stepcycles"
 
 # SPLIT STRING (for _dlc first-level) & COLS OF DFs CREATED IN THIS SCRIPT
 SPLIT_STRING = " - "
-ID_COL = "ID"
 SC_NUM_COL = "SC Number"
 GROUP_COL = "Group"
 N_COL = "N"  # for grand average dfs
-SC_PERCENTAGE_COL = "SC Percentage"
 
 # STATS
 CONTRASTS_COL = "Contrasts"

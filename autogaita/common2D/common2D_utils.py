@@ -1,7 +1,7 @@
 # %% imports
 from autogaita.common2D.common2D_constants import FILE_ID_STRING_ADDITIONS
 from autogaita.dlc.dlc_utils import find_number
-from autogaita.gaita_res.utils import try_to_run_gaita, write_issues_to_textfile
+from autogaita.resources.utils import try_to_run_gaita, write_issues_to_textfile
 import os
 import numpy as np
 import tkinter as tk

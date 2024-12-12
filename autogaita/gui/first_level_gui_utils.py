@@ -3,7 +3,7 @@ import json
 import tkinter as tk
 from threading import Thread
 from autogaita.common2D.common2D_utils import run_singlerun_in_multirun, extract_info
-from autogaita.gaita_res.utils import try_to_run_gaita
+from autogaita.resources.utils import try_to_run_gaita
 
 # %%..........  functions preparing and calling runs of 2D autogaita  ..................
 

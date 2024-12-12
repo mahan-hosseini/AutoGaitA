@@ -6,7 +6,7 @@ from autogaita.universal3D.universal3D_2_sc_extraction import (
 )
 from autogaita.universal3D.universal3D_3_analysis import analyse_and_export_stepcycles
 from autogaita.universal3D.universal3D_4_plots import plot_results
-from autogaita.gaita_res.utils import print_finish, PlotPanel
+from autogaita.resources.utils import print_finish, PlotPanel
 import matplotlib
 import matplotlib.pyplot as plt
 

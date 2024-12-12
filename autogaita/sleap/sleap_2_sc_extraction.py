@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.gaita_res.utils import write_issues_to_textfile
+from autogaita.resources.utils import write_issues_to_textfile
 from autogaita.common2D.common2D_utils import (
     check_cycle_out_of_bounds,
     check_cycle_duplicates,

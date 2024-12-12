@@ -10,7 +10,7 @@ import customtkinter as ctk
 
 
 # .................................  constants  ........................................
-from autogaita.common2D.common2D_constants import ISSUES_TXT_FILENAME
+from autogaita.resources.constants import ISSUES_TXT_FILENAME
 
 
 # ...............................  error handling  .....................................

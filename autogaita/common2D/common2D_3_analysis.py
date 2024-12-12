@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.gaita_res.utils import bin_num_to_percentages
+from autogaita.resources.utils import bin_num_to_percentages
 import os
 import warnings
 import pandas as pd
@@ -7,9 +7,8 @@ import numpy as np
 import math
 
 # %% constants
+from autogaita.resources.constants import TIME_COL, SC_PERCENTAGE_COL
 from autogaita.common2D.common2D_constants import (
-    TIME_COL,
-    SC_PERCENTAGE_COL,
     ORIGINAL_XLS_FILENAME,
     NORMALISED_XLS_FILENAME,
     AVERAGE_XLS_FILENAME,

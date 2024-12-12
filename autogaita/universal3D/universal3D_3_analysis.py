@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.gaita_res.utils import (
+from autogaita.resources.utils import (
     write_issues_to_textfile,
     bin_num_to_percentages,
 )
@@ -10,6 +10,7 @@ import math
 import warnings
 
 # %% constants
+from autogaita.resources.constants import SC_PERCENTAGE_COL
 from autogaita.universal3D.universal3D_constants import (
     LEGS,
     LEGS_COLFORMAT,
@@ -19,8 +20,7 @@ from autogaita.universal3D.universal3D_constants import (
     AVERAGE_XLS_FILENAME,
     STD_XLS_FILENAME,
     SEPARATOR_IDX,
-    DF_LEG_COL,
-    SC_PERCENTAGE_COL,
+    LEG_COL,
     EXCLUDED_COLS_IN_AV_STD_DFS,
     REORDER_COLS_IN_STEP_NORMDATA,
 )
@@ -138,7 +138,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                 pd.DataFrame(
                     data=legname,
                     index=all_steps_data[l_idx].index,
-                    columns=[DF_LEG_COL],
+                    columns=[LEG_COL],
                 ),
             ],
             axis=1,
@@ -149,7 +149,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                 pd.DataFrame(
                     data=legname,
                     index=normalised_steps_data[l_idx].index,
-                    columns=[DF_LEG_COL],
+                    columns=[LEG_COL],
                 ),
             ],
             axis=1,

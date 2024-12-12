@@ -1,4 +1,4 @@
-from autogaita.gaita_res.utils import try_to_run_gaita
+from autogaita.resources.utils import try_to_run_gaita
 import pandas as pd
 import pandas.testing as pdt
 import os

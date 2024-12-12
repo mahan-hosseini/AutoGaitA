@@ -6,7 +6,7 @@ from autogaita.gui.first_level_gui_utils import (
     extract_cfg_from_json_file,
     extract_results_from_json_file,
 )
-from autogaita.gaita_res.utils import try_to_run_gaita
+from autogaita.resources.utils import try_to_run_gaita
 from autogaita.universal3D.universal3D_datafile_preparation import prepare_3D
 import tkinter as tk
 import customtkinter as ctk

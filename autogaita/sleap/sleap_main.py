@@ -4,7 +4,7 @@ from autogaita.sleap.sleap_2_sc_extraction import extract_stepcycles
 from autogaita.common2D.common2D_utils import handle_issues
 from autogaita.common2D.common2D_3_analysis import analyse_and_export_stepcycles
 from autogaita.common2D.common2D_4_plots import plot_results
-from autogaita.gaita_res.utils import print_finish, PlotPanel
+from autogaita.resources.utils import print_finish, PlotPanel
 import matplotlib
 import matplotlib.pyplot as plt
 

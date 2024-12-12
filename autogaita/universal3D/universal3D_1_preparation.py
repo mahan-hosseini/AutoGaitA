@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.gaita_res.utils import write_issues_to_textfile
+from autogaita.resources.utils import write_issues_to_textfile
 import os
 import shutil
 import json
@@ -7,11 +7,13 @@ import pandas as pd
 import numpy as np
 
 # %% constants
-from autogaita.universal3D.universal3D_constants import (
-    LEGS_COLFORMAT,
+from autogaita.resources.constants import (
     ISSUES_TXT_FILENAME,
     CONFIG_JSON_FILENAME,
-    DF_TIME_COL,
+    TIME_COL,
+)
+from autogaita.universal3D.universal3D_constants import (
+    LEGS_COLFORMAT,
 )
 
 # %% workflow step #1 - preparation
@@ -122,21 +124,21 @@ def some_prep(info, folderinfo, cfg):
 
     # Check if data has some col saying "Time" in any form of capitalisation and if so
     # make sure it's capitalised
-    if any(col.lower() == DF_TIME_COL.lower() for col in data.columns):
+    if any(col.lower() == TIME_COL.lower() for col in data.columns):
         data.columns = [
-            col.capitalize() if col.lower() == DF_TIME_COL.lower() else col
+            col.capitalize() if col.lower() == TIME_COL.lower() else col
             for col in data.columns
         ]
 
     # Annoying thing 1 of our simi data: there were two Time = 0s, we take the second
     # (i.e. last)
-    if DF_TIME_COL in data.columns and len(np.where(data[DF_TIME_COL] == 0)[0]) > 1:
-        real_start_idx = np.where(data[DF_TIME_COL] == 0)[0][-1]
+    if TIME_COL in data.columns and len(np.where(data[TIME_COL] == 0)[0]) > 1:
+        real_start_idx = np.where(data[TIME_COL] == 0)[0][-1]
         data = data.iloc[real_start_idx:, :]
         data.index = range(len(data))  # update index
 
     # Important: either create time col if not present or if present set its values
-    data[DF_TIME_COL] = data.index * (1 / sampling_rate)
+    data[TIME_COL] = data.index * (1 / sampling_rate)
 
     # Annoying thing 2 of our simi data: it sometimes does weird things with their data
     # (e.g., storing 99cm as 0,99 and 1 metre 10cm something something as 101.222.333

@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.gaita_res.utils import write_issues_to_textfile
+from autogaita.resources.utils import write_issues_to_textfile
 import os
 import pandas as pd
 import numpy as np

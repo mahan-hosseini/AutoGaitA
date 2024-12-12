@@ -13,12 +13,12 @@ def configure_the_icon(root):
         except ImportError:
             print("Unable to import pyobjc modules")
         else:
-            with resources.path("autogaita.gaita_res", "icon.icns") as icon_path:
+            with resources.path("autogaita.resources", "icon.icns") as icon_path:
                 ns_application = NSApplication.sharedApplication()
                 logo_ns_image = NSImage.alloc().initWithContentsOfFile_(str(icon_path))
                 ns_application.setApplicationIconImage_(logo_ns_image)
     elif platform.system().startswith("win"):
-        with resources.path("autogaita.gaita_res", "icon.ico") as icon_path:
+        with resources.path("autogaita.resources", "icon.ico") as icon_path:
             root.iconbitmap(str(icon_path))
 
 

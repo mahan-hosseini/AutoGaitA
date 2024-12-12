@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.gaita_res.utils import bin_num_to_percentages
+from autogaita.resources.utils import bin_num_to_percentages
 from autogaita.group.group_utils import save_figures, write_issues_to_textfile
 import os
 import string
@@ -14,10 +14,12 @@ from matplotlib.animation import FuncAnimation, FFMpegWriter
 import pdb
 
 # %% constants
-from autogaita.group.group_constants import (
+from autogaita.resources.constants import (
     ID_COL,
-    GROUP_COL,
     SC_PERCENTAGE_COL,
+)
+from autogaita.group.group_constants import (
+    GROUP_COL,
     PCA_BARPLOT_BARCOLOR,
     PCA_BARPLOT_LINECOLOR,
     PCA_CUSTOM_SCATTER_OUTER_SEPARATOR,

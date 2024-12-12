@@ -14,7 +14,7 @@ from autogaita.group.group_4_stats import (
 )
 from autogaita.group.group_5_plots import plot_results
 from autogaita.group.group_utils import print_start, print_finish
-from autogaita.gaita_res.utils import PlotPanel
+from autogaita.resources.utils import PlotPanel
 import matplotlib
 import matplotlib.pyplot as plt
 

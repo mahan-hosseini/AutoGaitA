@@ -3,16 +3,16 @@ from autogaita.universal3D.universal3D_utils import (
     extract_feature_column,
     transform_joint_and_leg_to_colname,
 )
-from autogaita.gaita_res.utils import write_issues_to_textfile
+from autogaita.resources.utils import write_issues_to_textfile
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 # %% constants
+from autogaita.resources.constants import TIME_COL
 from autogaita.universal3D.universal3D_constants import (
     LEGS,
-    DF_TIME_COL,
     SC_LAT_LEGEND_FONTSIZE,
     ANGLE_PLOTS_YLIMITS,
     STICK_LINEWIDTH,
@@ -342,7 +342,7 @@ def plot_joint_y_by_time(
             for s in range(sc_num):
                 this_sc_idx = run_cycles[s]
                 this_time = all_steps_data.loc[
-                    this_sc_idx[0] : this_sc_idx[1], DF_TIME_COL
+                    this_sc_idx[0] : this_sc_idx[1], TIME_COL
                 ]
                 this_y = all_steps_data.loc[
                     this_sc_idx[0] : this_sc_idx[1], y_col_string
@@ -437,7 +437,7 @@ def plot_angles_by_time(
             for s in range(sc_num):
                 this_sc_idx = run_cycles[s]
                 this_time = all_steps_data.loc[
-                    this_sc_idx[0] : this_sc_idx[1], DF_TIME_COL
+                    this_sc_idx[0] : this_sc_idx[1], TIME_COL
                 ]
                 this_angle = all_steps_data.loc[
                     this_sc_idx[0] : this_sc_idx[1], angle_col_string

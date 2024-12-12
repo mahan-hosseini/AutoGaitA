@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.gaita_res.utils import write_issues_to_textfile
+from autogaita.resources.utils import write_issues_to_textfile
 from autogaita.dlc.dlc_utils import prepare_DLC_df
 from autogaita.common2D.common2D_constants import FILE_ID_STRING_ADDITIONS
 import os
@@ -9,11 +9,13 @@ import pandas as pd
 import numpy as np
 
 # %% constants
+from autogaita.resources.constants import (
+    ISSUES_TXT_FILENAME,
+    TIME_COL,
+    CONFIG_JSON_FILENAME,
+)
 from autogaita.common2D.common2D_constants import (
     DIRECTION_DLC_THRESHOLD,
-    TIME_COL,
-    ISSUES_TXT_FILENAME,
-    CONFIG_JSON_FILENAME,
 )
 
 # %% workflow step #1 - preparation

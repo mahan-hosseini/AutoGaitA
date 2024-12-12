@@ -67,7 +67,7 @@ def run_gui():
     # => load the original logo & resize it using ANTIALIASING (LANCZOS) of PIL
     # => create an initial photo image that tkinter can use & grid it
     # ...............  PACKAGE WAY OF LOADING LOGO  ...............
-    with resources.path("autogaita.gaita_res", "logo.png") as image_path:
+    with resources.path("autogaita.resources", "logo.png") as image_path:
         original_image = Image.open(image_path)
     # # ...............  LOCAL WAY OF LOADING LOGO  ...............
     # image_path = "logo.png"

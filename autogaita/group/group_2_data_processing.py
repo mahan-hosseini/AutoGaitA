@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.gaita_res.utils import bin_num_to_percentages
+from autogaita.resources.utils import bin_num_to_percentages
 from autogaita.group.group_utils import write_issues_to_textfile
 import os
 import pandas as pd
@@ -7,6 +7,10 @@ import numpy as np
 import warnings
 
 # %% constants
+from autogaita.resources.constants import (
+    ID_COL,
+    SC_PERCENTAGE_COL,
+)
 from autogaita.group.group_constants import (
     NORM_SHEET_NAME,
     ORIG_SHEET_NAME,
@@ -17,10 +21,8 @@ from autogaita.group.group_constants import (
     G_STD_GROUP_SHEET_NAME,
     # SPLIT STRING (for _dlc first-level) & COLS OF DFs CREATED IN THIS SCRIPT
     SPLIT_STRING,
-    ID_COL,
     SC_NUM_COL,
     N_COL,  # for grand average dfs
-    SC_PERCENTAGE_COL,
 )
 
 
