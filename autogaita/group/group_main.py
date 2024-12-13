@@ -13,8 +13,8 @@ from autogaita.group.group_4_stats import (
     ANOVA_main,
 )
 from autogaita.group.group_5_plots import plot_results
-from autogaita.group.group_utils import print_start, print_finish
-from autogaita.resources.utils import PlotPanel
+from autogaita.group.group_utils import print_start
+from autogaita.resources.utils import print_finish, PlotPanel
 import matplotlib
 import matplotlib.pyplot as plt
 

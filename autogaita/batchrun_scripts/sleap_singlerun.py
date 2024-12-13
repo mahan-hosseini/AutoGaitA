@@ -15,7 +15,7 @@ def sleap_singlerun():
     )
     folderinfo["results_dir"] = ""
     folderinfo["sctable_filename"] = "Annotation Table"
-    folderinfo["data_string"] = ""
+    folderinfo["data_string"] = "_data"
     folderinfo["beam_string"] = ""
 
     # cfg

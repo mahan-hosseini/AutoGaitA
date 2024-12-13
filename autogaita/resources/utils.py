@@ -27,7 +27,14 @@ def try_to_run_gaita(tracking_software, info, folderinfo, cfg, multirun_flag):
     # first print some info
     line_row = "-" * INFO_TEXT_WIDTH
     empty_row = " " * INFO_TEXT_WIDTH
-    message_1 = "G A I T A | S T A R T"
+    software_string = ""
+    if tracking_software == "DLC":
+        software_string = "D E E P L A B C U T"
+    elif tracking_software == "SLEAP":
+        software_string = "S L E A P"
+    elif tracking_software == "Universal 3D":
+        software_string = "U N I V E R S A L  3 D"
+    message_1 = f"A U T O G A I T A | {software_string}"
     message_2 = "Analysing"
     message_3 = info["name"]
     side_space_1 = " " * ((INFO_TEXT_WIDTH - len(message_1)) // 2)
@@ -111,12 +118,13 @@ def print_finish(info):
     """Print that we finished this program"""
     line_row = "-" * INFO_TEXT_WIDTH
     empty_row = " " * INFO_TEXT_WIDTH
-    finished_message_1 = "G A I T A | D O N E"
+    finished_message_1 = "A U T O G A I T A | D O N E"
     finished_message_2 = "Results are here"
     side_space_1 = " " * ((INFO_TEXT_WIDTH - len(finished_message_1)) // 2)
     side_space_2 = " " * ((INFO_TEXT_WIDTH - len(finished_message_2)) // 2)
     message = (
-        line_row
+        "\n\n\n"
+        + line_row
         + "\n"
         + side_space_1
         + finished_message_1

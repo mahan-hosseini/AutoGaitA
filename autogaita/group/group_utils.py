@@ -118,14 +118,6 @@ def print_start(folderinfo, cfg):
         f.write(start_string)
 
 
-def print_finish(folderinfo):
-    """Inform the user about being done."""
-    print("\n***************************************************************")
-    print("*      GAITA FINISHED - YOUR RESULTS WERE STORED HERE:        *")
-    print(folderinfo["results_dir"])
-    print("***************************************************************")
-
-
 # %% ......................  plotting helper functions  ...........................
 def save_figures(figure, results_dir, figure_file_string):
     """Save figures as pngs to results_dir and as svgs to separate subfolders"""
