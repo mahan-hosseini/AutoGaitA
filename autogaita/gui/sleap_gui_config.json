@@ -1,13 +1,13 @@
 [
     {
         "name": "",
-        "root_dir": "/Users/mahan/sciebo/Research/AutoGaitA/SLEAP/SLEAPs Drosophila",
-        "sctable_filename": "Annotation Table",
-        "data_string": "_data",
+        "root_dir": "",
+        "sctable_filename": "",
+        "data_string": "",
         "beam_string": ""
     },
     {
-        "sampling_rate": "100",
+        "sampling_rate": "",
         "subtract_beam": false,
         "dont_show_plots": false,
         "convert_to_mm": false,

@@ -1,60 +1,41 @@
 [
     {
         "group_names": [
-            "1",
-            "2",
+            "",
+            "",
             "",
             "",
             "",
             ""
         ],
         "group_dirs": [
-            "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group 1",
-            "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group 2",
+            "",
+            "",
             "",
             "",
             "",
             ""
         ],
-        "results_dir": "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/GroupGUIResults"
+        "results_dir": ""
     },
     {
         "do_permtest": true,
-        "do_anova": true,
-        "anova_design": "Mixed ANOVA",
-        "permutation_number": "100",
+        "do_anova": false,
+        "anova_design": "RM ANOVA",
+        "permutation_number": "10000",
         "stats_threshold": "0.05",
         "which_leg": "right",
-        "PCA_n_components": "0.75",
-        "PCA_custom_scatter_PCs": "2,4,5;1,3",
-        "PCA_save_3D_video": true,
+        "PCA_n_components": "3",
+        "PCA_custom_scatter_PCs": "",
+        "PCA_save_3D_video": false,
         "PCA_bins": "",
         "plot_SE": false,
         "color_palette": "Set2",
         "dont_show_plots": false,
         "legend_outside": true,
         "stats_variables": [
-            "Tail center y",
-            "Hind paw tao Velocity",
-            "Knee Velocity"
         ],
         "PCA_variables": [
-            "Nose x",
-            "Nose y",
-            "Ear base x",
-            "Ear base y",
-            "Front paw tao x",
-            "Front paw tao y",
-            "Wrist x",
-            "Wrist y",
-            "Elbow y",
-            "Hind paw tao x",
-            "Hind paw tao y",
-            "Tail base x",
-            "Tail base y",
-            "Tail center x",
-            "Tail tip y",
-            "Knee Velocity"
         ]
     }
 ]
