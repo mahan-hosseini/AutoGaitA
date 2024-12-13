@@ -49,8 +49,13 @@ def group_dlcrun():
     # cfg
     cfg = {}
     cfg["do_permtest"] = False  # True
-    cfg["do_anova"] = True
     cfg["permutation_number"] = 100
+    cfg["do_1way_anova"] = True
+    cfg["do_2way_anova"] = False
+    cfg["factor_1_name"] = ""
+    cfg["factor_2_name"] = ""
+    cfg["factor_1_type"] = ""
+    cfg["factor_2_type"] = ""
     cfg["PCA_n_components"] = 6
     # cfg["PCA_n_components"] = 0.33
     # cfg["PCA_custom_scatter_PCs"] = "4,5,6;4,5;2,4,6"
@@ -63,7 +68,7 @@ def group_dlcrun():
     cfg["dont_show_plots"] = True
     cfg["legend_outside"] = True
     cfg["which_leg"] = "left"
-    cfg["anova_design"] = "RM ANOVA"
+    cfg["anova_design"] = "RM ANOVA"  # can be "Two way...ANOVA" as well since v1!
     # cfg["anova_design"] = "Mixed ANOVA"
     cfg["permutation_number"] = 100
     cfg["PCA_variables"] = [

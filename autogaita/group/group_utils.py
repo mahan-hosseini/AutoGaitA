@@ -92,7 +92,7 @@ def print_start(folderinfo, cfg):
         for stats_var in cfg["stats_variables"]:
             start_string += "\n" + stats_var
         start_string += "\n\nConfiguration\n-------------"
-        if cfg["do_anova"]:
+        if cfg["do_1way_anova"]:
             start_string += "\n" + cfg["anova_design"]
         else:
             start_string += "\nNo ANOVA"

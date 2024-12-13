@@ -602,11 +602,15 @@ def run_ANOVA(stats_df, stats_var, cfg):
     anova_design = cfg["anova_design"]
     if "2-way" in anova_design:
         if "RM" in anova_design:
-            factor_1_col = cfg["factor_1_col"]
-            factor_2_col = cfg["factor_2_col"]
+            factor_1_name = cfg["factor_1_name"]
+            factor_2_name = cfg["factor_2_name"]
         elif "Mixed" in anova_design:
-            within_factor_col = cfg["within_factor_col"]
-            between_factor_col = cfg["between_factor_col"]
+            if cfg["factor_1_type"] == "Within":
+                within_factor_name = cfg["factor_1_name"]
+                between_factor_name = cfg["factor_2_name"]
+            elif cfg["factor_1_type"] == "Between":
+                between_factor_name = cfg["factor_1_name"]
+                within_factor_name = cfg["factor_2_name"]
 
     # run 4 different ANOVAs based on user input
     # => note that 2-way fully between ANOVAs are not supported by Pingouin
@@ -621,13 +625,13 @@ def run_ANOVA(stats_df, stats_var, cfg):
         )
     elif anova_design == "2-way RM ANOVA":
         result = stats_df.rm_anova(
-            dv=stats_var, within=[factor_1_col, factor_2_col], subject=ID_COL
+            dv=stats_var, within=[factor_1_name, factor_2_name], subject=ID_COL
         )
     elif anova_design == "2-way Mixed ANOVA":
         result = stats_df.mixed_anova(
             dv=stats_var,
-            within=within_factor_col,
-            between=between_factor_col,
+            within=within_factor_name,
+            between=between_factor_name,
             subject=ID_COL,
         )
     return result

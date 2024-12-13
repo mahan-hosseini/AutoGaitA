@@ -25,8 +25,13 @@ def group_universal3Drun():
         )
         # cfg
         cfg["do_permtest"] = True
-        cfg["do_anova"] = True
         cfg["permutation_number"] = 10
+        cfg["do_1way_anova"] = True
+        cfg["do_2way_anova"] = False
+        cfg["factor_1_name"] = ""
+        cfg["factor_2_name"] = ""
+        cfg["factor_1_type"] = ""
+        cfg["factor_2_type"] = ""
         cfg["PCA_n_components"] = 3
         cfg["PCA_save_3D_video"] = False
         cfg["stats_threshold"] = 0.05
@@ -34,7 +39,9 @@ def group_universal3Drun():
         cfg["color_palette"] = "viridis"
         cfg["legend_outside"] = True
         cfg["dont_show_plots"] = True
-        cfg["anova_design"] = "Mixed ANOVA"
+        cfg["anova_design"] = (
+            "Mixed ANOVA"  # can be "Two way...ANOVA" as well since v1!
+        )
         cfg["PCA_variables"] = [
             # "Midfoot, " + cfg["which_leg"] + " Z",
             # "Ankle, " + cfg["which_leg"] + " Z",

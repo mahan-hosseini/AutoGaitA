@@ -54,7 +54,8 @@ INT_VARS = ["permutation_number"]
 # (note that numbers are initialised as strings)
 TK_BOOL_VARS = [
     "do_permtest",
-    "do_anova",
+    "do_1way_anova",
+    "do_2way_anova",
     "PCA_save_3D_video",
     "plot_SE",
     "legend_outside",
@@ -62,6 +63,10 @@ TK_BOOL_VARS = [
 ]
 TK_STR_VARS = [
     "anova_design",
+    "factor_1_name",
+    "factor_2_name",
+    "factor_1_type",
+    "factor_2_type",
     "permutation_number",
     "stats_threshold",
     "PCA_n_components",
@@ -292,9 +297,9 @@ def build_mainwindow(root, group_number, root_dimensions):
             row_counter += 1
         # call row_counter a better name
         last_group_row = row_counter
-        # empty label 1 for spacing
-        empty_label_one = ctk.CTkLabel(mainwindow, text="")
-        empty_label_one.grid(row=last_group_row, column=0, columnspan=3, sticky="nsew")
+        # # empty label 1 for spacing
+        # empty_label_one = ctk.CTkLabel(mainwindow, text="")
+        # empty_label_one.grid(row=last_group_row, column=0, columnspan=3, sticky="nsew")
         # results dir
         results_dir = tk.StringVar(
             mainwindow,
@@ -307,62 +312,121 @@ def build_mainwindow(root, group_number, root_dimensions):
             WIDGET_CFG,
         )
         results_dir_label.grid(
-            row=last_group_row + 1, column=0, columnspan=3, sticky="ew"
+            row=last_group_row + 0, column=0, columnspan=3, sticky="ew"
         )
         results_dir_entry.grid(
-            row=last_group_row + 2, column=0, columnspan=3, sticky="ew"
+            row=last_group_row + 1, column=0, columnspan=3, sticky="ew"
         )
-        # empty label 2 for spacing
-        empty_label_two = ctk.CTkLabel(mainwindow, text="")
-        empty_label_two.grid(
-            row=last_group_row + 3, column=0, columnspan=3, sticky="nsew"
-        )
+        # # empty label 2 for spacing
+        # empty_label_two = ctk.CTkLabel(mainwindow, text="")
+        # empty_label_two.grid(
+        #     row=last_group_row + 3, column=0, columnspan=3, sticky="nsew"
+        # )
+        # ..........................  statistics section  ..............................
         # Perm Test
         perm_checkbox = gaita_widgets.checkbox(
             mainwindow,
-            "Run cluster-extent permutation test",
+            "Cluster-extent permutation test",
             cfg["do_permtest"],
             WIDGET_CFG,
         )
-        perm_checkbox.grid(row=last_group_row + 4, column=0, columnspan=3, pady=10)
-        # ANOVA info
-        ANOVA_checkbox = gaita_widgets.checkbox(
+        perm_checkbox.grid(row=last_group_row + 2, column=0, columnspan=3, pady=10)
+        # 1way ANOVA
+        oneway_ANOVA_checkbox = gaita_widgets.checkbox(
             mainwindow,
-            "Run ANOVA - if yes: choose design below",
-            cfg["do_anova"],
+            "One-way ANOVA (with following factor-type)",
+            cfg["do_1way_anova"],
             WIDGET_CFG,
         )
-        ANOVA_checkbox.configure(
-            command=lambda: change_ANOVA_buttons_state(ANOVA_buttons),
+        oneway_ANOVA_checkbox.configure(
+            command=lambda: change_ANOVA_widgets_state(oneway_ANOVA_buttons, "1way"),
         )
-        ANOVA_checkbox.grid(row=last_group_row + 5, column=0, columnspan=3, pady=10)
-        # ANOVA design
-        ANOVA_buttons_strings = ["Mixed ANOVA", "RM ANOVA"]
-        ANOVA_buttons = []
-        for i in range(len(ANOVA_buttons_strings)):
-            ANOVA_buttons.append(
+        oneway_ANOVA_checkbox.grid(
+            row=last_group_row + 3, column=0, columnspan=3, pady=10
+        )
+        oneway_ANOVA_string_and_var_value = [
+            ["Within-subjects (e.g. pre- & post-treatment)", "RM ANOVA"],
+            ["Between-subjects (e.g. age)", "Mixed ANOVA"],
+        ]
+        oneway_ANOVA_buttons = []
+        for i in range(len(oneway_ANOVA_string_and_var_value)):
+            oneway_ANOVA_buttons.append(
                 ctk.CTkRadioButton(
                     mainwindow,
-                    text=ANOVA_buttons_strings[i],
+                    text=oneway_ANOVA_string_and_var_value[i][0],
                     variable=cfg["anova_design"],
-                    value=ANOVA_buttons_strings[i],
+                    value=oneway_ANOVA_string_and_var_value[i][1],
                     fg_color=FG_COLOR,
                     hover_color=HOVER_COLOR,
-                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+                    font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
                 )
             )
-            if cfg["do_anova"].get() is True:
-                ANOVA_buttons[i].configure(state="normal")
-            ANOVA_buttons[-1].grid(row=last_group_row + 6, column=i, columnspan=2)
+            if cfg["do_1way_anova"].get() is True:
+                oneway_ANOVA_buttons[i].configure(state="normal")
+            oneway_ANOVA_buttons[-1].grid(
+                row=last_group_row + 4 + i, column=0, columnspan=3
+            )
         # initialise ANOVA buttons state by running this function once
-        change_ANOVA_buttons_state(ANOVA_buttons)
+        change_ANOVA_widgets_state(oneway_ANOVA_buttons, "1way")
+        # 2way ANOVA
+        twoway_ANOVA_checkbox = gaita_widgets.checkbox(
+            mainwindow,
+            "Two-way ANOVA (with following factors)",
+            cfg["do_2way_anova"],
+            WIDGET_CFG,
+        )
+        twoway_ANOVA_checkbox.configure(
+            command=lambda: change_ANOVA_widgets_state(twoway_ANOVA_widgets, "2way"),
+        )
+        twoway_ANOVA_checkbox.grid(
+            row=last_group_row + 6, column=0, columnspan=3, pady=10
+        )
+        for i, label_string in enumerate(["Number", "Name", "Type"]):
+            this_label = ctk.CTkLabel(
+                mainwindow,
+                text=label_string,
+                font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+            )
+            this_label.grid(row=last_group_row + 7, column=i)
+        twoway_ANOVA_widgets = []
+        for i in range(2):
+            factor_number_label, factor_name_entry = gaita_widgets.label_and_entry_pair(
+                mainwindow,
+                str(i + 1),
+                cfg[f"factor_{i+1}_name"],
+                WIDGET_CFG,
+            )
+            factor_number_label.grid(row=last_group_row + 8 + i, column=0)
+            factor_name_entry.grid(row=last_group_row + 8 + i, column=1)
+            twoway_ANOVA_widgets.append(factor_name_entry)  # widgets for (de)activating
+            factor_type_dropdown = ctk.CTkComboBox(
+                master=mainwindow,
+                values=["Within", "Between"],
+                variable=cfg[f"factor_{i+1}_type"],
+                button_color=GROUP_FG_COLOR,
+                button_hover_color=GROUP_HOVER_COLOR,
+            )
+            factor_type_dropdown.grid(row=last_group_row + 8 + i, column=2)
+            twoway_ANOVA_widgets.append(factor_type_dropdown)
+        twoway_info_string = (
+            "Group names must separate factors with a hyphen, only one allowed per name"
+            + " (e.g. 9week-25mm)"
+        )
+        twoway_info_label = ctk.CTkLabel(
+            mainwindow,
+            text=twoway_info_string,
+            font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        )
+        twoway_info_label.grid(row=last_group_row + 10, column=0, columnspan=3, pady=10)
+        # initialise ANOVA widgets state by running this function once
+        change_ANOVA_widgets_state(twoway_ANOVA_widgets, "2way")
 
         # ....................  advanced cfg & define features  ........................
-        # empty label 3 for spacing
-        empty_label_three = ctk.CTkLabel(mainwindow, text="")
-        empty_label_three.grid(
-            row=last_group_row + 7, column=0, columnspan=3, sticky="nsew"
-        )
+        # # empty label 3 for spacing
+        # empty_label_three = ctk.CTkLabel(mainwindow, text="")
+        # empty_label_three.grid(
+        #     row=last_group_row + 9, column=0, columnspan=3, sticky="nsew"
+        # )
 
         # advanced cfg
         cfgwindow_button = gaita_widgets.header_button(
@@ -372,7 +436,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             command=lambda: (advanced_cfgwindow(mainwindow, root_dimensions)),
         )
         cfgwindow_button.grid(
-            row=last_group_row + 8,
+            row=last_group_row + 11,
             column=0,
             columnspan=3,
         )
@@ -389,16 +453,17 @@ def build_mainwindow(root, group_number, root_dimensions):
                     group_dirs,
                     results_dir,
                     root,
+                    cfg,
                 ),
             ),
         )
-        definefeatures_button.grid(row=last_group_row + 9, column=0, columnspan=3)
+        definefeatures_button.grid(row=last_group_row + 12, column=0, columnspan=3)
 
-        # empty label four for spacing
-        empty_label_four = ctk.CTkLabel(mainwindow, text="")
-        empty_label_four.grid(
-            row=last_group_row + 10, column=1, columnspan=3, sticky="ns"
-        )
+        # # empty label four for spacing
+        # empty_label_four = ctk.CTkLabel(mainwindow, text="")
+        # empty_label_four.grid(
+        #     row=last_group_row + 11, column=1, columnspan=3, sticky="ns"
+        # )
 
         # exit button
         exit_button = gaita_widgets.exit_button(mainwindow, WIDGET_CFG)
@@ -409,7 +474,7 @@ def build_mainwindow(root, group_number, root_dimensions):
                 mainwindow.after(5000, mainwindow.destroy),
             ),
         )
-        exit_button.grid(row=last_group_row + 11, column=0, columnspan=3)
+        exit_button.grid(row=last_group_row + 13, column=0, columnspan=3)
 
         # maximise widgets to fit fullscreen
         maximise_widgets(mainwindow)
@@ -575,7 +640,7 @@ def advanced_cfgwindow(mainwindow, root_dimensions):
 # %%..............  LOCAL FUNCTION(S) #3 - BUILD ADD FEATURES WINDOW  ..................
 
 
-def definefeatures_window(mainwindow, group_names, group_dirs, results_dir, root):
+def definefeatures_window(mainwindow, group_names, group_dirs, results_dir, root, cfg):
     """Build define features window"""
 
     # nested function (called by run-button): extract boolean checkbox vars and store
@@ -596,6 +661,7 @@ def definefeatures_window(mainwindow, group_names, group_dirs, results_dir, root
     #    -- (note we extract from average xls since that automatically informs about
     #        export_average_x/y vars!)
     df = None
+    # NOTE! some tests of user input here, correct directories and ANOVA configs
     test_directories = []  # first see if all group dirs are valid paths
     for directory in group_dirs:
         test_directories.append(directory.get())
@@ -608,7 +674,25 @@ def definefeatures_window(mainwindow, group_names, group_dirs, results_dir, root
         error_msg = "You did not specify a directory to save results to!"
         tk.messagebox.showerror(title="Folder not found!", message=error_msg)
         return
-    if not os.path.exists(results_dir.get()):  # for results dir, create if not there
+    # ANOVA user-input validity tests
+    if cfg["do_1way_anova"].get() is True and cfg["do_2way_anova"] is True:
+        error_msg = "You can only run a one- or two-way ANOVA, not both!"
+        tk.messagebox.showerror(title="No triple ANOVA!", message=error_msg)
+        return
+    elif cfg["do_2way_anova"] is True:
+        for i in range(2):
+            if cfg[f"factor_{i+1}_type"] not in ["Between", "Within"]:
+                error_msg = f"Your Factor {i+1} Type must be Between or Within!"
+                tk.messagebox.showerror(
+                    title="Fix two-way ANOVA Types!", message=error_msg
+                )
+                return
+        if cfg["factor_1_type"] == "Between" and cfg["factor_2_type"] == "Between":
+            error_msg = f"Sorry two-way between-subject ANOVAs are not yet supported :/"
+            tk.messagebox.showerror(title="My bad =/", message=error_msg)
+            return
+    # now check if we need to create results dir and load some av_df for features
+    if not os.path.exists(results_dir.get()):
         os.makedirs(results_dir.get())
     some_groups_dir = group_dirs[0].get()
     all_ID_dirs = [
@@ -697,8 +781,10 @@ def definefeatures_window(mainwindow, group_names, group_dirs, results_dir, root
             this_checkbox.grid(row=row_counter, column=col_counter, sticky="nsew")
             # if user doesn't want to do stats, dont have them choose features
             if frame == stats_frame:
-                if (cfg["do_permtest"].get() is False) & (
-                    cfg["do_anova"].get() is False
+                if (
+                    (cfg["do_permtest"].get() is False)
+                    & (cfg["do_1way_anova"].get() is False)
+                    & (cfg["do_2way_anova"].get() is False)
                 ):
                     this_checkbox.configure(state="disabled")
             row_counter += 1
@@ -1008,16 +1094,24 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
 # %%...............  LOCAL FUNCTION(S) #6 - VARIOUS HELPER FUNCTIONS  ..................
 
 
-def change_ANOVA_buttons_state(ANOVA_buttons):
-    """Change the state of ANOVA radio button widgets based on whether user wants
-    to perform an ANOVA or not.
+def change_ANOVA_widgets_state(ANOVA_widget_list, anova_type):
+    """Change the state of ANOVA widgets based on whether user wants
+    to perform a given ANOVA or not.
+
+    Note
+    ----
+    ANOVA_widget_list are len=2 for oneway and len=4 for twoway
     """
-    if cfg["do_anova"].get() is True:
-        for i in range(len(ANOVA_buttons)):
-            ANOVA_buttons[i].configure(state="normal")
-    elif cfg["do_anova"].get() is False:
-        for i in range(len(ANOVA_buttons)):
-            ANOVA_buttons[i].configure(state="disabled")
+    if anova_type == "1way":
+        anova_key = "do_1way_anova"
+    elif anova_type == "2way":
+        anova_key = "do_2way_anova"
+    if cfg[anova_key].get() is True:
+        for i in range(len(ANOVA_widget_list)):
+            ANOVA_widget_list[i].configure(state="normal")
+    elif cfg[anova_key].get() is False:
+        for i in range(len(ANOVA_widget_list)):
+            ANOVA_widget_list[i].configure(state="disabled")
 
 
 def maximise_widgets(window):

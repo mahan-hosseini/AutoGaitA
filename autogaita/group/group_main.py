@@ -104,7 +104,7 @@ def group(folderinfo, cfg):
         plt.close("all")
 
         # ..................................  ANOVA  ...................................
-        if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
+        if cfg["do_1way_anova"]:  # indentation since we check for stats-vars here too!
             if anova_design_sanity_check(stats_df, folderinfo, cfg):
                 for stats_var in cfg["stats_variables"]:
                     ANOVA_main(
