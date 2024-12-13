@@ -112,7 +112,7 @@ def print_finish(info):
     line_row = "-" * INFO_TEXT_WIDTH
     empty_row = " " * INFO_TEXT_WIDTH
     finished_message_1 = "G A I T A | D O N E"
-    finished_message_2 = "Result location"
+    finished_message_2 = "Results are here"
     side_space_1 = " " * ((INFO_TEXT_WIDTH - len(finished_message_1)) // 2)
     side_space_2 = " " * ((INFO_TEXT_WIDTH - len(finished_message_2)) // 2)
     message = (
@@ -121,8 +121,6 @@ def print_finish(info):
         + side_space_1
         + finished_message_1
         + side_space_2
-        # + "\n"
-        # + line_row
         + "\n"
         + empty_row
         + "\n"

@@ -320,7 +320,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         # Perm Test
         perm_checkbox = gaita_widgets.checkbox(
             mainwindow,
-            "Run cluster-extent permutation test",
+            "Cluster-extent permutation test",
             cfg["do_permtest"],
             WIDGET_CFG,
         )
@@ -328,7 +328,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         # ANOVA info
         ANOVA_checkbox = gaita_widgets.checkbox(
             mainwindow,
-            "Run ANOVA - if yes: choose design below",
+            "ANOVA & Tukey's. If yes: choose factor-type below",
             cfg["do_anova"],
             WIDGET_CFG,
         )
@@ -337,23 +337,26 @@ def build_mainwindow(root, group_number, root_dimensions):
         )
         ANOVA_checkbox.grid(row=last_group_row + 5, column=0, columnspan=3, pady=10)
         # ANOVA design
-        ANOVA_buttons_strings = ["Mixed ANOVA", "RM ANOVA"]
+        ANOVA_string_and_var_value = [
+            ["Within-subjects (e.g. pre- & post-treatment)", "RM ANOVA"],
+            ["Between-subjects (e.g. age)", "Mixed ANOVA"],
+        ]
         ANOVA_buttons = []
-        for i in range(len(ANOVA_buttons_strings)):
+        for i in range(len(ANOVA_string_and_var_value)):
             ANOVA_buttons.append(
                 ctk.CTkRadioButton(
                     mainwindow,
-                    text=ANOVA_buttons_strings[i],
+                    text=ANOVA_string_and_var_value[i][0],
                     variable=cfg["anova_design"],
-                    value=ANOVA_buttons_strings[i],
+                    value=ANOVA_string_and_var_value[i][1],
                     fg_color=FG_COLOR,
                     hover_color=HOVER_COLOR,
-                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+                    font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
                 )
             )
             if cfg["do_anova"].get() is True:
                 ANOVA_buttons[i].configure(state="normal")
-            ANOVA_buttons[-1].grid(row=last_group_row + 6, column=i, columnspan=2)
+            ANOVA_buttons[-1].grid(row=last_group_row + 6 + i, column=0, columnspan=3)
         # initialise ANOVA buttons state by running this function once
         change_ANOVA_buttons_state(ANOVA_buttons)
 
@@ -361,7 +364,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         # empty label 3 for spacing
         empty_label_three = ctk.CTkLabel(mainwindow, text="")
         empty_label_three.grid(
-            row=last_group_row + 7, column=0, columnspan=3, sticky="nsew"
+            row=last_group_row + 8, column=0, columnspan=3, sticky="nsew"
         )
 
         # advanced cfg
@@ -369,10 +372,10 @@ def build_mainwindow(root, group_number, root_dimensions):
             mainwindow, "Advanced Configuration", WIDGET_CFG
         )
         cfgwindow_button.configure(
-            command=lambda: (advanced_cfgwindow(mainwindow, root_dimensions)),
+            command=lambda: (advanced_cfgwindow(mainwindow)),
         )
         cfgwindow_button.grid(
-            row=last_group_row + 8,
+            row=last_group_row + 9,
             column=0,
             columnspan=3,
         )
@@ -392,12 +395,12 @@ def build_mainwindow(root, group_number, root_dimensions):
                 ),
             ),
         )
-        definefeatures_button.grid(row=last_group_row + 9, column=0, columnspan=3)
+        definefeatures_button.grid(row=last_group_row + 10, column=0, columnspan=3)
 
         # empty label four for spacing
         empty_label_four = ctk.CTkLabel(mainwindow, text="")
         empty_label_four.grid(
-            row=last_group_row + 10, column=1, columnspan=3, sticky="ns"
+            row=last_group_row + 11, column=1, columnspan=3, sticky="ns"
         )
 
         # exit button
@@ -409,7 +412,7 @@ def build_mainwindow(root, group_number, root_dimensions):
                 mainwindow.after(5000, mainwindow.destroy),
             ),
         )
-        exit_button.grid(row=last_group_row + 11, column=0, columnspan=3)
+        exit_button.grid(row=last_group_row + 12, column=0, columnspan=3)
 
         # maximise widgets to fit fullscreen
         maximise_widgets(mainwindow)
@@ -418,7 +421,7 @@ def build_mainwindow(root, group_number, root_dimensions):
 # %%..............  LOCAL FUNCTION(S) #2 - BUILD ADVANCED CFG WINDOW  ..................
 
 
-def advanced_cfgwindow(mainwindow, root_dimensions):
+def advanced_cfgwindow(mainwindow):
     """Build advanced configuration window"""
 
     # build window

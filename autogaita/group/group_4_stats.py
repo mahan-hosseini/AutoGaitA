@@ -608,8 +608,15 @@ def run_ANOVA(stats_df, stats_var, cfg):
             within_factor_col = cfg["within_factor_col"]
             between_factor_col = cfg["between_factor_col"]
 
-    # run 4 different ANOVAs based on user input
-    # => note that 2-way fully between ANOVAs are not supported by Pingouin
+    # ..............  NOTE FOR MYSELF @ 13.12.2024 before releasing v1  ................
+    # => 2-way ANOVAs are not yet supported since I wanted to take more time to test
+    #    it and confirm that it gives expected results.
+    # => There is a branch with it being almost developed - I stopped there with
+    #    tests of valid user input (@ line 677 of definefeatures_window) which did not
+    #    behave as expected
+    # => Still decided to leave these lines here as they are because they do not
+    #    affect anything really
+    # => Also don't forget that 2-way fully between ANOVAs are not supported by Pingouin
     if anova_design == "RM ANOVA":
         result = stats_df.rm_anova(dv=stats_var, within=GROUP_COL, subject=ID_COL)
     elif anova_design == "Mixed ANOVA":

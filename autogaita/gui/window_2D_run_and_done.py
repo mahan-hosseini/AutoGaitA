@@ -351,7 +351,7 @@ def populate_run_window(
         info_label_1.grid(row=last_sleap_row + 1, column=0)
         info_label_2 = ctk.CTkLabel(
             runwindow,
-            text="If not, you can still use identifier 1 for differentiating SLEAP files from other files.",
+            text="If not height-correcting, identifier 1 can still be used for differentiating SLEAP files from other files.",
             font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
         )
         info_label_2.grid(row=last_sleap_row + 2, column=0)
