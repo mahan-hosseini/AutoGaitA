@@ -136,7 +136,7 @@ def print_finish(info):
         + finished_message_2
         + side_space_2
         + "\n"
-        + info["results_dir"]
+        + str(info["results_dir"])
         + "\n"
         + line_row
     )
