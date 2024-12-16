@@ -600,7 +600,7 @@ def run_ANOVA(stats_df, stats_var, cfg):
 
     # unpack
     anova_design = cfg["anova_design"]
-    if "2-way" in anova_design:
+    if "2-way" in anova_design:  # not really 2-way, see below
         if "RM" in anova_design:
             factor_1_col = cfg["factor_1_col"]
             factor_2_col = cfg["factor_2_col"]
@@ -609,21 +609,24 @@ def run_ANOVA(stats_df, stats_var, cfg):
             between_factor_col = cfg["between_factor_col"]
 
     # ..............  NOTE FOR MYSELF @ 13.12.2024 before releasing v1  ................
-    # => 2-way ANOVAs are not yet supported since I wanted to take more time to test
-    #    it and confirm that it gives expected results.
-    # => There is a branch with it being almost developed - I stopped there with
+    # => 2-way ANOVAs are 3-way ANOVAs with 2 within and 1 between subjects factor
+    #    really
+    # => Not supported by Pinguin, likely need to switch to statsmodel's linear mixed
+    #    effects models if I want to support it
+    # => There is a branch with the it being almost developed - I stopped there with
     #    tests of valid user input (@ line 677 of definefeatures_window) which did not
     #    behave as expected
     # => Still decided to leave these lines here as they are because they do not
     #    affect anything really
-    # => Also don't forget that 2-way fully between ANOVAs are not supported by Pingouin
     if anova_design == "RM ANOVA":
-        result = stats_df.rm_anova(dv=stats_var, within=GROUP_COL, subject=ID_COL)
+        result = stats_df.rm_anova(
+            dv=stats_var, within=[SC_PERCENTAGE_COL, GROUP_COL], subject=ID_COL
+        )
     elif anova_design == "Mixed ANOVA":
         result = stats_df.mixed_anova(
             dv=stats_var,
-            between=GROUP_COL,
             within=SC_PERCENTAGE_COL,
+            between=GROUP_COL,
             subject=ID_COL,
         )
     elif anova_design == "2-way RM ANOVA":
