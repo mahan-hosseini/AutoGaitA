@@ -9,8 +9,12 @@
 --------------------
 A N O V A  T A B L E
 --------------------
-  Source  ddof1  ddof2         F     p-unc      ng2       eps
-0  Group      2      4  2.522463  0.195573  0.33195  0.580282
+                  Source          SS  ddof1  ...  p-GG-corr       ng2       eps
+0          SC Percentage  780.712433     24  ...   0.032538  0.511663  0.053003
+1                  Group  144.298837      2  ...   0.242443  0.162239  0.580282
+2  SC Percentage * Group  190.782416     48  ...   0.435841  0.203848  0.016950
+
+[3 rows x 10 columns]
 
 -------------------
 C O M P A R I S O N
@@ -44,8 +48,12 @@ No significant clusters!
 --------------------
 A N O V A  T A B L E
 --------------------
-  Source  ddof1  ddof2          F     p-unc       ng2       eps
-0  Group      2      4  15.370426  0.013257  0.842182  0.518022
+                  Source           SS  ddof1  ...  p-GG-corr       ng2       eps
+0          SC Percentage  1022.539658     24  ...   0.124393  0.453097  0.052407
+1                  Group   575.821847      2  ...   0.056085  0.318123  0.518022
+2  SC Percentage * Group   353.498721     48  ...   0.432256  0.222643  0.021708
+
+[3 rows x 10 columns]
 
 -------------------
 C O M P A R I S O N
@@ -88,8 +96,12 @@ No significant clusters!
 --------------------
 A N O V A  T A B L E
 --------------------
-  Source  ddof1  ddof2          F     p-unc       ng2       eps
-0  Group      2      4  22.099956  0.006887  0.915896  0.509885
+                  Source          SS  ddof1  ...  p-GG-corr       ng2       eps
+0          SC Percentage  166.104222     24  ...   0.085752  0.388156  0.068974
+1                  Group  619.499290      2  ...   0.040842  0.702917  0.509885
+2  SC Percentage * Group   41.466941     48  ...   0.545927  0.136722  0.024071
+
+[3 rows x 10 columns]
 
 -------------------
 C O M P A R I S O N
@@ -162,8 +174,12 @@ No significant clusters!
 --------------------
 A N O V A  T A B L E
 --------------------
-  Source  ddof1  ddof2        F     p-unc       ng2       eps
-0  Group      2      4  1.91676  0.260739  0.219196  0.515871
+                  Source            SS  ddof1  ...  p-GG-corr       ng2       eps
+0          SC Percentage  14992.519862     24  ...   0.071831  0.408918  0.078481
+1                  Group   1845.561538      2  ...   0.299087  0.078478  0.515871
+2  SC Percentage * Group  10907.214139     48  ...   0.267908  0.334797  0.023893
+
+[3 rows x 10 columns]
 
 -------------------
 C O M P A R I S O N
@@ -206,8 +222,12 @@ No significant clusters!
 --------------------
 A N O V A  T A B L E
 --------------------
-  Source  ddof1  ddof2         F     p-unc       ng2      eps
-0  Group      2      4  6.695186  0.052906  0.674259  0.50105
+                  Source            SS  ddof1  ...  p-GG-corr       ng2       eps
+0          SC Percentage   8432.818851     24  ...   0.292788  0.215078  0.047727
+1                  Group  20774.662410      2  ...   0.122282  0.402999  0.501050
+2  SC Percentage * Group   7505.003822     48  ...   0.380602  0.196053  0.024647
+
+[3 rows x 10 columns]
 
 -------------------
 C O M P A R I S O N
@@ -268,8 +288,12 @@ Significant clusters at:
 --------------------
 A N O V A  T A B L E
 --------------------
-  Source  ddof1  ddof2         F     p-unc       ng2       eps
-0  Group      2      4  0.785518  0.515523  0.260197  0.628944
+                  Source            SS  ddof1  ...  p-GG-corr       ng2       eps
+0          SC Percentage  53041.576773     24  ...   0.056276  0.593305  0.052085
+1                  Group   3749.679823      2  ...   0.484060  0.093489  0.628944
+2  SC Percentage * Group  16372.389594     48  ...   0.311717  0.310489  0.017868
+
+[3 rows x 10 columns]
 
 -------------------
 C O M P A R I S O N
