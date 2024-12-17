@@ -1,6 +1,6 @@
 # %% imports
-from autogaita.resources.utils import bin_num_to_percentages
-from autogaita.group.group_utils import save_figures, write_issues_to_textfile
+from autogaita.resources.utils import bin_num_to_percentages, write_issues_to_textfile
+from autogaita.group.group_utils import save_figures
 import os
 import string
 import pandas as pd
@@ -33,7 +33,6 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
     """PCA on features of interest"""
 
     # unpack
-    results_dir = folderinfo["results_dir"]
     PCA_custom_scatter_PCs = cfg["PCA_custom_scatter_PCs"]
     PCA_bins = cfg["PCA_bins"]
 
@@ -58,7 +57,7 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
             + "var-explained approach!"
         )
         print(PCA_error_message_1)
-        write_issues_to_textfile(PCA_error_message_1, results_dir)
+        write_issues_to_textfile(PCA_error_message_1, folderinfo)
         return
     # plot barplot of cumulative explained variance
     plot_PCA_barplot(PCA_info, folderinfo, cfg, plot_panel_instance)
@@ -96,7 +95,6 @@ def convert_PCA_bins_to_list(folderinfo, cfg):
     for this
     """
     # unpack
-    results_dir = folderinfo["results_dir"]
     PCA_bins = cfg["PCA_bins"]
     bin_num = cfg["bin_num"]
 
@@ -121,7 +119,7 @@ def convert_PCA_bins_to_list(folderinfo, cfg):
                     + "\nPlease check your input and try again!"
                 )
                 print(PCA_bins_error_message)
-                write_issues_to_textfile(PCA_bins_error_message, results_dir)
+                write_issues_to_textfile(PCA_bins_error_message, folderinfo)
                 raise ValueError(PCA_bins_error_message)
 
         else:
@@ -143,7 +141,6 @@ def create_PCA_df(avg_dfs, folderinfo, cfg):
     """Create a ID x ID_COL + features dataframe to be used by PCA"""
 
     # unpack
-    results_dir = folderinfo["results_dir"]
     group_names = folderinfo["group_names"]
     PCA_vars = cfg["PCA_variables"]
     bin_num = cfg["bin_num"]
@@ -193,7 +190,7 @@ def create_PCA_df(avg_dfs, folderinfo, cfg):
             + "This should never happen, please contact me!"
         )
         print(critical_PCA_df_error_message)
-        write_issues_to_textfile(critical_PCA_df_error_message, results_dir)
+        write_issues_to_textfile(critical_PCA_df_error_message, folderinfo)
         raise ValueError(critical_PCA_df_error_message)
     # add colnames after the last mouse (makes concat'ing series 2 df easier)
     PCA_df.columns = [GROUP_COL] + [ID_COL] + features
@@ -259,7 +256,8 @@ def PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg):
 
     # add column headers
     for pc in range(number_of_PCs):
-        sheet[string.ascii_uppercase[pc + 1] + "1"] = "PC " + str(pc + 1)
+        # pdb.set_trace()
+        sheet.cell(row=1, column=pc + 2, value="PC " + str(pc + 1))
     # add cell values: explained variance
     sheet.cell(row=2, column=1, value="Explained Var. (%)")
     for pc in range(number_of_PCs):
@@ -372,7 +370,7 @@ def plot_PCA_scatterplots(
                 + "!\nThe PC you wanted was not computed by PCA!"
             )
             print(invalid_custom_PC_scatter_message)
-            write_issues_to_textfile(invalid_custom_PC_scatter_message, results_dir)
+            write_issues_to_textfile(invalid_custom_PC_scatter_message, folderinfo)
             return
         # after the test we can overwrite "real" number of PCs of full PCA here since
         # we only use this value to know if we also do a 3D plot or not from here on

@@ -13,7 +13,7 @@ from autogaita.group.group_4_stats import (
     ANOVA_main,
 )
 from autogaita.group.group_5_plots import plot_results
-from autogaita.group.group_utils import print_start
+from autogaita.group.group_utils import print_start, tukeys_only_info_message
 from autogaita.resources.utils import print_finish, PlotPanel
 import matplotlib
 import matplotlib.pyplot as plt
@@ -105,13 +105,18 @@ def group(folderinfo, cfg):
 
         # ..................................  ANOVA  ...................................
         if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
-            if anova_design_sanity_check(stats_df, folderinfo, cfg):
+            if anova_design_sanity_check(stats_df, folderinfo, cfg) is not True:
+                just_do_tukeys = True
+                tukeys_only_info_message(folderinfo)
+            else:
+                just_do_tukeys = False
                 for stats_var in cfg["stats_variables"]:
                     ANOVA_main(
                         stats_df,
                         g_avg_dfs,
                         g_std_dfs,
                         stats_var,
+                        just_do_tukeys,
                         folderinfo,
                         cfg,
                         plot_panel_instance,

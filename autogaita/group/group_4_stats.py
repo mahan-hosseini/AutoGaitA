@@ -1,11 +1,10 @@
 # %% imports
-from autogaita.resources.utils import bin_num_to_percentages
+from autogaita.resources.utils import bin_num_to_percentages, write_issues_to_textfile
 from autogaita.group.group_utils import (
     check_mouse_conversion,
     save_figures,
     ytickconvert_mm_to_cm,
     ylabel_velocity_and_acceleration,
-    write_issues_to_textfile,
 )
 import os
 import sys
@@ -16,7 +15,7 @@ import openpyxl
 from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 from scipy import stats
-import pingouin as pg
+import pingouin as pg  # important for ANOVAs!
 
 # %% constants
 from autogaita.resources.constants import INFO_TEXT_WIDTH, ID_COL, SC_PERCENTAGE_COL
@@ -489,11 +488,14 @@ def extract_all_clusters(trueobs_results_df, contrast):
 
 # ...............................  sanity check . ......................................
 def anova_design_sanity_check(stats_df, folderinfo, cfg):
-    """Sanity check the anova_design input of the user based on stats_df's IDs"""
+    """Sanity check the anova_design input of the user based on stats_df's IDs
+    Note
+    ----
+    This function also catches cases in which a user might have a 2-way design and just wants to run Tukeys (see below for 2-way #1 and #2)
+    """
 
     # unpack
     anova_design = cfg["anova_design"]
-    results_dir = folderinfo["results_dir"]
 
     # get IDs for each group to check if they are unique
     group_IDs = stats_df.groupby("Group")["ID"].unique()
@@ -508,7 +510,7 @@ def anova_design_sanity_check(stats_df, folderinfo, cfg):
     if anova_design == "Mixed ANOVA":
         if len(ID_list) == len(unique_ID_list):  # check passed
             return True
-        else:
+        else:  # 2-way #1 is caught here (non-unique IDs when Mixed)
             mixed_anova_error_message = (
                 "\n*********\n! ERROR !\n*********\n"
                 + "\nANOVA design seems wrong - skipping ANOVA!"
@@ -518,7 +520,7 @@ def anova_design_sanity_check(stats_df, folderinfo, cfg):
                 + str(group_IDs)
             )
             print(mixed_anova_error_message)
-            write_issues_to_textfile(mixed_anova_error_message, results_dir)
+            write_issues_to_textfile(mixed_anova_error_message, folderinfo)
             return False
     # RM ANOVA - IDs in each group must be the same!
     elif anova_design == "RM ANOVA":
@@ -539,9 +541,12 @@ def anova_design_sanity_check(stats_df, folderinfo, cfg):
                 + "analyses will be included in RM ANOVA:\n\n"
                 + str(valid_IDs)
             )
-            print(rm_anova_info_message)
-            write_issues_to_textfile(rm_anova_info_message, results_dir)
-            return True
+            if valid_IDs:
+                print(rm_anova_info_message)
+                write_issues_to_textfile(rm_anova_info_message, folderinfo)
+                return True
+            else:  # 2-way #2 here: not all IDs in all groups in a RM design
+                return False
         else:
             rm_anova_error_message = (
                 "\n*********\n! ERROR !\n*********\n"
@@ -552,13 +557,20 @@ def anova_design_sanity_check(stats_df, folderinfo, cfg):
                 + str(group_IDs)
             )
             print(rm_anova_error_message)
-            write_issues_to_textfile(rm_anova_error_message, results_dir)
+            write_issues_to_textfile(rm_anova_error_message, folderinfo)
             return False
 
 
 # ...............................  main function  ......................................
 def ANOVA_main(
-    stats_df, g_avg_dfs, g_std_dfs, stats_var, folderinfo, cfg, plot_panel_instance
+    stats_df,
+    g_avg_dfs,
+    g_std_dfs,
+    stats_var,
+    just_do_tukeys,
+    folderinfo,
+    cfg,
+    plot_panel_instance,
 ):
     """Perform a two-way RM-ANOVA with the factors group (between or within) & SC
     percentage (within) on a given dependent variable
@@ -570,9 +582,10 @@ def ANOVA_main(
     # initialise text file
     initial_stats_textfile(stats_var, anova_design, folderinfo)
 
-    # run the 1-way RM or Mixed ANOVA
+    # run the fully RM or Mixed ANOVA
     # => note pingouin checks both or sphericity by default
-    ANOVA_result = run_ANOVA(stats_df, stats_var, cfg)
+    if just_do_tukeys is False:
+        ANOVA_result = run_ANOVA(stats_df, stats_var, cfg)
 
     # run Tukeys for pairwise comparisons
     # => always running multiple comparison tests as well. see Prism's doc for why

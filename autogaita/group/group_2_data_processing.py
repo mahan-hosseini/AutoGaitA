@@ -1,6 +1,5 @@
 # %% imports
-from autogaita.resources.utils import bin_num_to_percentages
-from autogaita.group.group_utils import write_issues_to_textfile
+from autogaita.resources.utils import bin_num_to_percentages, write_issues_to_textfile
 import os
 import pandas as pd
 import numpy as np
@@ -95,7 +94,7 @@ def import_data(folderinfo, cfg):
                     tracking_software,
                     name,
                     which_leg,
-                    results_dir,
+                    folderinfo,
                     cfg,
                 )
             df_dict[which_df][g] = final_df_checks_and_save_to_xls(
@@ -109,7 +108,7 @@ def import_data(folderinfo, cfg):
     # test: is bin_num is consistent across our groups
     # => if so, add it as well as one_bin_in_% to cfg
     cfg["bin_num"] = test_bin_num_consistency(
-        df_dict["Normalised"], group_names, results_dir
+        df_dict["Normalised"], group_names, folderinfo
     )
     dfs = df_dict["Normalised"]
     raw_dfs = df_dict["Original"]
@@ -147,7 +146,7 @@ def final_df_checks_and_save_to_xls(
     return this_df
 
 
-def test_bin_num_consistency(dfs, group_names, results_dir):
+def test_bin_num_consistency(dfs, group_names, folderinfo):
     """Tests if bin number of step-cycle normalisation is consistent across groups"""
     # For this we use sc_breaks [i.e. the nan step-separators]) to see if bin_num is the
     # same value across all individual step-cycles across all groups.
@@ -166,17 +165,15 @@ def test_bin_num_consistency(dfs, group_names, results_dir):
             this_bin_num = sc_breaks[b] - sc_breaks[b - 1] - 1
             if this_bin_num != bin_num:
                 bin_num_error_helper_function(
-                    dfs, g, group_names, sc_breaks, results_dir, b
+                    folderinfo, dfs, g, group_names, sc_breaks, b
                 )
         # handle the last step-cycle of the df (it doesn't have a sc_break after it!)
         if (len(dfs[g]) - sc_breaks[-1] - 1) != this_bin_num:
-            bin_num_error_helper_function(
-                dfs, g, group_names, sc_breaks, results_dir, b
-            )
+            bin_num_error_helper_function(folderinfo, dfs, g, group_names, sc_breaks, b)
     return bin_num
 
 
-def bin_num_error_helper_function(dfs, g, group_names, sc_breaks, results_dir, b):
+def bin_num_error_helper_function(folderinfo, dfs, g, group_names, sc_breaks, b):
     """Handle this error in a separate function for readability"""
     id_col_idx = dfs[g].columns.get_loc(ID_COL)
     message = (
@@ -189,11 +186,11 @@ def bin_num_error_helper_function(dfs, g, group_names, sc_breaks, results_dir, b
         + "\nPlease re-run & make sure all bin numbers match!"
     )
     print(message)
-    write_issues_to_textfile(message, results_dir)
+    write_issues_to_textfile(message, folderinfo)
     raise ValueError(message)
 
 
-def test_PCA_and_stats_variables(df, group_name, name, results_dir, cfg):
+def test_PCA_and_stats_variables(df, group_name, name, folderinfo, cfg):
     """Tests if PCA & stats variables are present in all groups' datasets"""
     PCA_variables = cfg["PCA_variables"]
     stats_variables = cfg["stats_variables"]
@@ -215,7 +212,7 @@ def test_PCA_and_stats_variables(df, group_name, name, results_dir, cfg):
                 + "\nPlease re-run & make sure all variables are present!"
             )
             print(PCA_variable_mismatch_message)
-            write_issues_to_textfile(PCA_variable_mismatch_message, results_dir)
+            write_issues_to_textfile(PCA_variable_mismatch_message, folderinfo)
             raise ValueError(PCA_variable_mismatch_message)
     if stats_variables:
         if not all(variable in df.columns for variable in stats_variables):
@@ -235,7 +232,7 @@ def test_PCA_and_stats_variables(df, group_name, name, results_dir, cfg):
                 + "\nPlease re-run & make sure all variables are present!"
             )
             print(stats_variable_mismatch_message)
-            write_issues_to_textfile(stats_variable_mismatch_message, results_dir)
+            write_issues_to_textfile(stats_variable_mismatch_message, folderinfo)
             raise ValueError(stats_variable_mismatch_message)
 
 
@@ -247,7 +244,7 @@ def import_and_combine_dfs(
     tracking_software,
     name,
     which_leg,
-    results_dir,
+    folderinfo,
     cfg,
 ):
     """Import one run's df at a time and combine to group-level df"""
@@ -274,11 +271,11 @@ def import_and_combine_dfs(
             + ".\nSkipping!"
         )
         print(this_message)
-        write_issues_to_textfile(this_message, results_dir)
+        write_issues_to_textfile(this_message, folderinfo)
     else:
         df_copy = df.copy()
         # test: are our PCA & stats variables present in this ID's dataset?
-        test_PCA_and_stats_variables(df_copy, group_name, name, results_dir, cfg)
+        test_PCA_and_stats_variables(df_copy, group_name, name, folderinfo, cfg)
         # add some final info & append to group_df
         if tracking_software == "DLC":
             # add this run's info to df (& prepare Stepcycle column)

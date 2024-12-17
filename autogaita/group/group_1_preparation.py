@@ -1,8 +1,7 @@
 # %% imports
-from autogaita.group.group_utils import write_issues_to_textfile
+from autogaita.resources.utils import write_issues_to_textfile
 import os
 import json
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -110,7 +109,6 @@ def extract_cfg_vars(folderinfo, cfg):
 
     group_names = folderinfo["group_names"]
     group_dirs = folderinfo["group_dirs"]
-    results_dir = folderinfo["results_dir"]
 
     # ................................  save_to_xls  ...................................
     save_to_xls = [None] * len(group_dirs)
@@ -143,7 +141,7 @@ def extract_cfg_vars(folderinfo, cfg):
                     save_to_xls[g] = False
                 if save_to_xls[g] is True:
                     print(sheet_type_mismatch_message)
-                    write_issues_to_textfile(sheet_type_mismatch_message, results_dir)
+                    write_issues_to_textfile(sheet_type_mismatch_message, folderinfo)
             # case 2: we found a xlsx file
             elif os.path.exists(
                 os.path.join(
@@ -158,7 +156,7 @@ def extract_cfg_vars(folderinfo, cfg):
                 if save_to_xls[g] is False:
                     save_to_xls[g] = True
                     print(sheet_type_mismatch_message)
-                    write_issues_to_textfile(sheet_type_mismatch_message, results_dir)
+                    write_issues_to_textfile(sheet_type_mismatch_message, folderinfo)
         # test that at least 1 folder has valid results for all groups
         if not valid_results_folders:
             no_valid_results_error = (
@@ -168,7 +166,7 @@ def extract_cfg_vars(folderinfo, cfg):
                 + "\nFix & re-run!"
             )
             print(no_valid_results_error)
-            write_issues_to_textfile(no_valid_results_error, results_dir)
+            write_issues_to_textfile(no_valid_results_error, folderinfo)
     # assign to our cfg dict after group loop
     cfg["save_to_xls"] = save_to_xls
 
@@ -190,7 +188,7 @@ def extract_cfg_vars(folderinfo, cfg):
                 + str(cfg["PCA_n_components"])
                 + "\n Fix & re-run!"
             )
-            write_issues_to_textfile(PCA_error_message, results_dir)
+            write_issues_to_textfile(PCA_error_message, folderinfo)
             raise ValueError(PCA_error_message)
         if cfg["PCA_n_components"] < 2:
             print(
@@ -217,7 +215,7 @@ def extract_cfg_vars(folderinfo, cfg):
             + "\n".join(list(set(duplicate_vars)))
         )
         print(PCA_duplicates_error_message)
-        write_issues_to_textfile(PCA_duplicates_error_message, results_dir)
+        write_issues_to_textfile(PCA_duplicates_error_message, folderinfo)
         cfg["PCA_variables"] = unique_PCA_vars
     # check if PCA bin num is valid, two tests and 1 fix
     # => note there is separate code that transforms this string input into an int-list
@@ -249,7 +247,7 @@ def extract_cfg_vars(folderinfo, cfg):
         #    so we just stop everything and help them fix it
         if PCA_bins_error_message:
             print(PCA_bins_error_message)
-            write_issues_to_textfile(PCA_bins_error_message, results_dir)
+            write_issues_to_textfile(PCA_bins_error_message, folderinfo)
             raise ValueError(PCA_bins_error_message)
         # fix for users: remove first and last characters if not digits
         while not cfg["PCA_bins"][0].isdigit():

@@ -1,6 +1,6 @@
 import os
-
-from autogaita.resources.constants import ISSUES_TXT_FILENAME, INFO_TEXT_WIDTH
+from autogaita.resources.utils import write_issues_to_textfile
+from autogaita.resources.constants import INFO_TEXT_WIDTH
 from autogaita.group.group_constants import (
     GROUP_CONFIG_TXT_FILENAME,
     PCA_CUSTOM_SCATTER_OUTER_SEPARATOR,
@@ -63,6 +63,11 @@ def print_start(folderinfo, cfg):
             cfg["PCA_custom_scatter_PCs"] = cfg["PCA_custom_scatter_PCs"].replace(
                 " ", ""  # remove spaces for user if they included them (not allowed!)
             )
+            # string cannot end with the ; separator this will break later
+            while cfg["PCA_custom_scatter_PCs"].endswith(  # in case users are funny
+                PCA_CUSTOM_SCATTER_OUTER_SEPARATOR
+            ):
+                cfg["PCA_custom_scatter_PCs"] = cfg["PCA_custom_scatter_PCs"][:-1]
             start_string += "\n\nCustom Scatterplot Configuration:"
             for i, custom_scatter_PCs in enumerate(
                 cfg["PCA_custom_scatter_PCs"].split(PCA_CUSTOM_SCATTER_OUTER_SEPARATOR)
@@ -156,13 +161,17 @@ def ylabel_velocity_and_acceleration(feature, unit, sampling_rate):
 
 
 # %% ........................  misc. helper functions  .................................
-
-
-def write_issues_to_textfile(message, results_dir):
-    """Write issues to a textfile"""
-    issues_textfile = os.path.join(results_dir, ISSUES_TXT_FILENAME)
-    with open(issues_textfile, "a") as f:
-        f.write(message)
+def tukeys_only_info_message(folderinfo):
+    """Inform user about the fact that we are only doing Tukeys due to our ANOVA sanity check failing"""
+    tukeys_only_info_message = (
+        "\n***********\n! WARNING !\n***********\n\n"
+        + "Your ANOVA settings were wrong.This either happens because: \n 1) You ran "
+        + "a one-way ANOVA with wrong inputs (there should be another message about "
+        + "this) or \n 2) You attempted to run a two-way design which is not "
+        + "supported yet.\nWe will run Tukey's test for multiple comparisons anyways."
+    )
+    print(tukeys_only_info_message)
+    write_issues_to_textfile(tukeys_only_info_message, folderinfo)
 
 
 def check_mouse_conversion(feature, cfg, **kwargs):
