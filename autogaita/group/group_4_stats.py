@@ -586,6 +586,8 @@ def ANOVA_main(
     # => note pingouin checks both or sphericity by default
     if just_do_tukeys is False:
         ANOVA_result = run_ANOVA(stats_df, stats_var, cfg)
+    else:
+        ANOVA_result = None
 
     # run Tukeys for pairwise comparisons
     # => always running multiple comparison tests as well. see Prism's doc for why
@@ -995,7 +997,7 @@ def save_stats_summary_to_text(
     message = ""
 
     # only for ANOVA - add the table above contrast loop
-    if "ANOVA" in which_test:
+    if "ANOVA" in which_test and ANOVA_result is not None:
         message = (
             message
             + "\n\n--------------------\nA N O V A  T A B L E"

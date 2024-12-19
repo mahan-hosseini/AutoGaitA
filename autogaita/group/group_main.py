@@ -110,17 +110,20 @@ def group(folderinfo, cfg):
                 tukeys_only_info_message(folderinfo)
             else:
                 just_do_tukeys = False
-                for stats_var in cfg["stats_variables"]:
-                    ANOVA_main(
-                        stats_df,
-                        g_avg_dfs,
-                        g_std_dfs,
-                        stats_var,
-                        just_do_tukeys,
-                        folderinfo,
-                        cfg,
-                        plot_panel_instance,
-                    )
+            # this function is called ANOVA_main even though we might just run Tukeys
+            # with it and not exactly an ANOVA as well
+            # => see conditions in sanity check setting just_do_tukeys
+            for stats_var in cfg["stats_variables"]:
+                ANOVA_main(
+                    stats_df,
+                    g_avg_dfs,
+                    g_std_dfs,
+                    stats_var,
+                    just_do_tukeys,
+                    folderinfo,
+                    cfg,
+                    plot_panel_instance,
+                )
         plt.close("all")
 
     # ..................................  plots  .......................................
