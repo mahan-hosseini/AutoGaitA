@@ -1003,8 +1003,19 @@ def save_stats_summary_to_text(
             + "\n\n--------------------\nA N O V A  T A B L E"
             + "\n--------------------"
             + "\n"
-            + str(ANOVA_result)
         )
+        message += "\n"  # col header row
+        for col in ANOVA_result.columns:
+            message += f"| {col} | "
+        n_rows, n_cols = np.shape(ANOVA_result)
+        for row_idx in range(n_rows):
+            message += "\n"  # new row
+            for col_idx in range(n_cols):
+                val = ANOVA_result.iloc[row_idx, col_idx]
+                if isinstance(val, str):
+                    message += f"| {val} | "
+                else:
+                    message += f"| {str(round(val, 4))} | "
 
     # contrast specific info
     for contrast in contrasts:
