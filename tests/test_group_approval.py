@@ -41,6 +41,7 @@ def extract_folderinfo(tmp_path):
         "example data/25mm/Results/",
     ]
     folderinfo["results_dir"] = tmp_path
+    folderinfo["load_dir"] = ""
     return folderinfo
 
 

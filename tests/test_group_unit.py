@@ -14,6 +14,7 @@ def extract_folderinfo(tmp_path):
         "group_names": ["group1", "group2"],
         "group_dirs": ["/path/to/group1", "/path/to/group2"],
         "results_dir": tmp_path,
+        "load_dir": "",
     }
 
 
