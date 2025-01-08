@@ -592,3 +592,56 @@ def grand_avg_and_std(avg_dfs, folderinfo, cfg):
         )
         save_results_sheet(g_std_dfs[g], save_to_xls, g_std_filepath)
     return g_avg_dfs, g_std_dfs
+
+
+# %% .................  local functions #4 - load previous dataframes  .................
+def load_previous_runs_dataframes(folderinfo, cfg):
+    """If user asked for it load previous runs dataframes instead of generating them (i.e., avg_dfs, g_avg_dfs, g_std_dfs)"""
+    avg_dfs = [[]] * len(folderinfo["group_names"])
+    g_avg_dfs = [[]] * len(folderinfo["group_names"])
+    g_std_dfs = [[]] * len(folderinfo["group_names"])
+    for g, group_name in enumerate((folderinfo["group_names"])):
+        try:
+            avg_dfs[g] = pd.read_excel(
+                os.path.join(
+                    folderinfo["load_dir"],
+                    group_name + " - " + AVG_GROUP_SHEET_NAME + ".xlsx",
+                )
+            )
+            g_avg_dfs[g] = pd.read_excel(
+                os.path.join(
+                    folderinfo["load_dir"],
+                    group_name + " - " + G_AVG_GROUP_SHEET_NAME + ".xlsx",
+                )
+            )
+            g_std_dfs[g] = pd.read_excel(
+                os.path.join(
+                    folderinfo["load_dir"],
+                    group_name + " - " + G_STD_GROUP_SHEET_NAME + ".xlsx",
+                )
+            )
+        except FileNotFoundError:
+            error_msg = (
+                "\n******************\n! CRITICAL ERROR !\n******************\n"
+                + f"Unable to load the data of group '{group_name}' from \n"
+                + f"{folderinfo['load_dir']}"
+                + "\n\nTry again!"
+            )
+            print(error_msg)
+            write_issues_to_textfile(error_msg, folderinfo)
+            raise FileNotFoundError
+    # since import_data writes bin_num (running a sanity check before) we have to do
+    # it here too. No need to run the sanity check again since that was done previously
+    cfg["bin_num"] = len(np.unique(avg_dfs[0][SC_PERCENTAGE_COL]))
+    if cfg["bin_num"] * len(np.unique(avg_dfs[0][ID_COL])) != len(avg_dfs[0]):
+        error_msg = (
+            "\n******************\n! CRITICAL ERROR !\n******************\n"
+            + "Something is wrong with your IDs and SC Percentage columns."
+            + "\nThere seem to be duplicates. Make sure that this is not the case."
+            + "\nOtherwise, run it again without loading your previous run's results."
+        )
+        print(error_msg)
+        write_issues_to_textfile(error_msg, folderinfo)
+        raise ValueError(error_msg)
+    else:
+        return avg_dfs, g_avg_dfs, g_std_dfs, cfg

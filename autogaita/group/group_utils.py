@@ -30,6 +30,10 @@ def print_start(folderinfo, cfg):
     for group_name in folderinfo["group_names"]:
         start_string += "\n" + group_name
 
+    # load dir
+    if folderinfo["load_dir"]:
+        start_string += "\n\nLoad Directory\n--------------\n" + folderinfo["load_dir"]
+
     # pca
     PCA_string = "P R I N C I P A L | C O M P O N E N T | A N A L Y S I S"
     space_add = " " * ((INFO_TEXT_WIDTH - len(PCA_string)) // 2)

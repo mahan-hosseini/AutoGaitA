@@ -46,6 +46,7 @@ def group_dlcrun():
         # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Sanity Test Interaction Graziana/Result 10 joints/Mahan Results/"
         # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/GroupResults/"
     )
+    folderinfo["load_dir"] = ""
     # cfg
     cfg = {}
     cfg["do_permtest"] = False  # True

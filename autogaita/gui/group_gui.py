@@ -41,7 +41,7 @@ WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
 MIN_GROUP_NUM = 2
 MAX_GROUP_NUM = 6
 CONFIG_FILE_NAME = "group_gui_config.json"
-STRING_VARS = ["group_names", "group_dirs", "results_dir"]
+STRING_VARS = ["group_names", "group_dirs", "results_dir", "load_dir"]
 # note n_components can be float only for this input-check since we convert to int when
 # fitting the PCA model if it is equal to or greater than 1
 FLOAT_VARS = ["stats_threshold", "PCA_n_components"]
@@ -69,6 +69,7 @@ TK_STR_VARS = [
     "PCA_bins",
     "which_leg",
     "results_dir",
+    "load_dir",
     "color_palette",
 ]
 EXCLUDED_VARS_FROM_CFG_FILE = ["last_runs_stats_variables", "last_runs_PCA_variables"]
@@ -295,11 +296,15 @@ def build_mainwindow(root, group_number, root_dimensions):
         # empty label 1 for spacing
         empty_label_one = ctk.CTkLabel(mainwindow, text="")
         empty_label_one.grid(row=last_group_row, column=0, columnspan=3, sticky="nsew")
-        # results dir
-        results_dir = tk.StringVar(
-            mainwindow,
-            extract_results_dir_from_json_file(),
+
+        # NOTE! load results and load dirs as strings from cfg json before converting
+        #       to tk-vars
+        results_dir_string, load_dir_string = (
+            extract_results_and_load_dirs_from_json_files()
         )
+
+        # results dir
+        results_dir = tk.StringVar(mainwindow, results_dir_string)
         results_dir_label, results_dir_entry = gaita_widgets.label_and_entry_pair(
             mainwindow,
             "Path to save group-analysis results to",
@@ -312,10 +317,20 @@ def build_mainwindow(root, group_number, root_dimensions):
         results_dir_entry.grid(
             row=last_group_row + 2, column=0, columnspan=3, sticky="ew"
         )
+        # load dir
+        load_dir = tk.StringVar(mainwindow, load_dir_string)
+        load_dir_label, load_dir_entry = gaita_widgets.label_and_entry_pair(
+            mainwindow,
+            "Optional: path to load previous group-data from",
+            load_dir,
+            WIDGET_CFG,
+        )
+        load_dir_label.grid(row=last_group_row + 3, column=0, columnspan=3, sticky="ew")
+        load_dir_entry.grid(row=last_group_row + 4, column=0, columnspan=3, sticky="ew")
         # empty label 2 for spacing
         empty_label_two = ctk.CTkLabel(mainwindow, text="")
         empty_label_two.grid(
-            row=last_group_row + 3, column=0, columnspan=3, sticky="nsew"
+            row=last_group_row + 5, column=0, columnspan=3, sticky="nsew"
         )
         # Perm Test
         perm_checkbox = gaita_widgets.checkbox(
@@ -324,7 +339,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             cfg["do_permtest"],
             WIDGET_CFG,
         )
-        perm_checkbox.grid(row=last_group_row + 4, column=0, columnspan=3, pady=10)
+        perm_checkbox.grid(row=last_group_row + 6, column=0, columnspan=3, pady=10)
         # ANOVA info
         ANOVA_checkbox = gaita_widgets.checkbox(
             mainwindow,
@@ -335,7 +350,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         ANOVA_checkbox.configure(
             command=lambda: change_ANOVA_buttons_state(ANOVA_buttons),
         )
-        ANOVA_checkbox.grid(row=last_group_row + 5, column=0, columnspan=3, pady=10)
+        ANOVA_checkbox.grid(row=last_group_row + 7, column=0, columnspan=3, pady=10)
         # ANOVA design
         ANOVA_string_and_var_value = [
             ["Within-subjects (e.g. pre- & post-treatment)", "RM ANOVA"],
@@ -356,7 +371,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             )
             if cfg["do_anova"].get() is True:
                 ANOVA_buttons[i].configure(state="normal")
-            ANOVA_buttons[-1].grid(row=last_group_row + 6 + i, column=0, columnspan=3)
+            ANOVA_buttons[-1].grid(row=last_group_row + 8 + i, column=0, columnspan=3)
         # initialise ANOVA buttons state by running this function once
         change_ANOVA_buttons_state(ANOVA_buttons)
 
@@ -364,7 +379,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         # empty label 3 for spacing
         empty_label_three = ctk.CTkLabel(mainwindow, text="")
         empty_label_three.grid(
-            row=last_group_row + 8, column=0, columnspan=3, sticky="nsew"
+            row=last_group_row + 10, column=0, columnspan=3, sticky="nsew"
         )
 
         # advanced cfg
@@ -375,7 +390,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             command=lambda: (advanced_cfgwindow(mainwindow)),
         )
         cfgwindow_button.grid(
-            row=last_group_row + 9,
+            row=last_group_row + 11,
             column=0,
             columnspan=3,
         )
@@ -391,16 +406,17 @@ def build_mainwindow(root, group_number, root_dimensions):
                     group_names,
                     group_dirs,
                     results_dir,
+                    load_dir,
                     root,
                 ),
             ),
         )
-        definefeatures_button.grid(row=last_group_row + 10, column=0, columnspan=3)
+        definefeatures_button.grid(row=last_group_row + 12, column=0, columnspan=3)
 
         # empty label four for spacing
         empty_label_four = ctk.CTkLabel(mainwindow, text="")
         empty_label_four.grid(
-            row=last_group_row + 11, column=1, columnspan=3, sticky="ns"
+            row=last_group_row + 13, column=1, columnspan=3, sticky="ns"
         )
 
         # exit button
@@ -412,7 +428,7 @@ def build_mainwindow(root, group_number, root_dimensions):
                 mainwindow.after(5000, mainwindow.destroy),
             ),
         )
-        exit_button.grid(row=last_group_row + 12, column=0, columnspan=3)
+        exit_button.grid(row=last_group_row + 14, column=0, columnspan=3)
 
         # maximise widgets to fit fullscreen
         maximise_widgets(mainwindow)
@@ -578,7 +594,9 @@ def advanced_cfgwindow(mainwindow):
 # %%..............  LOCAL FUNCTION(S) #3 - BUILD ADD FEATURES WINDOW  ..................
 
 
-def definefeatures_window(mainwindow, group_names, group_dirs, results_dir, root):
+def definefeatures_window(
+    mainwindow, group_names, group_dirs, results_dir, load_dir, root
+):
     """Build define features window"""
 
     # nested function (called by run-button): extract boolean checkbox vars and store
@@ -723,6 +741,7 @@ def definefeatures_window(mainwindow, group_names, group_dirs, results_dir, root
                 group_names,
                 group_dirs,
                 results_dir,
+                load_dir,
                 root,
                 mainwindow,
                 featureswindow,
@@ -740,7 +759,7 @@ def definefeatures_window(mainwindow, group_names, group_dirs, results_dir, root
 
 # %%..................  LOCAL FUNCTION(S) #4 - BUILD DONE WINDOW  ......................
 def build_donewindow(
-    group_names, group_dirs, results_dir, root, mainwindow, featureswindow
+    group_names, group_dirs, results_dir, load_dir, root, mainwindow, featureswindow
 ):
     """Build done window"""
     # create done window & make it pretty and nice
@@ -799,11 +818,17 @@ def build_donewindow(
     # ..................................................................................
     # ........................  IMPORTANT - prepare folderinfo .........................
     # ..................................................................................
-    folderinfo = {"group_names": [], "group_dirs": [], "results_dir": ""}
+    folderinfo = {
+        "group_names": [],
+        "group_dirs": [],
+        "results_dir": "",
+        "load_dir": "",
+    }
     for g in range(len(group_names)):
         folderinfo["group_names"].append(group_names[g].get())
         folderinfo["group_dirs"].append(group_dirs[g].get())
     folderinfo["results_dir"] = results_dir.get()
+    folderinfo["load_dir"] = load_dir.get()
 
     # run button
     done_button = ctk.CTkButton(
@@ -944,7 +969,8 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
                         this_runs_folderinfo[key][i] = folderinfo[key][i] + "/"
                     else:
                         this_runs_folderinfo[key][i] = folderinfo[key][i]
-            else:  # results_dir
+            # results_dir and load_dir (check load_dir only if not empty)
+            elif key == "results_dir" or (key == "load_dir" and folderinfo[key]):
                 if not folderinfo[key].endswith(os.sep):
                     this_runs_folderinfo[key] = folderinfo[key] + "/"
                 else:
@@ -1044,7 +1070,10 @@ def fix_window_after_its_creation(window):
 def update_config_file(folderinfo, cfg):
     """updates the group_gui_config file with this folderinfo and cfg parameters"""
     # transform tkVars into normal strings and bools
-    output_dicts = [{"group_names": [], "group_dirs": [], "results_dir": ""}, {}]
+    output_dicts = [
+        {"group_names": [], "group_dirs": [], "results_dir": "", "load_dir": ""},
+        {},
+    ]
 
     for i in range(len(output_dicts)):
         if i == 0:  # as the list index 0 refers to  folderinfo
@@ -1139,7 +1168,7 @@ def extract_group_names_and_dirs_from_json_file():
     return group_names, group_dirs
 
 
-def extract_results_dir_from_json_file():
+def extract_results_and_load_dirs_from_json_files():
     """loads the results dir from the config file"""
     # load the configuration file
     with open(
@@ -1149,8 +1178,9 @@ def extract_results_dir_from_json_file():
         last_runs_folderinfo = json.load(config_json_file)[0]
 
     results_dir = last_runs_folderinfo["results_dir"]
+    load_dir = last_runs_folderinfo["load_dir"]
 
-    return results_dir
+    return results_dir, load_dir
 
 
 # %% what happens if we hit run

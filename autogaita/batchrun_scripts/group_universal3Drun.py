@@ -23,6 +23,7 @@ def group_universal3Drun():
             + cfg["which_leg"]
             + " leg/"
         )
+        folderinfo["load_dir"] = ""
         # cfg
         cfg["do_permtest"] = True
         cfg["do_anova"] = True

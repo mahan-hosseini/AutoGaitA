@@ -4,6 +4,7 @@ from autogaita.group.group_2_data_processing import (
     import_data,
     avg_and_std,
     grand_avg_and_std,
+    load_previous_runs_dataframes,
 )
 from autogaita.group.group_3_PCA import PCA_main
 from autogaita.group.group_4_stats import (
@@ -17,13 +18,6 @@ from autogaita.group.group_utils import print_start, tukeys_only_info_message
 from autogaita.resources.utils import print_finish, PlotPanel
 import matplotlib
 import matplotlib.pyplot as plt
-
-# %% A note on cross species functionality
-# => This function supports cross species analyses, however the data must be obtained
-#    from the same tracking_software (=> I.e., resulting from autogaita_dlc or _universal3D)
-# => Also users have to ensure that the comparison makes sense across species w.r.t.
-#    features
-# => Adding "both" leg functionality in compute_avg & g_avg_dfs at some point.
 
 
 # .................................  constants  ........................................
@@ -69,16 +63,25 @@ def group(folderinfo, cfg):
     # => print start after some_prep since we do some stuff to cfg["PCA_bins"] there
     print_start(folderinfo, cfg)
 
-    # ...................................  import  .....................................
-    # => DLC ONLY: dfs is x-standardised automatically if 1st-level standardised x
-    #   -- As a result all average & std dfs are x-standardised as well
-    dfs, raw_dfs, cfg = import_data(folderinfo, cfg)
+    # .....................  import & transform (a) or load (b)  .......................
 
-    # .................................  avgs & stds  ..................................
-    avg_dfs, std_dfs = avg_and_std(dfs, folderinfo, cfg)
+    # approach a - import & transform (i.e. no previous results to load from)
+    if not folderinfo["load_dir"]:
+        # in dlc/sleap, dfs is x-standardised automatically if 1st-level standardised x
+        # => As a result all average & std dfs are x-standardised as well
+        dfs, raw_dfs, cfg = import_data(folderinfo, cfg)
+        avg_dfs, std_dfs = avg_and_std(dfs, folderinfo, cfg)
+        g_avg_dfs, g_std_dfs = grand_avg_and_std(avg_dfs, folderinfo, cfg)
 
-    # ..............................  grand avgs & stds  ...............................
-    g_avg_dfs, g_std_dfs = grand_avg_and_std(avg_dfs, folderinfo, cfg)
+    # approach b - load previous run's dfs (avg, g_avg & g_std_dfs)
+    else:
+        try:
+            # creating cfg["bin_num"] here too (since done in import_data in (a)!)
+            avg_dfs, g_avg_dfs, g_std_dfs, cfg = load_previous_runs_dataframes(
+                folderinfo, cfg
+            )
+        except (FileNotFoundError, ValueError):
+            return
 
     # ...................................  PCA  ........................................
     if cfg["PCA_variables"]:  # empty lists are falsey!

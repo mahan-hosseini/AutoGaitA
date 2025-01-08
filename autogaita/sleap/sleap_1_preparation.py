@@ -240,14 +240,9 @@ def move_data_to_folders(info, folderinfo):
     root_dir = folderinfo["root_dir"]
     data_string = folderinfo["data_string"]
     os.makedirs(results_dir)
-    # move csv or h5 files
+    # move h5 files
     for filename in os.listdir(root_dir):
-        if name + data_string + ".csv" in filename:
-            shutil.copy2(
-                os.path.join(root_dir, filename),
-                os.path.join(results_dir, filename),
-            )
-        elif name + data_string + ".h5" in filename:
+        if name + data_string + ".h5" in filename:
             shutil.copy2(
                 os.path.join(root_dir, filename),
                 os.path.join(results_dir, filename),
@@ -336,7 +331,7 @@ def check_and_expand_cfg(data, cfg, info):
             "\n******************\n! CRITICAL ERROR !\n******************\n"
             + "It seems like you want to standardise heights to a baseline (beam)."
             + "\nUnfortunately we were unable to find the y-columns you listed in "
-            + "your beam's csv-file.\nPlease try again.\nInvalid beam side(s) was/were:"
+            + "your beam-file.\nPlease try again.\nInvalid beam side(s) was/were:"
         )
         beam_error = False  # check 3 possible cases
         if (cfg["beam_col_left"]) and (not cfg["beam_col_right"]):

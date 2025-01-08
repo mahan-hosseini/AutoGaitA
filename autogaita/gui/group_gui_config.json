@@ -16,7 +16,8 @@
             "",
             ""
         ],
-        "results_dir": ""
+        "results_dir": "",
+        "load_dir": ""
     },
     {
         "do_permtest": true,
