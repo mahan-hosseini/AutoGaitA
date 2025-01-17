@@ -124,7 +124,7 @@ def test_group_approval(extract_true_dir, extract_folderinfo, extract_cfg):
         )
         for df in [true_pca_df, test_pca_df]:
             if "ID" in df.columns:
-                df = df.drop(columns=["ID"])
+                df.drop(columns=["ID"], inplace=True)
         pdt.assert_frame_equal(test_pca_df, true_pca_df)
 
     # ...................  4) TEST EQUIVALENCE OF STATS.TXT & DFs  .....................
