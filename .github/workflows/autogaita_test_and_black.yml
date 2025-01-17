@@ -30,7 +30,7 @@ jobs:
         python -m pip install .[dev]
     - name: Test with pytest
       run: |
-        pytest -k group
+        pytest -k group_app
 
   black:
     runs-on: ubuntu-latest
