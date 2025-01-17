@@ -116,8 +116,15 @@ def test_group_approval(extract_true_dir, extract_folderinfo, extract_cfg):
     pdt.assert_frame_equal(test_std_df, true_std_df)
 
     # .......................  3) TEST EQUIVALENCE OF PCA DFs  .........................
-    # for filename in ["PCA Feature Summary.xlsx", "PCA ID Info.xlsx", "PCA Info.xlsx"]:
-    for filename in ["PCA Info.xlsx"]:
+    if os.getenv("CI") == "true":
+        pca_filenames = ["PCA Info.xlsx"]
+    else:
+        pca_filenames = [
+            "PCA Feature Summary.xlsx",
+            "PCA ID Info.xlsx",
+            "PCA Info.xlsx",
+        ]
+    for filename in pca_filenames:
         true_pca_df = pd.read_excel(os.path.join(extract_true_dir, filename))
         test_pca_df = pd.read_excel(
             os.path.join(extract_folderinfo["results_dir"], filename)
