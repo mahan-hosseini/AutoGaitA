@@ -1,8 +1,19 @@
+from autogaita.group.group_main import (
+    import_data,
+    avg_and_std,
+    create_stats_df,
+    cluster_extent_test,
+)
+from autogaita.group.group_2_data_processing import (
+    load_previous_runs_dataframes,
+    check_PCA_and_stats_variables,
+)
 from autogaita.group.group_3_PCA import run_PCA, convert_PCA_bins_to_list
 from autogaita.group.group_4_stats import run_ANOVA
 import pytest
 from sklearn import datasets
 import pandas as pd
+import pandas.testing as pdt
 import numpy as np
 import math
 
@@ -40,33 +51,94 @@ def extract_cfg():
     }
 
 
-# %%..............................  statistics  ........................................
+# %%............................  2. data processing  ..................................
+def test_check_PCA_and_stats_variables(extract_folderinfo, extract_cfg):
+    """Test this sanity check does not have the necessary columns"""
+    group_names = ["5 mm", "12 mm", "25 mm"]
+    extract_folderinfo["group_names"] = group_names
+    extract_folderinfo["load_dir"] = "example data/group"
+    # changing PCA/stats vars like this already performs a first test because the load
+    # function only runs successfully, if the test_PCA_.. function does
+    # => i.e. the features are present in the all 3 kinds of dfs
+    extract_cfg["PCA_variables"] = ["Ankle Angle", "Knee Angle"]
+    extract_cfg["stats_variables"] = ["Ankle Angle", "Knee Angle"]
+    avg_dfs, _, _, extract_cfg = load_repos_group_data(extract_folderinfo, extract_cfg)
+    # test correct failure
+    # => code means: test that after removing the column our check correctly raises a
+    #    ValueError
+    avg_dfs[0].drop(columns=["Ankle Angle"], inplace=True)
+    with pytest.raises(ValueError):
+        check_PCA_and_stats_variables(
+            avg_dfs[0], "5 mm", "Average", extract_folderinfo, extract_cfg
+        )
 
 
-# NOTE !!!
-# => This test is outdated and wrong because it is for two within subject factors (for
-#    example 3 separate behavioural tests and pre/post medication treatment or so -
-#    done by each subject)
-# => I will not delete this since I might want to re-use it if I should support such
-#    designs
-#
-# def test_twoway_RM_ANOVA(extract_cfg):
-#     # Adopted example data from https://real-statistics.com/
-#     # See the RM ANOVA xlsx file for complete link
-#     extract_cfg["do_anova"] = True
-#     extract_cfg["anova_design"] = "RM ANOVA"
-#     stats_df = pd.read_excel("tests/test_data/group_data/RM ANOVA Example Data.xlsx")
-#     stats_var = "Value"
-#     result = run_ANOVA(stats_df, stats_var, extract_cfg)
-#     # Note that the last 2 assert statements have a different tolerance because those
-#     # p-values differed a bit. Not sure why but it's a tiny amount and tolerable IMO
-#     pytest.set_trace()
-#     assert math.isclose(result["p-unc"][0], stats_df["p(A)"][0], abs_tol=1e-05)
-#     assert math.isclose(result["p-unc"][1], stats_df["p(B)"][0], abs_tol=1e-05)
-#     assert math.isclose(result["p-unc"][2], stats_df["p(AxB)"][0], abs_tol=1e-05)
-#     assert math.isclose(result["p-GG-corr"][0], stats_df["GG-p(A)"][0], abs_tol=1e-05)
-#     assert math.isclose(result["p-GG-corr"][1], stats_df["GG-p(B)"][0], abs_tol=1e-04)
-#     assert math.isclose(result["p-GG-corr"][2], stats_df["GG-p(AxB)"][0], abs_tol=1e-02)
+def test_load_previous_runs_dataframes(extract_folderinfo, extract_cfg):
+    """Testing if errors are raised correctly and if the loaded dfs are eqiuvalent to the ones import_data generates"""
+    # 1: fails as wanted if group name wrong (df not found in load dir)
+    extract_folderinfo["group_names"] = ["not 5 mm", "12 mm", "25 mm"]
+    extract_folderinfo["load_dir"] = "example data/group"
+    with pytest.raises(FileNotFoundError):
+        avg_dfs, g_avg_dfs, g_std_dfs, extract_cfg = load_repos_group_data(
+            extract_folderinfo, extract_cfg
+        )
+    # 2: avg_dfs equivalent to import_data's avg_dfs
+    extract_folderinfo["group_names"] = ["5 mm", "12 mm", "25 mm"]
+    extract_folderinfo["group_dirs"] = [
+        "example data/5mm/Results/",
+        "example data/12mm/Results/",
+        "example data/25mm/Results/",
+    ]
+    avg_dfs, g_avg_dfs, g_std_dfs, extract_cfg = load_repos_group_data(
+        extract_folderinfo, extract_cfg
+    )
+    # some prep required for import data & avg_and_std
+    extract_cfg["sampling_rate"] = 100
+    extract_cfg["bin_num"] = 25
+    extract_cfg["save_to_xls"] = [True, True, True]
+    extract_cfg["tracking_software"] = "DLC"
+    extract_cfg["analyse_average_x"] = True
+    i_dfs, _, extract_cfg = import_data(extract_folderinfo, extract_cfg)
+    i_avg_dfs, _ = avg_and_std(i_dfs, extract_folderinfo, extract_cfg)
+    for g in range(3):  # dtype of ID is int and float - whatever
+        pdt.assert_frame_equal(avg_dfs[g], i_avg_dfs[g], check_dtype=False)
+
+
+# %%..............................  4. statistics  .....................................
+
+
+def test_load_dfs_stats_df_perm_test_smoke(extract_folderinfo, extract_cfg):
+    """Smoke test three functions:
+    1. load_previous_runs-dataframes
+    2. create_stats_df
+    3. cluster_extent_test
+    => Check if it all runs without errors on our repo's example data
+    """
+    # first, prepare approrpiately & overwrite the fixtures of this script as needed
+    # 1) for load_previous_runs_dataframes (called by load repos group data)
+    extract_folderinfo["group_names"] = ["5 mm", "12 mm", "25 mm"]
+    extract_folderinfo["load_dir"] = "example data/group"
+    avg_dfs, g_avg_dfs, g_std_dfs, extract_cfg = load_repos_group_data(
+        extract_folderinfo, extract_cfg
+    )
+    # 2) for stats_df & the permutation test functions
+    extract_cfg["sampling_rate"] = 100
+    extract_cfg["do_permtest"] = True
+    extract_cfg["dont_show_plots"] = True
+    extract_cfg["tracking_software"] = "DLC"
+    extract_cfg["group_color_dict"] = {"5 mm": "red", "12 mm": "blue", "25 mm": "green"}
+    extract_folderinfo["contrasts"] = ["5 mm & 12 mm", "5 mm & 25 mm", "12 mm & 25 mm"]
+    stats_df = create_stats_df(avg_dfs, extract_folderinfo, extract_cfg)
+    plot_panel_instance = None
+    cluster_extent_test(
+        stats_df,
+        g_avg_dfs,
+        g_std_dfs,
+        "Ankle Angle",
+        extract_folderinfo,
+        extract_cfg,
+        plot_panel_instance,
+    )
 
 
 def test_Mixed_ANOVA(extract_cfg):
@@ -132,3 +204,40 @@ def test_convert_PCA_bins_to_list(
     extract_cfg["bin_num"] = bin_num
     updated_cfg = convert_PCA_bins_to_list(extract_folderinfo, extract_cfg)
     assert np.array_equal(updated_cfg["PCA_bins"], np.array(expected_bins_list))
+
+
+def load_repos_group_data(extract_folderinfo, extract_cfg):
+    """Use load_previous_runs_dataframes to load example data from the repo"""
+    extract_cfg["sampling_rate"] = 100
+    extract_cfg["group_color_dict"] = {"5 mm": "red", "12 mm": "blue", "25 mm": "green"}
+    extract_folderinfo["contrasts"] = ["5 mm & 12 mm", "5 mm & 25 mm", "12 mm & 25 mm"]
+    avg_dfs, g_avg_dfs, g_std_dfs, extract_cfg = load_previous_runs_dataframes(
+        extract_folderinfo, extract_cfg
+    )
+    return avg_dfs, g_avg_dfs, g_std_dfs, extract_cfg
+
+
+# NOTE !!!
+# => This test is outdated and wrong because it is for two within subject factors (for
+#    example 3 separate behavioural tests and pre/post medication treatment or so -
+#    done by each subject)
+# => I will not delete this since I might want to re-use it if I should support such
+#    designs
+#
+# def test_twoway_RM_ANOVA(extract_cfg):
+#     # Adopted example data from https://real-statistics.com/
+#     # See the RM ANOVA xlsx file for complete link
+#     extract_cfg["do_anova"] = True
+#     extract_cfg["anova_design"] = "RM ANOVA"
+#     stats_df = pd.read_excel("tests/test_data/group_data/RM ANOVA Example Data.xlsx")
+#     stats_var = "Value"
+#     result = run_ANOVA(stats_df, stats_var, extract_cfg)
+#     # Note that the last 2 assert statements have a different tolerance because those
+#     # p-values differed a bit. Not sure why but it's a tiny amount and tolerable IMO
+#     pytest.set_trace()
+#     assert math.isclose(result["p-unc"][0], stats_df["p(A)"][0], abs_tol=1e-05)
+#     assert math.isclose(result["p-unc"][1], stats_df["p(B)"][0], abs_tol=1e-05)
+#     assert math.isclose(result["p-unc"][2], stats_df["p(AxB)"][0], abs_tol=1e-05)
+#     assert math.isclose(result["p-GG-corr"][0], stats_df["GG-p(A)"][0], abs_tol=1e-05)
+#     assert math.isclose(result["p-GG-corr"][1], stats_df["GG-p(B)"][0], abs_tol=1e-04)
+#     assert math.isclose(result["p-GG-corr"][2], stats_df["GG-p(AxB)"][0], abs_tol=1e-02)

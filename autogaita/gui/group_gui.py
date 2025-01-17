@@ -29,6 +29,7 @@ from autogaita.gui.gui_constants import (
     AUTOGAITA_FOLDER_PATH,
     get_widget_cfg_dict,  # function!
 )
+from autogaita.group.group_constants import NORM_SHEET_NAME, AVG_GROUP_SHEET_NAME
 
 # these colors are GUI-specific - add to common widget cfg
 FG_COLOR = GROUP_FG_COLOR
@@ -73,7 +74,6 @@ TK_STR_VARS = [
     "color_palette",
 ]
 EXCLUDED_VARS_FROM_CFG_FILE = ["last_runs_stats_variables", "last_runs_PCA_variables"]
-NORM_SHEET_NAME = "Normalised Stepcycle"
 
 # %%...............................  MAIN PROGRAM ......................................
 
@@ -612,47 +612,58 @@ def definefeatures_window(
             ]
 
     # ...................  EXTRACT FEATURES FROM AN AVERAGE SC XLS  ....................
+    # => Only needed if not loading a previous run (note there is a check for features
+    #    being present in all dfs in load_previous_runs_dataframes in group_main)
     # => First read the xls as df, extract columns that are meaningful after
     #    averaging, or throw errors if we don't manage to do so
     #    -- (note we extract from average xls since that automatically informs about
     #        export_average_x/y vars!)
-    df = None
-    test_directories = []  # first see if all group dirs are valid paths
-    for directory in group_dirs:
-        test_directories.append(directory.get())
-    for directory in test_directories:
-        if not os.path.exists(directory):
-            error_msg = "No directory found at: " + directory
+    if load_dir:
+        group_one_string = group_names[0].get()
+        load_dir_string = load_dir.get()
+        df = pd.read_excel(
+            os.path.join(
+                load_dir_string, f"{group_one_string} - {AVG_GROUP_SHEET_NAME}.xlsx"
+            )
+        )
+    else:
+        df = None
+        test_directories = []  # first see if all group dirs are valid paths
+        for directory in group_dirs:
+            test_directories.append(directory.get())
+        for directory in test_directories:
+            if not os.path.exists(directory):
+                error_msg = "No directory found at: " + directory
+                tk.messagebox.showerror(title="Folder not found!", message=error_msg)
+                return
+        if not results_dir.get():
+            error_msg = "You did not specify a directory to save results to!"
             tk.messagebox.showerror(title="Folder not found!", message=error_msg)
             return
-    if not results_dir.get():
-        error_msg = "You did not specify a directory to save results to!"
-        tk.messagebox.showerror(title="Folder not found!", message=error_msg)
-        return
-    if not os.path.exists(results_dir.get()):  # for results dir, create if not there
-        os.makedirs(results_dir.get())
-    some_groups_dir = group_dirs[0].get()
-    all_ID_dirs = [
-        f
-        for f in os.listdir(some_groups_dir)
-        if os.path.isdir(os.path.join(some_groups_dir, f))
-    ]
-    for ID_dir in all_ID_dirs:
-        some_IDs_dir = os.path.join(some_groups_dir, ID_dir)
-        IDs_files = os.listdir(some_IDs_dir)
-        # next operator means we loop lazy - stop once we find it & return None if av
-        # sheet not in dir
-        av_sheet_path = next(
-            (file for file in IDs_files if NORM_SHEET_NAME in file), None
-        )
-        if av_sheet_path:  # won't be true if no AVXLS found
-            full_path = os.path.join(some_IDs_dir, av_sheet_path)
-            if av_sheet_path.endswith(".xlsx"):
-                df = pd.read_excel(full_path)
-                break
-            elif av_sheet_path.endswith(".csv"):
-                df = pd.read_csv(full_path)
-                break
+        if not os.path.exists(results_dir.get()):
+            os.makedirs(results_dir.get())
+        some_groups_dir = group_dirs[0].get()
+        all_ID_dirs = [
+            f
+            for f in os.listdir(some_groups_dir)
+            if os.path.isdir(os.path.join(some_groups_dir, f))
+        ]
+        for ID_dir in all_ID_dirs:
+            some_IDs_dir = os.path.join(some_groups_dir, ID_dir)
+            IDs_files = os.listdir(some_IDs_dir)
+            # next operator means we loop lazy - stop once we find it & return None if av
+            # sheet not in dir
+            av_sheet_path = next(
+                (file for file in IDs_files if NORM_SHEET_NAME in file), None
+            )
+            if av_sheet_path:  # won't be true if no AVXLS found
+                full_path = os.path.join(some_IDs_dir, av_sheet_path)
+                if av_sheet_path.endswith(".xlsx"):
+                    df = pd.read_excel(full_path)
+                    break
+                elif av_sheet_path.endswith(".csv"):
+                    df = pd.read_csv(full_path)
+                    break
     # select columns we want to provide as feature options using regular expressions
     # => since it's on av sheet, x & Y will only be included if export_average_x/Y was
     #    True @ first-level
@@ -698,7 +709,7 @@ def definefeatures_window(
     #    (i.e., True) or not. we will store all true checkboxes for both PCA and stats
     #    later (but it's handy that the key names overlap)
     checkbox_vars = {key: {} for key in LIST_VARS}
-    for f_idx, frame in enumerate([stats_frame, PCA_frame]):
+    for frame in [stats_frame, PCA_frame]:
         if frame == stats_frame:  # make sure to put stuff into the correct dict
             key = "stats_variables"
         elif frame == PCA_frame:
@@ -901,7 +912,7 @@ def check_folderinfo_and_cfg(folderinfo, cfg):
         for key in inner_dict.keys():
             # check string vars: group dirs & names and results dir
             if key in STRING_VARS:
-                if key == "group_dirs":
+                if key == "group_dirs" and not folderinfo["load_dir"]:
                     for g_idx, group_dir in enumerate(inner_dict[key]):
                         if not os.path.exists(group_dir):
                             this_msg = (

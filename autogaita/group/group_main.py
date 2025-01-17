@@ -19,7 +19,6 @@ from autogaita.resources.utils import print_finish, PlotPanel
 import matplotlib
 import matplotlib.pyplot as plt
 
-
 # .................................  constants  ........................................
 # SET PLT BACKEND
 # Agg is a non-interactive backend for plotting that can only write to files
@@ -56,7 +55,9 @@ def group(folderinfo, cfg):
         # build loading screen
         plot_panel_instance.build_plot_panel_loading_screen()
 
-    # ..................................  unpack  ......................................
+    # ................................  preparation  ...................................
+    # => either creates and sanity-checks folderinfo & cfg or loads it from a previous
+    #    run's config.json file (if load_dir)
     folderinfo, cfg = some_prep(folderinfo, cfg)
 
     # ..............................  print start  ....................................

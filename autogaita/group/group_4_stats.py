@@ -446,7 +446,7 @@ def plot_permutation_test_results(
                 if tracking_software in ["DLC", "SLEAP"]:
                     unit = "x in pixels"
                 elif tracking_software == "Universal 3D":
-                    unit = "Y in (your units)"
+                    unit = "Y"
             f.supylabel(
                 ylabel_velocity_and_acceleration(feature, unit, sampling_rate),
                 fontsize=STATS_PLOTS_SUPLABEL_SIZE,
@@ -896,7 +896,7 @@ def plot_multcomp_results(
                 if tracking_software in ["DLC", "SLEAP"]:
                     unit = "x in pixels"
                 elif tracking_software == "Universal 3D":
-                    unit = "Y in (your units)"
+                    unit = "Y"
             f.supylabel(
                 ylabel_velocity_and_acceleration(feature, unit, sampling_rate),
                 fontsize=STATS_PLOTS_SUPLABEL_SIZE,

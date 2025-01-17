@@ -190,7 +190,7 @@ def bin_num_error_helper_function(folderinfo, dfs, g, group_names, sc_breaks, b)
     raise ValueError(message)
 
 
-def test_PCA_and_stats_variables(df, group_name, name, folderinfo, cfg):
+def check_PCA_and_stats_variables(df, group_name, name, folderinfo, cfg):
     """Tests if PCA & stats variables are present in all groups' datasets"""
     PCA_variables = cfg["PCA_variables"]
     stats_variables = cfg["stats_variables"]
@@ -275,7 +275,7 @@ def import_and_combine_dfs(
     else:
         df_copy = df.copy()
         # test: are our PCA & stats variables present in this ID's dataset?
-        test_PCA_and_stats_variables(df_copy, group_name, name, folderinfo, cfg)
+        check_PCA_and_stats_variables(df_copy, group_name, name, folderinfo, cfg)
         # add some final info & append to group_df
         if tracking_software == "DLC":
             # add this run's info to df (& prepare Stepcycle column)
@@ -542,7 +542,6 @@ def idxs_list_to_list_of_SC_lists(idxs):
 
 def grand_avg_and_std(avg_dfs, folderinfo, cfg):
     """Compute the grand averages & standard deviations for all columns of df"""
-
     # unpack
     group_names = folderinfo["group_names"]
     results_dir = folderinfo["results_dir"]
@@ -630,6 +629,23 @@ def load_previous_runs_dataframes(folderinfo, cfg):
             print(error_msg)
             write_issues_to_textfile(error_msg, folderinfo)
             raise FileNotFoundError
+    # re-index avg_dfs based on unique SC Percentages
+    array_of_idxs = np.arange(len(avg_dfs[0][SC_PERCENTAGE_COL].unique()))
+    for g in range(len(avg_dfs)):
+        repeat_index_this_often = len(avg_dfs[g]) // len(array_of_idxs)
+        new_idx = np.tile(array_of_idxs, repeat_index_this_often)
+        avg_dfs[g] = avg_dfs[g].set_index(new_idx)
+    # check if PCA & stats variables are present in all dataframes
+    for g, group_name in enumerate(folderinfo["group_names"]):
+        check_PCA_and_stats_variables(
+            avg_dfs[g], group_name, "Average", folderinfo, cfg
+        )
+        check_PCA_and_stats_variables(
+            g_avg_dfs[g], group_name, "Grand Average", folderinfo, cfg
+        )
+        check_PCA_and_stats_variables(
+            g_std_dfs[g], group_name, "Grand Standard Deviation", folderinfo, cfg
+        )
     # since import_data writes bin_num (running a sanity check before) we have to do
     # it here too. No need to run the sanity check again since that was done previously
     cfg["bin_num"] = len(np.unique(avg_dfs[0][SC_PERCENTAGE_COL]))

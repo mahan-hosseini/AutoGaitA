@@ -49,43 +49,58 @@ def some_prep(folderinfo, cfg):
         if os.path.exists(info_file_path):
             os.remove(info_file_path)
 
-    # extracted_cfg_vars: save_to_xls, PCA stuff & dont show plots
-    cfg = extract_cfg_vars(folderinfo, cfg)
-
-    # see if there's a config json file and add to cfg dict
-    for g_idx, group_dir in enumerate(group_dirs):
+    # *********** IMPORTANT ***********
+    # if load_dir, we have already saved a group config.json (see below before return)
+    # => use this and just return the cfg
+    # => make sure to write folderinfo["contrast"] manually above as is and then return
+    #    that folderinfo plus the cfg you load from the file
+    if folderinfo["load_dir"]:
         with open(
-            os.path.join(group_dir, CONFIG_JSON_FILENAME), "r"
+            os.path.join(folderinfo["load_dir"], CONFIG_JSON_FILENAME), "r"
         ) as config_json_file:
-            config_vars_from_json = json.load(config_json_file)
-            for key in config_vars_from_json.keys():
-                # assigning like this ensure all keys are in all jsons across groups
-                if g_idx == 0:
-                    cfg[key] = config_vars_from_json[key]
-                else:
-                    # sanity check for group-differences in cfg variables!
-                    if (key not in cfg.keys()) | (
-                        cfg[key] != config_vars_from_json[key]
-                    ):
-                        error_message = (
-                            "config.json variables differ between groups!"
-                            + "\nPlease make sure that all cfg variables between "
-                            + "groups match & try again!"
-                        )
-                        raise ValueError(error_message)
-                    else:
+            cfg = json.load(config_json_file)
+
+    else:  # if not, do the below things based on group dirs' configs
+        # 1. extracted_cfg_vars: save_to_xls, PCA stuff & dont show plots
+        cfg = extract_cfg_vars(folderinfo, cfg)
+
+        # 2. ennsure each key's across-group-equivalence and then add to cfg dict
+        for g_idx, group_dir in enumerate(group_dirs):
+            with open(
+                os.path.join(group_dir, CONFIG_JSON_FILENAME), "r"
+            ) as config_json_file:
+                config_vars_from_json = json.load(config_json_file)
+                for key in config_vars_from_json.keys():
+                    # assigning like this ensure all keys are in all jsons across groups
+                    if g_idx == 0:
                         cfg[key] = config_vars_from_json[key]
+                    else:
+                        # sanity check for group-differences in cfg variables!
+                        if (key not in cfg.keys()) | (
+                            cfg[key] != config_vars_from_json[key]
+                        ):
+                            error_message = (
+                                "config.json variables differ between groups!"
+                                + "\nPlease make sure that all cfg variables between "
+                                + "groups match & try again!"
+                            )
+                            raise ValueError(error_message)
+                        else:
+                            cfg[key] = config_vars_from_json[key]
 
-    # after having checked cfg keys for equivalence, we have to make sure that
-    # hind_joints is renamed to joints if DLC
-    # => note that cfg will not be updated (and overwritten from input if Universal 3D so it's)
-    #    okay that we do this
-    if cfg["tracking_software"] == "DLC":
-        cfg["joints"] = cfg["hind_joints"]
-    joints = cfg["joints"]
-    angles = cfg["angles"]
+        # 3. rename hind_joints is to joints if DLC or SLEAP
+        if "hind_joints" in cfg.keys():
+            cfg["joints"] = cfg["hind_joints"]
 
-    # prepare some plotting color stuff
+    # ******** IMPORTANT *******
+    # => Do the following two things regardless of load_dir:
+    # 1. save cfg to json file in results_dir for load_dir capability
+    config_json_path = os.path.join(results_dir, CONFIG_JSON_FILENAME)
+    if os.path.exists(config_json_path):  # overwrite if exists
+        os.remove(config_json_path)
+    with open(config_json_path, "w") as config_json_file:
+        json.dump(cfg, config_json_file)
+    # 2. create this plot stuff manually (cycler objects cannot be written to json)
     cfg["group_color_cycler"] = plt.cycler(
         "color", sns.color_palette(cfg["color_palette"], len(group_names))
     )
@@ -93,10 +108,10 @@ def some_prep(folderinfo, cfg):
         zip(group_names, cfg["group_color_cycler"].by_key()["color"])
     )
     cfg["joint_color_cycler"] = plt.cycler(
-        "color", sns.color_palette(cfg["color_palette"], len(joints))
+        "color", sns.color_palette(cfg["color_palette"], len(cfg["joints"]))
     )
     cfg["angle_color_cycler"] = plt.cycler(
-        "color", sns.color_palette(cfg["color_palette"], len(angles["name"]))
+        "color", sns.color_palette(cfg["color_palette"], len(cfg["angles"]["name"]))
     )
 
     return folderinfo, cfg
