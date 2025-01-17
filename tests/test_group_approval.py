@@ -116,8 +116,10 @@ def test_group_approval(extract_true_dir, extract_folderinfo, extract_cfg):
     pdt.assert_frame_equal(test_std_df, true_std_df)
 
     # .......................  3) TEST EQUIVALENCE OF PCA DFs  .........................
+    # => okay so for some reason this equivalence check fails on CI but not locally.
+    # => my guess is that due to the different OS in the cloud IDs are loaded differently which means that the PCA ID Info
     if os.getenv("CI") == "true":
-        pca_filenames = ["PCA Info.xlsx"]
+        pca_filenames = ["PCA Info.xlsx", "PCA Feature Summary.xlsx"]
     else:
         pca_filenames = [
             "PCA Feature Summary.xlsx",
@@ -129,9 +131,6 @@ def test_group_approval(extract_true_dir, extract_folderinfo, extract_cfg):
         test_pca_df = pd.read_excel(
             os.path.join(extract_folderinfo["results_dir"], filename)
         )
-        for df in [true_pca_df, test_pca_df]:
-            if "ID" in df.columns:
-                df.drop(columns=["ID"], inplace=True)
         pdt.assert_frame_equal(test_pca_df, true_pca_df)
 
     # ...................  4) TEST EQUIVALENCE OF STATS.TXT & DFs  .....................
