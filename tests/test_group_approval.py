@@ -1,5 +1,6 @@
 from autogaita import group
 from autogaita.group.group_constants import STATS_TXT_FILENAME
+from autogaita.resources.constants import CONFIG_JSON_FILENAME
 import pandas as pd
 import pandas.testing as pdt
 import filecmp
@@ -114,19 +115,36 @@ def test_group_approval(extract_true_dir, extract_folderinfo, extract_cfg):
     pdt.assert_frame_equal(test_av_df, true_av_df)
     pdt.assert_frame_equal(test_std_df, true_std_df)
 
-    # .......................  3) TEST EQUIVALENCE OF PCA DF  ..........................
-    true_pca_df = pd.read_excel(os.path.join(extract_true_dir, "PCA Info.xlsx"))
-    test_pca_df = pd.read_excel(
-        os.path.join(extract_folderinfo["results_dir"], "PCA Info.xlsx")
-    )
-    pdt.assert_frame_equal(test_pca_df, true_pca_df)
+    # .......................  3) TEST EQUIVALENCE OF PCA DFs  .........................
+    for filename in ["PCA Feature Summary.xlsx", "PCA ID Info.xlsx", "PCA Info.xlsx"]:
+        true_pca_df = pd.read_excel(os.path.join(extract_true_dir, filename))
+        test_pca_df = pd.read_excel(
+            os.path.join(extract_folderinfo["results_dir"], filename)
+        )
+        pdt.assert_frame_equal(test_pca_df, true_pca_df)
 
-    # ......................  4) TEST EQUIVALENCE OF STATS.TXT  ........................
+    # ...................  4) TEST EQUIVALENCE OF STATS.TXT & DFs  .....................
     shallow = False  # if True compares only the metadata, not the contents!
-    match, mismatch, errors = filecmp.cmpfiles(
+    match, _, _ = filecmp.cmpfiles(  # Summary Stats.txt file
         extract_true_dir,
         extract_folderinfo["results_dir"],
         [STATS_TXT_FILENAME],
         shallow,
     )
     assert match == [STATS_TXT_FILENAME]
+    for version_number in ["1", "2"]:  # Two Tukeys Results Excel Files
+        filename = f"Stats Multiple Comparison - Version {version_number}.xlsx"
+        true_stats_df = pd.read_excel(os.path.join(extract_true_dir, filename))
+        test_stats_df = pd.read_excel(
+            os.path.join(extract_folderinfo["results_dir"], filename)
+        )
+        pdt.assert_frame_equal(test_stats_df, true_stats_df)
+
+    # ......................  5) TEST EQUIVALENCE OF CONFIG.JSON  ......................
+    match, _, _ = filecmp.cmpfiles(
+        extract_true_dir,
+        extract_folderinfo["results_dir"],
+        [CONFIG_JSON_FILENAME],
+        shallow,
+    )
+    assert match == [CONFIG_JSON_FILENAME]
