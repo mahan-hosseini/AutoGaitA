@@ -116,8 +116,10 @@ def test_group_approval(extract_true_dir, extract_folderinfo, extract_cfg):
     pdt.assert_frame_equal(test_std_df, true_std_df)
 
     # .......................  3) TEST EQUIVALENCE OF PCA DFs  .........................
-    # => okay so for some reason this equivalence check fails on CI but not locally.
-    # => my guess is that due to the different OS in the cloud IDs are loaded differently which means that the PCA ID Info
+    # => okay so the equivalence test fails for ID INFO.xlsx on CI but passes locally.
+    # => it is due to the rows of the ID INFO.xlsx being in a different order
+    # => I guess due to how git-actions' os lists the files in the folder or something
+    # => the workaround here uses a env-variable that is set in the CI workflow file
     if os.getenv("CI") == "true":
         pca_filenames = ["PCA Info.xlsx", "PCA Feature Summary.xlsx"]
     else:

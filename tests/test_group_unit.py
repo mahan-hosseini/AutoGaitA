@@ -82,29 +82,33 @@ def test_load_previous_runs_dataframes(extract_folderinfo, extract_cfg):
         avg_dfs, g_avg_dfs, g_std_dfs, extract_cfg = load_repos_group_data(
             extract_folderinfo, extract_cfg
         )
-    # # 2: avg_dfs equivalent to import_data's avg_dfs
-    # # "results_dir": tmp_path,
-    # # "load_dir": "",
-    # extract_folderinfo["group_names"] = ["5 mm", "12 mm", "25 mm"]
-    # extract_folderinfo["group_dirs"] = [
-    #     "example data/5mm/Results/",
-    #     "example data/12mm/Results/",
-    #     "example data/25mm/Results/",
-    # ]
-    # avg_dfs, g_avg_dfs, g_std_dfs, extract_cfg = load_repos_group_data(
-    #     extract_folderinfo, extract_cfg
-    # )
-    # # some prep required for import data & avg_and_std
-    # extract_cfg["sampling_rate"] = 100
-    # extract_cfg["bin_num"] = 25
-    # extract_cfg["save_to_xls"] = [True, True, True]
-    # extract_cfg["tracking_software"] = "DLC"
-    # extract_cfg["analyse_average_x"] = True
-    # i_dfs, _, extract_cfg = import_data(extract_folderinfo, extract_cfg)
-    # i_avg_dfs, _ = avg_and_std(i_dfs, extract_folderinfo, extract_cfg)
-    # for g in range(3):  # dtype of ID is int and float - whatever
-    #     pytest.set_trace()
-    #     pdt.assert_frame_equal(avg_dfs[g], i_avg_dfs[g], check_dtype=False)
+    # 2: avg_dfs equivalent to import_data's avg_dfs
+    # "results_dir": tmp_path,
+    # "load_dir": "",
+    extract_folderinfo["group_names"] = ["5 mm", "12 mm", "25 mm"]
+    extract_folderinfo["group_dirs"] = [
+        "example data/5mm/Results/",
+        "example data/12mm/Results/",
+        "example data/25mm/Results/",
+    ]
+    avg_dfs, g_avg_dfs, g_std_dfs, extract_cfg = load_repos_group_data(
+        extract_folderinfo, extract_cfg
+    )
+    # some prep required for import data & avg_and_std
+    extract_cfg["sampling_rate"] = 100
+    extract_cfg["bin_num"] = 25
+    extract_cfg["save_to_xls"] = [True, True, True]
+    extract_cfg["tracking_software"] = "DLC"
+    extract_cfg["analyse_average_x"] = True
+    i_dfs, _, extract_cfg = import_data(extract_folderinfo, extract_cfg)
+    i_avg_dfs, _ = avg_and_std(i_dfs, extract_folderinfo, extract_cfg)
+    pytest.set_trace()
+    print(i_avg_dfs)
+    print(avg_dfs)
+    print(i_avg_dfs[0]["ID"])
+    print(avg_dfs[0]["ID"])
+    for g in range(3):  # dtype of ID is int and float - whatever
+        pdt.assert_frame_equal(avg_dfs[g], i_avg_dfs[g], check_dtype=False)
 
 
 # %%..............................  4. statistics  .....................................
