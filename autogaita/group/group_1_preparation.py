@@ -59,6 +59,7 @@ def some_prep(folderinfo, cfg):
             os.path.join(folderinfo["load_dir"], CONFIG_JSON_FILENAME), "r"
         ) as config_json_file:
             cfg = json.load(config_json_file)
+            cfg["loaded"] = True  # used in a unit test in test_group_unit.py
 
     else:  # if not, do the below things based on group dirs' configs
         # 1. extracted_cfg_vars: save_to_xls, PCA stuff & dont show plots
