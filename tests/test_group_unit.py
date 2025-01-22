@@ -10,7 +10,8 @@ from autogaita.group.group_2_data_processing import (
     check_PCA_and_stats_variables,
 )
 from autogaita.group.group_3_PCA import run_PCA, convert_PCA_bins_to_list
-from autogaita.group.group_4_stats import run_ANOVA
+from autogaita.group.group_4_stats import run_ANOVA, multcompare_SC_Percentages
+from autogaita.resources.utils import bin_num_to_percentages
 import pytest
 from sklearn import datasets
 import pandas as pd
@@ -188,6 +189,61 @@ def test_Mixed_ANOVA(extract_cfg):
     assert math.isclose(result["p-unc"][0], stats_df["p(A)"][0], abs_tol=1e-05)
     assert math.isclose(result["p-unc"][1], stats_df["p(B)"][0], abs_tol=1e-05)
     assert math.isclose(result["p-unc"][2], stats_df["p(AxB)"][0], abs_tol=1e-05)
+
+
+def test_multcomp_df_with_scipy_example(extract_folderinfo, extract_cfg):
+    # Adopted example from https://docs.scipy.org/doc/scipy-1.15.0/reference/generated/
+    # scipy.stats.tukey_hsd.html
+    extract_folderinfo["group_names"] = ["group0", "group1", "group2"]
+    extract_folderinfo["contrasts"] = [
+        "group0 & group1",
+        "group0 & group2",
+        "group1 & group2",
+    ]
+    # fmt: off
+    scipy_example = [24.5, 23.5, 26.4, 27.1, 29.9, 28.4, 34.2, 29.5, 32.2, 30.1, 26.1, 28.3, 24.3, 26.2, 27.8]  # fmt: on
+    # prep data
+    data = []
+    bin_num = 25
+    for i in scipy_example:
+        data.append([i] * bin_num)
+    data = np.ravel(data)
+    # prep group_col
+    subject_num = 5
+    group_col = []
+    for group in extract_folderinfo["group_names"]:
+        for _ in range(subject_num):
+            group_col.append([group] * bin_num)
+    group_col = np.ravel(group_col)
+    # prep ID_col
+    total_subject_num = 15
+    IDs = np.arange(1, total_subject_num + 1)
+    ID_col = np.repeat(IDs, bin_num)
+    # prep SC percentage col
+    extract_cfg["bin_num"] = 25
+    SC_percentages = bin_num_to_percentages(extract_cfg["bin_num"])
+    SC_percentage_col = [SC_percentages] * total_subject_num
+    SC_percentage_col = np.ravel(SC_percentage_col)
+    # pytest.set_trace()
+    # manually create dummy stats df
+    stats_df = pd.DataFrame(data=data, columns=["Variable"])
+    stats_df["Group"] = group_col
+    stats_df["ID"] = ID_col
+    stats_df["SC Percentage"] = SC_percentage_col
+    # run the func and perform hard-coded check with vals of doc's example
+    # => multcomp_df's rows are all equal because our SC percentages were all equal here
+    # => correct results correspond to doc-example's rows 1, 4 and 2 first listing all
+    #    stats-values, then p then CI low & CI high since that corresponds to the order
+    #    of multcomp df's columns
+    # => i.e., col1= SC %, then 3 cols for each contrast's q, then p, then CI low, then
+    #    CI high in the order of groups0 & 1, 0 & 2, and 1 & 2
+    multcomp_df = multcompare_SC_Percentages(
+        stats_df, "Variable", extract_folderinfo, extract_cfg
+    )
+    # fmt: off
+    correct_results = [-4.6, -0.260, 4.34, 0.014, 0.980, 0.02, -8.249, -3.909, 0.691, -0.951, 3.389, 7.989]  
+    for r, result in enumerate(correct_results):
+        assert math.isclose(result, multcomp_df.iloc[0, r+1], abs_tol=0.001)
 
 
 # %%..................................  PCA  ...........................................

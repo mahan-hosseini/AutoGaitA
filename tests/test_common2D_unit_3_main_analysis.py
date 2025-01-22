@@ -6,7 +6,6 @@ from autogaita.common2D.common2D_3_analysis import (
     add_angles,
     add_x_velocities,
     add_angular_velocities,
-    standardise_x_y_and_add_features_to_one_step,
 )
 from hypothesis import given
 import hypothesis.strategies as st
@@ -16,16 +15,9 @@ import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-import pdb
 
 
 # %%................................  fixtures  ........................................
-@pytest.fixture
-def extract_data_using_some_prep(extract_info, extract_folderinfo, extract_cfg):
-    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
-    return data
-
-
 @pytest.fixture
 def extract_info(tmp_path):
     info = {}
@@ -156,11 +148,13 @@ def test_angles(angle_x_y, lower_x_y, upper_x_y, expected_angle):
     assert step["angle Angle"].values == expected_angle
 
 
-def test_angles_not_depending_on_x_coordinate_standardisation(
+def test_angles_not_depending_on_x_standardisation_and_gait_direction_flipping(
     extract_info, extract_folderinfo, extract_cfg
 ):
+    # 1. preparation
     data = some_prep(extract_info, extract_folderinfo, extract_cfg)
     all_cycles = extract_stepcycles(data, extract_info, extract_folderinfo, extract_cfg)
+    # 2. x standardisation
     results = analyse_and_export_stepcycles(data, all_cycles, extract_info, extract_cfg)
     all_steps_data = results["all_steps_data"]
     x_standardised_steps_data = results["x_standardised_steps_data"]
@@ -168,6 +162,17 @@ def test_angles_not_depending_on_x_coordinate_standardisation(
     for angle_col in angle_cols:
         pdt.assert_series_equal(
             all_steps_data[angle_col], x_standardised_steps_data[angle_col]
+        )
+    # 3. gait direction flipping
+    extract_cfg["flip_gait_direction"] = False
+    non_flipped_data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    non_flipped_results = analyse_and_export_stepcycles(
+        non_flipped_data, all_cycles, extract_info, extract_cfg
+    )
+    non_flipped_all_steps_data = non_flipped_results["all_steps_data"]
+    for angle_col in angle_cols:
+        pdt.assert_series_equal(
+            all_steps_data[angle_col], non_flipped_all_steps_data[angle_col]
         )
 
 
