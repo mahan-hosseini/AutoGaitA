@@ -479,6 +479,14 @@ def plot_stickdiagrams(
 ):
     """4 - Plot a stick diagram"""
 
+    # Note for myself:
+    # I tried to figure this out and was kinda getting there but then I realised that
+    # because of the 3d axes being generally different than 2d axes and apparently them
+    # interacting strangely with subplots() there was a LOT of white space vertically
+    # in my subplot grid which is apparently not trivial to get rid of. see here for a
+    # discussion:
+    # https://github.com/matplotlib/matplotlib/issues/19519
+
     # unpack
     name = info["name"]
     results_dir = info["results_dir"]
