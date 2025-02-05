@@ -8,6 +8,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from mpl_toolkits.mplot3d import Axes3D
+
+import matplotlib
+import pdb
 
 # %% constants
 from autogaita.resources.constants import TIME_COL
@@ -88,7 +92,7 @@ def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
             plt.close("all")
 
             # ............................  4 - stick diagram  .........................
-            plot_stickdiagram(
+            plot_stickdiagrams(
                 legname, all_steps_data, all_cycles, info, cfg, plot_panel_instance
             )
 
@@ -470,7 +474,7 @@ def plot_angles_by_time(
             plot_panel_instance.figures.append(f[a])
 
 
-def plot_stickdiagram(
+def plot_stickdiagrams(
     legname, all_steps_data, all_cycles, info, cfg, plot_panel_instance
 ):
     """4 - Plot a stick diagram"""
@@ -496,102 +500,145 @@ def plot_stickdiagram(
         sharey=True,
         gridspec_kw={"hspace": 0},
     )
+    f_3d, ax_3d = plt.subplots(  # 3d stick diagram
+        len(all_cycles[legname]),
+        1,
+        sharex=True,
+        sharey=True,
+        gridspec_kw={"hspace": 0},
+        subplot_kw={"projection": "3d"},
+    )
+    f_3d.set_size_inches(f.get_size_inches())  # match figure sizes
     color_cycle = plt.cycler("color", sns.color_palette(color_palette, max_cycle_num))
 
     # plot
     for r, run_cycles in enumerate(all_cycles[legname]):  # run loop (axis)
         this_sc_num = len(run_cycles)
         try:  # handle 1 run with valid SCs
+            ax_3d[r].set_prop_cycle(color_cycle)
             ax[r].set_prop_cycle(color_cycle)
         except:
+            ax_3d.set_prop_cycle(color_cycle)
             ax.set_prop_cycle(color_cycle)
         for c, this_color_dict in zip(range(this_sc_num), color_cycle):  # SC loop
             this_sc_idx = run_cycles[c]
             this_color = this_color_dict["color"][:3]
             this_label = generate_sc_latency_label(this_sc_idx, sampling_rate)
-            # for tps from SC1 to SCend - plot(joint1x, joint1y)
+            # for tps from SC1 to SCend - plot(joint1x, joint1y) or x/y/z
             for i in range(
                 this_sc_idx[0], this_sc_idx[1] + 1
             ):  # timepoint loop (of this SC)
-                this_ys = list()  # for each timepoint, define joints' xy coord new
+                this_xs = list()  # for each timepoint, define joints' coords new
+                this_ys = list()
                 this_zs = list()
                 for joint in plot_joints:
                     # check for bodyside-specificity
                     if joint + "Y" in all_steps_data.columns:
+                        x_col_string = joint + "X"
                         y_col_string = joint + "Y"
                         z_col_string = joint + "Z"
                     else:
+                        x_col_string = transform_joint_and_leg_to_colname(
+                            joint, legname, "X"
+                        )
                         y_col_string = transform_joint_and_leg_to_colname(
                             joint, legname, "Y"
                         )
                         z_col_string = transform_joint_and_leg_to_colname(
                             joint, legname, "Z"
                         )
+                    this_xs.append(all_steps_data.loc[i, x_col_string])
                     this_ys.append(all_steps_data.loc[i, y_col_string])
                     this_zs.append(all_steps_data.loc[i, z_col_string])
-                if i == range(this_sc_idx[0], this_sc_idx[1] + 1)[0]:
+                    # plot args/axis being a list or not is based on label and sc number
+                    plot_args = {
+                        "color": this_color,
+                        "lw": STICK_LINEWIDTH,
+                        "label": (
+                            this_label
+                            if i == range(this_sc_idx[0], this_sc_idx[1] + 1)[0]
+                            else None
+                        ),
+                    }
                     try:
-                        ax[r].plot(
-                            this_ys,
-                            this_zs,
-                            color=this_color,
-                            lw=STICK_LINEWIDTH,
-                            label=this_label,
-                        )
+                        ax_3d[r].plot(this_xs, this_ys, this_zs, **plot_args)
+                        ax[r].plot(this_ys, this_zs, **plot_args)
                     except:
-                        ax.plot(
-                            this_ys,
-                            this_zs,
-                            color=this_color,
-                            lw=STICK_LINEWIDTH,
-                            label=this_label,
-                        )
-                else:  # no label
-                    try:
-                        ax[r].plot(
-                            this_ys, this_zs, color=this_color, lw=STICK_LINEWIDTH
-                        )
-                    except:
-                        ax.plot(this_ys, this_zs, color=this_color, lw=STICK_LINEWIDTH)
+                        ax_3d.plot(this_xs, this_ys, this_zs, **plot_args)
+                        ax.plot(this_ys, this_zs, **plot_args)
         # axis stuff
         try:
             if legend_outside is True:
+                ax_3d[r].legend(
+                    fontsize=SC_LAT_LEGEND_FONTSIZE,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0.5),
+                )
                 ax[r].legend(
                     fontsize=SC_LAT_LEGEND_FONTSIZE,
                     loc="center left",
                     bbox_to_anchor=(1, 0.5),
                 )
             elif legend_outside is False:
+                ax_3d[r].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
                 ax[r].legend(fontsize=SC_LAT_LEGEND_FONTSIZE)
             median_z_val = [round(np.median(ax[r].get_yticks()), 2)]
             median_z_val_label = [str(median_z_val[0])]  # has to be of same len
+            ax_3d[r].set_zticks(median_z_val, median_z_val_label)
             ax[r].set_yticks(median_z_val, median_z_val_label)
         except:
             if legend_outside is True:
+                ax_3d.legend(
+                    fontsize=SC_LAT_LEGEND_FONTSIZE + 3,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0.5),
+                )
                 ax.legend(
                     fontsize=SC_LAT_LEGEND_FONTSIZE + 3,
                     loc="center left",
                     bbox_to_anchor=(1, 0.5),
                 )
             elif legend_outside is False:
+                ax_3d.legend(fontsize=SC_LAT_LEGEND_FONTSIZE + 3)
                 ax.legend(fontsize=SC_LAT_LEGEND_FONTSIZE + 3)
             median_z_val = [round(np.median(ax.get_yticks()), 2)]
             median_z_val_label = [str(median_z_val[0])]  # has to be of same len
+            ax_3d.set_zticks(median_z_val, median_z_val_label)
             ax.set_yticks(median_z_val, median_z_val_label)
-        # title
-        figure_file_string = name + " - " + legname + " - Stick Diagram"
+        # 3d view & axes-sizes equal to 2d figure
         try:
-            ax[0].set_title(figure_file_string)
+            ax_3d[r].view_init(elev=20, azim=-90)
+            # pos = ax[r].get_position()
+            # ax_3d[r].set_position([pos.x0, pos.y0, pos.width, pos.height])
+            ax_3d[r].set_box_aspect([20, 2, 1])
+            # ax_3d[r].set_xlim(ax[r].get_xlim())
+            # ax_3d[r].set_zlim(ax[r].get_ylim())
         except:
-            ax.set_title(figure_file_string)
+            ax_3d.view_init(elev=20, azim=0)
+            ax_3d.set_position(ax.get_position())
+    # title
+    figure_file_string = name + " - " + legname + " - Stick Diagram"
+    try:
+        ax_3d[0].set_title(figure_file_string + " - 3D")
+        ax[0].set_title(figure_file_string)
+    except:
+        ax_3d.set_title(figure_file_string + " - 3D")
+        ax.set_title(figure_file_string)
+    f_3d.supxlabel("y")
+    f_3d.supylabel("z")
     f.supxlabel("y")
     f.supylabel("z")
+    save_figures(f_3d, results_dir, figure_file_string + " - 3D")
     save_figures(f, results_dir, figure_file_string)
     if dont_show_plots:
+        plt.close(f_3d)
         plt.close(f)
+
+    pdb.set_trace()
 
     # add figure to plot panel figures list
     if dont_show_plots is False:  # -> show plot panel
+        plot_panel_instance.figures.append(f_3d)
         plot_panel_instance.figures.append(f)
 
 
