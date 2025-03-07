@@ -406,7 +406,8 @@ def build_mainwindow(root, group_number, root_dimensions):
                     group_names,
                     group_dirs,
                     results_dir,
-                    load_dir,
+                    load_dir,  # tk var
+                    cfg["which_leg"],  # tk var
                     root,
                 ),
             ),
@@ -595,9 +596,13 @@ def advanced_cfgwindow(mainwindow):
 
 
 def definefeatures_window(
-    mainwindow, group_names, group_dirs, results_dir, load_dir, root
+    mainwindow, group_names, group_dirs, results_dir, load_dir, which_leg, root
 ):
     """Build define features window"""
+
+    # prep - extract tk vars
+    load_dir = load_dir.get()
+    which_leg = which_leg.get()
 
     # nested function (called by run-button): extract boolean checkbox vars and store
     # in cfg dicts!
@@ -659,7 +664,11 @@ def definefeatures_window(
             if av_sheet_path:  # won't be true if no AVXLS found
                 full_path = os.path.join(some_IDs_dir, av_sheet_path)
                 if av_sheet_path.endswith(".xlsx"):
-                    df = pd.read_excel(full_path)
+                    try:
+                        # universal 3D (that has which_leg sheets) always exports xlsx
+                        df = pd.read_excel(full_path, sheet_name=which_leg)
+                    except:
+                        df = pd.read_excel(full_path)
                     break
                 elif av_sheet_path.endswith(".csv"):
                     df = pd.read_csv(full_path)
@@ -912,7 +921,7 @@ def check_folderinfo_and_cfg(folderinfo, cfg):
         for key in inner_dict.keys():
             # check string vars: group dirs & names and results dir
             if key in STRING_VARS:
-                if key == "group_dirs" and not folderinfo["load_dir"]:
+                if key == "group_dirs" and len(folderinfo["load_dir"]) > 0:
                     for g_idx, group_dir in enumerate(inner_dict[key]):
                         if not os.path.exists(group_dir):
                             this_msg = (
@@ -981,8 +990,8 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
                     else:
                         this_runs_folderinfo[key][i] = folderinfo[key][i]
             # results_dir and load_dir (check load_dir only if not empty)
-            elif key == "results_dir" or (key == "load_dir" and folderinfo[key]):
-                if not folderinfo[key].endswith(os.sep):
+            elif key in ["results_dir", "load_dir"]:
+                if len(folderinfo[key]) > 0 and not folderinfo[key].endswith(os.sep):
                     this_runs_folderinfo[key] = folderinfo[key] + "/"
                 else:
                     this_runs_folderinfo[key] = folderinfo[key]

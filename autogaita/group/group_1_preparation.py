@@ -54,7 +54,7 @@ def some_prep(folderinfo, cfg):
     # => use this and just return the cfg
     # => make sure to write folderinfo["contrast"] manually above as is and then return
     #    that folderinfo plus the cfg you load from the file
-    if folderinfo["load_dir"]:
+    if len(folderinfo["load_dir"]) > 0:
         with open(
             os.path.join(folderinfo["load_dir"], CONFIG_JSON_FILENAME), "r"
         ) as config_json_file:
