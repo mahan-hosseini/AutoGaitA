@@ -600,10 +600,6 @@ def definefeatures_window(
 ):
     """Build define features window"""
 
-    # prep - extract tk vars
-    load_dir = load_dir.get()
-    which_leg = which_leg.get()
-
     # nested function (called by run-button): extract boolean checkbox vars and store
     # in cfg dicts!
     def get_selected_variables():
@@ -623,7 +619,7 @@ def definefeatures_window(
     #    averaging, or throw errors if we don't manage to do so
     #    -- (note we extract from average xls since that automatically informs about
     #        export_average_x/y vars!)
-    if load_dir:
+    if len(load_dir.get()) > 0:
         group_one_string = group_names[0].get()
         load_dir_string = load_dir.get()
         df = pd.read_excel(
@@ -666,7 +662,7 @@ def definefeatures_window(
                 if av_sheet_path.endswith(".xlsx"):
                     try:
                         # universal 3D (that has which_leg sheets) always exports xlsx
-                        df = pd.read_excel(full_path, sheet_name=which_leg)
+                        df = pd.read_excel(full_path, sheet_name=which_leg.get())
                     except:
                         df = pd.read_excel(full_path)
                     break
@@ -976,8 +972,8 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
     # using string concatenation). If not just add a forward slash. In the beginning
     # of autogaita.group, we will convert os.sep to forward slashes if they should be
     # backward slashes (windows works with both)
-    # => Note this was changed and works with os.path.join() now...
-    # => NU: have another look @ this matter in GUI functions
+    # => The part that does this in autogaita.group was updated and uses os.path.join
+    # => Thought about changing strings to Paths here but will leave it for now it works
     for key in folderinfo.keys():
         if key == "group_names":
             this_runs_folderinfo[key] = folderinfo[key]
