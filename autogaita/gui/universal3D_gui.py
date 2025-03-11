@@ -42,7 +42,7 @@ WIDGET_CFG["HOVER_COLOR"] = HOVER_COLOR
 
 CONFIG_FILE_NAME = "universal3D_gui_config.json"
 INT_VARS = ["sampling_rate", "bin_num", "plot_joint_number"]
-LIST_VARS = ["joints"]
+LIST_VARS = ["joints", "y_standardisation_joint", "z_standardisation_joint"]
 DICT_VARS = ["angles"]
 # TK_BOOL/STR_VARS are only used for initialising widgets based on cfg file
 # (note that numbers are initialised as strings)
@@ -52,8 +52,11 @@ TK_BOOL_VARS = [
     "y_acceleration",
     "angular_acceleration",
     "plot_SE",
-    "normalise_height_at_SC_level",
+    "standardise_z_at_SC_level",
+    "standardise_z_to_a_joint",
+    "standardise_y_coordinates",
     "postname_flag",
+    "flip_gait_direction",
     "analyse_average_y",
     "legend_outside",
     "fileprep_3D_DLC",
@@ -190,6 +193,15 @@ def run_universal3D_gui():
     samprate_label.grid(row=3, column=0, columnspan=2, sticky="w")
     samprate_entry.grid(row=3, column=1)
 
+    # flip gait direction
+    flip_gait_direction_box = gaita_widgets.checkbox(
+        root,
+        "Standardise direction of movement across runs",
+        cfg["flip_gait_direction"],
+        WIDGET_CFG,
+    )
+    flip_gait_direction_box.grid(row=4, column=0, columnspan=2, sticky="w")
+
     # postname present checkbox
     postname_flag_checkbox = gaita_widgets.checkbox(
         root,
@@ -198,9 +210,11 @@ def run_universal3D_gui():
         WIDGET_CFG,
     )
     postname_flag_checkbox.configure(
-        command=lambda: gui_utils.change_postname_entry_state(results, postname_entry),
+        command=lambda: gui_utils.change_widget_state_based_on_checkbox(
+            results, "postname_flag", postname_entry
+        ),
     )
-    postname_flag_checkbox.grid(row=4, column=0, columnspan=2)
+    postname_flag_checkbox.grid(row=5, column=0, columnspan=2)
 
     # postname string
     postname_label, postname_entry = gaita_widgets.label_and_entry_pair(
@@ -209,13 +223,13 @@ def run_universal3D_gui():
         results["postname_string"],
         WIDGET_CFG,
     )
-    postname_label.grid(row=5, column=0, sticky="e")
+    postname_label.grid(row=6, column=0, sticky="e")
     postname_entry.configure(state="disabled")
-    postname_entry.grid(row=5, column=1, sticky="w")
+    postname_entry.grid(row=6, column=1, sticky="w")
 
     # empty label 1 (for spacing)
     empty_label_one = ctk.CTkLabel(root, text="")
-    empty_label_one.grid(row=8, column=0)
+    empty_label_one.grid(row=7, column=0)
 
     # ..........................  advanced cfg section  ................................
 
@@ -223,7 +237,7 @@ def run_universal3D_gui():
     advanced_cfg_header_label = gaita_widgets.header_label(
         root, "Advanced Configuration", WIDGET_CFG
     )
-    advanced_cfg_header_label.grid(row=9, column=0, columnspan=2, sticky="nsew")
+    advanced_cfg_header_label.grid(row=8, column=0, columnspan=2, sticky="nsew")
 
     # data file preparation window
     datafile_prep_button = gaita_widgets.header_button(
@@ -232,7 +246,7 @@ def run_universal3D_gui():
     datafile_prep_button.configure(
         command=lambda: build_datafile_prep_window(root, results, cfg),
     )
-    datafile_prep_button.grid(row=10, column=0, columnspan=2)
+    datafile_prep_button.grid(row=9, column=0, columnspan=2)
 
     # column name information window
     column_info_button = gaita_widgets.header_button(
@@ -241,7 +255,7 @@ def run_universal3D_gui():
     column_info_button.configure(
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
-    column_info_button.grid(row=11, column=0, columnspan=2)
+    column_info_button.grid(row=10, column=0, columnspan=2)
 
     # advanced cfg
     cfg_window_button = gaita_widgets.header_button(
@@ -250,17 +264,17 @@ def run_universal3D_gui():
     cfg_window_button.configure(
         command=lambda: (build_cfg_window(root, cfg)),
     )
-    cfg_window_button.grid(row=12, column=0, columnspan=2)
+    cfg_window_button.grid(row=11, column=0, columnspan=2)
 
     # empty label 2 (for spacing)
     empty_label_two = ctk.CTkLabel(root, text="")
-    empty_label_two.grid(row=13, column=0)
+    empty_label_two.grid(row=12, column=0)
 
     # ............................  run & exit section  ................................
 
     # run analysis label
     runheader_label = gaita_widgets.header_label(root, "Run Analysis", WIDGET_CFG)
-    runheader_label.grid(row=14, column=0, columnspan=2, sticky="nsew")
+    runheader_label.grid(row=13, column=0, columnspan=2, sticky="nsew")
 
     # single video checkbox
     singlevideo_checkbox = gaita_widgets.checkbox(
@@ -270,17 +284,19 @@ def run_universal3D_gui():
         WIDGET_CFG,
     )
     singlevideo_checkbox.configure(
-        command=lambda: gui_utils.change_ID_entry_state(cfg, ID_entry),
+        command=lambda: gui_utils.change_widget_state_based_on_checkbox(
+            cfg, "analyse_singlerun", ID_entry
+        ),
     )
-    singlevideo_checkbox.grid(row=15, column=0, columnspan=2)
+    singlevideo_checkbox.grid(row=14, column=0, columnspan=2)
 
     # ID string info
     ID_label, ID_entry = gaita_widgets.label_and_entry_pair(
         root, "ID to be analysed:", results["name"], WIDGET_CFG
     )
-    ID_label.grid(row=16, column=0, sticky="e")
-    ID_entry.grid(row=16, column=1, sticky="w")
-    gui_utils.change_ID_entry_state(cfg, ID_entry)
+    ID_label.grid(row=15, column=0, sticky="e")
+    ID_entry.grid(row=15, column=1, sticky="w")
+    gui_utils.change_widget_state_based_on_checkbox(cfg, "analyse_singlerun", ID_entry)
 
     # run analysis button
     run_button = gaita_widgets.header_button(root, "Run Analysis!", WIDGET_CFG)
@@ -299,11 +315,11 @@ def run_universal3D_gui():
             build_donewindow(results, root, root_dimensions),
         )
     )
-    run_button.grid(row=17, column=0, columnspan=2, padx=10, pady=(10, 5))
+    run_button.grid(row=16, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # empty label 3 (for spacing)
     empty_label_three = ctk.CTkLabel(root, text="")
-    empty_label_three.grid(row=18, column=0)
+    empty_label_three.grid(row=17, column=0)
 
     # close program button
     exit_button = gaita_widgets.exit_button(
@@ -326,7 +342,7 @@ def run_universal3D_gui():
             root.after(5000, root.destroy),
         ),
     )
-    exit_button.grid(row=19, column=0, columnspan=2, padx=10, pady=(10, 5))
+    exit_button.grid(row=18, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # maximise widgets
     gui_utils.maximise_widgets(root)
@@ -556,7 +572,9 @@ def build_cfg_window(root, cfg):
     adv_cfg_analysis_header_label = gaita_widgets.header_label(
         cfg_window, "Analysis", WIDGET_CFG
     )
-    adv_cfg_analysis_header_label.grid(row=0, column=0, rowspan=2, sticky="nsew")
+    adv_cfg_analysis_header_label.grid(
+        row=0, column=0, rowspan=2, columnspan=2, sticky="nsew"
+    )
     # bin_num
     bin_num_label, bin_num_entry = gaita_widgets.label_and_entry_pair(
         cfg_window,
@@ -565,35 +583,73 @@ def build_cfg_window(root, cfg):
         WIDGET_CFG,
         adv_cfg_textsize=True,
     )
-    bin_num_label.grid(row=2, column=0)
-    bin_num_entry.grid(row=3, column=0)
+    bin_num_label.grid(row=2, column=0, columnspan=2)
+    bin_num_entry.grid(row=3, column=0, columnspan=2)
+    # acceleration label
+    acceleration_string = "Analyse (i.e. plot & export) accelerations for:"
+    acceleration_label = ctk.CTkLabel(
+        cfg_window,
+        text=acceleration_string,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    acceleration_label.grid(row=4, column=0, columnspan=2)
     # y acceleration
     y_accel_box = gaita_widgets.checkbox(
         cfg_window,
-        "Compute, plot & export joints' Y-accelerations",
+        "y-coordinates",
         cfg["y_acceleration"],
         WIDGET_CFG,
         adv_cfg_textsize=True,
     )
-    y_accel_box.grid(row=4, column=0)
+    y_accel_box.grid(row=5, column=0, sticky="e")
     # angular acceleration
     angular_accel_box = gaita_widgets.checkbox(
         cfg_window,
-        "Compute, plot & export angular accelerations",
+        "angles",
         cfg["angular_acceleration"],
         WIDGET_CFG,
         adv_cfg_textsize=True,
     )
-    angular_accel_box.grid(row=5, column=0)
-    # height normalisation at each step cycle separately
-    height_normalisation_box = gaita_widgets.checkbox(
+    angular_accel_box.grid(row=5, column=1, sticky="w")
+    # height standardisation at each step cycle separately
+    z_standardisation_box = gaita_widgets.checkbox(
         cfg_window,
-        "Normalise heights of all step cycles separately",
-        cfg["normalise_height_at_SC_level"],
+        "Normalise heights separately for all step cycles",
+        cfg["standardise_z_at_SC_level"],
         WIDGET_CFG,
         adv_cfg_textsize=True,
     )
-    height_normalisation_box.grid(row=6, column=0)
+    z_standardisation_box.grid(row=6, column=0, columnspan=2)
+    # z standardisation to a specific joint not global minimum
+    standardise_z_to_joint_box = gaita_widgets.checkbox(
+        cfg_window,
+        "Standardise heights to a joint instead of to global minimum",
+        cfg["standardise_z_to_a_joint"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
+    )
+    standardise_z_to_joint_box.configure(
+        command=lambda: gui_utils.change_widget_state_based_on_checkbox(
+            cfg, "standardise_z_to_a_joint", z_standardisation_joint_entry
+        ),
+    )
+    standardise_z_to_joint_box.grid(row=7, column=0, columnspan=2)
+    # z standardisation joint string label & entry
+    z_standardisation_joint_label, z_standardisation_joint_entry = (
+        gaita_widgets.label_and_entry_pair(
+            cfg_window,
+            "Height-standardisation joint:",
+            cfg["z_standardisation_joint"][0],
+            WIDGET_CFG,
+            adv_cfg_textsize=True,
+        )
+    )
+    z_standardisation_joint_label.grid(row=8, column=0, sticky="e")
+    z_standardisation_joint_entry.grid(row=8, column=1, sticky="w")
+    # to initialise the widget correctly, run this function once
+    gui_utils.change_widget_state_based_on_checkbox(
+        cfg, "standardise_z_to_a_joint", z_standardisation_joint_entry
+    )
     # export average y coordinates
     analyse_average_y_box = gaita_widgets.checkbox(
         cfg_window,
@@ -602,14 +658,53 @@ def build_cfg_window(root, cfg):
         WIDGET_CFG,
         adv_cfg_textsize=True,
     )
-    analyse_average_y_box.grid(row=7, column=0)
+    analyse_average_y_box.grid(row=9, column=0, columnspan=2)
+    analyse_average_y_box.configure(
+        command=lambda: gui_utils.change_widget_state_based_on_checkbox(
+            cfg, "analyse_average_y", standardise_y_coordinates_box
+        ),
+    )
+    # standardise y coordinates
+    standardise_y_coordinates_box = gaita_widgets.checkbox(
+        cfg_window,
+        "Standardise y-coordinates",
+        cfg["standardise_y_coordinates"],
+        WIDGET_CFG,
+        adv_cfg_textsize=True,
+    )
+    standardise_y_coordinates_box.configure(
+        command=lambda: gui_utils.change_widget_state_based_on_checkbox(
+            cfg, "standardise_y_coordinates", y_standardisation_joint_entry
+        ),
+    )
+    standardise_y_coordinates_box.grid(row=10, column=0, columnspan=2)
+    gui_utils.change_widget_state_based_on_checkbox(
+        cfg, "analyse_average_y", standardise_y_coordinates_box
+    )
+    # y standardisation joint string label & entry
+    y_standardisation_joint_label, y_standardisation_joint_entry = (
+        gaita_widgets.label_and_entry_pair(
+            cfg_window,
+            "Y-standardisation joint:",
+            cfg["y_standardisation_joint"][0],
+            WIDGET_CFG,
+            adv_cfg_textsize=True,
+        )
+    )
+    y_standardisation_joint_label.grid(row=11, column=0, sticky="e")
+    y_standardisation_joint_entry.grid(row=11, column=1, sticky="w")
+    gui_utils.change_widget_state_based_on_checkbox(
+        cfg, "standardise_y_coordinates", y_standardisation_joint_entry
+    )
 
     #  .............................  advanced output  .................................
     # advanced output header
     adv_cfg_output_header_label = gaita_widgets.header_label(
         cfg_window, "Output", WIDGET_CFG
     )
-    adv_cfg_output_header_label.grid(row=8, column=0, rowspan=2, sticky="nsew")
+    adv_cfg_output_header_label.grid(
+        row=12, column=0, rowspan=2, columnspan=2, sticky="nsew"
+    )
     # number of joints to plot
     plot_joint_num_label, plot_joint_num_entry = gaita_widgets.label_and_entry_pair(
         cfg_window,
@@ -618,8 +713,8 @@ def build_cfg_window(root, cfg):
         WIDGET_CFG,
         adv_cfg_textsize=True,
     )
-    plot_joint_num_label.grid(row=10, column=0)
-    plot_joint_num_entry.grid(row=11, column=0)
+    plot_joint_num_label.grid(row=14, column=0, sticky="e")
+    plot_joint_num_entry.grid(row=14, column=1, sticky="w")
     # plot plots to python
     showplots_checkbox = gaita_widgets.checkbox(
         cfg_window,
@@ -628,7 +723,7 @@ def build_cfg_window(root, cfg):
         WIDGET_CFG,
         adv_cfg_textsize=True,
     )
-    showplots_checkbox.grid(row=12, column=0)
+    showplots_checkbox.grid(row=15, column=0, columnspan=2)
     # plot SE
     plot_SE_box = gaita_widgets.checkbox(
         cfg_window,
@@ -637,7 +732,7 @@ def build_cfg_window(root, cfg):
         WIDGET_CFG,
         adv_cfg_textsize=True,
     )
-    plot_SE_box.grid(row=13, column=0)
+    plot_SE_box.grid(row=16, column=0, columnspan=2)
     # color palette
     color_palette_string = "Choose figures' color palette"
     color_palette_label = ctk.CTkLabel(
@@ -645,7 +740,7 @@ def build_cfg_window(root, cfg):
         text=color_palette_string,
         font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    color_palette_label.grid(row=14, column=0)
+    color_palette_label.grid(row=17, column=0, columnspan=2)
     color_palette_entry = ctk.CTkOptionMenu(
         cfg_window,
         values=COLOR_PALETTES_LIST,
@@ -655,7 +750,7 @@ def build_cfg_window(root, cfg):
         button_hover_color=HOVER_COLOR,
         font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    color_palette_entry.grid(row=15, column=0)
+    color_palette_entry.grid(row=18, column=0, columnspan=2)
     # legend outside
     legend_outside_checkbox = gaita_widgets.checkbox(
         cfg_window,
@@ -664,7 +759,7 @@ def build_cfg_window(root, cfg):
         WIDGET_CFG,
         adv_cfg_textsize=True,
     )
-    legend_outside_checkbox.grid(row=16, column=0)
+    legend_outside_checkbox.grid(row=19, column=0, columnspan=2)
 
     # results dir
     results_dir_label, results_dir_entry = gaita_widgets.label_and_entry_pair(
@@ -674,8 +769,8 @@ def build_cfg_window(root, cfg):
         WIDGET_CFG,
         adv_cfg_textsize=True,
     )
-    results_dir_label.grid(row=17, column=0)
-    results_dir_entry.grid(row=18, column=0)
+    results_dir_label.grid(row=20, column=0, columnspan=2)
+    results_dir_entry.grid(row=21, column=0, columnspan=2)
 
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -687,10 +782,10 @@ def build_cfg_window(root, cfg):
         command=lambda: cfg_window.destroy(),
     )
     adv_cfg_done_button.grid(
-        row=19, column=0, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=22, column=0, rowspan=2, columnspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # maximise widgets
-    cfg_window.columnconfigure(0, weight=1, uniform="Silent_Creme")
+    cfg_window.columnconfigure(list(range(2)), weight=1, uniform="Silent_Creme")
     cfg_window.rowconfigure(list(range(20)), weight=1, uniform="Silent_Creme")
 
 

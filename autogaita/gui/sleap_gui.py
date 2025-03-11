@@ -192,7 +192,9 @@ def run_sleap_gui():
         WIDGET_CFG,
     )
     convert_checkbox.configure(
-        command=lambda: gui_utils.change_ratio_entry_state(cfg, ratio_entry),
+        command=lambda: gui_utils.change_widget_state_based_on_checkbox(
+            cfg, "convert_to_mm", ratio_entry
+        ),
     )
     convert_checkbox.grid(row=2, column=0, columnspan=2, sticky="w")
 
@@ -209,7 +211,7 @@ def run_sleap_gui():
     )
     ratio_right_label.grid(row=2, column=2, sticky="w")
     # to initialise the widget correctly, run this function once
-    gui_utils.change_ratio_entry_state(cfg, ratio_entry)
+    gui_utils.change_widget_state_based_on_checkbox(cfg, "convert_to_mm", ratio_entry)
 
     # NU - I'll implement beam subtraction and gait direction flipping after having
     #      data for testing

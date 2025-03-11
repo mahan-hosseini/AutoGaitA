@@ -41,52 +41,11 @@ def maximise_widgets(window):
 
 
 # ..............................  change widget states  ................................
-def change_ratio_entry_state(cfg, ratio_entry):
-    """Change the state of ratio entry widget based on whether user wants
-    to convert pixels to mm or not.
-    """
-    if cfg["convert_to_mm"].get() is True:
-        ratio_entry.configure(state="normal")
-    elif cfg["convert_to_mm"].get() is False:
-        ratio_entry.configure(state="disabled")
 
 
-def change_y_standardisation_joint_entry_state(cfg, y_standardisation_joint_entry):
-    if cfg["standardise_y_to_a_joint"].get() is True:
-        y_standardisation_joint_entry.configure(state="normal")
-    elif cfg["standardise_y_to_a_joint"].get() is False:
-        y_standardisation_joint_entry.configure(state="disabled")
-
-
-def change_x_standardisation_box_state(cfg, standardise_x_coordinates_box):
-    if cfg["analyse_average_x"].get() is True:
-        standardise_x_coordinates_box.configure(state="normal")
-    elif cfg["analyse_average_x"].get() is False:
-        standardise_x_coordinates_box.configure(state="disabled")
-
-
-def change_x_standardisation_joint_entry_state(cfg, x_standardisation_joint_entry):
-    if cfg["standardise_x_coordinates"].get() is True:
-        x_standardisation_joint_entry.configure(state="normal")
-    elif cfg["standardise_x_coordinates"].get() is False:
-        x_standardisation_joint_entry.configure(state="disabled")
-
-
-def change_ID_entry_state(cfg, ID_entry):
-    """Change the state of ID entry widget based on whether user wants to only analyse
-    a single dataset.
-    """
-    if cfg["analyse_singlerun"].get() is True:
-        ID_entry.configure(state="normal")
-    elif cfg["analyse_singlerun"].get() is False:
-        ID_entry.configure(state="disabled")
-
-
-def change_postname_entry_state(results, postname_entry):
-    """Change the state of ID entry widget based on whether user wants to only analyse
-    a single dataset.
-    """
-    if results["postname_flag"].get() is True:
-        postname_entry.configure(state="normal")
-    elif results["postname_flag"].get() is False:
-        postname_entry.configure(state="disabled")
+def change_widget_state_based_on_checkbox(cfg, key_of_checkbox, entry_to_change):
+    """Change the state of an entry widget based on whether a checkbox is checked."""
+    if cfg[key_of_checkbox].get() is True:
+        entry_to_change.configure(state="normal")
+    elif cfg[key_of_checkbox].get() is False:
+        entry_to_change.configure(state="disabled")

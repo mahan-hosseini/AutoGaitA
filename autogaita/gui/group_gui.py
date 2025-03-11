@@ -349,7 +349,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         )
         ANOVA_checkbox.configure(
             command=lambda: change_ANOVA_buttons_state(ANOVA_buttons),
-        )
+        )  # dont use gui_utils here because its a bit special
         ANOVA_checkbox.grid(row=last_group_row + 7, column=0, columnspan=3, pady=10)
         # ANOVA design
         ANOVA_string_and_var_value = [

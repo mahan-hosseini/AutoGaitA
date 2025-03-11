@@ -120,8 +120,8 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         adv_cfg_textsize=True,
     )
     standardise_y_to_joint_box.configure(
-        command=lambda: gui_utils.change_y_standardisation_joint_entry_state(
-            cfg, y_standardisation_joint_entry
+        command=lambda: gui_utils.change_widget_state_based_on_checkbox(
+            cfg, "standardise_y_to_a_joint", y_standardisation_joint_entry
         ),
     )
     standardise_y_to_joint_box.grid(row=8, column=0, columnspan=2)
@@ -139,8 +139,8 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
     y_standardisation_joint_label.grid(row=9, column=0, sticky="e")
     y_standardisation_joint_entry.grid(row=9, column=1, sticky="w")
     # to initialise the widget correctly, run this function once
-    gui_utils.change_y_standardisation_joint_entry_state(
-        cfg, y_standardisation_joint_entry
+    gui_utils.change_widget_state_based_on_checkbox(
+        cfg, "standardise_y_to_a_joint", y_standardisation_joint_entry
     )
 
     # analyse average x coordinates
@@ -152,8 +152,8 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         adv_cfg_textsize=True,
     )
     analyse_average_x_box.configure(
-        command=lambda: gui_utils.change_x_standardisation_box_state(
-            cfg, standardise_x_coordinates_box
+        command=lambda: gui_utils.change_widget_state_based_on_checkbox(
+            cfg, "analyse_average_x", standardise_x_coordinates_box
         ),
     )
     analyse_average_x_box.grid(row=10, column=0)
@@ -167,12 +167,14 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         adv_cfg_textsize=True,
     )
     standardise_x_coordinates_box.configure(
-        command=lambda: gui_utils.change_x_standardisation_joint_entry_state(
-            cfg, x_standardisation_joint_entry
+        command=lambda: gui_utils.change_widget_state_based_on_checkbox(
+            cfg, "standardise_x_coordinates", x_standardisation_joint_entry
         ),
     )
     standardise_x_coordinates_box.grid(row=10, column=1)
-    gui_utils.change_x_standardisation_box_state(cfg, standardise_x_coordinates_box)
+    gui_utils.change_widget_state_based_on_checkbox(
+        cfg, "analyse_average_x", standardise_x_coordinates_box
+    )
 
     # x standardisation joint string label & entry
     x_standardisation_joint_label, x_standardisation_joint_entry = (
@@ -186,8 +188,8 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
     )
     x_standardisation_joint_label.grid(row=11, column=0, sticky="e")
     x_standardisation_joint_entry.grid(row=11, column=1, sticky="w")
-    gui_utils.change_x_standardisation_joint_entry_state(
-        cfg, x_standardisation_joint_entry
+    gui_utils.change_widget_state_based_on_checkbox(
+        cfg, "standardise_x_coordinates", x_standardisation_joint_entry
     )
 
     # invert y-axis

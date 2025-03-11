@@ -198,11 +198,13 @@ def run_dlc_gui():
         WIDGET_CFG,
     )
     convert_checkbox.configure(
-        command=lambda: gui_utils.change_ratio_entry_state(cfg, ratio_entry),
+        command=lambda: gui_utils.change_widget_state_based_on_checkbox(
+            cfg, "convert_to_mm", ratio_entry
+        ),
     )
     convert_checkbox.grid(row=2, column=0, columnspan=2, sticky="w")
 
-    # ratio  label
+    # ratio label
     ratio_entry = ctk.CTkEntry(
         root,
         textvariable=cfg["pixel_to_mm_ratio"],
@@ -215,7 +217,7 @@ def run_dlc_gui():
     )
     ratio_right_label.grid(row=2, column=2, sticky="w")
     # to initialise the widget correctly, run this function once
-    gui_utils.change_ratio_entry_state(cfg, ratio_entry)
+    gui_utils.change_widget_state_based_on_checkbox(cfg, "convert_to_mm", ratio_entry)
 
     # subtract beam
     subtract_beam_checkbox = gaita_widgets.checkbox(
