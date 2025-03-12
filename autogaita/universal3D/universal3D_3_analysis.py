@@ -84,7 +84,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                 all_cycles[legname][0][0] : all_cycles[legname][0][1]
             ]
             this_step = norm_z_flip_y_and_add_features_to_one_step(
-                this_step, l_idx, global_Y_max, cfg
+                this_step, global_Y_max, cfg
             )
             all_steps_data[l_idx] = this_step
             normalised_steps_data[l_idx] = normalise_one_steps_data(this_step, bin_num)
@@ -96,7 +96,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                 all_cycles[legname][0][0] : all_cycles[legname][0][1]
             ]
             first_step = norm_z_flip_y_and_add_features_to_one_step(
-                first_step, l_idx, global_Y_max, cfg
+                first_step, global_Y_max, cfg
             )
             all_steps_data[l_idx] = first_step
             normalised_steps_data[l_idx] = normalise_one_steps_data(first_step, bin_num)
@@ -117,7 +117,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                     all_cycles[legname][s][0] : all_cycles[legname][s][1]
                 ]
                 this_step = norm_z_flip_y_and_add_features_to_one_step(
-                    this_step, l_idx, global_Y_max, cfg
+                    this_step, global_Y_max, cfg
                 )
                 all_steps_data[l_idx] = pd.concat(
                     [all_steps_data[l_idx], this_step], axis=0
@@ -226,24 +226,32 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
 # ......................................................................................
 
 
-def norm_z_flip_y_and_add_features_to_one_step(step, l_idx, global_Y_max, cfg):
+def norm_z_flip_y_and_add_features_to_one_step(step, global_Y_max, cfg):
     """For a single step cycle's data, normalise z if wanted, flip y columns if needed
     (to simulate equal run direction) and add features (angles & velocities)
     """
     # unpack
+    standardise_z_at_SC_level = cfg["standardise_z_at_SC_level"]
+    standardise_z_to_a_joint = cfg["standardise_z_to_a_joint"]
+    z_standardisation_joint = cfg["z_standardisation_joint"]
+    flip_gait_direction = cfg["flip_gait_direction"]
     direction_joint = cfg["direction_joint"]
     # if user wanted this, normalise z (height) at step-cycle level
     step_copy = step.copy()
-    if cfg["normalise_height_at_SC_level"] is True:
-        # Finally, standardise all Z columns to global Z minimum being zero
+    if standardise_z_at_SC_level is True:
         z_cols = [col for col in step_copy.columns if col.endswith("Z")]
-        z_minimum = min(step_copy[z_cols].min())
+        if standardise_z_to_a_joint is True:
+            # note the [0] here is important because it's still a list of len=1!!
+            z_minimum = step_copy[z_standardisation_joint[0] + "Z"].min()
+        else:
+            z_minimum = min(step_copy[z_cols].min())
         step_copy[z_cols] -= z_minimum
-    # find out if we need to flip y columns of this step and flip them if we do
-    direction_joint_col_idx = step_copy.columns.get_loc(direction_joint)
-    direction_joint_mean = np.mean(step_copy[direction_joint])
-    if step_copy.iloc[0, direction_joint_col_idx] > direction_joint_mean:
-        step_copy = flip_y_columns(step_copy, global_Y_max)
+    # if user wanted flipping & if we need to flip y cols of this given step do so
+    if flip_gait_direction:
+        direction_joint_col_idx = step_copy.columns.get_loc(direction_joint)
+        direction_joint_mean = np.mean(step_copy[direction_joint])
+        if step_copy.iloc[0, direction_joint_col_idx] > direction_joint_mean:
+            step_copy = flip_y_columns(step_copy, global_Y_max)
     # add angles and velocities
     step_copy = add_features(step_copy, cfg)
     return step_copy

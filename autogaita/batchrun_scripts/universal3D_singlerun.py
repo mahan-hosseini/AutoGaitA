@@ -23,11 +23,16 @@ def universal3D_singlerun():
     cfg["angular_acceleration"] = True
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
-    cfg["normalise_height_at_SC_level"] = True
+    cfg["standardise_z_at_SC_level"] = True
+    cfg["standardise_z_to_a_joint"] = True
+    cfg["z_standardisation_joint"] = ["Midfoot"]
     cfg["plot_joint_number"] = 5
     cfg["color_palette"] = "Set2"
     cfg["legend_outside"] = True
-    cfg["analyse_average_y"] = False
+    cfg["flip_gait_direction"] = False
+    cfg["analyse_average_y"] = True
+    cfg["standardise_y_coordinates"] = True
+    cfg["y_standardisation_joint"] = ["Midfoot"]
     cfg["joints"] = [
         # "R1-ThCx",
         "Midfoot",

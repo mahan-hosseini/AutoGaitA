@@ -27,8 +27,10 @@ def some_prep(info, folderinfo, cfg):
     results_dir = info["results_dir"]
     postname_string = folderinfo["postname_string"]
     sampling_rate = cfg["sampling_rate"]
-    normalise_height_at_SC_level = cfg["normalise_height_at_SC_level"]
+    standardise_z_at_SC_level = cfg["standardise_z_at_SC_level"]
     analyse_average_y = cfg["analyse_average_y"]
+    standardise_y_coordinates = cfg["standardise_y_coordinates"]
+    standardise_z_to_a_joint = cfg["standardise_z_to_a_joint"]
 
     # .............................  move data  ........................................
     # => see if we can delete a previous runs results folder if existant. if not, it's a
@@ -106,16 +108,23 @@ def some_prep(info, folderinfo, cfg):
         return (None, None)  # => return the tuple bc. some prep returns 2 variables
     joints = cfg["joints"]
     angles = cfg["angles"]
+    # important to unpack to vars and not to cfg since cfg is overwritten in multiruns!
+    y_standardisation_joint = cfg["y_standardisation_joint"][0]
+    z_standardisation_joint = cfg["z_standardisation_joint"][0]
     # store config json file @ group path
     # !!! NU - do this @ ID path
     group_path = results_dir.split(name)[0]
     config_json_path = os.path.join(group_path, CONFIG_JSON_FILENAME)
     config_vars_to_json = {
         "sampling_rate": sampling_rate,
-        "normalise_height_at_SC_level": normalise_height_at_SC_level,
+        "standardise_z_at_SC_level": standardise_z_at_SC_level,
+        "analyse_average_y": analyse_average_y,
+        "standardise_y_coordinates": standardise_y_coordinates,
+        "y_standardisation_joint": y_standardisation_joint,
+        "standardise_z_to_a_joint": standardise_z_to_a_joint,
+        "z_standardisation_joint": z_standardisation_joint,
         "joints": joints,
         "angles": angles,
-        "analyse_average_y": analyse_average_y,
         "tracking_software": "Universal 3D",
     }
     # note - using "w" will overwrite/truncate file, thus no need to remove it if exists
@@ -166,10 +175,15 @@ def some_prep(info, folderinfo, cfg):
         data[y_cols] += abs(global_Y_min)
     global_Y_max = max(data[y_cols].max())
 
-    # Finally, standardise all Z columns to global Z minimum being zero
+    # Finally, standardise all Z columns to global Z minimum or a user-provided joint
     z_cols = [col for col in data.columns if col.endswith("Z")]  # Find all Z cols
-    global_Z_min = min(data[z_cols].min())  # Compute global z min
-    data[z_cols] -= global_Z_min  # Subtract global Z min from all Z cols
+    if standardise_z_to_a_joint:
+        # Note in the test-function we ensured that this was provided in the correct
+        # "Foot, left" format and handled trailing spaces being too much or missing
+        z_min = data[z_standardisation_joint + "Z"].min()
+    else:
+        z_min = min(data[z_cols].min())  # Compute global z min
+    data[z_cols] -= z_min  # Subtract either joint's or global z min from all Z cols
 
     return data, global_Y_max
 
@@ -305,10 +319,40 @@ def test_and_expand_cfg(data, cfg, info):
         write_issues_to_textfile(no_joint_message, info)
         print(no_joint_message)
         return (None, None)  # returning tuple bc. some_prep returns 2 variables
+    # this way of setting direction joint works because we prev. checked its validity
     if joints[0] + "Y" in data.columns:
         cfg["direction_joint"] = joints[0] + "Y"
     else:
         cfg["direction_joint"] = joints[0] + LEGS_COLFORMAT[0] + "Y"
+
+    # test y/z standardisation joints if needed
+    broken_standardisation_joint = ""
+    if cfg["standardise_y_coordinates"]:
+        cfg["y_standardisation_joint"] = check_and_fix_cfg_strings(
+            data, cfg, "y_standardisation_joint", info
+        )
+        if not cfg["y_standardisation_joint"]:
+            broken_standardisation_joint += "y"
+    if cfg["standardise_z_to_a_joint"]:
+        cfg["z_standardisation_joint"] = check_and_fix_cfg_strings(
+            data, cfg, "z_standardisation_joint", info
+        )
+        if not cfg["z_standardisation_joint"]:
+            if broken_standardisation_joint:
+                broken_standardisation_joint += " & z"
+            else:
+                broken_standardisation_joint += "z"
+    if broken_standardisation_joint:
+        no_standardisation_joint_message = (
+            "\n******************\n! CRITICAL ERROR !\n******************\n"
+            + "After testing your standardisation joints we found an issue with "
+            + broken_standardisation_joint
+            + "-coordinate standardisation joint."
+            + "\n Cancelling AutoGaitA - please try again!"
+        )
+        write_issues_to_textfile(no_standardisation_joint_message, info)
+        print(no_standardisation_joint_message)
+        return (None, None)  # returning tuple bc. some_prep returns 2 variables
 
     return cfg
 
@@ -316,10 +360,10 @@ def test_and_expand_cfg(data, cfg, info):
 def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
     """Check and fix strings in our joint & angle lists so that:
     1) They don't include empty strings
-    2) All strings end with the space character (since we do string + "y")
-    3) All strings are valid columns of the DLC dataset
+    2) All strings end with the space character (since we do string + "Z")
+    3) All strings are valid columns of the coordinate dataset
 
-    Note
+    Note - THIS IS NOT AND SHOULD NOT BE IDENTICAL TO 2D VERSIONS OF THIS FUNCTION!
     ----
     This is a bit more involved here than in _dlc since we have to check whether
     a given string is body-specific (e.g., Midfoot, left Z) or not (e.g., Pelvis Z)
@@ -336,7 +380,7 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
         # note that below local func. DOES NOT CLEAN the list - it only corrects space
         # characters and returns invalid_idxs that we'll use next to clean the list
         string_variable, invalid_joint_idxs = check_data_column_names(
-            data, string_variable
+            data, string_variable, cfg_key=cfg_key
         )
         # if user gave us joints we didnt find, write, print & save error message
         if invalid_joint_idxs:  # if none found, func returns an empty list (falsey!)
@@ -351,7 +395,12 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
             # now print & save erroneous & remaining joints
             joint_error = (
                 "\n***********\n! WARNING !\n***********\n"
-                + "\nYou entered joint-names that are not included in your dataset:"
+                + "Unable to find all "
+                + cfg_key
+                + " joints/key points you entered!"
+                + "\n Note that body-side specific y/z standardisation joints must be "
+                + " provided as such, e.g. 'Foot, left'"
+                + "\n\nInvalid and thus removed were:"
             )
             for idx in invalid_joint_idxs:
                 joint_error += "\n" + dirty_string_variable[idx]
@@ -447,7 +496,7 @@ def check_and_fix_cfg_strings(data, cfg, cfg_key, info):
     return string_variable
 
 
-def check_data_column_names(data, string_variable):
+def check_data_column_names(data, string_variable, **kwargs):
     """Checks if user-input is present in data columns and changes space-characters
     accordingly
     => Bodyside-specific colnames have to end WITHOUT a space (because we concat
@@ -462,10 +511,11 @@ def check_data_column_names(data, string_variable):
     HOWEVER IT DOES fix the space-character thingy for those strings THAT ARE IN THE
     DATASET!
     """
+    cfg_key = kwargs.get("cfg_key", None)
     invalid_joint_idxs = []
     for s, string in enumerate(string_variable):
-        # if a string is ending with a space, see if it is non-bodyside-specific
-        # if that's not the case, remove the space
+        # if a string is ending with a space, see if it is bodyside-specific
+        # if that's the case, remove the space
         if string.endswith(" "):
             if string + "Y" in data.columns:
                 pass
@@ -481,4 +531,19 @@ def check_data_column_names(data, string_variable):
                 string_variable[s] = string + " "
             else:
                 invalid_joint_idxs.append(s)
+        # special case for standardisation joints which must be provided side-specific
+        # if corresponding joint is.
+        # => ONLY DOING THE FOLLOWING FOR SIDE-SPECIFIC JOINTS!
+        # => if string ends with a space ("Foot, left ") it should lead to valid joint
+        #    if "Y" added. flag invalid joint if it doesn't
+        # => if string doesn't end with a space and would be valid if it did, add space
+        if cfg_key in ("y_standardisation_joint", "z_standardisation_joint"):
+            if any(leg in string for leg in LEGS_COLFORMAT):
+                if string.endswith(" "):
+                    if string + "Y" not in data.columns:
+                        invalid_joint_idxs.append(s)
+                else:
+                    if string + " Y" in data.columns:
+                        string_variable[s] = string + " "
+
     return string_variable, invalid_joint_idxs

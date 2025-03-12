@@ -24,11 +24,16 @@ def universal3D_multirun():
     cfg["angular_acceleration"] = True
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
-    cfg["normalise_height_at_SC_level"] = True
+    cfg["standardise_z_at_SC_level"] = True
+    cfg["standardise_z_to_a_joint"] = True
+    cfg["z_standardisation_joint"] = ["Foot, left"]
     cfg["plot_joint_number"] = 7
     cfg["color_palette"] = "viridis"
     cfg["legend_outside"] = True
+    cfg["flip_gait_direction"] = False
     cfg["analyse_average_y"] = True
+    cfg["standardise_y_coordinates"] = True
+    cfg["y_standardisation_joint"] = ["Foot"]
     cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis", "Shoulder", "Neck"]
     cfg["angles"] = {
         "name": ["Ankle", "Knee"],

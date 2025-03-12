@@ -169,7 +169,7 @@ def some_prep(info, folderinfo, cfg):
     beam_hind_jointadd = cfg["beam_hind_jointadd"]
     beam_fore_jointadd = cfg["beam_fore_jointadd"]
     direction_joint = cfg["direction_joint"]
-    # important to unpack to vars hand not to cfg since cfg is overwritten in multiruns!
+    # important to unpack to vars and not to cfg since cfg is overwritten in multiruns!
     x_standardisation_joint = cfg["x_standardisation_joint"][0]
     y_standardisation_joint = cfg["y_standardisation_joint"][0]
     # store config json file @ group path
