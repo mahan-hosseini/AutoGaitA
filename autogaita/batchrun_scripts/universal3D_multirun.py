@@ -1,6 +1,6 @@
 from autogaita.resources.utils import try_to_run_gaita
 import os
-
+import copy
 
 # %% main function
 
@@ -56,8 +56,13 @@ def run_singlerun(idx, info, folderinfo, cfg):
     keynames = info.keys()
     for keyname in keynames:
         this_info[keyname] = info[keyname][idx]
+    # make a deep copy of cfg that used in each run, otherwise changes to the cfg dict
+    # would translate to subsequent runs
+    # ==> see https://stackoverflow.com/questions/2465921/
+    #         how-to-copy-a-dictionary-and-only-edit-the-copy
+    this_cfg = copy.deepcopy(cfg)
     # important to only pass this_info to main script here (1 run at a time!)
-    try_to_run_gaita("Universal 3D", this_info, folderinfo, cfg, True)
+    try_to_run_gaita("Universal 3D", this_info, folderinfo, this_cfg, True)
 
 
 def extract_info(folderinfo):

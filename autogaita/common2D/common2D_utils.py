@@ -3,6 +3,7 @@ from autogaita.common2D.common2D_constants import FILE_ID_STRING_ADDITIONS
 from autogaita.dlc.dlc_utils import find_number
 from autogaita.resources.utils import try_to_run_gaita, write_issues_to_textfile
 import os
+import copy
 import numpy as np
 import tkinter as tk
 
@@ -22,8 +23,13 @@ def run_singlerun_in_multirun(tracking_software, idx, info, folderinfo, cfg):
             this_info["results_dir"] = os.path.join(
                 folderinfo["root_dir"], "Results", this_info["name"]
             )
+    # make a deep copy of cfg that used in each run, otherwise changes to the cfg dict
+    # would translate to subsequent runs
+    # ==> see https://stackoverflow.com/questions/2465921/
+    #         how-to-copy-a-dictionary-and-only-edit-the-copy
+    this_cfg = copy.deepcopy(cfg)
     # important to only pass this_info to main script here (1 run at a time!)
-    try_to_run_gaita(tracking_software, this_info, folderinfo, cfg, True)
+    try_to_run_gaita(tracking_software, this_info, folderinfo, this_cfg, True)
 
 
 def extract_info(tracking_software, folderinfo, in_GUI=False):
