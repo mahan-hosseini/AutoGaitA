@@ -18,13 +18,13 @@
         "standardise_z_at_SC_level": false,
         "standardise_z_to_a_joint": true,
         "z_standardisation_joint": [
-            "Ankle"
+            "Midfoot, left"
         ],
         "flip_gait_direction": true,
         "analyse_average_y": true,
         "standardise_y_coordinates": true,
         "y_standardisation_joint": [
-            "Ankle"
+            "Midfoot, left"
         ],
         "color_palette": "Set2",
         "legend_outside": true,
