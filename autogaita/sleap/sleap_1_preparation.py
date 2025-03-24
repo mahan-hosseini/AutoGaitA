@@ -200,7 +200,20 @@ def some_prep(info, folderinfo, cfg):
     #    me to test it properly
     # => Note that subtract_beam is hardcoded to False above for the same reason
 
-    # check gait direction & DLC file validity
+    # quick warning if cfg is set to not flip gait direction but to standardise x
+    if not flip_gait_direction and standardise_x_coordinates:
+        message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + "You are standardising x-coordinates without standardising the direction "
+            + "of gait (e.g. all walking from right to left)."
+            + "\nThis can be correct if you are doing things like treadmill walking "
+            + "but can lead to unexpected behaviour otherwise!"
+            + "\nMake sure you know what you are doing!"
+        )
+        print(message)
+        write_issues_to_textfile(message, info)
+
+    # check gait direction
     # data = check_gait_direction(data, direction_joint, flip_gait_direction, info)
     data["Flipped"] = False  # because of IMPORTANT NOTE above
 

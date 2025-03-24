@@ -82,6 +82,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
             + "of gait (e.g. all walking from right to left)."
             + "\nThis is correct if you are doing things like treadmill walking but "
             + "can lead to unexpected behaviour otherwise!"
+            + "\nMake sure you know what you are doing!"
         )
         print(message)
         write_issues_to_textfile(message, info)

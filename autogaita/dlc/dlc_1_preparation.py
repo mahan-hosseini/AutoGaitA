@@ -235,6 +235,18 @@ def some_prep(info, folderinfo, cfg):
         for column in data.columns:
             if not column.endswith("likelihood"):
                 data[column] = data[column] / pixel_to_mm_ratio
+    # quick warning if cfg is set to not flip gait direction but to standardise x
+    if not flip_gait_direction and standardise_x_coordinates:
+        message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + "You are standardising x-coordinates without standardising the direction "
+            + "of gait (e.g. all walking from right to left)."
+            + "\nThis can be correct if you are doing things like treadmill walking "
+            + "but can lead to unexpected behaviour otherwise!"
+            + "\nMake sure you know what you are doing!"
+        )
+        print(message)
+        write_issues_to_textfile(message, info)
     # check gait direction & DLC file validity
     data = check_gait_direction(data, direction_joint, flip_gait_direction, info)
     if data is None:  # this means DLC file is broken
