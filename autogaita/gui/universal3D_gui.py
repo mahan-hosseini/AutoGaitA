@@ -441,7 +441,7 @@ def build_datafile_prep_window(root, results, cfg):
     # string to remove
     string_to_remove_label, string_to_remove_entry = gaita_widgets.label_and_entry_pair(
         fileprep_window,
-        "Substring to remove:",
+        "Text to remove from all columns:",
         cfg["fileprep_string_to_remove"],
         WIDGET_CFG,
     )
@@ -475,7 +475,7 @@ def build_datafile_prep_window(root, results, cfg):
     # separator
     separator_label, separator_entry = gaita_widgets.label_and_entry_pair(
         fileprep_window,
-        "Separator substring (must be unique!):",
+        "Separator (must be unique!):",
         cfg["fileprep_separator"],
         WIDGET_CFG,
     )
