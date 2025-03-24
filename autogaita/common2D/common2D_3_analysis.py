@@ -63,6 +63,9 @@ def analyse_and_export_stepcycles(data, all_cycles, info, cfg):
     # 2 or more steps - build dataframe
     elif len(all_cycles) > 1:
         # first- step is added manually
+        # NOTE
+        # ----
+        # normalised_steps_data is created using x_standardised_steps_data or first_step
         first_step = data_copy.loc[all_cycles[0][0] : all_cycles[0][1]]
         if standardise_x_coordinates:
             all_steps_data, x_standardised_steps_data = (
@@ -181,20 +184,20 @@ def standardise_x_y_and_add_features_to_one_step(step, cfg):
         step_copy[y_cols] -= this_y_min
     # if no x-standardisation, just add features & return non-(x-)normalised step
     if cfg["standardise_x_coordinates"] is False:
-        non_norm_step = add_features(step_copy, cfg)
-        return non_norm_step
+        non_stand_step = add_features(step_copy, cfg)
+        return non_stand_step
         # else standardise x (horizontal dimension) at step-cycle level too
     else:
-        non_norm_step = add_features(step_copy, cfg)
-        x_norm_step = step_copy.copy()
-        x_cols = [col for col in x_norm_step.columns if col.endswith("x")]
+        non_stand_step = add_features(step_copy, cfg)
+        x_stand_step = step_copy.copy()
+        x_cols = [col for col in x_stand_step.columns if col.endswith("x")]
         # note the [0] here is important because it's still a list of len=1!!
-        min_x_standardisation_joint = x_norm_step[
+        min_x_standardisation_joint = x_stand_step[
             cfg["x_standardisation_joint"][0] + "x"
         ].min()
-        x_norm_step[x_cols] -= min_x_standardisation_joint
-        x_norm_step = add_features(x_norm_step, cfg)
-        return non_norm_step, x_norm_step
+        x_stand_step[x_cols] -= min_x_standardisation_joint
+        x_stand_step = add_features(x_stand_step, cfg)
+        return non_stand_step, x_stand_step
 
 
 def add_features(step, cfg):

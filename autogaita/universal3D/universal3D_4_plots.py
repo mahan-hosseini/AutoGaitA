@@ -45,6 +45,24 @@ from autogaita.universal3D.universal3D_constants import (
 # plotting functions extract values using .loc!)
 
 
+# A note on y-standardisation (17.03.2025)
+# ----------------------------------------
+# => If y-standardisation was performed, original as well as y-standardised dfs are
+#    generated and exported to xls
+# => Our plotting functions only used all_steps_data, average_data & std_data
+# => Conveniently, if y-standardisation is performed, all_steps_data DOES NOT include
+#    y-standardisation and is thus still the correct choice for the step-cycle level
+#    plots (#1-#4)
+# => On the other hand, average_data & std_data (plots #5-11) DO and SHOULD include
+#    y-standardisation
+# => Note that there is a slight discrepancy because angle-plots are based on
+#    y-standardised values  for the step-cycle level plots (#3) but not for the average
+#    plots (#7)
+#   -- This is not an issue since y-standardisation does not affect angles, even though
+#      the values of y change because they change by a constant for all joints (there
+#      is a unit test for this in dlc)
+
+
 # ................................  master function  ...................................
 def plot_results(results, all_cycles, info, cfg, plot_panel_instance):
     """Plot various results"""

@@ -1,5 +1,4 @@
 from autogaita.common2D.common2D_utils import extract_info, run_singlerun_in_multirun
-import os
 
 # %% main function
 

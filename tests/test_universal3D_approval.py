@@ -49,11 +49,16 @@ def extract_cfg():
     cfg["angular_acceleration"] = True
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
-    cfg["normalise_height_at_SC_level"] = True
+    cfg["standardise_z_at_SC_level"] = True
+    cfg["standardise_z_to_a_joint"] = False
+    cfg["z_standardisation_joint"] = ["Midfoot, left"]
     cfg["plot_joint_number"] = 7
     cfg["legend_outside"] = True
+    cfg["flip_gait_direction"] = True
     cfg["color_palette"] = "viridis"
     cfg["analyse_average_y"] = False
+    cfg["standardise_y_coordinates"] = True
+    cfg["y_standardisation_joint"] = ["Midfoot, left"]
     cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis "]
     cfg["angles"] = {
         "name": ["Ankle", "Knee", "Hip"],
@@ -74,30 +79,10 @@ def test_universal3D_approval(
     try_to_run_gaita(
         "Universal 3D", extract_info, extract_folderinfo, extract_cfg, False
     )
-    # load true dfs from xlsx files
-    true_av_df = pd.read_excel(
-        os.path.join(
-            extract_true_dir, extract_info["name"] + " - Average Stepcycle.xlsx"
-        )
-    )
-    true_std_df = pd.read_excel(
-        os.path.join(
-            extract_true_dir, extract_info["name"] + " - Standard Devs. Stepcycle.xlsx"
-        )
-    )
-    # test dfs are results of current run above
-    test_av_df = pd.read_excel(
-        os.path.join(
-            extract_info["results_dir"],
-            extract_info["name"] + " - Average Stepcycle.xlsx",
-        )
-    )
-    test_std_df = pd.read_excel(
-        os.path.join(
-            extract_info["results_dir"],
-            extract_info["name"] + " - Standard Devs. Stepcycle.xlsx",
-        )
-    )
-    # finally assert equivalence of df-pairs
-    pdt.assert_frame_equal(test_av_df, true_av_df)
-    pdt.assert_frame_equal(test_std_df, true_std_df)
+    for true_df_file in os.listdir(extract_true_dir):
+        if true_df_file.endswith(".xlsx"):
+            true_df = pd.read_excel(os.path.join(extract_true_dir, true_df_file))
+            test_df = pd.read_excel(
+                os.path.join(extract_info["results_dir"], true_df_file)
+            )
+            pdt.assert_frame_equal(test_df, true_df)

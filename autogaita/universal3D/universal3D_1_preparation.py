@@ -519,31 +519,48 @@ def check_data_column_names(data, string_variable, **kwargs):
         if string.endswith(" "):
             if string + "Y" in data.columns:
                 pass
+            # this "elif" condition applies to joints/direction joints, it's different
+            # for y/z-standardisation, which is checked further down
             elif string[:-1] + LEGS_COLFORMAT[0] + "Y" in data.columns:
                 string_variable[s] = string[:-1]
             else:
                 invalid_joint_idxs.append(s)
         # if a string is not ending with a space, see if it should
         else:
+            # this "if" is similar to "elif" above
             if string + LEGS_COLFORMAT[0] + "Y" in data.columns:
                 pass
             elif string + " Y" in data.columns:
                 string_variable[s] = string + " "
             else:
                 invalid_joint_idxs.append(s)
-        # special case for standardisation joints which must be provided side-specific
+        # SPECIAL CASE for standardisation joints which must be provided side-specific
         # if corresponding joint is.
         # => ONLY DOING THE FOLLOWING FOR SIDE-SPECIFIC JOINTS!
         # => if string ends with a space ("Foot, left ") it should lead to valid joint
         #    if "Y" added. flag invalid joint if it doesn't
         # => if string doesn't end with a space and would be valid if it did, add space
         if cfg_key in ("y_standardisation_joint", "z_standardisation_joint"):
-            if any(leg in string for leg in LEGS_COLFORMAT):
-                if string.endswith(" "):
+            # if string DOES NOT END (!) with a space "Foot, left" make sure to test it
+            # with a space because LEGS_COLFORMAT ends with spaces
+            if not string.endswith(" "):  # NOTE THE "NOT" HERE!
+                test_string = string + " "
+                if any(leg in test_string for leg in LEGS_COLFORMAT):
+                    if test_string + "Y" not in data.columns:
+                        invalid_joint_idxs.append(s)
+                    else:
+                        # if it's valid, add the space to string_variable
+                        string_variable[s] = string + " "
+            else:
+                # the "else" of this "if" means that string_variable was given
+                # correctly and can stay as is
+                if any(leg in string for leg in LEGS_COLFORMAT):
                     if string + "Y" not in data.columns:
                         invalid_joint_idxs.append(s)
-                else:
-                    if string + " Y" in data.columns:
-                        string_variable[s] = string + " "
+            # this happens if user gave "Foot" for example without the
+            # side-specific identifier (e.g. "Foot, left") - catch it
+            if string + "Y" not in data.columns and string + " Y" not in data.columns:
+                if s not in invalid_joint_idxs:  # no duplicates!
+                    invalid_joint_idxs.append(s)
 
     return string_variable, invalid_joint_idxs

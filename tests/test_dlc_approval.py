@@ -91,46 +91,19 @@ def extract_cfg():
     return cfg
 
 
-# ..............................  RUN - TWO APPROVAL TESTS  ............................
-# A Note
-# ------
-# In group and simi approval tests we only have 1 test. Here we have 2 tests since Nick
-# used this to teach the concept of fixtures and how multiple tests can use the same
-# fixture to have the same testing environment. I decided against using multiple
-# approval tests in the other two scripts since for those a given run of autogaita
-# takes much longer and would unnecessarily increase computation times..
-# For autogaita_dlc this is negligible since it runs that much faster in general
+# ..............................  RUN - ONE APPROVAL TESTS  ............................
 
 
 @pytest.mark.slow
 def test_dlc_approval_average_df(
     extract_true_dir, extract_info, extract_folderinfo, extract_cfg
 ):
+    # run
     try_to_run_gaita("DLC", extract_info, extract_folderinfo, extract_cfg, False)
-    true_av_df = pd.read_excel(
-        os.path.join(extract_true_dir, "ID 12 - Run 3 - Average Stepcycle.xlsx")
-    )
-    test_av_df = pd.read_excel(
-        os.path.join(
-            extract_info["results_dir"],
-            "ID 12 - Run 3 - Average Stepcycle.xlsx",
-        )
-    )
-    pdt.assert_frame_equal(test_av_df, true_av_df)
-
-
-@pytest.mark.slow
-def test_dlc_approval_std_df(
-    extract_true_dir, extract_info, extract_folderinfo, extract_cfg
-):
-    try_to_run_gaita("DLC", extract_info, extract_folderinfo, extract_cfg, False)
-    true_std_df = pd.read_excel(
-        os.path.join(extract_true_dir, "ID 12 - Run 3 - Standard Devs. Stepcycle.xlsx")
-    )
-    test_std_df = pd.read_excel(
-        os.path.join(
-            extract_info["results_dir"],
-            "ID 12 - Run 3 - Standard Devs. Stepcycle.xlsx",
-        )
-    )
-    pdt.assert_frame_equal(test_std_df, true_std_df)
+    for true_df_file in os.listdir(extract_true_dir):
+        if true_df_file.endswith(".xlsx"):
+            true_df = pd.read_excel(os.path.join(extract_true_dir, true_df_file))
+            test_df = pd.read_excel(
+                os.path.join(extract_info["results_dir"], true_df_file)
+            )
+            pdt.assert_frame_equal(test_df, true_df)

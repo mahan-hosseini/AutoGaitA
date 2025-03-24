@@ -16,6 +16,7 @@ from autogaita.universal3D.universal3D_constants import (
     LEGS_COLFORMAT,
     OUTPUTS,
     ORIGINAL_XLS_FILENAME,
+    Y_STANDARDISED_XLS_FILENAME,
     NORMALISED_XLS_FILENAME,
     AVERAGE_XLS_FILENAME,
     STD_XLS_FILENAME,
@@ -25,7 +26,7 @@ from autogaita.universal3D.universal3D_constants import (
     REORDER_COLS_IN_STEP_NORMDATA,
 )
 
-# %% workflow step #3 - y-flipping, features, df-creation & exports
+# %% workflow step #3 - y-flipping, y-stand, features, df-creation & exports
 # Note
 # ----
 # There is quite a lot going on in this function. We:
@@ -35,7 +36,7 @@ from autogaita.universal3D.universal3D_constants import (
 # 3) we then we flip y columns if needed (to simulate equal walking direction)
 # 4) immediately after 3 & 4 and for each step's data separately, we compute and add
 #    features (angles, velocities, accelerations)
-#    ==> see norm_z_flip_y_and_add_features_to_one_step & helper functions a
+#    ==> see standardise_y_z_flip_gait_add_features_to_one_step & helper functions a
 # 5) immediately after adding features, we normalise a step to bin_num
 #    ==> see normalise_one_steps_data & helper functions b
 # 6) we add original and normalised steps to all_steps_data and normalised_steps_data
@@ -56,6 +57,8 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
     results_dir = info["results_dir"]
     bin_num = cfg["bin_num"]
     analyse_average_y = cfg["analyse_average_y"]
+    flip_gait_direction = cfg["flip_gait_direction"]
+    standardise_y_coordinates = cfg["standardise_y_coordinates"]
     # do everything on a copy of the data df
     data_copy = data.copy()
     # for exports, we don't need all_cycles to be separated for runs
@@ -65,41 +68,89 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
     delete_previous_xlsfiles(name, results_dir)
     # initialise list of dfs & results
     all_steps_data = [pd.DataFrame(data=None)] * len(OUTPUTS)
+    y_standardised_steps_data = [pd.DataFrame(data=None)] * len(OUTPUTS)
     normalised_steps_data = [pd.DataFrame(data=None)] * len(OUTPUTS)
     average_data = [pd.DataFrame(data=None)] * len(OUTPUTS)
     std_data = [pd.DataFrame(data=None)] * len(OUTPUTS)
     sc_num = [None for i in range(len(OUTPUTS))]
     results = {"left": {}, "right": {}, "both": {}}
+    # quick warning if cfg is set to not flip gait direction but to standardise y
+    if not flip_gait_direction and standardise_y_coordinates:
+        message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + "You are standardising Y coordinates without standardising the direction "
+            + "of gait (e.g. all walking from right to left)."
+            + "\nThis is correct if you are doing things like treadmill walking but "
+            + "can lead to unexpected behaviour otherwise!"
+        )
+        print(message)
+        write_issues_to_textfile(message, info)
     # .................  loop over legs and populate dfs  ..............................
     # for each step:
     # 1) extract it from data_copy (this_step)
-    # 2) normalise Z if wanted, flip y columns if needed and add features
-    # 3) normalise its length to bin_num (this_normalised_step)
-    # 4) add this_step to all_steps_data and this_normalised_step to
-    #    normalised_steps_data
+    # 2) normalise z if wanted
+    # 3) flip y columns if wanted
+    # 4) standardise y to a joint if wanted
+    # 5) add features
+    # 6) normalise its length to bin_num (this_normalised_step)
+    # 7) add this_step to all_steps_data, this_normalised_step to
+    #    normalised_steps_data and this_y_standardised_step to y_standardised_steps_data
     for l_idx, legname in enumerate(LEGS):
+        # NOTE
+        # ----
+        # normalised_steps_data is created using y_standardised_step or first_step,
+        # leading to average/std dfs being based on y-standardised or raw data
+        # automatically
         # 1 step only (highly unlikely in humans)
         if len(all_cycles[legname]) == 1:
             this_step = data_copy.loc[
                 all_cycles[legname][0][0] : all_cycles[legname][0][1]
             ]
-            this_step = norm_z_flip_y_and_add_features_to_one_step(
-                this_step, global_Y_max, cfg
-            )
-            all_steps_data[l_idx] = this_step
-            normalised_steps_data[l_idx] = normalise_one_steps_data(this_step, bin_num)
+            if standardise_y_coordinates:
+                this_step, y_standardised_step = (
+                    standardise_y_z_flip_gait_add_features_to_one_step(
+                        this_step, global_Y_max, cfg
+                    )
+                )
+                all_steps_data[l_idx] = this_step
+                y_standardised_steps_data[l_idx] = y_standardised_step
+                normalised_steps_data[l_idx] = normalise_one_steps_data(
+                    y_standardised_step, bin_num  # normalising y-standardised here!
+                )
+            else:
+                this_step = standardise_y_z_flip_gait_add_features_to_one_step(
+                    this_step, global_Y_max, cfg
+                )
+                all_steps_data[l_idx] = this_step
+                normalised_steps_data[l_idx] = normalise_one_steps_data(
+                    this_step, bin_num
+                )
             sc_num[l_idx] = 1
         # 2 or more steps - build dataframes
         elif len(all_cycles[legname]) > 1:
-            # first step is added manually
+            # first, add the first step
             first_step = data_copy.loc[
                 all_cycles[legname][0][0] : all_cycles[legname][0][1]
             ]
-            first_step = norm_z_flip_y_and_add_features_to_one_step(
-                first_step, global_Y_max, cfg
-            )
-            all_steps_data[l_idx] = first_step
-            normalised_steps_data[l_idx] = normalise_one_steps_data(first_step, bin_num)
+            if standardise_y_coordinates:
+                first_step, y_standardised_first_step = (
+                    standardise_y_z_flip_gait_add_features_to_one_step(
+                        first_step, global_Y_max, cfg
+                    )
+                )
+                all_steps_data[l_idx] = first_step
+                y_standardised_steps_data[l_idx] = y_standardised_first_step
+                normalised_steps_data[l_idx] = normalise_one_steps_data(
+                    y_standardised_first_step, bin_num
+                )
+            else:
+                first_step = standardise_y_z_flip_gait_add_features_to_one_step(
+                    first_step, global_Y_max, cfg
+                )
+                all_steps_data[l_idx] = first_step
+                normalised_steps_data[l_idx] = normalise_one_steps_data(
+                    first_step, bin_num
+                )
             # some prep for addition of further steps
             sc_num[l_idx] = len(all_cycles[legname])
             nanvector = data_copy.loc[[SEPARATOR_IDX]]
@@ -109,21 +160,41 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                 # get step separators
                 numvector = data_copy.loc[[SEPARATOR_IDX]]
                 numvector[:] = s + 1
-                all_steps_data[l_idx] = add_step_separators(
-                    all_steps_data[l_idx], nanvector, numvector
-                )
                 # this_step
                 this_step = data_copy.loc[
                     all_cycles[legname][s][0] : all_cycles[legname][s][1]
                 ]
-                this_step = norm_z_flip_y_and_add_features_to_one_step(
-                    this_step, global_Y_max, cfg
+                if standardise_y_coordinates:
+                    this_step, this_y_standardised_step = (
+                        standardise_y_z_flip_gait_add_features_to_one_step(
+                            this_step, global_Y_max, cfg
+                        )
+                    )
+                    this_normalised_step = normalise_one_steps_data(
+                        this_y_standardised_step, bin_num
+                    )
+                else:
+                    this_step = standardise_y_z_flip_gait_add_features_to_one_step(
+                        this_step, global_Y_max, cfg
+                    )
+                    this_normalised_step = normalise_one_steps_data(this_step, bin_num)
+                # step separators & step-to-rest concatenation
+                # => note that normalised step is already based on y-stand if required
+                all_steps_data[l_idx] = add_step_separators(
+                    all_steps_data[l_idx], nanvector, numvector
                 )
                 all_steps_data[l_idx] = pd.concat(
                     [all_steps_data[l_idx], this_step], axis=0
                 )
+                if standardise_y_coordinates:
+                    y_standardised_steps_data[l_idx] = add_step_separators(
+                        y_standardised_steps_data[l_idx], nanvector, numvector
+                    )
+                    y_standardised_steps_data[l_idx] = pd.concat(
+                        [y_standardised_steps_data[l_idx], this_y_standardised_step],
+                        axis=0,
+                    )
                 # this_normalised_step
-                this_normalised_step = normalise_one_steps_data(this_step, bin_num)
                 normalised_steps_data[l_idx] = add_step_separators(
                     normalised_steps_data[l_idx], nanvector, numvector
                 )
@@ -143,6 +214,18 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
             ],
             axis=1,
         )
+        if standardise_y_coordinates:
+            y_standardised_steps_data[l_idx] = pd.concat(
+                [
+                    y_standardised_steps_data[l_idx],  # y_standardised_steps_data
+                    pd.DataFrame(
+                        data=legname,
+                        index=y_standardised_steps_data[l_idx].index,
+                        columns=[LEG_COL],
+                    ),
+                ],
+                axis=1,
+            )
         normalised_steps_data[l_idx] = pd.concat(
             [
                 normalised_steps_data[l_idx],  # normalised_steps_data
@@ -155,17 +238,23 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
             axis=1,
         )
         # 2) create and save average_ and std_data
+        # => note that normalised_steps_data is automatically based on y-standardisation
+        #    which translates to average_data & std_data
         average_data[l_idx], std_data[l_idx] = compute_average_and_std_data(
             normalised_steps_data[l_idx], bin_num, analyse_average_y
         )
     # ................................  after leg-loop  ................................
     # 1a) create "both" sheets for all our data-formats (added to -1 idx of df_list)
-    # => note that we only need only_one_valid_leg once so the first 3 functions are
+    # => note that we only need only_one_valid_leg once so the first 4 functions are
     #    called with [0] to index the output-tuple and get only the df from the function
     all_steps_data = combine_legs(all_steps_data, "concatenate")[0]
     normalised_steps_data = combine_legs(normalised_steps_data, "concatenate")[0]
     average_data = combine_legs(average_data, "average")[0]
-    std_data, only_one_valid_leg = combine_legs(std_data, "average")
+    if standardise_y_coordinates:
+        y_standardised_steps_data = combine_legs(
+            y_standardised_steps_data, "concatenate"
+        )[0]
+    std_data, only_one_valid_leg = combine_legs(std_data, "average")  # legvalidity here
     # 1b) inform user if only one leg had valid SCs (affects 3rd sheet!)
     if only_one_valid_leg:
         this_message = (
@@ -184,6 +273,10 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
         results[output]["normalised_steps_data"] = normalised_steps_data[idx]
         results[output]["average_data"] = average_data[idx]
         results[output]["std_data"] = std_data[idx]
+        if standardise_y_coordinates:
+            results[output]["y_standardised_steps_data"] = y_standardised_steps_data[
+                idx
+            ]
         if idx == len(OUTPUTS) - 1:
             if not only_one_valid_leg:
                 results[output]["sc_num"] = sc_num[0] + sc_num[1]
@@ -218,23 +311,30 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
             os.path.join(results_dir, name + STD_XLS_FILENAME),
             only_one_valid_leg,
         )
+        if standardise_y_coordinates:
+            save_results_sheet(
+                y_standardised_steps_data[idx],
+                output,
+                os.path.join(results_dir, name + Y_STANDARDISED_XLS_FILENAME),
+                only_one_valid_leg,
+            )
     return results
 
 
 # ......................................................................................
-# ...........  helper functions a - norm z, flip y and add features  ...................
+# .........  helper functions a - stand y/z, flip gait and add features  ...............
 # ......................................................................................
 
 
-def norm_z_flip_y_and_add_features_to_one_step(step, global_Y_max, cfg):
-    """For a single step cycle's data, normalise z if wanted, flip y columns if needed
-    (to simulate equal run direction) and add features (angles & velocities)
-    """
+def standardise_y_z_flip_gait_add_features_to_one_step(step, global_Y_max, cfg):
+    """For a single step cycle's data, standardise y & z if wanted, flip y columns if wanted (to simulate equal run direction) and add features (angles & velocities)"""
     # unpack
     standardise_z_at_SC_level = cfg["standardise_z_at_SC_level"]
     standardise_z_to_a_joint = cfg["standardise_z_to_a_joint"]
     z_standardisation_joint = cfg["z_standardisation_joint"]
     flip_gait_direction = cfg["flip_gait_direction"]
+    standardise_y_coordinates = cfg["standardise_y_coordinates"]
+    y_standardisation_joint = cfg["y_standardisation_joint"]
     direction_joint = cfg["direction_joint"]
     # if user wanted this, normalise z (height) at step-cycle level
     step_copy = step.copy()
@@ -246,15 +346,53 @@ def norm_z_flip_y_and_add_features_to_one_step(step, global_Y_max, cfg):
         else:
             z_minimum = min(step_copy[z_cols].min())
         step_copy[z_cols] -= z_minimum
-    # if user wanted flipping & if we need to flip y cols of this given step do so
-    if flip_gait_direction:
-        direction_joint_col_idx = step_copy.columns.get_loc(direction_joint)
-        direction_joint_mean = np.mean(step_copy[direction_joint])
-        if step_copy.iloc[0, direction_joint_col_idx] > direction_joint_mean:
-            step_copy = flip_y_columns(step_copy, global_Y_max)
-    # add angles and velocities
-    step_copy = add_features(step_copy, cfg)
-    return step_copy
+    # no y-standardisation, just flip the step if needed, add features and return
+    if standardise_y_coordinates is False:
+        non_stand_step = step_copy.copy()
+        if flip_gait_direction:
+            non_stand_step = flip_a_steps_gait_direction(
+                non_stand_step, direction_joint, global_Y_max
+            )
+        non_stand_step = add_features(non_stand_step, cfg)
+        return non_stand_step
+
+    # user wanted y-standardisation
+    # => BUT: make sure that we GAIT FLIP before y-standardising!
+    # => i.e. flip gait direction, y-stand and finally add features
+    #    - OTHERWISE the way global_Y_max is used to flip gait direction BREAKS IT!
+    else:
+        non_stand_step = step_copy.copy()
+        y_stand_step = step_copy.copy()
+        # first flip gait direction
+        if flip_gait_direction:
+            non_stand_step = flip_a_steps_gait_direction(
+                non_stand_step, direction_joint, global_Y_max
+            )
+            y_stand_step = flip_a_steps_gait_direction(
+                y_stand_step, direction_joint, global_Y_max
+            )
+        # now y-standardise
+        # => standardising to the minimum of the joint is correct because flipping
+        #    ensures that all steps' y values are increasing as the step progresses
+        #   - things can get weird if users are not gait flipping (and are not e.g.
+        #     analysing treadmill walks where y is roughly fixed) but we informed them
+        #     about this before (at top of "analyse_....-function")
+        y_cols = [col for col in y_stand_step.columns if col.endswith("Y")]
+        y_minimum = y_stand_step[y_standardisation_joint[0] + "Y"].min()
+        y_stand_step[y_cols] -= y_minimum
+        # add features & return
+        non_stand_step = add_features(non_stand_step, cfg)
+        y_stand_step = add_features(y_stand_step, cfg)
+        return non_stand_step, y_stand_step
+
+
+def flip_a_steps_gait_direction(step, direction_joint, global_Y_max):
+    """Flip a step's y cols first checking if it's needed for given step with direction joint"""
+    direction_joint_col_idx = step.columns.get_loc(direction_joint)
+    direction_joint_mean = np.mean(step[direction_joint])
+    if step.iloc[0, direction_joint_col_idx] > direction_joint_mean:  # needed?
+        step = flip_y_columns(step, global_Y_max)
+    return step
 
 
 def flip_y_columns(step, global_Y_max):

@@ -27,8 +27,10 @@ def group_universal3Drun():
         # cfg
         cfg["do_permtest"] = True
         cfg["do_anova"] = True
-        cfg["permutation_number"] = 10
+        cfg["permutation_number"] = 10000
         cfg["PCA_n_components"] = 3
+        cfg["PCA_custom_scatter_PCs"] = ""
+        cfg["PCA_bins"] = ""
         cfg["PCA_save_3D_video"] = False
         cfg["stats_threshold"] = 0.05
         cfg["plot_SE"] = False

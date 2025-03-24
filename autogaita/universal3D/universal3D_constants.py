@@ -24,6 +24,7 @@ STANCEEND_COL = "Stance (te)"
 SEARCH_WIN_TURN_TIME = 500  # 5 seconds
 # export results as xlsx
 ORIGINAL_XLS_FILENAME = " - Original Stepcycles"  # filenames of sheet exports
+Y_STANDARDISED_XLS_FILENAME = " - Y-Standardised Stepcycles"
 NORMALISED_XLS_FILENAME = " - Normalised Stepcycles"
 AVERAGE_XLS_FILENAME = " - Average Stepcycle"
 STD_XLS_FILENAME = " - Standard Devs. Stepcycle"
