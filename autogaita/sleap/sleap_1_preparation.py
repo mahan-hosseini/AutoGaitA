@@ -552,8 +552,9 @@ def flip_mouse_body(data, info):
     # 1) Flip all rows in x columns only and subtract max from all vals
     flipped_data = data.copy()
     x_cols = [col for col in flipped_data.columns if col.endswith(" x")]
+    global_x_max = flipped_data[x_cols].max().max()
     for col in x_cols:
-        flipped_data[col] = max(flipped_data[col]) - flipped_data[col]
+        flipped_data[col] = global_x_max - flipped_data[col]
     return flipped_data
 
 
