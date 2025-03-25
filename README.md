@@ -81,6 +81,9 @@ Step cycles are normalised via averaging temporally adjacent data points if thei
 
 **We strongly advise** users to think carefully about an appropriate bin number for their datasets. The correct value varies and depends strongly on the studied species, behaviour and the frame rate of cameras.
 
+## 2D Kinematics in AutoGaitA Universal 3D
+**We strongly advise** AutoGaitA Universal 3D users to carefully consider how our toolbox computes kinematics in 2D, i.e., angles along the y/z-plane and velocities along the y-dimensions. For more information, please see the corresponding **[important note on 2D kinematics in our documentation]**(https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.xc5ome7hzfid).
+
 ## Analysing other behaviours - AutoCyclA 🚴
 Even though AutoGaitA's main focus is to automate and standardise gait analyses, our toolbox can be used to automate the analyses of any rhythmic behaviour of interest. For a proof-of-principle demonstration and an introduction of the general workflow of such analyses, see **[AutoCyclA - Automated Cycling Analysis with AutoGaitA.](https://github.com/mahan-hosseini/AutoGaitA/tree/main/autocycla)**
 
