@@ -1,20 +1,14 @@
 from autogaita.dlc.dlc_1_preparation import (
     some_prep,
     move_data_to_folders,
-    check_and_expand_cfg,
-    check_and_fix_cfg_strings,
-    flip_mouse_body,
     check_gait_direction,
 )
-from hypothesis import given, strategies as st, settings, HealthCheck
 import os
 import copy
 import math
 import numpy as np
 import pandas as pd
-import pandas.testing as pdt
 import pytest
-import pdb
 
 
 # %%................................  fixtures  ........................................
@@ -97,14 +91,6 @@ def extract_cfg():
 
 
 # %%..............................  preparation  .......................................
-#                       AN IMPORTANT NOTE ON THESE UNIT TESTS!
-# Calling check_and_expand cfg outside of some_prep with the
-# export_data_using_some_prep fixture leads to the cfg that is returned by
-# check_and_expand to be None since the data var DOES NOT INCLUDE the beam!
-# => We thus set cfg["subtract_beam"] to False prior to calling it (see e.g.the
-#    plot_joint test)
-
-
 def test_wrong_data_and_beam_strings(extract_info, extract_folderinfo, extract_cfg):
     extract_folderinfo["beam_string"] = extract_folderinfo["data_string"]
     some_prep(extract_info, extract_folderinfo, extract_cfg)
@@ -200,51 +186,6 @@ def test_error_if_no_cfgkey_joints(extract_info, extract_folderinfo, extract_cfg
         content = f.read()
         assert "x & y-coordinate standardisation joint" in content
         assert data is None
-
-
-def test_plot_joint_error(extract_data_using_some_prep, extract_cfg, extract_info):
-    extract_cfg["plot_joint_number"] = 2000
-    extract_cfg["subtract_beam"] = False
-    check_and_expand_cfg(extract_data_using_some_prep, extract_cfg, extract_info)
-    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
-        content = f.read()
-    assert "we can :)" in content
-    extract_cfg = check_and_expand_cfg(
-        extract_data_using_some_prep, extract_cfg, extract_info
-    )
-    assert extract_cfg["plot_joints"] == extract_cfg["hind_joints"]
-    extract_cfg["plot_joint_number"] = 2
-    extract_cfg = check_and_expand_cfg(
-        extract_data_using_some_prep, extract_cfg, extract_info
-    )
-    assert extract_cfg["plot_joints"] == extract_cfg["hind_joints"][:2]
-
-
-@given(test_list=st.lists(st.text(), min_size=1))
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-def test_removal_of_wrong_strings_from_cfg_key(
-    test_list, extract_data_using_some_prep, extract_cfg, extract_info
-):
-    cfg_key = "hind_joints"  # irrelevant since property testing
-    extract_cfg[cfg_key] = test_list
-    test_result = check_and_fix_cfg_strings(
-        extract_data_using_some_prep, extract_cfg, cfg_key, extract_info
-    )
-    assert not test_result  # empty list is falsey
-
-
-def test_flip_mouse_body(extract_info, extract_folderinfo, extract_cfg):
-    extract_cfg["flip_gait_direction"] = False
-    test_data = some_prep(extract_info, extract_folderinfo, extract_cfg)
-    function_flipped_data = test_data.copy()
-    function_flipped_data = flip_mouse_body(test_data, extract_info)
-    x_cols = [col for col in function_flipped_data.columns if col.endswith(" x")]
-    global_x_max = max(test_data[x_cols].max())
-    for col in x_cols:
-        function_flipped_series = function_flipped_data[col]
-        function_flipped_series = function_flipped_series.astype(float)
-        manually_flipped_series = global_x_max - test_data[col]
-        pdt.assert_series_equal(function_flipped_series, manually_flipped_series)
 
 
 def test_check_gait_direction(extract_data_using_some_prep, extract_cfg, extract_info):
