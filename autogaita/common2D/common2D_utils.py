@@ -1,6 +1,5 @@
 # %% imports
 from autogaita.common2D.common2D_constants import FILE_ID_STRING_ADDITIONS
-from autogaita.dlc.dlc_utils import find_number
 from autogaita.resources.utils import try_to_run_gaita, write_issues_to_textfile
 import os
 import copy
@@ -122,6 +121,13 @@ def extract_info(tracking_software, folderinfo, in_GUI=False):
         info["name"] = list(set(info["name"]))  # no duplicates
 
     return info
+
+
+def find_number(fullstring, prestring, poststring):
+    """Find (mouse/run) number based on user-defined strings in filenames"""
+    start_idx = fullstring.find(prestring) + len(prestring)
+    end_idx = fullstring.find(poststring)
+    return int(fullstring[start_idx:end_idx])
 
 
 # ...........................  SC extraction helpers  ..................................

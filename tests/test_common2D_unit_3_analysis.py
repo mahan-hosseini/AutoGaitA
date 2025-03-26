@@ -1,5 +1,5 @@
-from autogaita.dlc.dlc_1_preparation import some_prep
-from autogaita.dlc.dlc_2_sc_extraction import extract_stepcycles
+from autogaita.common2D.common2D_1_preparation import some_prep
+from autogaita.common2D.common2D_2_sc_extraction import extract_stepcycles
 from autogaita.common2D.common2D_3_analysis import (
     analyse_and_export_stepcycles,
     add_step_separators,
@@ -152,7 +152,7 @@ def test_angles_not_depending_on_x_standardisation_and_gait_direction_flipping(
     extract_info, extract_folderinfo, extract_cfg
 ):
     # 1. preparation
-    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
     all_cycles = extract_stepcycles(data, extract_info, extract_folderinfo, extract_cfg)
     # 2. x standardisation
     results = analyse_and_export_stepcycles(data, all_cycles, extract_info, extract_cfg)
@@ -165,7 +165,7 @@ def test_angles_not_depending_on_x_standardisation_and_gait_direction_flipping(
         )
     # 3. gait direction flipping
     extract_cfg["flip_gait_direction"] = False
-    non_flipped_data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    non_flipped_data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
     non_flipped_results = analyse_and_export_stepcycles(
         non_flipped_data, all_cycles, extract_info, extract_cfg
     )

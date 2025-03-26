@@ -1,9 +1,9 @@
 # ...................................  imports  ........................................
-from autogaita.dlc.dlc_1_preparation import some_prep
-from autogaita.dlc.dlc_2_sc_extraction import extract_stepcycles
-from autogaita.common2D.common2D_utils import handle_issues
+from autogaita.common2D.common2D_1_preparation import some_prep
+from autogaita.common2D.common2D_2_sc_extraction import extract_stepcycles
 from autogaita.common2D.common2D_3_analysis import analyse_and_export_stepcycles
 from autogaita.common2D.common2D_4_plots import plot_results
+from autogaita.common2D.common2D_utils import handle_issues
 from autogaita.resources.utils import print_finish, PlotPanel
 import matplotlib
 import matplotlib.pyplot as plt
@@ -41,7 +41,8 @@ def dlc(info, folderinfo, cfg):
         plot_panel_instance.build_plot_panel_loading_screen()
 
     # ................................  preparation  ...................................
-    data = some_prep(info, folderinfo, cfg)
+    tracking_software = "DLC"  # IMPORTANT variable for some_prep!
+    data = some_prep(tracking_software, info, folderinfo, cfg)
     if data is None:
         return
 

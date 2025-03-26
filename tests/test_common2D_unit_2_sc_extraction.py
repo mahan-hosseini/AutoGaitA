@@ -1,6 +1,6 @@
 from autogaita.dlc.dlc_main import dlc
-from autogaita.dlc.dlc_1_preparation import some_prep
-from autogaita.dlc.dlc_2_sc_extraction import extract_stepcycles
+from autogaita.common2D.common2D_1_preparation import some_prep
+from autogaita.common2D.common2D_2_sc_extraction import extract_stepcycles
 from autogaita.common2D.common2D_utils import (
     check_cycle_out_of_bounds,
     check_cycle_duplicates,
@@ -16,7 +16,7 @@ import pytest
 # %%................................  fixtures  ........................................
 @pytest.fixture
 def extract_data_using_some_prep(extract_info, extract_folderinfo, extract_cfg):
-    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
     return data
 
 

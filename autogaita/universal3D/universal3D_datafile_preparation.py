@@ -1,4 +1,4 @@
-from autogaita.dlc.dlc_utils import prepare_DLC_df
+from autogaita.common2D.common2D_1_preparation import prepare_DLC_df
 import os
 import pandas as pd
 import pdb

@@ -1,12 +1,9 @@
-from autogaita.dlc.dlc_1_preparation import (
+from autogaita.common2D.common2D_1_preparation import (
     some_prep,
     move_data_to_folders,
     check_gait_direction,
 )
 import os
-import copy
-import math
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -14,7 +11,7 @@ import pytest
 # %%................................  fixtures  ........................................
 @pytest.fixture
 def extract_data_using_some_prep(extract_info, extract_folderinfo, extract_cfg):
-    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
     return data
 
 
@@ -91,63 +88,10 @@ def extract_cfg():
 
 
 # %%..............................  preparation  .......................................
-def test_wrong_data_and_beam_strings(extract_info, extract_folderinfo, extract_cfg):
-    extract_folderinfo["beam_string"] = extract_folderinfo["data_string"]
-    some_prep(extract_info, extract_folderinfo, extract_cfg)
-    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
-        content = f.read()
-    assert "Your data & baseline (beam) identifiers ([G] in our" in content
-
-
-def test_wrong_postmouse_string(extract_info, extract_folderinfo, extract_cfg):
-    extract_folderinfo["postmouse_string"] = "this_is_a_test"
-    some_prep(extract_info, extract_folderinfo, extract_cfg)
-    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
-        content = f.read()
-    assert "Unable to identify ANY RELEVANT FILES for" in content
-
-
-def test_global_min_standardisation(extract_info, extract_folderinfo, extract_cfg):
-    extract_cfg["subtract_beam"] = False
-    extract_cfg["standardise_y_to_a_joint"] = False
-    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
-    y_cols = [c for c in data.columns if c.endswith(" y")]
-    assert data[y_cols].min().min() == 0
-    # approach here is find difference between global & standardisation joint minma and
-    # see if all y cols' difference is equal to that
-    # => this implies that joint-based y-standardisation worked
-    global_and_standardisation_joints_y_min_diff = data[
-        extract_cfg["y_standardisation_joint"][0] + " y"
-    ].min()
-    global_min_data = data.copy()
-    extract_cfg["standardise_y_to_a_joint"] = True
-    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
-    assert np.allclose(  # use np.allclose here because we are comparing arrays
-        global_min_data[y_cols],
-        data[y_cols] + global_and_standardisation_joints_y_min_diff,
-        atol=1e-9,
-    )
-
-
-def test_datas_indexing_and_time_column(extract_info, extract_folderinfo, extract_cfg):
-    for extract_cfg["sampling_rate"] in [50, 500, 5000]:
-        data = some_prep(extract_info, extract_folderinfo, extract_cfg)
-        # use isclose here because there are some floating point things going on (eg. 1.
-        # 66 and 1.660 for sampling rate of 500)
-        assert math.isclose(
-            data["Time"].max(),
-            (len(data) - 1) / (1 * extract_cfg["sampling_rate"]),
-            rel_tol=1e-9,
-        )
-
-
-def test_cols_we_added_to_data(extract_info, extract_folderinfo, extract_cfg):
-    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
-    assert (data.columns[0] == "Time") & (data.columns[1] == "Flipped")
 
 
 def test_move_csv_datafile_to_results_dir(extract_info, extract_folderinfo):
-    move_data_to_folders(extract_info, extract_folderinfo)
+    move_data_to_folders("DLC", ".csv", extract_info, extract_folderinfo)
     for file in os.listdir(extract_info["results_dir"]):
         if file.endswith(".csv"):
             assert (
@@ -158,42 +102,12 @@ def test_move_csv_datafile_to_results_dir(extract_info, extract_folderinfo):
             )
 
 
-def test_error_if_no_cfgkey_joints(extract_info, extract_folderinfo, extract_cfg):
-    full_cfg = copy.deepcopy(extract_cfg)  # no referencing here - we need copies!
-    for cfg_key in [
-        "hind_joints",
-        "x_standardisation_joint",
-        "y_standardisation_joint",
-    ]:
-        extract_cfg = copy.deepcopy(full_cfg)  # here too!
-        extract_cfg[cfg_key] = ["not_in_data"]
-        data = some_prep(extract_info, extract_folderinfo, extract_cfg)
-        with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
-            content = f.read()
-        if cfg_key == "hind_joints":
-            assert "hind limb joint names" in content
-        elif cfg_key == "x_standardisation_joint":
-            assert "x-coordinate standardisation joint" in content
-        elif cfg_key == "y_standardisation_joint":
-            assert "y-coordinate standardisation joint" in content
-        assert data is None
-    # cannot loop case of x & y joints being broken
-    extract_cfg = copy.deepcopy(full_cfg)
-    extract_cfg["x_standardisation_joint"] = ["not_in_data"]
-    extract_cfg["y_standardisation_joint"] = ["not_in_data"]
-    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
-    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
-        content = f.read()
-        assert "x & y-coordinate standardisation joint" in content
-        assert data is None
-
-
 def test_check_gait_direction(extract_data_using_some_prep, extract_cfg, extract_info):
     direction_joint = extract_cfg["direction_joint"]
     flip_gait_direction = True  # 1) test broken DLC data (empty)
     broken_data = pd.DataFrame(data=None, columns=extract_data_using_some_prep.columns)
     check_gait_direction(
-        broken_data, direction_joint, flip_gait_direction, extract_info
+        "DLC", broken_data, direction_joint, flip_gait_direction, extract_info
     )
     with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
         content = f.read()
@@ -208,6 +122,6 @@ def test_check_gait_direction(extract_data_using_some_prep, extract_cfg, extract
     x_coords = first_half + second_half
     flip_this_data[direction_joint + "x"] = x_coords
     flip_this_data = check_gait_direction(
-        flip_this_data, direction_joint, flip_gait_direction, extract_info
+        "DLC", flip_this_data, direction_joint, flip_gait_direction, extract_info
     )
     assert flip_this_data["Flipped"][0] == True

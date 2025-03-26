@@ -2,18 +2,21 @@ from autogaita.common2D.common2D_1_preparation import (
     check_and_expand_cfg,
     check_and_fix_cfg_strings,
     flip_mouse_body,
+    some_prep,  # note that first input of some_prep is set to "DLC" when not mattering!
 )
-from autogaita.dlc.dlc_1_preparation import some_prep
 import os
-from hypothesis import given, strategies as st, settings, HealthCheck
+import copy
+import math
+import numpy as np
 import pandas.testing as pdt
+from hypothesis import given, strategies as st, settings, HealthCheck
 import pytest
 
 
-# %%.....................  fixtures  (from dlc unit tests)  ............................
+# %%..............................  fixtures  ..........................................
 @pytest.fixture
 def extract_data_using_some_prep(extract_info, extract_folderinfo, extract_cfg):
-    data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
     return data
 
 
@@ -98,6 +101,7 @@ def extract_cfg():
 #    plot_joint test)
 
 
+# %%..........................  cfg & string stuff  ....................................
 def test_plot_joint_error(extract_data_using_some_prep, extract_cfg, extract_info):
     extract_cfg["plot_joint_number"] = 2000
     extract_cfg["subtract_beam"] = False
@@ -116,6 +120,36 @@ def test_plot_joint_error(extract_data_using_some_prep, extract_cfg, extract_inf
     assert extract_cfg["plot_joints"] == extract_cfg["hind_joints"][:2]
 
 
+def test_error_if_no_cfgkey_joints(extract_info, extract_folderinfo, extract_cfg):
+    full_cfg = copy.deepcopy(extract_cfg)  # no referencing here - we need copies!
+    for cfg_key in [
+        "hind_joints",
+        "x_standardisation_joint",
+        "y_standardisation_joint",
+    ]:
+        extract_cfg = copy.deepcopy(full_cfg)  # here too!
+        extract_cfg[cfg_key] = ["not_in_data"]
+        data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
+        with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
+            content = f.read()
+        if cfg_key == "hind_joints":
+            assert "hind limb joint names" in content
+        elif cfg_key == "x_standardisation_joint":
+            assert "x-coordinate standardisation joint" in content
+        elif cfg_key == "y_standardisation_joint":
+            assert "y-coordinate standardisation joint" in content
+        assert data is None
+    # cannot loop case of x & y joints being broken
+    extract_cfg = copy.deepcopy(full_cfg)
+    extract_cfg["x_standardisation_joint"] = ["not_in_data"]
+    extract_cfg["y_standardisation_joint"] = ["not_in_data"]
+    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
+    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
+        content = f.read()
+        assert "x & y-coordinate standardisation joint" in content
+        assert data is None
+
+
 @given(test_list=st.lists(st.text(), min_size=1))
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_removal_of_wrong_strings_from_cfg_key(
@@ -129,9 +163,66 @@ def test_removal_of_wrong_strings_from_cfg_key(
     assert not test_result  # empty list is falsey
 
 
+def test_wrong_data_and_beam_strings(extract_info, extract_folderinfo, extract_cfg):
+    extract_folderinfo["beam_string"] = extract_folderinfo["data_string"]
+    some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
+    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
+        content = f.read()
+    assert "Your data & baseline (beam) identifiers ([G] in our" in content
+
+
+def test_wrong_postmouse_string(extract_info, extract_folderinfo, extract_cfg):
+    extract_folderinfo["postmouse_string"] = "this_is_a_test"
+    some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
+    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
+        content = f.read()
+    assert "Unable to identify ANY RELEVANT FILES for" in content
+
+
+# %%...........................  dataframe stuff  ......................................
+def test_cols_we_added_to_data(extract_info, extract_folderinfo, extract_cfg):
+    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
+    assert (data.columns[0] == "Time") & (data.columns[1] == "Flipped")
+
+
+def test_datas_indexing_and_time_column(extract_info, extract_folderinfo, extract_cfg):
+    for extract_cfg["sampling_rate"] in [50, 500, 5000]:
+        data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
+        # use isclose here because there are some floating point things going on (eg. 1.
+        # 66 and 1.660 for sampling rate of 500)
+        assert math.isclose(
+            data["Time"].max(),
+            (len(data) - 1) / (1 * extract_cfg["sampling_rate"]),
+            rel_tol=1e-9,
+        )
+
+
+# %%...........................  data manipulation  ....................................
+def test_global_min_standardisation(extract_info, extract_folderinfo, extract_cfg):
+    extract_cfg["subtract_beam"] = False
+    extract_cfg["standardise_y_to_a_joint"] = False
+    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
+    y_cols = [c for c in data.columns if c.endswith(" y")]
+    assert data[y_cols].min().min() == 0
+    # approach here is find difference between global & standardisation joint minma and
+    # see if all y cols' difference is equal to that
+    # => this implies that joint-based y-standardisation worked
+    global_and_standardisation_joints_y_min_diff = data[
+        extract_cfg["y_standardisation_joint"][0] + " y"
+    ].min()
+    global_min_data = data.copy()
+    extract_cfg["standardise_y_to_a_joint"] = True
+    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
+    assert np.allclose(  # use np.allclose here because we are comparing arrays
+        global_min_data[y_cols],
+        data[y_cols] + global_and_standardisation_joints_y_min_diff,
+        atol=1e-9,
+    )
+
+
 def test_flip_mouse_body(extract_info, extract_folderinfo, extract_cfg):
     extract_cfg["flip_gait_direction"] = False
-    test_data = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    test_data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
     function_flipped_data = test_data.copy()
     function_flipped_data = flip_mouse_body(test_data, extract_info)
     x_cols = [col for col in function_flipped_data.columns if col.endswith(" x")]
