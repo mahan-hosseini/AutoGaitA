@@ -26,14 +26,14 @@
         "plot_joint_number": "5",
         "plot_SE": true,
         "standardise_y_at_SC_level": false,
-        "standardise_y_to_a_joint": true,
+        "standardise_y_to_a_joint": false,
         "y_standardisation_joint": [
             ""
         ],
         "invert_y_axis": true,
         "flip_gait_direction": true,
-        "analyse_average_x": true,
-        "standardise_x_coordinates": true,
+        "analyse_average_x": false,
+        "standardise_x_coordinates": false,
         "x_standardisation_joint": [
             ""
         ],

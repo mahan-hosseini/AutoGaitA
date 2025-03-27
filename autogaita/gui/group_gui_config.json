@@ -26,7 +26,7 @@
         "permutation_number": "10000",
         "stats_threshold": "0.05",
         "which_leg": "right",
-        "PCA_n_components": "3",
+        "PCA_n_components": "10",
         "PCA_custom_scatter_PCs": "",
         "PCA_save_3D_video": false,
         "PCA_bins": "",

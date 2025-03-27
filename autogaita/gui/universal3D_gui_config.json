@@ -16,12 +16,12 @@
         "plot_joint_number": "3",
         "plot_SE": false,
         "standardise_z_at_SC_level": false,
-        "standardise_z_to_a_joint": true,
+        "standardise_z_to_a_joint": false,
         "z_standardisation_joint": [
             "Midfoot, left"
         ],
         "flip_gait_direction": true,
-        "analyse_average_y": true,
+        "analyse_average_y": false,
         "standardise_y_coordinates": true,
         "y_standardisation_joint": [
             "Midfoot, left"
@@ -58,6 +58,7 @@
         "fileprep_postname_string": "",
         "fileprep_results_dir": "",
         "fileprep_separator": "",
-        "fileprep_string_to_remove": ""
+        "fileprep_string_to_remove": "",
+        "fileprep_3D_DLC": false
     }
 ]
