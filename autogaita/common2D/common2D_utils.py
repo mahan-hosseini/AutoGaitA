@@ -34,93 +34,109 @@ def run_singlerun_in_multirun(tracking_software, idx, info, folderinfo, cfg):
 def extract_info(tracking_software, folderinfo, in_GUI=False):
     """Prepare a dict of lists that include unique infos for each dataset in a folder"""
 
-    # DLC
+    # unpack
+    premouse_string = folderinfo["premouse_string"]
+    postmouse_string = folderinfo["postmouse_string"]
+    prerun_string = folderinfo["prerun_string"]
+    postrun_string = folderinfo["postrun_string"]
+    # IMPORTANT
+    # ---------
+    # different file types based on which software did the tracking!
     if tracking_software == "DLC":
-        # unpack
-        premouse_string = folderinfo["premouse_string"]
-        postmouse_string = folderinfo["postmouse_string"]
-        prerun_string = folderinfo["prerun_string"]
-        postrun_string = folderinfo["postrun_string"]
-
-        # prepare output info dict and run
-        info = {"name": [], "mouse_num": [], "run_num": []}
-        for filename in os.listdir(folderinfo["root_dir"]):
-            # make sure we don't get wrong files
-            if (
-                (premouse_string in filename)
-                & (prerun_string in filename)
-                & (filename.endswith(".csv"))
-            ):
-                # ID number - fill in "_" for user if needed
-                this_mouse_num = False
-                for string_addition in FILE_ID_STRING_ADDITIONS:
-                    try:
-                        candidate_postmouse_string = string_addition + postmouse_string
-                        this_mouse_num = find_number(
-                            filename,
-                            premouse_string,
-                            candidate_postmouse_string,
-                        )
-                    except:
-                        pass
-                if this_mouse_num is False:
-                    no_ID_num_found_msg = (
-                        "Unable to extract ID numbers from file identifiers! "
-                        + "Check unique subject [B] and unique task [C] identifiers"
-                    )
-                    # if we're in the GUI, show an error message & stop here
-                    if in_GUI:
-                        tk.messagebox.showerror(
-                            title="No ID number found!", message=no_ID_num_found_msg
-                        )
-                        return
-                # Do the same for run number
-                this_run_num = False
-                for string_addition in FILE_ID_STRING_ADDITIONS:
-                    try:
-                        candidate_postrun_string = string_addition + postrun_string
-                        this_run_num = find_number(
-                            filename, prerun_string, candidate_postrun_string
-                        )
-                    except:
-                        pass
-                if this_run_num is False:
-                    no_run_num_found_msg = (
-                        "Unable to extract trial numbers from file identifiers! "
-                        + "Check unique trial [D] and unique camera [E] identifiers"
-                    )
-                    if in_GUI:
-                        tk.messagebox.showerror(
-                            title="No Trial number found!", message=no_run_num_found_msg
-                        )
-                        return
-                # if we found both an ID and a run number, create this_name & add to dict
-                if (
-                    this_mouse_num and this_run_num
-                ):  # are truthy since not False if found
-                    this_name = (
-                        "ID " + str(this_mouse_num) + " - Run " + str(this_run_num)
-                    )
-                    if this_name not in info["name"]:  # no data/beam duplicates here
-                        info["name"].append(this_name)
-                        info["mouse_num"].append(this_mouse_num)
-                        info["run_num"].append(this_run_num)
-
-    # SLEAP
+        file_type = ".csv"
     elif tracking_software == "SLEAP":
-        # unpack
-        root_dir = folderinfo["root_dir"]
-        data_string = folderinfo["data_string"]
-        # prepare output info dict and run
-        info = {"name": []}
-        for filename in os.listdir(root_dir):
-            if data_string + ".csv" in filename:
-                info["name"].append(filename.split(data_string + ".csv")[0])
-            if data_string + ".h5" in filename:
-                info["name"].append(filename.split(data_string + ".h5")[0])
-        info["name"] = list(set(info["name"]))  # no duplicates
-
+        file_type = ".h5"
+    # prepare output info dict and run
+    info = {"name": [], "mouse_num": [], "run_num": []}
+    for filename in os.listdir(folderinfo["root_dir"]):
+        # make sure we don't get wrong files
+        if (
+            (premouse_string in filename)
+            & (prerun_string in filename)
+            & (filename.endswith(file_type))
+        ):
+            # ID number - fill in "_" for user if needed
+            this_mouse_num = False
+            for string_addition in FILE_ID_STRING_ADDITIONS:
+                try:
+                    candidate_postmouse_string = string_addition + postmouse_string
+                    this_mouse_num = find_number(
+                        filename,
+                        premouse_string,
+                        candidate_postmouse_string,
+                    )
+                except:
+                    pass
+            if this_mouse_num is False:
+                no_ID_num_found_msg = (
+                    "Unable to extract ID numbers from file identifiers! "
+                    + "Check unique subject [B] and unique task [C] identifiers"
+                )
+                # if we're in the GUI, show an error message & stop here
+                if in_GUI:
+                    tk.messagebox.showerror(
+                        title="No ID number found!", message=no_ID_num_found_msg
+                    )
+                    return
+            # Do the same for run number
+            this_run_num = False
+            for string_addition in FILE_ID_STRING_ADDITIONS:
+                try:
+                    candidate_postrun_string = string_addition + postrun_string
+                    this_run_num = find_number(
+                        filename, prerun_string, candidate_postrun_string
+                    )
+                except:
+                    pass
+            if this_run_num is False:
+                no_run_num_found_msg = (
+                    "Unable to extract trial numbers from file identifiers! "
+                    + "Check unique trial [D] and unique camera [E] identifiers"
+                )
+                if in_GUI:
+                    tk.messagebox.showerror(
+                        title="No Trial number found!", message=no_run_num_found_msg
+                    )
+                    return
+            # if we found both an ID and a run number, create this_name & add to dict
+            if this_mouse_num and this_run_num:  # are truthy since not False if found
+                this_name = "ID " + str(this_mouse_num) + " - Run " + str(this_run_num)
+                if this_name not in info["name"]:  # no data/beam duplicates here
+                    info["name"].append(this_name)
+                    info["mouse_num"].append(this_mouse_num)
+                    info["run_num"].append(this_run_num)
+    # this might happen if user entered wrong identifiers or folder
+    if len(info["name"]) < 1:
+        no_files_message = (
+            f"Unable to find any files at {folderinfo["root_dir"]}!"
+            + "\ncheck your inputs!"
+            )
+        if in_GUI:
+            tk.messagebox.showerror(
+                title="No files found!",
+                message=no_files_message,
+            )
+        else:
+            print(no_files_message)
     return info
+
+    # SLEAP BACKUP
+    # => Note this previously was taking tracking_software input back when SLEAP was
+    #    not identical to DLC - keep this here in case you need it at some point (note
+    #    there is another return info below this)
+    # elif tracking_software == "SLEAP":
+    #     # unpack
+    #     root_dir = folderinfo["root_dir"]
+    #     data_string = folderinfo["data_string"]
+    #     # prepare output info dict and run
+    #     info = {"name": []}
+    #     for filename in os.listdir(root_dir):
+    #         if data_string + ".csv" in filename:
+    #             info["name"].append(filename.split(data_string + ".csv")[0])
+    #         if data_string + ".h5" in filename:
+    #             info["name"].append(filename.split(data_string + ".h5")[0])
+    #     info["name"] = list(set(info["name"]))  # no duplicates
+    # return info
 
 
 def find_number(fullstring, prestring, poststring):

@@ -1252,6 +1252,15 @@ def multirun_extract_info(folderinfo):
                             folderinfo["root_dir"], "Results", info["name"][-1]
                         )
                     )
+    if len(info["name"]) < 1:
+        no_files_message = (
+        f"Unable to find any files at {folderinfo["root_dir"]}!"
+        + "\ncheck your inputs!"
+        )
+        tk.messagebox.showerror(
+            title="No files found!",
+            message=no_files_message,
+        )
     return info
 
 

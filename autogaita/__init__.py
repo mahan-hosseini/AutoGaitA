@@ -1,7 +1,7 @@
 # main gui
 from .gui.main_gui import run_gui  # autogaita.run_gui()
 
-# 3 sub-guis
+# 4 sub-guis
 from .gui.dlc_gui import run_dlc_gui  # autogaita.run_dlc_gui()
 from .gui.sleap_gui import run_sleap_gui  # autogaita.run_sleap_gui()
 from .gui.universal3D_gui import (
@@ -17,7 +17,7 @@ from .universal3D.universal3D_main import (
 )  # autogaita.universal3D(info, folderinfo, cfg)
 from .group.group_main import group  # autogaita.group(folderinfo, cfg)
 
-# 6 batchrun functions - call via e.g. autogaita.dlc_singlerun()
+# 7 batchrun functions - call via e.g. autogaita.dlc_singlerun()
 from .batchrun_scripts.dlc_singlerun import dlc_singlerun
 from .batchrun_scripts.dlc_multirun import dlc_multirun
 from .batchrun_scripts.sleap_singlerun import sleap_singlerun

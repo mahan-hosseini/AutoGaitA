@@ -126,7 +126,7 @@ def final_df_checks_and_save_to_xls(
        completed)
     """
     # reorder the columns we added
-    if tracking_software == "DLC":
+    if tracking_software in ["DLC", "SLEAP"]:
         cols = [ID_COL, "Run", "Stepcycle", "Flipped", "Time"]
     elif tracking_software == "Universal 3D":
         cols = [ID_COL, "Leg", "Stepcycle", "Time"]
@@ -255,7 +255,7 @@ def import_and_combine_dfs(
     elif which_df == "X-Standardised":
         this_sheet_name = X_STANDARDISED_SHEET_NAME
     fullfilepath = os.path.join(group_dir, name, name + " - " + this_sheet_name)
-    if tracking_software == "DLC":
+    if tracking_software in ["DLC", "SLEAP"]:
         df = load_sheet_file(fullfilepath)
     elif tracking_software == "Universal 3D":
         df = load_sheet_file(fullfilepath, which_leg=which_leg)
@@ -277,7 +277,7 @@ def import_and_combine_dfs(
         # test: are our PCA & stats variables present in this ID's dataset?
         check_PCA_and_stats_variables(df_copy, group_name, name, folderinfo, cfg)
         # add some final info & append to group_df
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             # add this run's info to df (& prepare Stepcycle column)
             # => I call DLC stuff ID NUM - RUN NUM, so we can use temp_split & idxing
             #    as done below
@@ -414,7 +414,7 @@ def avg_and_std(dfs, folderinfo, cfg):
     bin_num = cfg["bin_num"]
     save_to_xls = cfg["save_to_xls"]
     tracking_software = cfg["tracking_software"]
-    if tracking_software == "DLC":
+    if tracking_software in ["DLC", "SLEAP"]:
         analyse_average_x = cfg["analyse_average_x"]
     elif tracking_software == "Universal 3D":
         analyse_average_y = cfg["analyse_average_y"]
@@ -426,7 +426,7 @@ def avg_and_std(dfs, folderinfo, cfg):
     # loop over all groups' dfs
     for g, group_name in enumerate(group_names):
         # extract this df and IDs
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             cols_to_exclude = [ID_COL, "Run", "Stepcycle", "Flipped", "Time"]
             for col in dfs[g].columns:
                 if col.endswith("likelihood"):

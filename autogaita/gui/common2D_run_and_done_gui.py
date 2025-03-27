@@ -1,10 +1,11 @@
 # %%..........  LOCAL FUNCTION(S) #3 - BUILD RUN AND DONE WINDOWS .............
-
+from autogaita.gui.common2D_gui_utils import (
+    get_results_and_cfg,
+    runanalysis,
+)
 from autogaita.gui.first_level_gui_utils import (
     update_config_file,
     extract_results_from_json_file,
-    get_results_and_cfg,
-    runanalysis,
 )
 import autogaita.gui.gui_utils as gui_utils
 import autogaita.gui.gaita_widgets as gaita_widgets
@@ -41,14 +42,10 @@ def build_run_and_done_windows(
         runwindow.title("Single GaitA")
     else:
         runwindow.title("Batch GaitA")
-    if tracking_software == "DLC":
-        runwindow.geometry(f"{int(w / 2)}x{h}+{int(w / 4)}+0")
-    elif tracking_software == "SLEAP":
-        runwindow.geometry(f"{int(w / 2)}x{int(h / 2)}+{int(w / 4)}+{int(h / 4)}")
+    runwindow.geometry(f"{int(w / 2)}x{h}+{int(w / 4)}+0")
     gui_utils.fix_window_after_its_creation(runwindow)
     # fill window with required info labels & entries - then get results
     results = populate_run_window(
-        tracking_software,
         analysis,
         runwindow,
         cfg,
@@ -154,7 +151,6 @@ def build_run_and_done_windows(
 
 # %%..........  LOCAL FUNCTION(S) #4 - POPULATE RUN WINDOW ....................
 def populate_run_window(
-    tracking_software,
     analysis,
     runwindow,
     cfg,
@@ -188,49 +184,30 @@ def populate_run_window(
 
     # ........................  build the frame  ...............................
     if analysis == "single":
-        if tracking_software == "DLC":
-            # mouse number
-            mousenum_label, mousenum_entry = gaita_widgets.label_and_entry_pair(
-                runwindow,
-                "What is the number of the animal/subject?",
-                results["mouse_num"],
-                widget_cfg,
-                adv_cfg_textsize=True,
-            )
-            mousenum_label.grid(row=0, column=0)
-            mousenum_entry.grid(row=1, column=0)
-            # run number
-            runnum_label, runnum_entry = gaita_widgets.label_and_entry_pair(
-                runwindow,
-                "What is the number of the trial?",
-                results["run_num"],
-                widget_cfg,
-                adv_cfg_textsize=True,
-            )
-            runnum_label.grid(row=2, column=0)
-            runnum_entry.grid(row=3, column=0)
-            # set row index accordingly
-            r = 4
-        elif tracking_software == "SLEAP":
-            # ID
-            ID_label, ID_entry = gaita_widgets.label_and_entry_pair(
-                runwindow,
-                "What is the ID of the animal/subject?",
-                results["name"],
-                widget_cfg,
-                adv_cfg_textsize=True,
-            )
-            ID_label.grid(row=0, column=0)
-            ID_entry.grid(row=1, column=0)
-            # set row index accordingly
-            r = 2
+        # mouse number
+        mousenum_label, mousenum_entry = gaita_widgets.label_and_entry_pair(
+            runwindow,
+            "What is the number of the animal/subject?",
+            results["mouse_num"],
+            widget_cfg,
+            adv_cfg_textsize=True,
+        )
+        mousenum_label.grid(row=0, column=0)
+        mousenum_entry.grid(row=1, column=0)
+        # run number
+        runnum_label, runnum_entry = gaita_widgets.label_and_entry_pair(
+            runwindow,
+            "What is the number of the trial?",
+            results["run_num"],
+            widget_cfg,
+            adv_cfg_textsize=True,
+        )
+        runnum_label.grid(row=2, column=0)
+        runnum_entry.grid(row=3, column=0)
+        # set row index accordingly
+        r = 4
     else:
         r = 0
-    # if tracking_software == "SLEAP":
-    #     # empty label 1 (for spacing)
-    #     empty_label_sleap = ctk.CTkLabel(runwindow, text="")
-    #     empty_label_sleap.grid(row=r, column=0)
-    #     r += 1
     # root directory
     rootdir_label, rootdir_entry = gaita_widgets.label_and_entry_pair(
         runwindow,
@@ -254,130 +231,88 @@ def populate_run_window(
     # empty label 1 (for spacing)
     empty_label_one = ctk.CTkLabel(runwindow, text="")
     empty_label_one.grid(row=r + 4, column=0)
-    last_sleap_row = r + 4
-    # .........................  DLC-specific information  .............................
-    if tracking_software == "DLC":
-        # file naming convention label one
-        name_convention_string_one = (
-            "According to the [A]_[B]_[C]_[D]-[E][G] filename convention "
-        )
-        name_convention_label_one = ctk.CTkLabel(
-            runwindow,
-            text=name_convention_string_one,
-            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-        )
-        name_convention_label_one.grid(row=r + 5, column=0)
-        # file naming convention label two
-        name_convention_string_two = (
-            "(e.g. C57B6_Mouse10_25mm_Run1-6DLC-JointTracking):"
-        )
-        name_convention_label_two = ctk.CTkLabel(
-            runwindow,
-            text=name_convention_string_two,
-            font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
-        )
-        name_convention_label_two.grid(row=r + 6, column=0)
-        # empty label 2 (for spacing)
-        empty_label_two = ctk.CTkLabel(runwindow, text="")
-        empty_label_two.grid(row=r + 7, column=0)
-        # data string
-        data_label, data_entry = gaita_widgets.label_and_entry_pair(
-            runwindow,
-            "[G] What is the identifier of the DLC-tracked coordinate file?",
-            results["data_string"],
-            widget_cfg,
-            adv_cfg_textsize=True,
-        )
-        data_label.grid(row=r + 8, column=0)
-        data_entry.grid(row=r + 9, column=0)
-        # beam string
-        beam_label, beam_entry = gaita_widgets.label_and_entry_pair(
-            runwindow,
-            "[G] What is the identifier of the DLC-tracked baseline file? (optional)",
-            results["beam_string"],
-            widget_cfg,
-            adv_cfg_textsize=True,
-        )
-        beam_label.grid(row=r + 10, column=0)
-        beam_entry.grid(row=r + 11, column=0)
-        # premouse_num string
-        premouse_label, premouse_entry = gaita_widgets.label_and_entry_pair(
-            runwindow,
-            "[B] Define the 'unique subject identifier' preceding the number",
-            results["premouse_string"],
-            widget_cfg,
-            adv_cfg_textsize=True,
-        )
-        premouse_label.grid(row=r + 12, column=0)
-        premouse_entry.grid(row=r + 13, column=0)
-        # postmouse_num string
-        postmouse_label, postmouse_entry = gaita_widgets.label_and_entry_pair(
-            runwindow,
-            "[C] Define the 'unique task identifier",
-            results["postmouse_string"],
-            widget_cfg,
-            adv_cfg_textsize=True,
-        )
-        postmouse_label.grid(row=r + 14, column=0)
-        postmouse_entry.grid(row=r + 15, column=0)
-        # prerun string
-        prerun_label, prerun_entry = gaita_widgets.label_and_entry_pair(
-            runwindow,
-            "[D] Define the 'unique trial identifier",
-            results["prerun_string"],
-            widget_cfg,
-            adv_cfg_textsize=True,
-        )
-        prerun_label.grid(row=r + 16, column=0)
-        prerun_entry.grid(row=r + 17, column=0)
-        # postrun string
-        postrun_label, postrun_entry = gaita_widgets.label_and_entry_pair(
-            runwindow,
-            "[E] Define the 'unique camera identifier",
-            results["postrun_string"],
-            widget_cfg,
-            adv_cfg_textsize=True,
-        )
-        postrun_label.grid(row=r + 18, column=0)
-        postrun_entry.grid(row=r + 19, column=0)
-    # .........................  SLEAP-specific information  ...........................
-    elif tracking_software == "SLEAP":
-        # info labels
-        info_label_1 = ctk.CTkLabel(
-            runwindow,
-            text="Below two identifers are both required if height-correcting to a tracked baseline.",
-            font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
-        )
-        info_label_1.grid(row=last_sleap_row + 1, column=0)
-        info_label_2 = ctk.CTkLabel(
-            runwindow,
-            text="If not height-correcting, identifier 1 can still be used for differentiating SLEAP files from other files.",
-            font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
-        )
-        info_label_2.grid(row=last_sleap_row + 2, column=0)
-        # data string
-        data_label, data_entry = gaita_widgets.label_and_entry_pair(
-            runwindow,
-            "1. Identifier of SLEAP-tracked coordinate files",
-            results["data_string"],
-            widget_cfg,
-            adv_cfg_textsize=True,
-        )
-        data_label.grid(row=last_sleap_row + 3, column=0)
-        data_entry.grid(row=last_sleap_row + 4, column=0)
-        # beam string
-        beam_label, beam_entry = gaita_widgets.label_and_entry_pair(
-            runwindow,
-            "2. Identifier of SLEAP-tracked baseline files",
-            results["beam_string"],
-            widget_cfg,
-            adv_cfg_textsize=True,
-        )
-        beam_label.grid(row=last_sleap_row + 5, column=0)
-        beam_entry.grid(row=last_sleap_row + 6, column=0)
-        # empty label 3 (for spacing)
-        empty_label_three = ctk.CTkLabel(runwindow, text="")
-        empty_label_three.grid(row=last_sleap_row + 7, column=0)
+    # .......................  file-identifier information  ............................
+    # file naming convention label one
+    name_convention_string_one = (
+        "According to the [A]_[B]_[C]_[D]-[E][G] filename convention "
+    )
+    name_convention_label_one = ctk.CTkLabel(
+        runwindow,
+        text=name_convention_string_one,
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    name_convention_label_one.grid(row=r + 5, column=0)
+    # file naming convention label two
+    name_convention_string_two = "(e.g. C57B6_Mouse10_25mm_Run1-6DLC-JointTracking):"
+    name_convention_label_two = ctk.CTkLabel(
+        runwindow,
+        text=name_convention_string_two,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    )
+    name_convention_label_two.grid(row=r + 6, column=0)
+    # empty label 2 (for spacing)
+    empty_label_two = ctk.CTkLabel(runwindow, text="")
+    empty_label_two.grid(row=r + 7, column=0)
+    # data string
+    data_label, data_entry = gaita_widgets.label_and_entry_pair(
+        runwindow,
+        "[G] What is the identifier of the tracked coordinate file?",
+        results["data_string"],
+        widget_cfg,
+        adv_cfg_textsize=True,
+    )
+    data_label.grid(row=r + 8, column=0)
+    data_entry.grid(row=r + 9, column=0)
+    # beam string
+    beam_label, beam_entry = gaita_widgets.label_and_entry_pair(
+        runwindow,
+        "[G] What is the identifier of the tracked baseline file? (optional)",
+        results["beam_string"],
+        widget_cfg,
+        adv_cfg_textsize=True,
+    )
+    beam_label.grid(row=r + 10, column=0)
+    beam_entry.grid(row=r + 11, column=0)
+    # premouse_num string
+    premouse_label, premouse_entry = gaita_widgets.label_and_entry_pair(
+        runwindow,
+        "[B] Define the 'unique subject identifier' preceding the number",
+        results["premouse_string"],
+        widget_cfg,
+        adv_cfg_textsize=True,
+    )
+    premouse_label.grid(row=r + 12, column=0)
+    premouse_entry.grid(row=r + 13, column=0)
+    # postmouse_num string
+    postmouse_label, postmouse_entry = gaita_widgets.label_and_entry_pair(
+        runwindow,
+        "[C] Define the 'unique task identifier",
+        results["postmouse_string"],
+        widget_cfg,
+        adv_cfg_textsize=True,
+    )
+    postmouse_label.grid(row=r + 14, column=0)
+    postmouse_entry.grid(row=r + 15, column=0)
+    # prerun string
+    prerun_label, prerun_entry = gaita_widgets.label_and_entry_pair(
+        runwindow,
+        "[D] Define the 'unique trial identifier",
+        results["prerun_string"],
+        widget_cfg,
+        adv_cfg_textsize=True,
+    )
+    prerun_label.grid(row=r + 16, column=0)
+    prerun_entry.grid(row=r + 17, column=0)
+    # postrun string
+    postrun_label, postrun_entry = gaita_widgets.label_and_entry_pair(
+        runwindow,
+        "[E] Define the 'unique camera identifier",
+        results["postrun_string"],
+        widget_cfg,
+        adv_cfg_textsize=True,
+    )
+    postrun_label.grid(row=r + 18, column=0)
+    postrun_entry.grid(row=r + 19, column=0)
     # button confirming being done
     # => change value of user_ready in this call
     finishbutton = ctk.CTkButton(
@@ -400,10 +335,7 @@ def populate_run_window(
             user_ready.set(1),
         ),
     )
-    if tracking_software == "DLC":
-        finishbutton_row = r + 20
-    elif tracking_software == "SLEAP":
-        finishbutton_row = last_sleap_row + 8
+    finishbutton_row = r + 20
     finishbutton.grid(
         row=finishbutton_row, column=0, rowspan=2, sticky="nsew", pady=5, padx=70
     )

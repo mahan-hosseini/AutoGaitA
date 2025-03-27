@@ -98,6 +98,12 @@ def extract_info(folderinfo):
                     info["results_dir"].append(
                         os.path.join(root_dir, "Results", info["name"][-1])
                     )
+    if len(info["name"]) < 1:
+        no_files_message = (
+        f"Unable to find any files at {folderinfo["root_dir"]}!"
+        + "\ncheck your inputs!"
+        )
+        print(no_files_message)
     return info
 
 

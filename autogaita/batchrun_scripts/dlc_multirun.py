@@ -62,7 +62,7 @@ def dlc_multirun():
         "upper_joint": ["Knee ", "Hip ", "Iliac Crest "],
     }
     # run a single gaita run for each entry of info
-    info = extract_info(folderinfo)
+    info = extract_info("DLC", folderinfo)
     for idx in range(len(info["name"])):
         run_singlerun_in_multirun("DLC", idx, info, folderinfo, cfg)
 

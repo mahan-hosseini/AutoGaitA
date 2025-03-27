@@ -33,7 +33,7 @@ def plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance):
     plt.close("all")
 
     # .......................2 - x coords over average SC (optional)....................
-    if tracking_software == "DLC":
+    if tracking_software in ["DLC", "SLEAP"]:
         if cfg["analyse_average_x"] is True:
             plot_horizontal_coord = True
     elif tracking_software == "Universal 3D":
@@ -98,7 +98,7 @@ def plot_joint_y_by_average_SC(
         ax.set_prop_cycle(joint_color_cycler)
         x = np.linspace(0, 100, bin_num)
         for joint in joints:
-            if tracking_software == "DLC":
+            if tracking_software in ["DLC", "SLEAP"]:
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "y")
             elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
@@ -118,7 +118,7 @@ def plot_joint_y_by_average_SC(
         elif legend_outside is False:
             ax.legend()
         ax.set_xlabel("Percentage")
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             ax.set_title(group_name + " - Joint Y over average step cycle")
             if check_mouse_conversion("y", cfg):
                 ytickconvert_mm_to_cm(ax)
@@ -144,7 +144,7 @@ def plot_joint_y_by_average_SC(
         ax.set_prop_cycle(group_color_cycler)
         x = np.linspace(0, 100, bin_num)
         for g, group_name in enumerate(group_names):
-            if tracking_software == "DLC":
+            if tracking_software in ["DLC", "SLEAP"]:
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "y")
             elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
@@ -163,7 +163,7 @@ def plot_joint_y_by_average_SC(
         elif legend_outside is False:
             ax.legend()
         ax.set_xlabel("Percentage")
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             ax.set_title(joint + "Y over average step cycle")
             if check_mouse_conversion("y", cfg):
                 ytickconvert_mm_to_cm(ax)
@@ -212,7 +212,7 @@ def plot_joint_x_by_average_SC(
         ax.set_prop_cycle(joint_color_cycler)
         x = np.linspace(0, 100, bin_num)
         for joint in joints:
-            if tracking_software == "DLC":
+            if tracking_software in ["DLC", "SLEAP"]:
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "x")
             elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
@@ -232,7 +232,7 @@ def plot_joint_x_by_average_SC(
         elif legend_outside is False:
             ax.legend()
         ax.set_xlabel("Percentage")
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             ax.set_title(group_name + " - Joint X over average step cycle")
             if check_mouse_conversion("x", cfg):
                 ytickconvert_mm_to_cm(ax)
@@ -258,7 +258,7 @@ def plot_joint_x_by_average_SC(
         ax.set_prop_cycle(group_color_cycler)
         x = np.linspace(0, 100, bin_num)
         for g, group_name in enumerate(group_names):
-            if tracking_software == "DLC":
+            if tracking_software in ["DLC", "SLEAP"]:
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "x")
             elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
@@ -277,7 +277,7 @@ def plot_joint_x_by_average_SC(
         elif legend_outside is False:
             ax.legend()
         ax.set_xlabel("Percentage")
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             ax.set_title(joint + "X over average step cycle")
             if check_mouse_conversion("x", cfg):
                 ytickconvert_mm_to_cm(ax)
@@ -326,7 +326,7 @@ def plot_angles_by_average_SC(
         ax.set_prop_cycle(angle_color_cycler)
         x = np.linspace(0, 100, bin_num)
         for angle in angles["name"]:
-            if tracking_software == "DLC":
+            if tracking_software in ["DLC", "SLEAP"]:
                 y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle")
             elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
@@ -346,7 +346,7 @@ def plot_angles_by_average_SC(
             ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel("Angle (degrees)")
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             ax.set_title(group_name + " - Joint angles over average step cycle")
         elif tracking_software == "Universal 3D":
             ax.set_title(
@@ -365,7 +365,7 @@ def plot_angles_by_average_SC(
         ax.set_prop_cycle(group_color_cycler)
         x = np.linspace(0, 100, bin_num)
         for g, group_name in enumerate(group_names):
-            if tracking_software == "DLC":
+            if tracking_software in ["DLC", "SLEAP"]:
                 y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle")
             elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
@@ -385,7 +385,7 @@ def plot_angles_by_average_SC(
             ax.legend()
         ax.set_xlabel("Percentage")
         ax.set_ylabel("Angle (degrees)")
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             ax.set_title(angle + "angle over average step cycle")
         elif tracking_software == "Universal 3D":
             if angle + "Angle" in g_avg_dfs[g].columns:
@@ -426,7 +426,7 @@ def plot_x_velocities_by_average_SC(
         ax.set_prop_cycle(joint_color_cycler)
         x = np.linspace(0, 100, bin_num)
         for joint in joints:
-            if tracking_software == "DLC":
+            if tracking_software in ["DLC", "SLEAP"]:
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "Velocity")
             elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
@@ -445,7 +445,7 @@ def plot_x_velocities_by_average_SC(
         elif legend_outside is False:
             ax.legend()
         ax.set_xlabel("Percentage")
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             if check_mouse_conversion("x", cfg):
                 ytickconvert_mm_to_cm(ax)
                 unit = "x in cm"
@@ -475,7 +475,7 @@ def plot_x_velocities_by_average_SC(
         ax.set_prop_cycle(group_color_cycler)
         x = np.linspace(0, 100, bin_num)
         for g, group_name in enumerate(group_names):
-            if tracking_software == "DLC":
+            if tracking_software in ["DLC", "SLEAP"]:
                 y_col = g_avg_dfs[g].columns.get_loc(joint + "Velocity")
             elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
@@ -494,7 +494,7 @@ def plot_x_velocities_by_average_SC(
         elif legend_outside is False:
             ax.legend()
         ax.set_xlabel("Percentage")
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             if check_mouse_conversion("x", cfg):
                 ytickconvert_mm_to_cm(ax)
                 unit = "x in cm"
@@ -544,7 +544,7 @@ def plot_angular_velocities_by_average_SC(
         ax.set_prop_cycle(angle_color_cycler)
         x = np.linspace(0, 100, bin_num)
         for angle in angles["name"]:
-            if tracking_software == "DLC":
+            if tracking_software in ["DLC", "SLEAP"]:
                 y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle Velocity")
             elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
@@ -566,7 +566,7 @@ def plot_angular_velocities_by_average_SC(
         ax.set_ylabel(
             ylabel_velocity_and_acceleration("Velocity", "degrees", sampling_rate)
         )
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             ax.set_title(group_name + " - Angular velocities over average step cycle")
         elif tracking_software == "Universal 3D":
             ax.set_title(
@@ -588,7 +588,7 @@ def plot_angular_velocities_by_average_SC(
         ax.set_prop_cycle(group_color_cycler)
         x = np.linspace(0, 100, bin_num)
         for g, group_name in enumerate(group_names):
-            if tracking_software == "DLC":
+            if tracking_software in ["DLC", "SLEAP"]:
                 y_col = g_avg_dfs[g].columns.get_loc(angle + "Angle Velocity")
             elif tracking_software == "Universal 3D":
                 # check for bodyside-specificity
@@ -610,7 +610,7 @@ def plot_angular_velocities_by_average_SC(
         ax.set_ylabel(
             ylabel_velocity_and_acceleration("Velocity", "degrees", sampling_rate)
         )
-        if tracking_software == "DLC":
+        if tracking_software in ["DLC", "SLEAP"]:
             ax.set_title(angle + "- Angular velocities over average step cycle")
         elif tracking_software == "Universal 3D":
             if angle + "Angle" in g_avg_dfs[g].columns:

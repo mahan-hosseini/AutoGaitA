@@ -63,7 +63,7 @@ def sleap_singlerun():
 
     # info
     info = {}
-    info["mouse_num"] = 20
+    info["mouse_num"] = 32
     info["run_num"] = 1
     info["name"] = "ID " + str(info["mouse_num"]) + " - Run " + str(info["run_num"])
     if folderinfo["results_dir"]:

@@ -1,10 +1,15 @@
 [
     {
-        "name": "",
+        "mouse_num": "",
+        "run_num": "",
         "root_dir": "",
         "sctable_filename": "",
         "data_string": "",
-        "beam_string": ""
+        "beam_string": "",
+        "premouse_string": "",
+        "postmouse_string": "",
+        "prerun_string": "",
+        "postrun_string": ""
     },
     {
         "sampling_rate": "",
@@ -23,22 +28,24 @@
         "standardise_y_at_SC_level": false,
         "standardise_y_to_a_joint": true,
         "y_standardisation_joint": [
-            "head"
+            ""
         ],
-        "flip_gait_direction": false,
+        "invert_y_axis": true,
+        "flip_gait_direction": true,
         "analyse_average_x": true,
         "standardise_x_coordinates": true,
         "x_standardisation_joint": [
-            "head"
+            ""
         ],
         "color_palette": "Set2",
         "legend_outside": true,
         "results_dir": "",
         "hind_joints": [
-            "head",
-            "thorax",
-            "wingL",
-            "wingR"
+            "Midfoot",
+            "Ankle",
+            "Knee",
+            "",
+            ""
         ],
         "fore_joints": [],
         "beam_col_left": [
@@ -55,13 +62,13 @@
         ],
         "angles": {
             "name": [
-                "thorax"
+                "Ankle"
             ],
             "lower_joint": [
-                "hindlegL4"
+                "Midfoot"
             ],
             "upper_joint": [
-                "midlegL4"
+                "Knee"
             ]
         }
     }
