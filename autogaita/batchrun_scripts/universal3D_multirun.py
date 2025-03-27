@@ -100,8 +100,7 @@ def extract_info(folderinfo):
                     )
     if len(info["name"]) < 1:
         no_files_message = (
-        f"Unable to find any files at {folderinfo["root_dir"]}!"
-        + "\ncheck your inputs!"
+            f"Unable to find any files at {root_dir}!" + "\ncheck your inputs!"
         )
         print(no_files_message)
     return info

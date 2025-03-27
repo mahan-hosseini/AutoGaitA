@@ -1220,7 +1220,8 @@ def multirun_extract_info(folderinfo):
     3) info["results_dir"] is the dir we save this ID's (!) Results to!
     """
 
-    results_dir = cfg["results_dir"].get()
+    root_dir = folderinfo["root_dir"]
+    results_dir = cfg["results_dir"].get()  # global var....
     info = {"name": [], "results_dir": []}
     for filename in os.listdir(folderinfo["root_dir"]):
         # dont try to combine the two "join" if blocks into one - we want to append
@@ -1254,8 +1255,7 @@ def multirun_extract_info(folderinfo):
                     )
     if len(info["name"]) < 1:
         no_files_message = (
-        f"Unable to find any files at {folderinfo["root_dir"]}!"
-        + "\ncheck your inputs!"
+            f"Unable to find any files at {root_dir}!" + "\ncheck your inputs!"
         )
         tk.messagebox.showerror(
             title="No files found!",

@@ -35,6 +35,7 @@ def extract_info(tracking_software, folderinfo, in_GUI=False):
     """Prepare a dict of lists that include unique infos for each dataset in a folder"""
 
     # unpack
+    root_dir = folderinfo["root_dir"]
     premouse_string = folderinfo["premouse_string"]
     postmouse_string = folderinfo["postmouse_string"]
     prerun_string = folderinfo["prerun_string"]
@@ -108,9 +109,8 @@ def extract_info(tracking_software, folderinfo, in_GUI=False):
     # this might happen if user entered wrong identifiers or folder
     if len(info["name"]) < 1:
         no_files_message = (
-            f"Unable to find any files at {folderinfo["root_dir"]}!"
-            + "\ncheck your inputs!"
-            )
+            f"Unable to find any files at {root_dir}!" + "\ncheck your inputs!"
+        )
         if in_GUI:
             tk.messagebox.showerror(
                 title="No files found!",

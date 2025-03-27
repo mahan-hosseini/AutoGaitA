@@ -596,6 +596,7 @@ def grand_avg_and_std(avg_dfs, folderinfo, cfg):
 # %% .................  local functions #4 - load previous dataframes  .................
 def load_previous_runs_dataframes(folderinfo, cfg):
     """If user asked for it load previous runs dataframes instead of generating them (i.e., avg_dfs, g_avg_dfs, g_std_dfs)"""
+    load_dir = folderinfo["load_dir"]
     avg_dfs = [[]] * len(folderinfo["group_names"])
     g_avg_dfs = [[]] * len(folderinfo["group_names"])
     g_std_dfs = [[]] * len(folderinfo["group_names"])
@@ -623,7 +624,7 @@ def load_previous_runs_dataframes(folderinfo, cfg):
             error_msg = (
                 "\n******************\n! CRITICAL ERROR !\n******************\n"
                 + f"Unable to load the data of group '{group_name}' from \n"
-                + f"{folderinfo['load_dir']}"
+                + f"{load_dir}"
                 + "\n\nTry again!"
             )
             print(error_msg)
