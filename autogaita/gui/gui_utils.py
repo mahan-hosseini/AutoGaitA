@@ -43,9 +43,9 @@ def maximise_widgets(window):
 # ..............................  change widget states  ................................
 
 
-def change_widget_state_based_on_checkbox(cfg, key_of_checkbox, entry_to_change):
-    """Change the state of an entry widget based on whether a checkbox is checked."""
-    if cfg[key_of_checkbox].get() is True:
-        entry_to_change.configure(state="normal")
-    elif cfg[key_of_checkbox].get() is False:
-        entry_to_change.configure(state="disabled")
+def change_widget_state_based_on_checkbox(cfg, key_to_check, widget_to_change):
+    """Change the state of a widget based on state of another widget."""
+    if cfg[key_to_check].get() is True:
+        widget_to_change.configure(state="normal")
+    elif cfg[key_to_check].get() is False:
+        widget_to_change.configure(state="disabled")
