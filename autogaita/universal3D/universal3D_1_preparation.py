@@ -31,6 +31,7 @@ def some_prep(info, folderinfo, cfg):
     analyse_average_y = cfg["analyse_average_y"]
     standardise_y_coordinates = cfg["standardise_y_coordinates"]
     standardise_z_to_a_joint = cfg["standardise_z_to_a_joint"]
+    tracking_software = "Universal 3D"  # hardcoded for this toolbox
 
     # .............................  move data  ........................................
     # => see if we can delete a previous runs results folder if existant. if not, it's a
@@ -125,7 +126,7 @@ def some_prep(info, folderinfo, cfg):
         "z_standardisation_joint": z_standardisation_joint,
         "joints": joints,
         "angles": angles,
-        "tracking_software": "Universal 3D",
+        "tracking_software": tracking_software,
     }
     # note - using "w" will overwrite/truncate file, thus no need to remove it if exists
     with open(config_json_path, "w") as config_json_file:

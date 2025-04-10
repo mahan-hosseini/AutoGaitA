@@ -56,6 +56,7 @@ TK_STR_VARS = [
     "plot_joint_number",
     "color_palette",
     "results_dir",
+    "coordinate_standardisation_xls",
 ]
 GUI_SPECIFIC_VARS = {
     "FLOAT_VARS": FLOAT_VARS,

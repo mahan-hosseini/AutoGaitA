@@ -1,5 +1,8 @@
 # %% imports
-from autogaita.resources.utils import write_issues_to_textfile
+from autogaita.resources.utils import (
+    write_issues_to_textfile,
+    standardise_primary_joint_coordinates,
+)
 from autogaita.common2D.common2D_constants import FILE_ID_STRING_ADDITIONS
 import os
 import shutil
@@ -48,6 +51,7 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     analyse_average_x = cfg["analyse_average_x"]
     standardise_x_coordinates = cfg["standardise_x_coordinates"]
     standardise_y_to_a_joint = cfg["standardise_y_to_a_joint"]
+    coordinate_standardisation_xls = cfg["coordinate_standardisation_xls"]
 
     # .............................  move data  ........................................
     # => slightly different for DLC or SLEAP (see local functions below)
@@ -198,6 +202,7 @@ def some_prep(tracking_software, info, folderinfo, cfg):
         "x_standardisation_joint": x_standardisation_joint,
         "standardise_y_to_a_joint": standardise_y_to_a_joint,
         "y_standardisation_joint": y_standardisation_joint,
+        "coordinate_standardisation_xls": coordinate_standardisation_xls,
         "hind_joints": hind_joints,
         "fore_joints": fore_joints,
         "angles": angles,
@@ -250,6 +255,12 @@ def some_prep(tracking_software, info, folderinfo, cfg):
         else:
             y_min = data[y_cols].min().min()
         data[y_cols] -= y_min
+    # standardise all primary joint (!) coordinates
+    # => all dimensions are divided by a fixed user-provided value
+    if len(coordinate_standardisation_xls) > 0:
+        data = standardise_primary_joint_coordinates(data, tracking_software, info, cfg)
+        if data is None:  # means an error
+            return
     # convert pixels to millimeters
     if convert_to_mm:
         for column in data.columns:

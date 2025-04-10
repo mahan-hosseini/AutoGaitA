@@ -8,9 +8,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 import tkinter as tk
 import customtkinter as ctk
 
-
 # .................................  constants  ........................................
 from autogaita.resources.constants import ISSUES_TXT_FILENAME, INFO_TEXT_WIDTH
+from autogaita.universal3D.universal3D_constants import LEGS_COLFORMAT
 
 
 # ...............................  error handling  .....................................
@@ -154,6 +154,107 @@ def bin_num_to_percentages(bin_num):
     # use floats to avoid integer duplicates for more than 100 bins
     else:
         return [round((((s + 1) / bin_num) * 100), 2) for s in range(bin_num)]
+
+
+def standardise_primary_joint_coordinates(data, tracking_software, info, cfg):
+    """Standardises all primary joint coordinates by a fixed decimal value which is divided from all dimensions' coordinates
+    => Note in Universal 3D it's just called joint
+    """
+    # unpack
+    name = info["name"]
+    coordinate_standardisation_xls = cfg["coordinate_standardisation_xls"]
+    if tracking_software != "Universal 3D":
+        ID_string = str(info["mouse_num"])
+        run_string = str(info["run_num"])
+        joints = cfg["hind_joints"]
+    else:
+        ID_string = name
+        joints = cfg["joints"]
+    # test if xls exists - if not quit autogaita
+    # => note that some_prep will be stopped if this should return None
+    if not os.path.exists(coordinate_standardisation_xls):
+        message = (
+            "\n******************\n! CRITICAL ERROR !\n******************\n"
+            + "No coordinate standardisation xls file found at:"
+            + f"\n{coordinate_standardisation_xls}!"
+            + "\nFix the path or remove the value from the config (GUI) if you "
+            + "do not wish you standardise coordinates."
+            + "\nNote that horizontal (i.e. x- in 2D) or height (i.e. y- in 2D) "
+            + "standardisation is something else!"
+            + "\nCancelling AutoGaitA!"
+        )
+        print(message)
+        write_issues_to_textfile(message, info)
+        return
+    # load the file (string because of comparison in conditon)
+    coord_stand_df = pd.read_excel(coordinate_standardisation_xls).astype(str)
+    if not all(coord_stand_df.columns.isin(["ID", "Run", "Standardisation Value"])):
+        message = (
+            "\n******************\n! CRITICAL ERROR !\n******************\n"
+            + "The coordinate standardisation Excel file does not have the correct "
+            + "column names - refer to our Template file!"
+            + "\nPlease check the xls file and try again."
+            + "\nCancelling AutoGaitA!"
+        )
+        print(message)
+        write_issues_to_textfile(message, info)
+        return
+    # extract the row we need
+    if tracking_software != "Universal 3D":
+        condition = (coord_stand_df["ID"] == ID_string) & (
+            coord_stand_df["Run"] == run_string
+        )
+    else:
+        condition = coord_stand_df["ID"] == ID_string
+    coord_stand_df = coord_stand_df[condition]
+    if len(coord_stand_df) != 1:
+        message = "\n******************\n! CRITICAL ERROR !\n******************\n"
+        if len(coord_stand_df) == 0:
+            message += (
+                f"Unable to find {name} in the coordinate standardisation xls file!"
+            )
+        elif len(coord_stand_df) > 1:
+            message += f"Found multiple entries for {name} in the coordinate standardisation xls file!"
+        message += (
+            "\nPlease check the xls file and try again." + "\nCancelling AutoGaitA!"
+        )
+        print(message)
+        write_issues_to_textfile(message, info)
+        return
+    # extract standardisation value from xls
+    try:
+        # if-len-lines in error-message block above ensure that the line below is
+        # indexing correctly using iloc[0, 2] - condition is always of len==1!
+        coordinate_standardisation_value = float(coord_stand_df.iloc[0, 2])
+    except ValueError:
+        message = (
+            "\n******************\n! CRITICAL ERROR !\n******************\n"
+            + f"Unable to convert standardisation value for {name} to a float!"
+            + "\nPlease check the xls file and try again."
+            + "\nCancelling AutoGaitA!"
+        )
+        print(message)
+        write_issues_to_textfile(message, info)
+        return
+    # all tests are passed - standardise coordinates
+    # => if we are in 3D we have to check for bodyside-specificity, add all cols
+    #    (joint + coord) to a list and use the list for looping when standardising
+    if tracking_software != "Universal 3D":
+        coordinates = ("x", "y")
+    else:
+        coordinates = ("X", "Y", "Z")
+    cols_to_standardise = []
+    for joint in joints:
+        for coord in coordinates:
+            central_joint = joint + coord
+            side_specific_joint = joint + LEGS_COLFORMAT[0] + coord
+            if central_joint in data.columns:
+                cols_to_standardise.append(central_joint)
+            if side_specific_joint in data.columns:
+                for leg in LEGS_COLFORMAT:
+                    cols_to_standardise.append(joint + leg + coord)
+    data[cols_to_standardise] /= coordinate_standardisation_value
+    return data
 
 
 # ................................  plot panel  ........................................

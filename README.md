@@ -11,7 +11,7 @@
 
 # Automated Gait Analysis in Python 🐸
 
-- AutoGaitA simplifies, accelerates, and standardises gait analyses after body posture tracking in 2D with [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut) and [SLEAP](https://github.com/talmolab/sleap) or marker-based as well as marker-less (such as [Simi Motion](http://www.simi.com/en/products/movement-analysis/simi-motion-2d3d.html?type=rss%2F)) methods for obtaining 3D coordinates. 
+- AutoGaitA simplifies, accelerates, and standardises gait analyses (as well as the analysis of other rhythmic behaviours) after body posture tracking in 2D with [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut) and [SLEAP](https://github.com/talmolab/sleap) or marker-based as well as marker-less (such as [Simi Motion](http://www.simi.com/en/products/movement-analysis/simi-motion-2d3d.html?type=rss%2F)) methods for obtaining 3D coordinates. 
 - AutoGaitA's first-level tools provide a wide range of automated kinematic analyses for each input video and AutoGaitA Group allows the comparison of up to six groups. 
 - AutoGaitA enables comparisons to be made across experimental conditions, species, disease states or genotypes. 
 - Despite being developed with gait data, AutoGaitA can be utilised for the analysis of any motor behaviour.

@@ -203,6 +203,19 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         )
         invert_y_axis_box.grid(row=12, column=0, columnspan=2)
 
+    # Standardise all (primary) joint coordinates by a fixed decimal value
+    coordinate_standardisation_xls_label, coordinate_standardisation_xls_entry = (
+        gaita_widgets.label_and_entry_pair(
+            cfg_window,
+            "Excel file for primary-joint coordinate standardisation:",
+            cfg["coordinate_standardisation_xls"],
+            widget_cfg,
+            adv_cfg_textsize=True,
+        )
+    )
+    coordinate_standardisation_xls_label.grid(row=13, column=0, columnspan=2)
+    coordinate_standardisation_xls_entry.grid(row=14, column=0, columnspan=2)
+
     #  .............................  advanced output  .................................
     # advanced analysis header
     adv_cfg_output_header_label = gaita_widgets.header_label(
@@ -211,7 +224,7 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         widget_cfg,
     )
     adv_cfg_output_header_label.grid(
-        row=13, column=0, rowspan=2, columnspan=2, sticky="nsew"
+        row=15, column=0, rowspan=2, columnspan=2, sticky="nsew"
     )
 
     # number of hindlimb (primary) joints to plot
@@ -222,8 +235,8 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         widget_cfg,
         adv_cfg_textsize=True,
     )
-    plot_joint_num__label.grid(row=15, column=0, columnspan=2)
-    plot_joint_num_entry.grid(row=16, column=0, columnspan=2)
+    plot_joint_num__label.grid(row=17, column=0, columnspan=2)
+    plot_joint_num_entry.grid(row=18, column=0, columnspan=2)
 
     # save to xls
     save_to_xls_box = gaita_widgets.checkbox(
@@ -233,7 +246,7 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         widget_cfg,
         adv_cfg_textsize=True,
     )
-    save_to_xls_box.grid(row=17, column=0, columnspan=2)
+    save_to_xls_box.grid(row=19, column=0, columnspan=2)
 
     # plot SE
     plot_SE_box = gaita_widgets.checkbox(
@@ -243,7 +256,7 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         widget_cfg,
         adv_cfg_textsize=True,
     )
-    plot_SE_box.grid(row=18, column=0, columnspan=2)
+    plot_SE_box.grid(row=20, column=0, columnspan=2)
 
     # color palette
     color_palette_string = "Choose figures' color palette"
@@ -252,7 +265,7 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         text=color_palette_string,
         font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    color_palette_label.grid(row=19, column=0, columnspan=2)
+    color_palette_label.grid(row=21, column=0, columnspan=2)
     color_palette_entry = ctk.CTkOptionMenu(
         cfg_window,
         values=COLOR_PALETTES_LIST,
@@ -262,7 +275,7 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         button_hover_color=HOVER_COLOR,
         font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    color_palette_entry.grid(row=20, column=0, columnspan=2)
+    color_palette_entry.grid(row=22, column=0, columnspan=2)
 
     # legend outside
     legend_outside_checkbox = gaita_widgets.checkbox(
@@ -272,18 +285,18 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         widget_cfg,
         adv_cfg_textsize=True,
     )
-    legend_outside_checkbox.grid(row=21, column=0, columnspan=2)
+    legend_outside_checkbox.grid(row=23, column=0, columnspan=2)
 
     # results dir
     results_dir_label, results_dir_entry = gaita_widgets.label_and_entry_pair(
         cfg_window,
-        "Save Results subfolders to directory below instead of to data's",
+        "Save Results subfolders to directory below instead of to data's:",
         cfg["results_dir"],
         widget_cfg,
         adv_cfg_textsize=True,
     )
-    results_dir_label.grid(row=22, column=0, columnspan=2)
-    results_dir_entry.grid(row=23, column=0, columnspan=2)
+    results_dir_label.grid(row=24, column=0, columnspan=2)
+    results_dir_entry.grid(row=25, column=0, columnspan=2)
 
     # done button
     adv_cfg_done_button = ctk.CTkButton(
@@ -295,7 +308,7 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         command=lambda: cfg_window.destroy(),
     )
     adv_cfg_done_button.grid(
-        row=24, column=0, columnspan=2, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=26, column=0, columnspan=2, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # maximise widgets
     cfg_window.columnconfigure(list(range(2)), weight=1, uniform="Silent_Creme")

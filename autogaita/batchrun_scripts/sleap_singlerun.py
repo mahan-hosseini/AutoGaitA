@@ -49,6 +49,7 @@ def sleap_singlerun():
     cfg["analyse_average_x"] = False
     cfg["standardise_x_coordinates"] = False
     cfg["x_standardisation_joint"] = ["Midfoot"]
+    cfg["coordinate_standardisation_xls"] = ""
     cfg["hind_joints"] = ["Midfoot", "Ankle", "Knee", "Hip"]
     cfg["fore_joints"] = []
     cfg["beam_col_left"] = []  # list of len == 1

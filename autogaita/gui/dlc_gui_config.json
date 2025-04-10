@@ -40,6 +40,7 @@
         "color_palette": "Set2",
         "legend_outside": true,
         "results_dir": "",
+        "coordinate_standardisation_xls": "",
         "hind_joints": [
             "Hind paw tao",
             "Ankle",

@@ -23,7 +23,7 @@ def dlc_singlerun():
     cfg = {}
     cfg["sampling_rate"] = 100  # base cfg
     cfg["subtract_beam"] = True
-    cfg["dont_show_plots"] = False
+    cfg["dont_show_plots"] = True
     cfg["convert_to_mm"] = True
     cfg["pixel_to_mm_ratio"] = 3.76
     cfg["x_sc_broken_threshold"] = 200  # optional cfg
@@ -44,6 +44,9 @@ def dlc_singlerun():
     cfg["analyse_average_x"] = True
     cfg["standardise_x_coordinates"] = True
     cfg["x_standardisation_joint"] = ["Hind paw tao"]
+    cfg["coordinate_standardisation_xls"] = (
+        "/Users/mahan/sciebo/PythonCode/gaita_repo/autogaita/resources/Coordinate Standardisation Table Template.xlsx"
+    )
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",
