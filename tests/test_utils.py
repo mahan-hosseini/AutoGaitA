@@ -122,10 +122,9 @@ def test_correct_coordinate_standardisation(
 
 def test_standardisation_xls_error_cases(extract_info, extract_folderinfo, extract_cfg):
     # prep: get data using some_prep
-    data = some_prep(
-        "DLC", extract_info, extract_folderinfo, extract_cfg
-    )
-    
+    name = extract_info["name"]
+    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
+
     # Error 1 - no standardisation xls file
     if os.path.exists(os.path.join(extract_info["results_dir"], "Issues.txt")):
         os.remove(os.path.join(extract_info["results_dir"], "Issues.txt"))
@@ -157,7 +156,7 @@ def test_standardisation_xls_error_cases(extract_info, extract_folderinfo, extra
     data = standardise_primary_joint_coordinates(data, "DLC", extract_info, extract_cfg)
     with open(os.path.join(extract_info["results_dir"], "Issues.txt"), "r") as f:
         issues = f.read()
-    assert f"Unable to find {extract_info["name"]}" in issues
+    assert f"Unable to find {name}" in issues
 
     # Error 4 - xls file has ID/Run multiple times
     if os.path.exists(os.path.join(extract_info["results_dir"], "Issues.txt")):
@@ -168,7 +167,7 @@ def test_standardisation_xls_error_cases(extract_info, extract_folderinfo, extra
     data = standardise_primary_joint_coordinates(data, "DLC", extract_info, extract_cfg)
     with open(os.path.join(extract_info["results_dir"], "Issues.txt"), "r") as f:
         issues = f.read()
-    assert f"Found multiple entries for {extract_info["name"]}" in issues
+    assert f"Found multiple entries for {name}" in issues
 
     # Error 5 - xls file does not have a number in standardisation value
     if os.path.exists(os.path.join(extract_info["results_dir"], "Issues.txt")):
