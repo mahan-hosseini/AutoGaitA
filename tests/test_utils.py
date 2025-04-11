@@ -1,7 +1,10 @@
 from autogaita.resources.utils import standardise_primary_joint_coordinates
 from autogaita.common2D.common2D_1_preparation import some_prep
+from autogaita.common2D.common2D_2_sc_extraction import extract_stepcycles
+from autogaita.common2D.common2D_3_analysis import analyse_and_export_stepcycles
 import os
 import pandas as pd
+import pandas.testing as pdt
 import pytest
 
 
@@ -36,7 +39,7 @@ def extract_folderinfo():
 def extract_cfg():
     cfg = {}
     cfg["sampling_rate"] = 100
-    cfg["subtract_beam"] = False  # false!
+    cfg["subtract_beam"] = True
     cfg["dont_show_plots"] = True
     cfg["convert_to_mm"] = False  # false!
     cfg["pixel_to_mm_ratio"] = 3.76
@@ -120,62 +123,84 @@ def test_correct_coordinate_standardisation(
     )
 
 
-def test_standardisation_xls_error_cases(extract_info, extract_folderinfo, extract_cfg):
-    # prep: get data using some_prep
-    name = extract_info["name"]
+def test_angles_are_unaffected_by_coordinate_standardisation(
+    extract_info, extract_folderinfo, extract_cfg
+):
+    # prep: run dlc_main's first 3 steps to get dfs with angles
+    # 1) for unstandardised data
     data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
-
-    # Error 1 - no standardisation xls file
-    if os.path.exists(os.path.join(extract_info["results_dir"], "Issues.txt")):
-        os.remove(os.path.join(extract_info["results_dir"], "Issues.txt"))
-    extract_cfg["coordinate_standardisation_xls"] = (
-        "autogaita/resources/This CoordStand Table is Missing.xlsx"
+    all_cycles = extract_stepcycles(data, extract_info, extract_folderinfo, extract_cfg)
+    unstandardised_results = analyse_and_export_stepcycles(
+        data, all_cycles, extract_info, extract_cfg
     )
-    data = standardise_primary_joint_coordinates(data, "DLC", extract_info, extract_cfg)
-    with open(os.path.join(extract_info["results_dir"], "Issues.txt"), "r") as f:
-        issues = f.read()
-    assert "No coordinate standardisation xls file found at:" in issues
-
-    # Error 2 - xls file has wrong column names
-    if os.path.exists(os.path.join(extract_info["results_dir"], "Issues.txt")):
-        os.remove(os.path.join(extract_info["results_dir"], "Issues.txt"))
+    # 2) for standardised data
     extract_cfg["coordinate_standardisation_xls"] = (
-        "tests/test_data/utils/This CoordStand Table has wrong columns.xlsx"
+        "autogaita/resources/Coordinate Standardisation Table Template.xlsx"
     )
-    data = standardise_primary_joint_coordinates(data, "DLC", extract_info, extract_cfg)
-    with open(os.path.join(extract_info["results_dir"], "Issues.txt"), "r") as f:
-        issues = f.read()
-    assert "does not have the correct column names" in issues
+    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
+    all_cycles = extract_stepcycles(data, extract_info, extract_folderinfo, extract_cfg)
+    standardised_results = analyse_and_export_stepcycles(
+        data, all_cycles, extract_info, extract_cfg
+    )
+    # compare angles
+    cols_to_compare = [
+        col
+        for col in unstandardised_results["average_data"].columns
+        if col.endswith("Angle")
+    ]
+    pdt.assert_frame_equal(
+        unstandardised_results["average_data"][cols_to_compare],
+        standardised_results["average_data"][cols_to_compare],
+    )
 
-    # Error 3 - xls file does not have ID/Run
-    if os.path.exists(os.path.join(extract_info["results_dir"], "Issues.txt")):
-        os.remove(os.path.join(extract_info["results_dir"], "Issues.txt"))
-    extract_cfg["coordinate_standardisation_xls"] = (
-        "tests/test_data/utils/This CoordStand Table has wrong Run.xlsx"
-    )
-    data = standardise_primary_joint_coordinates(data, "DLC", extract_info, extract_cfg)
-    with open(os.path.join(extract_info["results_dir"], "Issues.txt"), "r") as f:
-        issues = f.read()
-    assert f"Unable to find {name}" in issues
 
-    # Error 4 - xls file has ID/Run multiple times
-    if os.path.exists(os.path.join(extract_info["results_dir"], "Issues.txt")):
-        os.remove(os.path.join(extract_info["results_dir"], "Issues.txt"))
-    extract_cfg["coordinate_standardisation_xls"] = (
-        "tests/test_data/utils/This CoordStand Table has multiple Names.xlsx"
-    )
-    data = standardise_primary_joint_coordinates(data, "DLC", extract_info, extract_cfg)
-    with open(os.path.join(extract_info["results_dir"], "Issues.txt"), "r") as f:
-        issues = f.read()
-    assert f"Found multiple entries for {name}" in issues
+# Parameterized test for error cases
+@pytest.mark.parametrize(
+    "xls_path, expected_error",
+    [
+        (
+            "autogaita/resources/This CoordStand Table is Missing.xlsx",
+            "No coordinate standardisation xls file found at:",
+        ),
+        (
+            "tests/test_data/utils/This CoordStand Table has wrong columns.xlsx",
+            "does not have the correct column names",
+        ),
+        (
+            "tests/test_data/utils/This CoordStand Table has wrong Run.xlsx",
+            "Unable to find",
+        ),
+        (
+            "tests/test_data/utils/This CoordStand Table has multiple Names.xlsx",
+            "Found multiple entries for",
+        ),
+        (
+            "tests/test_data/utils/This CoordStand Table doesn't have a float as standval.xlsx",
+            "Unable to convert standardisation value for",
+        ),
+        (
+            "tests/test_data/utils/This CoordStand Table has a value smaller than 1.xlsx",
+            "smaller than 1!",
+        ),
+    ],
+)
+def test_standardisation_xls_error_cases(
+    extract_info, extract_folderinfo, extract_cfg, xls_path, expected_error
+):
+    # prep: remove existing Issues.txt
+    results_dir = extract_info["results_dir"]
+    issues_path = os.path.join(results_dir, "Issues.txt")
+    if os.path.exists(issues_path):
+        os.remove(issues_path)
 
-    # Error 5 - xls file does not have a number in standardisation value
-    if os.path.exists(os.path.join(extract_info["results_dir"], "Issues.txt")):
-        os.remove(os.path.join(extract_info["results_dir"], "Issues.txt"))
-    extract_cfg["coordinate_standardisation_xls"] = (
-        "tests/test_data/utils/This CoordStand Table doesn't have a float as standval.xlsx"
-    )
+    # set the xls path in the config & run the functions
+    extract_cfg["coordinate_standardisation_xls"] = xls_path
+    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
     data = standardise_primary_joint_coordinates(data, "DLC", extract_info, extract_cfg)
-    with open(os.path.join(extract_info["results_dir"], "Issues.txt"), "r") as f:
+
+    # assert the error message - inform about what error failed if it did
+    with open(issues_path, "r") as f:
         issues = f.read()
-    assert "Unable to convert standardisation value for " in issues
+    assert (
+        expected_error in issues
+    ), f"Expected error '{expected_error}' not found in Issues.txt"

@@ -236,6 +236,18 @@ def standardise_primary_joint_coordinates(data, tracking_software, info, cfg):
         print(message)
         write_issues_to_textfile(message, info)
         return
+    # ensure that value is equal to or larger than 1 (otherwise we would increase vals)
+    if coordinate_standardisation_value < 1:
+        message = (
+            "\n******************\n! CRITICAL ERROR !\n******************\n"
+            + f"Standardisation value for {name} is smaller than 1!"
+            + "\nPlease read the doc for why this is not allowed."
+            + "\nIf you do not want to standardise this dataset, use a value of 1."
+            + "\nCancelling AutoGaitA!"
+        )
+        print(message)
+        write_issues_to_textfile(message, info)
+        return
     # all tests are passed - standardise coordinates
     # => if we are in 3D we have to check for bodyside-specificity, add all cols
     #    (joint + coord) to a list and use the list for looping when standardising

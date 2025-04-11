@@ -241,7 +241,7 @@ def some_prep(tracking_software, info, folderinfo, cfg):
         )
         print(cols_are_weird_message)
         write_issues_to_textfile(cols_are_weird_message, info)
-    # if wanted: fix that deeplabcut inverses y
+    # if wanted: fix that deeplabcut & SLEAP inverse y
     if invert_y_axis:
         for col in data.columns:
             if col.endswith(" y"):
@@ -255,17 +255,6 @@ def some_prep(tracking_software, info, folderinfo, cfg):
         else:
             y_min = data[y_cols].min().min()
         data[y_cols] -= y_min
-    # standardise all primary joint (!) coordinates
-    # => all dimensions are divided by a fixed user-provided value
-    if len(coordinate_standardisation_xls) > 0:
-        data = standardise_primary_joint_coordinates(data, tracking_software, info, cfg)
-        if data is None:  # means an error
-            return
-    # convert pixels to millimeters
-    if convert_to_mm:
-        for column in data.columns:
-            if not column.endswith("likelihood"):
-                data[column] = data[column] / pixel_to_mm_ratio
     # quick warning if cfg is set to not flip gait direction but to standardise x
     if not flip_gait_direction and standardise_x_coordinates:
         message = (
@@ -306,6 +295,23 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     # reorder the columns we added
     cols = [TIME_COL, "Flipped"]
     data = data[cols + [c for c in data.columns if c not in cols]]
+    # ------------------------------------------------------------------------
+    #                             IMPORTANT
+    # Next two things must be the last that are done in this function, since
+    # joint-standardisation must be done after beam-subtraction and
+    # pixel-standardisation must be done after joint-standardisation!
+    # ------------------------------------------------------------------------
+    # 1) standardise all primary joint (!) coordinates
+    # => all dimensions are divided by a fixed user-provided value
+    if len(coordinate_standardisation_xls) > 0:
+        data = standardise_primary_joint_coordinates(data, tracking_software, info, cfg)
+        if data is None:  # means an error
+            return
+    # 2) convert pixels to millimeters
+    if convert_to_mm:
+        for column in data.columns:
+            if not column.endswith("likelihood"):
+                data[column] = data[column] / pixel_to_mm_ratio
     return data
 
 
