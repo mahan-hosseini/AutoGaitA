@@ -102,7 +102,11 @@ def test_golden_path_extract_stepcycles(
     expected_cycles = [[284, 317], [318, 359], [413, 441]]
     assert (
         extract_stepcycles(
-            extract_data_using_some_prep, extract_info, extract_folderinfo, extract_cfg
+            "DLC",
+            extract_data_using_some_prep,
+            extract_info,
+            extract_folderinfo,
+            extract_cfg,
         )
         == expected_cycles
     )
@@ -117,7 +121,11 @@ def test_file_not_found_error_in_extract_stepcycles(
     extract_folderinfo["root_dir"] = ""
     with pytest.raises(FileNotFoundError) as excinfo:
         extract_stepcycles(
-            extract_data_using_some_prep, extract_info, extract_folderinfo, extract_cfg
+            "DLC",
+            extract_data_using_some_prep,
+            extract_info,
+            extract_folderinfo,
+            extract_cfg,
         )
     assert "No Annotation Table found!" in str(excinfo.value)
 
@@ -144,7 +152,11 @@ def test_handle_issues_2_no_scs_of_given_mouse_and_run_in_extract_stepcycles(
     extract_info["mouse_num"] = 12
     extract_info["run_num"] = 1
     extract_stepcycles(
-        extract_data_using_some_prep, extract_info, extract_folderinfo, extract_cfg
+        "DLC",
+        extract_data_using_some_prep,
+        extract_info,
+        extract_folderinfo,
+        extract_cfg,
     )
     with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
         content = f.read()
@@ -156,7 +168,11 @@ def test_handle_issues_2_wrong_run_number_in_extract_stepcycles(
 ):
     extract_info["run_num"] = 123456789101112
     extract_stepcycles(
-        extract_data_using_some_prep, extract_info, extract_folderinfo, extract_cfg
+        "DLC",
+        extract_data_using_some_prep,
+        extract_info,
+        extract_folderinfo,
+        extract_cfg,
     )
     with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
         content = f.read()
@@ -168,7 +184,11 @@ def test_handle_issues_3_wrong_mouse_number_in_extract_stepcycles(
 ):
     extract_info["mouse_num"] = 123456789101112
     extract_stepcycles(
-        extract_data_using_some_prep, extract_info, extract_folderinfo, extract_cfg
+        "DLC",
+        extract_data_using_some_prep,
+        extract_info,
+        extract_folderinfo,
+        extract_cfg,
     )
     with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
         content = f.read()
@@ -183,7 +203,11 @@ def test_handle_issues_4_bad_annotation_table_columns_in_extract_stepcycles(
     )
     extract_folderinfo["sctable_filename"] = "flawed_table_bad_column_names_table"
     extract_stepcycles(
-        extract_data_using_some_prep, extract_info, extract_folderinfo, extract_cfg
+        "DLC",
+        extract_data_using_some_prep,
+        extract_info,
+        extract_folderinfo,
+        extract_cfg,
     )
     with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
         content = f.read()
@@ -198,7 +222,11 @@ def test_handle_issues_5_double_ID_in_annotation_table_in_extract_stepcycles(
     )
     extract_folderinfo["sctable_filename"] = "flawed_table_double_ID_15_table"
     extract_stepcycles(
-        extract_data_using_some_prep, extract_info, extract_folderinfo, extract_cfg
+        "DLC",
+        extract_data_using_some_prep,
+        extract_info,
+        extract_folderinfo,
+        extract_cfg,
     )
     with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
         content = f.read()
