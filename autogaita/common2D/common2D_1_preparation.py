@@ -298,8 +298,8 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     # ------------------------------------------------------------------------
     #                             IMPORTANT
     # Next two things must be the last that are done in this function, since
-    # joint-standardisation must be done after beam-subtraction and
-    # pixel-standardisation must be done after joint-standardisation!
+    # joint-standardisation must be done after beam-subtraction & non-beam-height-stand
+    # and pixel-standardisation must be done after joint-standardisation!
     # ------------------------------------------------------------------------
     # 1) standardise all primary joint (!) coordinates
     # => all dimensions are divided by a fixed user-provided value
@@ -310,7 +310,7 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     # 2) convert pixels to millimeters
     if convert_to_mm:
         for column in data.columns:
-            if not column.endswith("likelihood"):
+            if column.endswith((" x", " y")):  # if tuple: endswith any of these
                 data[column] = data[column] / pixel_to_mm_ratio
     return data
 
