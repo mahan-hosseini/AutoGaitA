@@ -4,7 +4,8 @@ from autogaita.common2D.common2D_utils import (
     check_cycle_out_of_bounds,
     check_cycle_duplicates,
     check_cycle_order,
-    check_tracking,
+    check_tracking_xy_thresholds,
+    check_tracking_SLEAP_nans,
     handle_issues,
 )
 import os
@@ -23,7 +24,7 @@ from autogaita.common2D.common2D_constants import (
 # %% workflow step #2 - SC extraction (reading user-provided SC Table)
 
 
-def extract_stepcycles(data, info, folderinfo, cfg):
+def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
     """Read XLS file with SC annotations, find correct row & return all_cycles"""
 
     # ...............................  preparation  ....................................
@@ -212,6 +213,9 @@ def extract_stepcycles(data, info, folderinfo, cfg):
         all_cycles = check_cycle_duplicates(all_cycles)
         # check if user input progressively later latencies
         all_cycles = check_cycle_order(all_cycles, info)
-        # check if tracking broke for any SCs - if so remove them
-        all_cycles = check_tracking(data, info, all_cycles, cfg)
+        # check if tracking broke for any SCs using user-provided x and y thresholds
+        all_cycles = check_tracking_xy_thresholds(data, info, all_cycles, cfg)
+        # for SLEAP - check if there were any NaNs in any joints/angle-joints in SCs
+        if tracking_software == "SLEAP":
+            all_cycles = check_tracking_SLEAP_nans(data, info, all_cycles, cfg)
     return all_cycles

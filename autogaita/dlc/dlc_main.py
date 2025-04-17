@@ -47,7 +47,7 @@ def dlc(info, folderinfo, cfg):
         return
 
     # .........................  step-cycle extraction  ................................
-    all_cycles = extract_stepcycles(data, info, folderinfo, cfg)
+    all_cycles = extract_stepcycles(tracking_software, data, info, folderinfo, cfg)
     if all_cycles is None:
         handle_issues("scs_invalid", info)
         if cfg["dont_show_plots"] is False:  # otherwise stuck at loading

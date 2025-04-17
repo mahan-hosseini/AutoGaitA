@@ -210,7 +210,7 @@ def check_cycle_order(all_cycles, info):
     return clean_cycles
 
 
-def check_tracking(data, info, all_cycles, cfg):
+def check_tracking_xy_thresholds(data, info, all_cycles, cfg):
     """Check if any x/y column of any joint has broken datapoints"""
     # unpack
     convert_to_mm = cfg["convert_to_mm"]
@@ -241,7 +241,49 @@ def check_tracking(data, info, all_cycles, cfg):
                     exclude_this_cycle = True
         if exclude_this_cycle == True:
             this_message = (
-                "\n...excluding SC #" + str(c + 1) + " - DLC tracking failed!"
+                "\n...excluding SC #"
+                + str(c + 1)
+                + " - Tracking failed (coordinate-jump larger than x/y threshold)!"
+            )
+            print(this_message)
+            write_issues_to_textfile(this_message, info)
+        else:
+            if clean_cycles == None:
+                clean_cycles = [cycle]  # also makes a 2xscs list of lists
+            else:
+                clean_cycles.append(cycle)
+    return clean_cycles
+
+
+def check_tracking_SLEAP_nans(data, info, all_cycles, cfg):
+    """In SLEAP if tracking fails it generates NaNs - make sure we don't have those in any SC in any joint or angle-joint"""
+    # unpack
+    hind_joints = cfg["hind_joints"]
+    angles = cfg["angles"]
+    # all joints to test for NaNs
+    all_joints = hind_joints
+    for key in angles.keys():
+        all_joints += angles[key]
+    # columns to check
+    columns = []
+    for joint in all_joints:
+        columns.append(joint + "x")
+        columns.append(joint + "y")
+    # check for NaNs
+    clean_cycles = None
+    for c, cycle in enumerate(all_cycles):
+        exclude_this_cycle = False  # reset
+        for col in columns:
+            this_data = data.loc[cycle[0] : cycle[1], col]
+            if any(this_data.isna()):
+                exclude_this_cycle = True
+                NaN_joint = col
+                break
+        if exclude_this_cycle == True:
+            this_message = (
+                "\n...excluding SC #"
+                + str(c + 1)
+                + f" - Tracking failed (NaN found at {NaN_joint})!"
             )
             print(this_message)
             write_issues_to_textfile(this_message, info)
