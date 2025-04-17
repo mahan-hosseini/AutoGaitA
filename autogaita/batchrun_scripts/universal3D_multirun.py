@@ -34,6 +34,7 @@ def universal3D_multirun():
     cfg["analyse_average_y"] = True
     cfg["standardise_y_coordinates"] = True
     cfg["y_standardisation_joint"] = ["Foot"]
+    cfg["coordinate_standardisation_xls"] = ""
     cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis", "Shoulder", "Neck"]
     cfg["angles"] = {
         "name": ["Ankle", "Knee"],

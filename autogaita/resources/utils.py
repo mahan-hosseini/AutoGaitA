@@ -167,9 +167,47 @@ def standardise_primary_joint_coordinates(data, tracking_software, info, cfg):
         ID_string = str(info["mouse_num"])
         run_string = str(info["run_num"])
         joints = cfg["hind_joints"]
+        angles = cfg["angles"]
     else:
         ID_string = name
         joints = cfg["joints"]
+        angles = cfg["angles"]
+    # first test: check if all joints used in angles are present in joints
+    angle_issue_message = ""
+    clean_angles = {"name": [], "lower_joint": [], "upper_joint": []}
+    for i in range(len(angles["name"])):
+        if all(
+            joint in joints
+            for joint in [angles["lower_joint"][i], angles["upper_joint"][i]]
+        ):
+            clean_angles["name"].append(angles["name"][i])
+            clean_angles["lower_joint"].append(angles["lower_joint"][i])
+            clean_angles["upper_joint"].append(angles["upper_joint"][i])
+        else:
+            if not angle_issue_message:
+                angle_issue_message += (
+                    "\n***********\n! WARNING !\n***********\n"
+                    + "\nYou are standardising your coordinates to fixed values / ID!"
+                    + "\nYou must ensure that all joints used in angle-computations "
+                    + "are present in your (hind) joints list and are thus "
+                    + "standardised!\nThis would otherwise lead to broken angles."
+                    + "\nProblematic angles are:"
+                    + "\n\n-----------------------"
+                )
+            angle_issue_message += (
+                f"\nName: {angles['name'][i]}"
+                + f"\nLower Joint: {angles['lower_joint'][i]}"
+                + f"\nUpper Joint: {angles['upper_joint'][i]}"
+                + "\n-----------------------"
+            )
+    # rare case of overwriting cfg within autogaita!
+    if angle_issue_message:
+        angle_issue_message += (
+            "\nWe will update your cfg (!) & continue with the remaining angles!"
+        )
+        print(angle_issue_message)
+        write_issues_to_textfile(angle_issue_message, info)
+    cfg["angles"] = clean_angles
     # test if xls exists - if not quit autogaita
     # => note that some_prep will be stopped if this should return None
     if not os.path.exists(coordinate_standardisation_xls):
@@ -185,7 +223,7 @@ def standardise_primary_joint_coordinates(data, tracking_software, info, cfg):
         )
         print(message)
         write_issues_to_textfile(message, info)
-        return
+        raise FileNotFoundError
     # load the file (string because of comparison in conditon)
     coord_stand_df = pd.read_excel(coordinate_standardisation_xls).astype(str)
     if not all(coord_stand_df.columns.isin(["ID", "Run", "Standardisation Value"])):
@@ -198,7 +236,7 @@ def standardise_primary_joint_coordinates(data, tracking_software, info, cfg):
         )
         print(message)
         write_issues_to_textfile(message, info)
-        return
+        raise ValueError
     # extract the row we need
     if tracking_software != "Universal 3D":
         condition = (coord_stand_df["ID"] == ID_string) & (
@@ -220,7 +258,7 @@ def standardise_primary_joint_coordinates(data, tracking_software, info, cfg):
         )
         print(message)
         write_issues_to_textfile(message, info)
-        return
+        raise ValueError
     # extract standardisation value from xls
     try:
         # if-len-lines in error-message block above ensure that the line below is
@@ -235,7 +273,7 @@ def standardise_primary_joint_coordinates(data, tracking_software, info, cfg):
         )
         print(message)
         write_issues_to_textfile(message, info)
-        return
+        raise ValueError
     # ensure that value is equal to or larger than 1 (otherwise we would increase vals)
     if coordinate_standardisation_value < 1:
         message = (
@@ -247,7 +285,7 @@ def standardise_primary_joint_coordinates(data, tracking_software, info, cfg):
         )
         print(message)
         write_issues_to_textfile(message, info)
-        return
+        raise ValueError
     # all tests are passed - standardise coordinates
     # => if we are in 3D we have to check for bodyside-specificity, add all cols
     #    (joint + coord) to a list and use the list for looping when standardising
@@ -265,8 +303,10 @@ def standardise_primary_joint_coordinates(data, tracking_software, info, cfg):
             if side_specific_joint in data.columns:
                 for leg in LEGS_COLFORMAT:
                     cols_to_standardise.append(joint + leg + coord)
-    data[cols_to_standardise] /= coordinate_standardisation_value
-    return data
+    data.loc[:, cols_to_standardise] = (
+        data.loc[:, cols_to_standardise] / coordinate_standardisation_value
+    )
+    return data, cfg
 
 
 # ................................  plot panel  ........................................

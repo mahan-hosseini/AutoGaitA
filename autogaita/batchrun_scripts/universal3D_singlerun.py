@@ -33,6 +33,7 @@ def universal3D_singlerun():
     cfg["analyse_average_y"] = True
     cfg["standardise_y_coordinates"] = True
     cfg["y_standardisation_joint"] = ["Midfoot, left"]
+    cfg["coordinate_standardisation_xls"] = ""
     cfg["joints"] = [
         # "R1-ThCx",
         "Midfoot",

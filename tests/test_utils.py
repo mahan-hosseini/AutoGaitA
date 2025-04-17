@@ -1,5 +1,6 @@
 from autogaita.resources.utils import standardise_primary_joint_coordinates
-from autogaita.common2D.common2D_1_preparation import some_prep
+from autogaita.common2D.common2D_1_preparation import some_prep as some_prep_2D
+from autogaita.universal3D.universal3D_1_preparation import some_prep as some_prep_3D
 from autogaita.common2D.common2D_2_sc_extraction import extract_stepcycles
 from autogaita.common2D.common2D_3_analysis import analyse_and_export_stepcycles
 import os
@@ -8,9 +9,9 @@ import pandas.testing as pdt
 import pytest
 
 
-# %%..............................  fixtures  ..........................................
+# %%...........................  2D GaitA fixtures  ....................................
 @pytest.fixture
-def extract_info(tmp_path):
+def extract_2D_info(tmp_path):
     info = {}
     info["mouse_num"] = 15
     info["run_num"] = 3
@@ -20,7 +21,7 @@ def extract_info(tmp_path):
 
 
 @pytest.fixture
-def extract_folderinfo():
+def extract_2D_folderinfo():
     folderinfo = {}
     folderinfo["root_dir"] = "tests/test_data/dlc_data"
     folderinfo["sctable_filename"] = (
@@ -36,10 +37,10 @@ def extract_folderinfo():
 
 
 @pytest.fixture
-def extract_cfg():
+def extract_2D_cfg():
     cfg = {}
     cfg["sampling_rate"] = 100
-    cfg["subtract_beam"] = True
+    cfg["subtract_beam"] = False
     cfg["dont_show_plots"] = True
     cfg["convert_to_mm"] = False  # false!
     cfg["pixel_to_mm_ratio"] = 3.76
@@ -57,7 +58,7 @@ def extract_cfg():
     cfg["color_palette"] = "viridis"
     cfg["legend_outside"] = True
     cfg["invert_y_axis"] = True
-    cfg["flip_gait_direction"] = True
+    cfg["flip_gait_direction"] = False
     cfg["analyse_average_x"] = True
     cfg["standardise_x_coordinates"] = True
     cfg["x_standardisation_joint"] = ["Hind paw tao"]
@@ -82,65 +83,150 @@ def extract_cfg():
     return cfg
 
 
-# ..................................  tests  .........................................
+# %%...........................  3D GaitA fixtures  ....................................
+@pytest.fixture
+def extract_3D_info(tmp_path):
+    info = {}
+    info["name"] = "TestSubject"
+    info["results_dir"] = os.path.join(tmp_path, info["name"])
+    return info
+
+
+@pytest.fixture
+def extract_3D_folderinfo():
+    folderinfo = {}
+    folderinfo["root_dir"] = "tests/test_data/universal3D_data/test_data/"
+    folderinfo["sctable_filename"] = "SC Latency Table"
+    folderinfo["postname_string"] = ""
+    return folderinfo
+
+
+@pytest.fixture
+def extract_3D_cfg():
+    cfg = {}
+    cfg["sampling_rate"] = 100
+    cfg["dont_show_plots"] = True
+    cfg["y_acceleration"] = True
+    cfg["angular_acceleration"] = True
+    cfg["bin_num"] = 25
+    cfg["plot_SE"] = True
+    cfg["standardise_z_at_SC_level"] = True
+    cfg["standardise_z_to_a_joint"] = False
+    cfg["z_standardisation_joint"] = ["Midfoot, left"]
+    cfg["plot_joint_number"] = 7
+    cfg["legend_outside"] = True
+    cfg["flip_gait_direction"] = False
+    cfg["color_palette"] = "viridis"
+    cfg["analyse_average_y"] = False
+    cfg["standardise_y_coordinates"] = True
+    cfg["y_standardisation_joint"] = ["Midfoot, left"]
+    cfg["coordinate_standardisation_xls"] = ""
+    cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis "]
+    cfg["angles"] = {
+        "name": ["Ankle", "Knee", "Hip"],
+        "lower_joint": ["Midfoot", "Ankle", "Knee"],
+        "upper_joint": ["Knee", "Hip", "Pelvis "],
+    }
+    return cfg
+
+
+# %% .................................  tests  .........................................
+
+
 def test_correct_coordinate_standardisation(
-    extract_info, extract_folderinfo, extract_cfg
+    extract_2D_info,
+    extract_2D_folderinfo,
+    extract_2D_cfg,
+    extract_3D_info,
+    extract_3D_folderinfo,
+    extract_3D_cfg,
 ):
-    # unstandardised data
-    extract_cfg["coordinate_standardisation_xls"] = ""
-    unstandardised_data = some_prep(
-        "DLC", extract_info, extract_folderinfo, extract_cfg
-    )
+    for tracking_software in ["DLC", "Universal 3D"]:
+        # prep vars
+        if tracking_software == "DLC":
+            info = extract_2D_info
+            folderinfo = extract_2D_folderinfo
+            cfg = extract_2D_cfg
+        else:
+            info = extract_3D_info
+            folderinfo = extract_3D_folderinfo
+            cfg = extract_3D_cfg
+        # run respective some_prep functions to get dfs
+        if tracking_software == "DLC":
+            # unstandardised data
+            cfg["coordinate_standardisation_xls"] = ""
+            unstandardised_data = some_prep_2D(tracking_software, info, folderinfo, cfg)
+            # standardised data
+            cfg["coordinate_standardisation_xls"] = (
+                "tests/test_data/utils/Correct DLC CoordStand Table.xlsx"
+            )
+            standardised_data = some_prep_2D(tracking_software, info, folderinfo, cfg)
+        elif tracking_software == "Universal 3D":
+            # unstandardised data
+            cfg["coordinate_standardisation_xls"] = ""
+            unstandardised_data = some_prep_3D(info, folderinfo, cfg)[0]  # tuple!
+            # standardised data
+            cfg["coordinate_standardisation_xls"] = (
+                "tests/test_data/utils/Correct Universal 3D CoordStand Table.xlsx"
+            )
+            standardised_data, global_Y_max = some_prep_3D(info, folderinfo, cfg)
+        # revert standardisation
+        reverted_data = standardised_data.copy()
+        standardisation_df = pd.read_excel(
+            cfg["coordinate_standardisation_xls"]
+        ).astype(str)
+        if tracking_software == "DLC":
+            condition = (standardisation_df["ID"] == str(info["mouse_num"])) & (
+                standardisation_df["Run"] == str(info["run_num"])
+            )
+        elif tracking_software == "Universal 3D":
+            condition = standardisation_df["ID"] == info["name"]
+        standardisation_value = float(
+            standardisation_df.loc[condition, "Standardisation Value"]
+        )
+        if tracking_software == "DLC":
+            cols_to_revert = [
+                col
+                for col in reverted_data.columns
+                if (not col.endswith("likelihood"))
+                and any([joint in col for joint in cfg["hind_joints"]])
+            ]
+        elif tracking_software == "Universal 3D":
+            cols_to_revert = [
+                col
+                for col in reverted_data.columns
+                if any([joint in col for joint in cfg["joints"]])
+            ]
+        reverted_data[cols_to_revert] *= standardisation_value
 
-    # standardised data
-    extract_cfg["coordinate_standardisation_xls"] = (
-        "autogaita/resources/Coordinate Standardisation Table Template.xlsx"
-    )
-    standardised_data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
-
-    # revert standardisation
-    reverted_data = standardised_data.copy()
-    standardisation_df = pd.read_excel(
-        extract_cfg["coordinate_standardisation_xls"]
-    ).astype(str)
-    condition = (standardisation_df["ID"] == str(extract_info["mouse_num"])) & (
-        standardisation_df["Run"] == str(extract_info["run_num"])
-    )
-    standardisation_value = float(
-        standardisation_df.loc[condition, "Standardisation Value"]
-    )
-    cols_to_revert = [
-        col
-        for col in reverted_data.columns
-        if (not col.endswith("likelihood"))
-        and any([joint in col for joint in extract_cfg["hind_joints"]])
-    ]
-    reverted_data[cols_to_revert] *= standardisation_value
-
-    # compare dataframes
-    pd.testing.assert_frame_equal(
-        reverted_data, unstandardised_data, check_exact=False, check_dtype=False
-    )
+        # compare dataframes
+        pd.testing.assert_frame_equal(
+            reverted_data, unstandardised_data, check_exact=False, check_dtype=False
+        )
 
 
 def test_angles_are_unaffected_by_coordinate_standardisation(
-    extract_info, extract_folderinfo, extract_cfg
+    extract_2D_info, extract_2D_folderinfo, extract_2D_cfg
 ):
     # prep: run dlc_main's first 3 steps to get dfs with angles
     # 1) for unstandardised data
-    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
-    all_cycles = extract_stepcycles(data, extract_info, extract_folderinfo, extract_cfg)
+    data = some_prep_2D("DLC", extract_2D_info, extract_2D_folderinfo, extract_2D_cfg)
+    all_cycles = extract_stepcycles(
+        data, extract_2D_info, extract_2D_folderinfo, extract_2D_cfg
+    )
     unstandardised_results = analyse_and_export_stepcycles(
-        data, all_cycles, extract_info, extract_cfg
+        data, all_cycles, extract_2D_info, extract_2D_cfg
     )
     # 2) for standardised data
-    extract_cfg["coordinate_standardisation_xls"] = (
+    extract_2D_cfg["coordinate_standardisation_xls"] = (
         "autogaita/resources/Coordinate Standardisation Table Template.xlsx"
     )
-    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
-    all_cycles = extract_stepcycles(data, extract_info, extract_folderinfo, extract_cfg)
+    data = some_prep_2D("DLC", extract_2D_info, extract_2D_folderinfo, extract_2D_cfg)
+    all_cycles = extract_stepcycles(
+        data, extract_2D_info, extract_2D_folderinfo, extract_2D_cfg
+    )
     standardised_results = analyse_and_export_stepcycles(
-        data, all_cycles, extract_info, extract_cfg
+        data, all_cycles, extract_2D_info, extract_2D_cfg
     )
     # compare angles
     cols_to_compare = [
@@ -185,18 +271,23 @@ def test_angles_are_unaffected_by_coordinate_standardisation(
     ],
 )
 def test_standardisation_xls_error_cases(
-    extract_info, extract_folderinfo, extract_cfg, xls_path, expected_error
+    extract_2D_info, extract_2D_folderinfo, extract_2D_cfg, xls_path, expected_error
 ):
     # prep: remove existing Issues.txt
-    results_dir = extract_info["results_dir"]
+    results_dir = extract_2D_info["results_dir"]
     issues_path = os.path.join(results_dir, "Issues.txt")
     if os.path.exists(issues_path):
         os.remove(issues_path)
 
     # set the xls path in the config & run the functions
-    extract_cfg["coordinate_standardisation_xls"] = xls_path
-    data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
-    data = standardise_primary_joint_coordinates(data, "DLC", extract_info, extract_cfg)
+    extract_2D_cfg["coordinate_standardisation_xls"] = xls_path
+    with pytest.raises(Exception):
+        data = some_prep_2D(
+            "DLC", extract_2D_info, extract_2D_folderinfo, extract_2D_cfg
+        )
+        data, cfg = standardise_primary_joint_coordinates(
+            data, "DLC", extract_2D_info, extract_2D_cfg
+        )
 
     # assert the error message - inform about what error failed if it did
     with open(issues_path, "r") as f:

@@ -1,5 +1,8 @@
 # %% imports
-from autogaita.resources.utils import write_issues_to_textfile
+from autogaita.resources.utils import (
+    write_issues_to_textfile,
+    standardise_primary_joint_coordinates,
+)
 import os
 import shutil
 import json
@@ -31,6 +34,7 @@ def some_prep(info, folderinfo, cfg):
     analyse_average_y = cfg["analyse_average_y"]
     standardise_y_coordinates = cfg["standardise_y_coordinates"]
     standardise_z_to_a_joint = cfg["standardise_z_to_a_joint"]
+    coordinate_standardisation_xls = cfg["coordinate_standardisation_xls"]
     tracking_software = "Universal 3D"  # hardcoded for this toolbox
 
     # .............................  move data  ........................................
@@ -124,6 +128,7 @@ def some_prep(info, folderinfo, cfg):
         "y_standardisation_joint": y_standardisation_joint,
         "standardise_z_to_a_joint": standardise_z_to_a_joint,
         "z_standardisation_joint": z_standardisation_joint,
+        "coordinate_standardisation_xls": coordinate_standardisation_xls,
         "joints": joints,
         "angles": angles,
         "tracking_software": tracking_software,
@@ -156,7 +161,6 @@ def some_prep(info, folderinfo, cfg):
     try:
         data = data.astype(float)
     except:
-
         unable_to_convert_message = (
             "\n******************\n! CRITICAL ERROR !\n******************\n"
             + "Unable to convert data to numbers for "
@@ -176,7 +180,7 @@ def some_prep(info, folderinfo, cfg):
         data[y_cols] += abs(global_Y_min)
     global_Y_max = max(data[y_cols].max())
 
-    # Finally, standardise all Z columns to global Z minimum or a user-provided joint
+    # Standardise all Z columns to global Z minimum or a user-provided joint
     z_cols = [col for col in data.columns if col.endswith("Z")]  # Find all Z cols
     if standardise_z_to_a_joint:
         # Note in the test-function we ensured that this was provided in the correct
@@ -186,6 +190,14 @@ def some_prep(info, folderinfo, cfg):
         z_min = min(data[z_cols].min())  # Compute global z min
     data[z_cols] -= z_min  # Subtract either joint's or global z min from all Z cols
 
+    # Standardise all user-chosen "joint" coordinates dividing them by a fixed decimal
+    # => IMPORTANT: This must be done AFTER all y-/z-standardisations above!
+    # => note this function has proper errors raised if things are wrongly configured
+    #    (so we don't have to return (None, None)...)
+    if len(coordinate_standardisation_xls) > 0:
+        data, cfg = standardise_primary_joint_coordinates(
+            data, tracking_software, info, cfg
+        )
     return data, global_Y_max
 
     # ..............................  sanity checks  ...................................

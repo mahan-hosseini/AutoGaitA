@@ -29,6 +29,7 @@
         "color_palette": "Set2",
         "legend_outside": true,
         "results_dir": "",
+        "coordinate_standardisation_xls": "",
         "joints": [
             "Midfoot",
             "Ankle ",

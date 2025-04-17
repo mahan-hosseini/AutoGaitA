@@ -303,10 +303,12 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     # ------------------------------------------------------------------------
     # 1) standardise all primary joint (!) coordinates
     # => all dimensions are divided by a fixed user-provided value
+    # => note this function has proper errors raised if things should be wrongly
+    #    configured by user!
     if len(coordinate_standardisation_xls) > 0:
-        data = standardise_primary_joint_coordinates(data, tracking_software, info, cfg)
-        if data is None:  # means an error
-            return
+        data, cfg = standardise_primary_joint_coordinates(
+            data, tracking_software, info, cfg
+        )
     # 2) convert pixels to millimeters
     if convert_to_mm:
         for column in data.columns:

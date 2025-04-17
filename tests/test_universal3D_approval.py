@@ -59,6 +59,7 @@ def extract_cfg():
     cfg["analyse_average_y"] = False
     cfg["standardise_y_coordinates"] = True
     cfg["y_standardisation_joint"] = ["Midfoot, left"]
+    cfg["coordinate_standardisation_xls"] = ""
     cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis "]
     cfg["angles"] = {
         "name": ["Ankle", "Knee", "Hip"],
