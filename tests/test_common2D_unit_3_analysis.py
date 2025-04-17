@@ -154,7 +154,9 @@ def test_angles_not_depending_on_x_standardisation_and_gait_direction_flipping(
 ):
     # 1. preparation
     data = some_prep("DLC", extract_info, extract_folderinfo, extract_cfg)
-    all_cycles = extract_stepcycles(data, extract_info, extract_folderinfo, extract_cfg)
+    all_cycles = extract_stepcycles(
+        "DLC", data, extract_info, extract_folderinfo, extract_cfg
+    )
     # 2. x standardisation
     results = analyse_and_export_stepcycles(data, all_cycles, extract_info, extract_cfg)
     all_steps_data = results["all_steps_data"]

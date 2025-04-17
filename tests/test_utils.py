@@ -212,7 +212,7 @@ def test_angles_are_unaffected_by_coordinate_standardisation(
     # 1) for unstandardised data
     data = some_prep_2D("DLC", extract_2D_info, extract_2D_folderinfo, extract_2D_cfg)
     all_cycles = extract_stepcycles(
-        data, extract_2D_info, extract_2D_folderinfo, extract_2D_cfg
+        "DLC", data, extract_2D_info, extract_2D_folderinfo, extract_2D_cfg
     )
     unstandardised_results = analyse_and_export_stepcycles(
         data, all_cycles, extract_2D_info, extract_2D_cfg
@@ -223,7 +223,7 @@ def test_angles_are_unaffected_by_coordinate_standardisation(
     )
     data = some_prep_2D("DLC", extract_2D_info, extract_2D_folderinfo, extract_2D_cfg)
     all_cycles = extract_stepcycles(
-        data, extract_2D_info, extract_2D_folderinfo, extract_2D_cfg
+        "DLC", data, extract_2D_info, extract_2D_folderinfo, extract_2D_cfg
     )
     standardised_results = analyse_and_export_stepcycles(
         data, all_cycles, extract_2D_info, extract_2D_cfg
