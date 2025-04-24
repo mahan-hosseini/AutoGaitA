@@ -322,8 +322,8 @@ def test_clean_cycles_5_SLEAP_nan_removals(
     }
     data = extract_data_using_some_prep.copy()
     all_cycles = [[111, 222], [333, 444], [555, 666]]
-    data["Hind paw tao y"][123] = np.nan
-    data["Elbow x"][444] = np.nan
+    data.loc[123, "Hind paw tao y"] = np.nan
+    data.loc[444, "Elbow x"] = np.nan
     clean_cycles = check_tracking_SLEAP_nans(
         data,
         extract_info,

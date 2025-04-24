@@ -511,10 +511,7 @@ def compute_angle(joint_angle, joint2, joint3):
     dot_product = v1[0] * v2[0] + v1[1] * v2[1]
     mag_v1 = math.sqrt(v1[0] ** 2 + v1[1] ** 2)
     mag_v2 = math.sqrt(v2[0] ** 2 + v2[1] ** 2)
-    # try:
     angle = math.acos(dot_product / (mag_v1 * mag_v2))
-    # except RuntimeWarning:
-    #     print("RuntimeWarning caught. Investigating...")
     return math.degrees(angle)
 
 
