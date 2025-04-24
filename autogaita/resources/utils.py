@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import os
 import traceback
+import math
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import tkinter as tk
 import customtkinter as ctk
@@ -141,6 +142,19 @@ def print_finish(info):
         + line_row
     )
     print(message)
+
+
+def compute_angle(joint_angle, joint2, joint3):
+    """Compute a given angle at a joint & a given timepoint"""
+    # Get vectors between the joints
+    v1 = (joint_angle[0] - joint2[0], joint_angle[1] - joint2[1])
+    v2 = (joint_angle[0] - joint3[0], joint_angle[1] - joint3[1])
+    # dot product, magnitude of vectors, angle in radians & convert 2 degrees
+    dot_product = v1[0] * v2[0] + v1[1] * v2[1]
+    mag_v1 = math.sqrt(v1[0] ** 2 + v1[1] ** 2)
+    mag_v2 = math.sqrt(v2[0] ** 2 + v2[1] ** 2)
+    angle = math.acos(dot_product / (mag_v1 * mag_v2))
+    return math.degrees(angle)
 
 
 def bin_num_to_percentages(bin_num):
