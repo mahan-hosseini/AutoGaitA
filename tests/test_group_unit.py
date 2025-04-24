@@ -136,7 +136,9 @@ def test_load_previous_runs_dataframes(extract_folderinfo, extract_cfg):
     extract_cfg["analyse_average_x"] = True
     i_dfs, _, extract_cfg = import_data(extract_folderinfo, extract_cfg)
     i_avg_dfs, _ = avg_and_std(i_dfs, extract_folderinfo, extract_cfg)
-    for g in range(3):  # dtype of ID is int and float - whatever
+    for g in range(3):
+        avg_dfs[g]["ID"].astype(int)  # dtype of ID is int and float
+        i_avg_dfs[g]["ID"].astype(int)  # needs to be fixed else CI fails
         pdt.assert_frame_equal(avg_dfs[g], i_avg_dfs[g], check_dtype=False)
 
 
