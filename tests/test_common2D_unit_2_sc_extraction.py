@@ -6,6 +6,7 @@ from autogaita.common2D.common2D_utils import (
     check_cycle_duplicates,
     check_cycle_order,
     check_tracking_xy_thresholds,
+    check_tracking_SLEAP_nans,
 )
 from hypothesis import given, strategies as st, settings, HealthCheck
 import os
@@ -307,6 +308,29 @@ def test_clean_cycles_4_DLC_tracking(
             this_cases_all_cycles,
             extract_cfg,
         )
+
+
+def test_clean_cycles_5_SLEAP_nan_removals(
+    extract_data_using_some_prep, extract_info, extract_cfg
+):
+    """We just pretend that this is SLEAP data - whatever"""
+    extract_cfg["joints"] = ["Hind paw tao ", "Ankle "]
+    extract_cfg["angles"] = {
+        "name": ["Elbow "],
+        "lower_joint": ["Wrist "],
+        "upper_joint": ["Lower Shoulder "],
+    }
+    data = extract_data_using_some_prep.copy()
+    all_cycles = [[111, 222], [333, 444], [555, 666]]
+    data["Hind paw tao y"][123] = np.nan
+    data["Elbow x"][444] = np.nan
+    clean_cycles = check_tracking_SLEAP_nans(
+        data,
+        extract_info,
+        all_cycles,
+        extract_cfg,
+    )
+    assert clean_cycles == [[555, 666]]
 
 
 # ...............................  helper functions  ...................................

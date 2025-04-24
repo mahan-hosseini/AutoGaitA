@@ -279,14 +279,11 @@ def test_standardisation_xls_error_cases(
     if os.path.exists(issues_path):
         os.remove(issues_path)
 
-    # set the xls path in the config & run the functions
+    # set the xls path in the config & run some_prep which will run the standardisation
     extract_2D_cfg["coordinate_standardisation_xls"] = xls_path
     with pytest.raises(Exception):
         data = some_prep_2D(
             "DLC", extract_2D_info, extract_2D_folderinfo, extract_2D_cfg
-        )
-        data, cfg = standardise_primary_joint_coordinates(
-            data, "DLC", extract_2D_info, extract_2D_cfg
         )
 
     # assert the error message - inform about what error failed if it did
@@ -295,3 +292,37 @@ def test_standardisation_xls_error_cases(
     assert (
         expected_error in issues
     ), f"Expected error '{expected_error}' not found in Issues.txt"
+
+
+def test_angle_joints_not_in_joints(
+    extract_2D_info, extract_2D_folderinfo, extract_2D_cfg
+):
+    # prep cfg stuff
+    cfg = extract_2D_cfg.copy()
+    cfg["coordinate_standardisation_xls"] = (
+        "tests/test_data/utils/Correct DLC CoordStand Table.xlsx"
+    )
+    cfg["hind_joints"] = ["Ankle", "Knee", "Hip"]
+    cfg["angles"] = {  # hind paw is to be removed (not in cfg["joints"]!)
+        "name": ["Hind paw tao", "Knee", "Knee", "Knee"],
+        "lower_joint": ["Ankle", "Hind paw tao", "Ankle", "Ankle"],
+        "upper_joint": ["Hip", "Hip", "Hind paw tao", "Hip"],
+    }
+    # prep: remove existing Issues.txt
+    results_dir = extract_2D_info["results_dir"]
+    issues_path = os.path.join(results_dir, "Issues.txt")
+    if os.path.exists(issues_path):
+        os.remove(issues_path)
+    # run (not just some prep, because we want the cfg, too)
+    data = some_prep_2D("DLC", extract_2D_info, extract_2D_folderinfo, cfg)
+    data, cfg = standardise_primary_joint_coordinates(data, "DLC", extract_2D_info, cfg)
+    # assert error
+    with open(issues_path, "r") as f:
+        issues = f.read()
+    assert "We will update your cfg (!)" in issues
+    # assert updated cfg
+    assert cfg["angles"] == {
+        "name": ["Knee "],
+        "lower_joint": ["Ankle "],
+        "upper_joint": ["Hip "],
+    }

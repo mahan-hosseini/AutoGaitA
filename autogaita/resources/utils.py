@@ -177,8 +177,12 @@ def standardise_primary_joint_coordinates(data, tracking_software, info, cfg):
     clean_angles = {"name": [], "lower_joint": [], "upper_joint": []}
     for i in range(len(angles["name"])):
         if all(
-            joint in joints
-            for joint in [angles["lower_joint"][i], angles["upper_joint"][i]]
+            angle_joint in joints
+            for angle_joint in [
+                angles["name"][i],
+                angles["lower_joint"][i],
+                angles["upper_joint"][i],
+            ]
         ):
             clean_angles["name"].append(angles["name"][i])
             clean_angles["lower_joint"].append(angles["lower_joint"][i])
