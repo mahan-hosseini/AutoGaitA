@@ -156,6 +156,11 @@ def test_error_if_no_cfgkey_joints(extract_info, extract_folderinfo, extract_cfg
 def test_removal_of_wrong_strings_from_cfg_key(
     test_list, extract_data_using_some_prep, extract_cfg, extract_info
 ):
+    # the following loop is to account for hypothesis randomly generating strings that
+    # actually are data columns (happend for "Knee ")
+    for i in range(len(test_list)):
+        if test_list[i] + "x" in extract_data_using_some_prep.columns:
+            test_list.pop(i)
     cfg_key = "hind_joints"  # irrelevant since property testing
     extract_cfg[cfg_key] = test_list
     test_result = check_and_fix_cfg_strings(
