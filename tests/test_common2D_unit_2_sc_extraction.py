@@ -5,6 +5,7 @@ from autogaita.common2D.common2D_utils import (
     check_cycle_out_of_bounds,
     check_cycle_duplicates,
     check_cycle_order,
+    check_differing_angle_joint_coords,
     check_tracking_xy_thresholds,
     check_tracking_SLEAP_nans,
 )
@@ -132,7 +133,7 @@ def test_file_not_found_error_in_extract_stepcycles(
 
 
 def test_handle_issues_1_all_SCs_invalid_because_all_cycles_empty_in_dlc(
-    extract_data_using_some_prep, extract_info, extract_folderinfo, extract_cfg
+    extract_info, extract_folderinfo, extract_cfg
 ):
     # call dlc and not extract_stepcycles since handle_issues call we test is in dlc
     extract_folderinfo["root_dir"] = os.path.join(
@@ -292,7 +293,34 @@ def test_clean_cycles_3_cycle_order(all_cycles, extract_info):
         assert flat_cycles == sorted(flat_cycles)
 
 
-def test_clean_cycles_4_DLC_tracking(
+def test_clean_cycles_4_differing_angle_joint_coords(
+    extract_data_using_some_prep, extract_info, extract_cfg
+):
+    data = extract_data_using_some_prep.copy()
+    all_cycles = [[111, 222], [333, 444]]
+    data.loc[123, "Hind paw tao x"] = 5.5
+    data.loc[123, "Hind paw tao y"] = 2.1
+    data.loc[123, "Ankle x"] = 5.5
+    data.loc[123, "Ankle y"] = 2.1
+    all_cycles = check_differing_angle_joint_coords(
+        all_cycles, data, extract_info, extract_cfg
+    )
+    assert all_cycles == [[333, 444]]
+    with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
+        content = f.read()
+    assert "SC #1" in content
+    assert "Lower joint: Hind paw tao" in content
+    data.loc[345, "Hip x"] = 10.1
+    data.loc[345, "Hip y"] = 0.333
+    data.loc[345, "Iliac Crest x"] = 10.1
+    data.loc[345, "Iliac Crest y"] = 0.333
+    assert (
+        check_differing_angle_joint_coords(all_cycles, data, extract_info, extract_cfg)
+        is None
+    )
+
+
+def test_clean_cycles_5_DLC_tracking(
     extract_data_using_some_prep, extract_info, extract_cfg
 ):
     """Note that we know that very early on (2-150) the mouse was not in the frame yet so DLC is broken and these SCs will be excluded. The other 3 of case 2 are the correcty SCs of this ID/run of which None should be excluded!"""
@@ -303,14 +331,14 @@ def test_clean_cycles_4_DLC_tracking(
     expected_cycles = (None, [[284, 317], [318, 359], [413, 441]])
     for c, this_cases_all_cycles in enumerate(all_cycles_of_the_two_cases):
         assert expected_cycles[c] == check_tracking_xy_thresholds(
+            this_cases_all_cycles,
             extract_data_using_some_prep,
             extract_info,
-            this_cases_all_cycles,
             extract_cfg,
         )
 
 
-def test_clean_cycles_5_SLEAP_nan_removals(
+def test_clean_cycles_6_SLEAP_nan_removals(
     extract_data_using_some_prep, extract_info, extract_cfg
 ):
     """We just pretend that this is SLEAP data - whatever"""
@@ -325,9 +353,9 @@ def test_clean_cycles_5_SLEAP_nan_removals(
     data.loc[123, "Hind paw tao y"] = np.nan
     data.loc[444, "Elbow x"] = np.nan
     clean_cycles = check_tracking_SLEAP_nans(
+        all_cycles,
         data,
         extract_info,
-        all_cycles,
         extract_cfg,
     )
     assert clean_cycles == [[555, 666]]

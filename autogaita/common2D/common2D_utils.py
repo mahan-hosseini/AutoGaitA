@@ -6,6 +6,9 @@ import copy
 import numpy as np
 import tkinter as tk
 
+# %% constants
+from autogaita.resources.constants import TIME_COL
+
 
 def run_singlerun_in_multirun(tracking_software, idx, info, folderinfo, cfg):
     """When performing a multirun, either via Batch Analysis in GUI or batchrun scripts, run the analysis for a given dataset"""
@@ -210,7 +213,81 @@ def check_cycle_order(all_cycles, info):
     return clean_cycles
 
 
-def check_tracking_xy_thresholds(data, info, all_cycles, cfg):
+def check_differing_angle_joint_coords(all_cycles, data, info, cfg):
+    """Check if none of the joints used for angle computations later have equal values (since this would lead to math.domain errors due to floating point precision)"""
+
+    # Note
+    # ----
+    # In theory, I could fix this programatically in the add_angle function, but I feel
+    # like joint-coords should not often be exactly equal like this in a meaningful way
+    # We can still change it in the future.
+
+    # unpack
+    angles = cfg["angles"]
+
+    clean_cycles = None
+    for c, cycle in enumerate(all_cycles):  # for each SC
+        cycle = check_a_single_cycle_for_joint_coords(cycle, angles, data, c, info)
+        if cycle:  # if cycle was not valid (equal-joint-coords) this returns None
+            if clean_cycles == None:
+                clean_cycles = [cycle]  # also makes a 2xscs list of lists
+            else:
+                clean_cycles.append(cycle)
+    return clean_cycles
+
+
+def check_a_single_cycle_for_joint_coords(cycle, angles, data, c, info):
+    for a in range(len(angles["name"])):  # for each angle configuration
+        # prepare a dict that has only the data of this angle config's joints
+        this_angle_data = {"name": [], "lower_joint": [], "upper_joint": []}
+        for key in this_angle_data.keys():
+            this_joint = angles[key][a]
+            this_angle_data[key] = np.array(
+                [data[this_joint + "x"], data[this_joint + "y"]]
+            )
+        # now check if any of the joints have the same coord at any idx
+        for idx in range(cycle[0], cycle[1]):
+            if (
+                np.array_equal(
+                    this_angle_data["name"][:, idx],
+                    this_angle_data["lower_joint"][:, idx],
+                )
+                or np.array_equal(
+                    this_angle_data["name"][:, idx],
+                    this_angle_data["upper_joint"][:, idx],
+                )
+                or np.array_equal(
+                    this_angle_data["lower_joint"][:, idx],
+                    this_angle_data["upper_joint"][:, idx],
+                )
+            ):
+                this_message = (
+                    "\n***********\n! WARNING !\n***********\n"
+                    + f"SC #{c + 1} has equal joint coordinates at "
+                    + f"{round(data[TIME_COL][idx],4)}s:"
+                    + "\n\nAngle - [x y]:\n"
+                    + angles["name"][a]
+                    + " - "
+                    + str(this_angle_data["name"][:, idx])
+                    + "\nLower joint: "
+                    + angles["lower_joint"][a]
+                    + " - "
+                    + str(this_angle_data["lower_joint"][:, idx])
+                    + "\nUpper joint: "
+                    + angles["upper_joint"][a]
+                    + " - "
+                    + str(this_angle_data["upper_joint"][:, idx])
+                    + "\nRemoving the SC from "
+                    + f"{round(data[TIME_COL][cycle[0]], 4)}-"
+                    + f"{round(data[TIME_COL][cycle[1]], 4)}s"
+                )
+                print(this_message)
+                write_issues_to_textfile(this_message, info)
+                return None  # removes this SC
+    return cycle  # if we never returned None, this SC is valid
+
+
+def check_tracking_xy_thresholds(all_cycles, data, info, cfg):
     """Check if any x/y column of any joint has broken datapoints"""
     # unpack
     convert_to_mm = cfg["convert_to_mm"]
@@ -255,7 +332,7 @@ def check_tracking_xy_thresholds(data, info, all_cycles, cfg):
     return clean_cycles
 
 
-def check_tracking_SLEAP_nans(data, info, all_cycles, cfg):
+def check_tracking_SLEAP_nans(all_cycles, data, info, cfg):
     """In SLEAP if tracking fails it generates NaNs - make sure we don't have those in any SC in any joint or angle-joint"""
     # unpack
     hind_joints = cfg["hind_joints"]

@@ -179,35 +179,6 @@ def test_angles_not_depending_on_x_standardisation_and_gait_direction_flipping(
         )
 
 
-@given(x_y_coordinates = st.tuples(st.one_of(st.integers(), st.floats()), st.one_of(st.integers(), st.floats())))  # fmt: skip
-@pytest.mark.filterwarnings("ignore:invalid value encountered")
-def test_angles_is_nan_when_all_points_are_at_same_location(x_y_coordinates):
-    angle_x_y = lower_x_y = upper_x_y = x_y_coordinates
-    step = (
-        pd.Series(
-            {
-                "angle x": angle_x_y[0],
-                "angle y": angle_x_y[1],
-                "lower x": lower_x_y[0],
-                "lower y": lower_x_y[1],
-                "upper x": upper_x_y[0],
-                "upper y": upper_x_y[1],
-            }
-        )
-        .to_frame()
-        .T
-    )
-
-    cfg = {}
-    cfg["angles"] = {
-        "name": ["angle "],
-        "lower_joint": ["lower "],
-        "upper_joint": ["upper "],
-    }
-    step = add_angles(step, cfg)
-    assert step["angle Angle"].isna().all()
-
-
 def test_velocities():
     """Unit test of how velocities are added
     A Note

@@ -133,6 +133,9 @@ def test_standardise_z_at_SC_level(sample_step, extract_cfg):
     pdt.assert_frame_equal(function_step, expected_step)
 
 
+# because we have random integers in step, we might get a near-zero vectors when
+# computing angles - ignore those warnings
+@pytest.mark.filterwarnings("ignore:invalid value")
 def test_flip_gait_direction(sample_step, extract_cfg):
     # prepare some vars
     extract_cfg["flip_gait_direction"] = True
@@ -180,6 +183,9 @@ def test_flip_gait_direction(sample_step, extract_cfg):
     pdt.assert_frame_equal(to_be_flipped_step, to_not_be_flipped_step)
 
 
+# because we have random integers in step, we might get a near-zero vectors when
+# computing angles - ignore those warnings
+@pytest.mark.filterwarnings("ignore:invalid value")
 @sample_data_for_property_tests
 def test_standardise_y_coordinates_no_gait_flipping(
     sample_step, extract_cfg, sample_steps_data

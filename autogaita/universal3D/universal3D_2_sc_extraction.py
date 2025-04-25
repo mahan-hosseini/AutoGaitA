@@ -6,6 +6,7 @@ import numpy as np
 
 # %% constants
 from autogaita.universal3D.universal3D_constants import (
+    TIME_COL,
     LEGS,
     SCXLS_SUBJCOLS,
     SCXLS_LEGCOLS,
@@ -265,6 +266,8 @@ def read_SC_info(data, SCdf, info, legname, cfg):
         all_cycles = check_cycle_duplicates(all_cycles)
         # check if user input progressively later latencies
         all_cycles = check_cycle_order(all_cycles, info, legname)
+        # check that none of the joints used for angles have the same value within SCs
+        all_cycles = check_different_angle_joint_coords(all_cycles, data, info, cfg)
         # NOTE for future self
         # => If you are considering to remove empty lists from run_cycles note that we
         #    need them for the case of Runs 1 & 3 having SCs but 2 not having any
@@ -272,6 +275,99 @@ def read_SC_info(data, SCdf, info, legname, cfg):
         #    look like Run2 - we need an empty subplot panel for run2 and thus an empty
         #    list!)
     return all_cycles
+
+
+def check_different_angle_joint_coords(all_cycles, data, info, cfg):
+    """Check if none of the joints used for angle computations later have equal values (since this would lead to math.domain errors due to floating point precision)"""
+
+    # Note 1
+    # ------
+    # In theory, I could fix this programatically in the add_angle function, but I feel
+    # like joint-coords should not often be exactly equal like this in a meaningful way
+    # We can still change it in the future.
+
+    # Note 2
+    # ------
+    # It is important that I loop over legs, because I have to ensure that angle-joints
+    # are different for each leg separately - even though the SC is just w.r.t. one leg,
+    # both legs' angles are computed later (and would lead to an error if equal)
+
+    # unpack
+    angles = cfg["angles"]
+
+    clean_cycles = None
+    for r, run_cycles in enumerate(all_cycles):
+        for c, cycle in enumerate(run_cycles):
+            cycle = check_a_single_cycle_for_joint_coords(
+                cycle, angles, data, r, c, info
+            )
+            if cycle:  # if cycle was not valid (equal-joint-coords) this returns None
+                if clean_cycles is None:  # if first valid cycle: list of empty lists
+                    clean_cycles = [[] for s in range(len(all_cycles))]
+                clean_cycles[r].append(cycle)
+    return clean_cycles
+
+
+def check_a_single_cycle_for_joint_coords(cycle, angles, data, r, c, info):
+    """This checks a single cycle: across both legs and all angle configs. Removing the cycle if we had equal joint-coords anywhere!"""
+    for legname in LEGS:  # loop over legs
+        for a in range(len(angles["name"])):  # loop over different angle configs
+            # first, prepare a dict that has only the data of this leg/angle combo
+            this_angle_data = {"name": [], "lower_joint": [], "upper_joint": []}
+            for key in this_angle_data.keys():
+                this_joint = angles[key][a]
+                if this_joint + "Y" in data.columns:
+                    this_angle_data[key] = np.array(
+                        [data[this_joint + "Y"], data[this_joint + "Z"]]
+                    )
+                else:  # we know that this joint is in data (because of a check in prep)
+                    this_angle_data[key] = np.array(
+                        [
+                            data[this_joint + ", " + legname + " Y"],
+                            data[this_joint + ", " + legname + " Z"],
+                        ]
+                    )
+            # now check if any of the joints have the same coord at any idx
+            for idx in range(cycle[0], cycle[1] + 1):  # within this SC only
+                if (
+                    np.array_equal(
+                        this_angle_data["name"][:, idx],
+                        this_angle_data["lower_joint"][:, idx],
+                    )
+                    or np.array_equal(
+                        this_angle_data["name"][:, idx],
+                        this_angle_data["upper_joint"][:, idx],
+                    )
+                    or np.array_equal(
+                        this_angle_data["lower_joint"][:, idx],
+                        this_angle_data["upper_joint"][:, idx],
+                    )
+                ):
+                    this_message = (
+                        "\n***********\n! WARNING !\n***********\n"
+                        + f"Run #{r + 1} - SC #{c + 1} has equal {legname.upper()} "
+                        + "joint coordinates at "
+                        + f"{round(data[TIME_COL][idx],4)}s:"
+                        + "\n\nAngle - [Y Z]:\n"
+                        + angles["name"][a]
+                        + " - "
+                        + str(this_angle_data["name"][:, idx])
+                        + "\nLower joint: "
+                        + angles["lower_joint"][a]
+                        + " - "
+                        + str(this_angle_data["lower_joint"][:, idx])
+                        + "\nUpper joint: "
+                        + angles["upper_joint"][a]
+                        + " - "
+                        + str(this_angle_data["upper_joint"][:, idx])
+                        + "\nRemoving the SC from "
+                        + f"{round(data[TIME_COL][cycle[0]], 4)}-"
+                        + f"{round(data[TIME_COL][cycle[1]], 4)}s"
+                    )
+                    print(this_message)
+                    write_issues_to_textfile(this_message, info)
+                    return None  # removes this SC
+    return cycle  # if we never returned None, this SC is valid
 
 
 # ..............................  helper functions  ....................................

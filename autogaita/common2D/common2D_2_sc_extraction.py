@@ -4,6 +4,7 @@ from autogaita.common2D.common2D_utils import (
     check_cycle_out_of_bounds,
     check_cycle_duplicates,
     check_cycle_order,
+    check_differing_angle_joint_coords,
     check_tracking_xy_thresholds,
     check_tracking_SLEAP_nans,
     handle_issues,
@@ -208,14 +209,25 @@ def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
     # ............................  clean all_cycles  ..................................
     # check if we skipped latencies because they were out of data-bounds
     all_cycles = check_cycle_out_of_bounds(all_cycles)
-    if all_cycles:  # can be None if all SCs were out of bounds
-        # check if there are any duplicates (e.g., SC2's start-lat == SC1's end-lat)
-        all_cycles = check_cycle_duplicates(all_cycles)
-        # check if user input progressively later latencies
-        all_cycles = check_cycle_order(all_cycles, info)
-        # check if tracking broke for any SCs using user-provided x and y thresholds
-        all_cycles = check_tracking_xy_thresholds(data, info, all_cycles, cfg)
-        # for SLEAP - check if there were any NaNs in any joints/angle-joints in SCs
-        if tracking_software == "SLEAP":
-            all_cycles = check_tracking_SLEAP_nans(data, info, all_cycles, cfg)
+    if not all_cycles:  # returns None if no clean cycles found
+        return None
+    # check if there are any duplicates (e.g., SC2's start-lat == SC1's end-lat)
+    all_cycles = check_cycle_duplicates(all_cycles)  # doesnt return None!
+    # check if user input progressively later latencies
+    all_cycles = check_cycle_order(all_cycles, info)
+    if not all_cycles:  # returns empty list if no clean cycles found
+        return None
+    # check that joints used in angle computations have different coords at all tps
+    all_cycles = check_differing_angle_joint_coords(all_cycles, data, info, cfg)
+    if not all_cycles:
+        return None
+    # check if tracking broke for any SCs using user-provided x and y thresholds
+    all_cycles = check_tracking_xy_thresholds(all_cycles, data, info, cfg)
+    if not all_cycles:
+        return None
+    # for SLEAP - check if there were any NaNs in any joints/angle-joints in SCs
+    if tracking_software == "SLEAP":
+        all_cycles = check_tracking_SLEAP_nans(all_cycles, data, info, cfg)
+        if not all_cycles:
+            return None
     return all_cycles
