@@ -83,9 +83,20 @@ def test_some_preps_cfg_files(extract_folderinfo, extract_cfg):
     #    not exact copies (e.g. references to the same object) for some Python-reason
     assert "loaded" in loaded_cfg.keys()
     assert "loaded" not in generated_cfg.keys()
-    loaded_cfg.pop("loaded")  # remove this key for comparison
     # 4. Check that the cfgs are equivalent
-    assert generated_cfg == loaded_cfg
+    loaded_cfg.pop("loaded")  # except this key of course - get rid of it
+    generated_cfg == loaded_cfg
+    # 5. Finally change some cfg key and assert that it has not been overwritten by
+    # loading a previous run's cfg
+    # => might seem unnecessary but the way this was implemented initially did
+    #    overwrite cfgs due to how it was loading stuff
+    extract_cfg["do_permtest"] = True
+    extract_cfg["anova_design"] = "Mixed ANOVA"
+    extract_cfg["PCA_variables"] = ["Ankle Angle", "Knee Angle", "Hip Angle"]
+    extract_folderinfo, loaded_cfg_2 = some_prep(extract_folderinfo, extract_cfg)
+    differing_keys = ["do_permtest", "anova_design", "PCA_variables"]
+    for key in differing_keys:
+        assert loaded_cfg_2[key] != loaded_cfg[key]
 
 
 # %%............................  2. data processing  ..................................

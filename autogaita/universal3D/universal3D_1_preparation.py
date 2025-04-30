@@ -154,6 +154,8 @@ def some_prep(info, folderinfo, cfg):
 
     # Important: either create time col if not present or if present set its values
     data[TIME_COL] = data.index * (1 / sampling_rate)
+    cols = [TIME_COL] + [col for col in data.columns if col != TIME_COL]  # 1st col
+    data = data[cols]
 
     # Annoying thing 2 of our simi data: it sometimes does weird things with their data
     # (e.g., storing 99cm as 0,99 and 1 metre 10cm something something as 101.222.333
@@ -199,41 +201,6 @@ def some_prep(info, folderinfo, cfg):
             data, tracking_software, info, cfg
         )
     return data, global_Y_max
-
-    # ..............................  sanity checks  ...................................
-    # Note - this was before I knew what tests are
-    # below are some old & less efficient ways of computing y min / max & z min
-    # => I saved these so you can put breakpoints and copy paste the sanity checks on
-    #    (e.g.) data_copy = data.copy() and then check equivalence of dfs using
-    #    data.equals(data_copy)
-
-    # 1 - SANITY CHECK FOR Y MIN
-    # global_y_min = float("inf")
-    # for col in data_copy.columns:
-    #     if col.endswith("Y"):
-    #         if min(data_copy[col]) < global_y_min:
-    #             global_y_min = min(data_copy[col])
-    # if global_y_min < 0:
-    #     for col in data_copy.columns:
-    #         if col.endswith("Y"):
-    #             data_copy[col] = data_copy[col] + abs(global_y_min)
-
-    # 2 - SANITY CHECK FOR Y MAX
-    # global_Y_max = 0
-    # for col in data.columns:
-    #     if col.endswith("Y"):
-    #         if max(data[col]) > global_Y_max:
-    #             global_Y_max = max(data[col])
-
-    # 3 - SANITY CHECK FOR Z MIN
-    # global_Z_min = float("inf")
-    # for col in data.columns:
-    #     if col.endswith("Z"):
-    #         if min(data[col]) < global_Z_min:
-    #             global_Z_min = min(data[col])
-    # for col in data.columns:
-    #     if col.endswith("Z"):
-    #         data[col] = data[col] - global_Z_min  # a neg num - a neg num = pos num
 
 
 # ..............................  helper functions  ....................................

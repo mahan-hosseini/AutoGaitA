@@ -23,6 +23,28 @@ from autogaita.group.group_constants import (
 def some_prep(folderinfo, cfg):
     """Add some folderinfo & cfg variables to the dictionaries for further processes"""
 
+    # AN IMPORTANT NOTE ABOUT LOAD_DIR
+    # --------------------------------
+    # Alright so the group pipeline's cfg (and thus, of course, config.json) is a bit
+    # special because it includes:
+    # 1) first-level config-keys, such as "joints" or "angles", that reflect what has
+    #    been analysed at the first level. These are also checked for equivalence
+    #    across groups when running this without load_dir (see the for g_idx loop
+    #    below) to ensure we are not comparing different sampling rates or so with a
+    #    group analysis
+    # 2) group-level config-keys, such as "do_permtest" or "PCA_variables" that define
+    #    how group analysis should be done
+    # Now:
+    # When loading previously generated group dfs (i.e., using load_dir), the vars in
+    # (2) should naturally be changing so the user can change "PCA_variables" or
+    # "do_anova". The config.json is coded to reflect the group-keys of the most
+    # recent analysis. The "first-level" config keys are, however, just checked for
+    # equivalence once and then never changed by group gaita. So if users should
+    # repeatedly run analyses in the same results_dir, the config.json file includes
+    # the first-level keys of the first run and the group-level keys of the most recent
+    # run. This is not an issue per se but very likely something that I might forget in
+    # a year thus here is a note.
+
     # unpack
     group_names = folderinfo["group_names"]
     group_dirs = folderinfo["group_dirs"]
@@ -49,23 +71,16 @@ def some_prep(folderinfo, cfg):
         if os.path.exists(info_file_path):
             os.remove(info_file_path)
 
-    # *********** IMPORTANT ***********
-    # if load_dir, we have already saved a group config.json (see below before return)
-    # => use this and just return the cfg
-    # => make sure to write folderinfo["contrast"] manually above as is and then return
-    #    that folderinfo plus the cfg you load from the file
+    # load a couple necessary first-level cfg vars from previous run's group config.json
     if len(folderinfo["load_dir"]) > 0:
-        with open(
-            os.path.join(folderinfo["load_dir"], CONFIG_JSON_FILENAME), "r"
-        ) as config_json_file:
-            cfg = json.load(config_json_file)
-            cfg["loaded"] = True  # used in a unit test in test_group_unit.py
+        cfg = load_previous_runs_first_level_cfg_vars(folderinfo, cfg)
 
-    else:  # if not, do the below things based on group dirs' configs
-        # 1. extracted_cfg_vars: save_to_xls, PCA stuff & dont show plots
-        cfg = extract_cfg_vars(folderinfo, cfg)
+    # define save_to_xls and test PCA
+    cfg = extract_save_to_xls_and_test_PCA_config(folderinfo, cfg)
 
-        # 2. ennsure each key's across-group-equivalence and then add to cfg dict
+    # if not loading previous results, ensure cfg-keys are equivalent across groups
+    # then add them to cfg dict
+    if len(folderinfo["load_dir"]) == 0:
         for g_idx, group_dir in enumerate(group_dirs):
             with open(
                 os.path.join(group_dir, CONFIG_JSON_FILENAME), "r"
@@ -84,24 +99,31 @@ def some_prep(folderinfo, cfg):
                                 "config.json variables differ between groups!"
                                 + "\nPlease make sure that all cfg variables between "
                                 + "groups match & try again!"
+                                + f"\nMismatch at {key} in group {group_names[g_idx]}"
                             )
                             raise ValueError(error_message)
                         else:
                             cfg[key] = config_vars_from_json[key]
 
-        # 3. rename hind_joints is to joints if DLC or SLEAP
-        if "hind_joints" in cfg.keys():
-            cfg["joints"] = cfg["hind_joints"]
+    # rename hind_joints to joints (if DLC or SLEAP)
+    if "hind_joints" in cfg.keys():
+        cfg["joints"] = cfg["hind_joints"]
 
-    # ******** IMPORTANT *******
-    # => Do the following two things regardless of load_dir:
-    # 1. save cfg to json file in results_dir for load_dir capability
+    # update cfg keys in json file in results_dir
+    # => i.e. if there's already a config.json @ results_dir (happens if load_dir was
+    #    True) the if-condition below updates (only) the group-config keys according to
+    #    this run's cfg dict
+    # => this also means that first-level cfg keys are never changed (which is intended)
     config_json_path = os.path.join(results_dir, CONFIG_JSON_FILENAME)
-    if os.path.exists(config_json_path):  # overwrite if exists
-        os.remove(config_json_path)
+    if os.path.exists(config_json_path):
+        with open(config_json_path, "r") as config_json_file:
+            existing_cfg = json.load(config_json_file)
+        existing_cfg.update({key: cfg[key] for key in cfg if key in existing_cfg})
+        cfg = existing_cfg  # update cfg with existing keys
     with open(config_json_path, "w") as config_json_file:
         json.dump(cfg, config_json_file)
-    # 2. create this plot stuff manually (cycler objects cannot be written to json)
+
+    # create this plot stuff manually (cycler objects cannot be written to json)
     cfg["group_color_cycler"] = plt.cycler(
         "color", sns.color_palette(cfg["color_palette"], len(group_names))
     )
@@ -115,76 +137,40 @@ def some_prep(folderinfo, cfg):
         "color", sns.color_palette(cfg["color_palette"], len(cfg["angles"]["name"]))
     )
 
+    # have this key for a unit test - make sure it's never written to json
+    if len(folderinfo["load_dir"]) > 0:
+        cfg["loaded"] = True
+
     return folderinfo, cfg
 
 
-def extract_cfg_vars(folderinfo, cfg):
+def load_previous_runs_first_level_cfg_vars(folderinfo, cfg):
+    """There are only a few "first-level" cfg vars (like "joints") we require for group gaita's workflow - load them here"""
+    with open(
+        os.path.join(folderinfo["load_dir"], CONFIG_JSON_FILENAME), "r"
+    ) as config_json_file:
+        old_cfg = json.load(config_json_file)
+        cfg["save_to_xls"] = old_cfg["save_to_xls"]
+        cfg["joints"] = old_cfg["joints"]
+        cfg["angles"] = old_cfg["angles"]
+    return cfg
+
+
+def extract_save_to_xls_and_test_PCA_config(folderinfo, cfg):
     """Extract save_to_xls from example Normalised dfs and sanity check
-    that they match between groups. Also some stuff for PCA!
+    that they match between groups. Also some tests for users' PCA config!
     """
 
-    group_names = folderinfo["group_names"]
-    group_dirs = folderinfo["group_dirs"]
+    # NOTE
+    # ----
+    # save_to_xls is a list of bools that is infered from file type of group's sheet
+    # files - only when not using load_dir. if we use load_dir, save_to_xls is loaded
+    # by load_previous_runs_first_level_cfg_vars
 
     # ................................  save_to_xls  ...................................
-    save_to_xls = [None] * len(group_dirs)
-    for g, group_dir in enumerate(group_dirs):
-        all_results_folders = os.listdir(
-            group_dir
-        )  # remove no-results valid_results_folders
-        valid_results_folders = []
-        # => Note if there's ambiguity / mixed filetypes, we set save_to_xls to True!
-        sheet_type_mismatch_message = (
-            "\n***********\n! WARNING !\n***********\n"
-            + "Mismatch in sheet file types for group "
-            + group_names[g]
-            + "!\nSaving all output sheets to"
-            + ".xlsx!\nRe-run first level & only save .csvs if "
-            + "you want .csv files of group results!"
-        )
-        for folder in all_results_folders:
-            # create save_to_xls here, there are two cases we have to deal with:
-            # case 1: we found a csv file
-            if os.path.exists(
-                os.path.join(
-                    group_dir,
-                    folder,
-                    folder + " - " + ORIG_SHEET_NAME + ".csv",
-                )
-            ):
-                valid_results_folders.append(folder)
-                if save_to_xls[g] is None:
-                    save_to_xls[g] = False
-                if save_to_xls[g] is True:
-                    print(sheet_type_mismatch_message)
-                    write_issues_to_textfile(sheet_type_mismatch_message, folderinfo)
-            # case 2: we found a xlsx file
-            elif os.path.exists(
-                os.path.join(
-                    group_dir,
-                    folder,
-                    folder + " - " + ORIG_SHEET_NAME + ".xlsx",
-                )
-            ):
-                valid_results_folders.append(folder)
-                if save_to_xls[g] is None:
-                    save_to_xls[g] = True
-                if save_to_xls[g] is False:
-                    save_to_xls[g] = True
-                    print(sheet_type_mismatch_message)
-                    write_issues_to_textfile(sheet_type_mismatch_message, folderinfo)
-        # test that at least 1 folder has valid results for all groups
-        if not valid_results_folders:
-            no_valid_results_error = (
-                "\n*********\n! ERROR !\n*********\n"
-                + "No valid results folder found for "
-                + group_names[g]
-                + "\nFix & re-run!"
-            )
-            print(no_valid_results_error)
-            write_issues_to_textfile(no_valid_results_error, folderinfo)
-    # assign to our cfg dict after group loop
-    cfg["save_to_xls"] = save_to_xls
+    if len(folderinfo["load_dir"]) == 0:
+        # infer save_to_xls from sheet files
+        cfg["save_to_xls"] = infer_save_to_xls_from_group_dirs_sheetfiles(folderinfo)
 
     # .........................  test if PCA config is valid  ..........................
     # only test if user wants PCA (ie. selected any features) and is not using the
@@ -272,3 +258,69 @@ def extract_cfg_vars(folderinfo, cfg):
             cfg["PCA_bins"] = cfg["PCA_bins"][:-1]
 
     return cfg
+
+
+def infer_save_to_xls_from_group_dirs_sheetfiles(folderinfo):
+    """Generate a list of save_to_xls bools that is automatically inferred from sheet file in group dir"""
+
+    # unpack
+    group_names = folderinfo["group_names"]
+    group_dirs = folderinfo["group_dirs"]
+
+    save_to_xls = [None] * len(group_dirs)
+    for g, group_dir in enumerate(group_dirs):
+        all_results_folders = os.listdir(
+            group_dir
+        )  # remove no-results valid_results_folders
+        valid_results_folders = []
+        # => Note if there are mixed filetypes, we set save_to_xls to True!
+        sheet_type_mismatch_message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + "Mismatch in sheet file types for group "
+            + group_names[g]
+            + "!\nSaving all output sheets to"
+            + ".xlsx!\nRe-run first level & only save .csvs if "
+            + "you want .csv files of group results!"
+        )
+        for folder in all_results_folders:
+            # create save_to_xls here, there are two cases we have to deal with:
+            # case 1: we found a csv file
+            if os.path.exists(
+                os.path.join(
+                    group_dir,
+                    folder,
+                    folder + " - " + ORIG_SHEET_NAME + ".csv",
+                )
+            ):
+                valid_results_folders.append(folder)
+                if save_to_xls[g] is None:
+                    save_to_xls[g] = False
+                if save_to_xls[g] is True:
+                    print(sheet_type_mismatch_message)
+                    write_issues_to_textfile(sheet_type_mismatch_message, folderinfo)
+            # case 2: we found a xlsx file
+            elif os.path.exists(
+                os.path.join(
+                    group_dir,
+                    folder,
+                    folder + " - " + ORIG_SHEET_NAME + ".xlsx",
+                )
+            ):
+                valid_results_folders.append(folder)
+                if save_to_xls[g] is None:
+                    save_to_xls[g] = True
+                if save_to_xls[g] is False:
+                    save_to_xls[g] = True
+                    print(sheet_type_mismatch_message)
+                    write_issues_to_textfile(sheet_type_mismatch_message, folderinfo)
+        # test that at least 1 folder has valid results for all groups
+        if not valid_results_folders:
+            no_valid_results_error = (
+                "\n*********\n! ERROR !\n*********\n"
+                + "No valid results folder found for "
+                + group_names[g]
+                + "\nFix & re-run!"
+            )
+            print(no_valid_results_error)
+            write_issues_to_textfile(no_valid_results_error, folderinfo)
+    return save_to_xls

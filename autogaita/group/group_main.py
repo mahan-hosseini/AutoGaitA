@@ -58,6 +58,7 @@ def group(folderinfo, cfg):
     # ................................  preparation  ...................................
     # => either creates and sanity-checks folderinfo & cfg or loads it from a previous
     #    run's config.json file (if load_dir)
+    # => there is an IMPORTANT NOTE about this in some_prep!
     folderinfo, cfg = some_prep(folderinfo, cfg)
 
     # ..............................  print start  ....................................
@@ -68,8 +69,8 @@ def group(folderinfo, cfg):
 
     # approach a - import & transform (i.e. no previous results to load from)
     if not folderinfo["load_dir"]:
-        # in dlc/sleap, dfs is x-standardised automatically if 1st-level standardised x
-        # => As a result all average & std dfs are x-standardised as well
+        # "dfs" are x-/Y-standardised automatically if 1st-level standardised x/Y
+        # => if this is the case, it translates to all average & std dfs as well
         dfs, raw_dfs, cfg = import_data(folderinfo, cfg)
         avg_dfs, std_dfs = avg_and_std(dfs, folderinfo, cfg)
         g_avg_dfs, g_std_dfs = grand_avg_and_std(avg_dfs, folderinfo, cfg)
