@@ -89,6 +89,7 @@ def sample_step():
             sample_step[joint + coord] = list(
                 np.random.randint(1, 101, sample_step_len)
             )
+    sample_step["Time"] = np.arange(sample_step_len)
     return pd.DataFrame(sample_step)
 
 
@@ -117,16 +118,18 @@ def sample_data_for_property_tests(func):
 # %% workflow step #3 - y-flipping, y-stand, features, df-creation & exports
 
 
-def test_standardise_z_at_SC_level(sample_step, extract_cfg):
+def test_standardise_z_at_SC_level(sample_step, extract_info, extract_cfg):
     extract_cfg["standardise_z_at_SC_level"] = True
     extract_cfg["standardise_z_to_a_joint"] = False
     extract_cfg["flip_gait_direction"] = False
     extract_cfg["standardise_y_coordinates"] = False
     z_cols = [col for col in sample_step.columns if col.endswith("Z")]
     function_step = standardise_y_z_flip_gait_add_features_to_one_step(
-        sample_step, 10, extract_cfg
+        sample_step, 10, extract_info, extract_cfg
     )
-    sample_step = add_features(sample_step, extract_cfg)  # otherwise df-shape mismatch
+    sample_step = add_features(
+        sample_step, extract_info, extract_cfg
+    )  # otherwise df-shape mismatch
     steps_global_z_minimum = sample_step[z_cols].min().min()  # global == all joints
     expected_step = sample_step.copy()
     expected_step[z_cols] -= steps_global_z_minimum
@@ -136,7 +139,7 @@ def test_standardise_z_at_SC_level(sample_step, extract_cfg):
 # because we have random integers in step, we might get a near-zero vectors when
 # computing angles - ignore those warnings
 @pytest.mark.filterwarnings("ignore:invalid value")
-def test_flip_gait_direction(sample_step, extract_cfg):
+def test_flip_gait_direction(sample_step, extract_info, extract_cfg):
     # prepare some vars
     extract_cfg["flip_gait_direction"] = True
     extract_cfg["standardise_y_coordinates"] = False
@@ -154,10 +157,10 @@ def test_flip_gait_direction(sample_step, extract_cfg):
             ascending=True, ignore_index=True
         )
     to_be_flipped_step = standardise_y_z_flip_gait_add_features_to_one_step(
-        to_be_flipped_step, global_Y_max, extract_cfg
+        to_be_flipped_step, global_Y_max, extract_info, extract_cfg
     )
     to_not_be_flipped_step = standardise_y_z_flip_gait_add_features_to_one_step(
-        to_not_be_flipped_step, global_Y_max, extract_cfg
+        to_not_be_flipped_step, global_Y_max, extract_info, extract_cfg
     )
     # first test if the y-values are flipped (increasing y-cols progressively)
     for col in y_cols:
@@ -188,7 +191,7 @@ def test_flip_gait_direction(sample_step, extract_cfg):
 @pytest.mark.filterwarnings("ignore:invalid value")
 @sample_data_for_property_tests
 def test_standardise_y_coordinates_no_gait_flipping(
-    sample_step, extract_cfg, sample_steps_data
+    sample_step, extract_info, extract_cfg, sample_steps_data
 ):
     extract_cfg["standardise_y_coordinates"] = True
     extract_cfg["flip_gait_direction"] = False
@@ -196,9 +199,11 @@ def test_standardise_y_coordinates_no_gait_flipping(
     # prep data
     # => because we are property testing, insert the hypothesis-generated data into the
     #    sample_step df (which has the correct columns)
-    sample_step = pd.DataFrame(columns=sample_step.columns, data=sample_steps_data)
+    # => the -1 in pd.df line is because we first want to exclude the time column...
+    sample_step = pd.DataFrame(columns=sample_step.columns[:-1], data=sample_steps_data)
+    sample_step["Time"] = np.arange(len(sample_step))  # ... to include it manually
     non_stand_step, y_stand_step = standardise_y_z_flip_gait_add_features_to_one_step(
-        sample_step, 10, extract_cfg
+        sample_step, 10, extract_info, extract_cfg
     )
     steps_y_min = (
         sample_step[extract_cfg["y_standardisation_joint"][0] + "Y"].min().min()
@@ -207,7 +212,9 @@ def test_standardise_y_coordinates_no_gait_flipping(
     pdt.assert_frame_equal(non_stand_step, y_stand_step)
 
 
-def test_standardise_y_coordinates_gait_flipping(sample_step, extract_cfg):
+def test_standardise_y_coordinates_gait_flipping(
+    sample_step, extract_info, extract_cfg
+):
     # prep vars
     extract_cfg["standardise_y_coordinates"] = True
     extract_cfg["flip_gait_direction"] = True
@@ -231,7 +238,7 @@ def test_standardise_y_coordinates_gait_flipping(sample_step, extract_cfg):
             ascending=False, ignore_index=True
         )
     non_stand_step, y_stand_step = standardise_y_z_flip_gait_add_features_to_one_step(
-        to_be_flipped_step, global_Y_max, extract_cfg
+        to_be_flipped_step, global_Y_max, extract_info, extract_cfg
     )
     steps_y_min = (
         non_stand_step[extract_cfg["y_standardisation_joint"][0] + "Y"].min().min()

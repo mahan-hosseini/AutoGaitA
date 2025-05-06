@@ -3,6 +3,7 @@ from autogaita.resources.utils import (
     write_issues_to_textfile,
     bin_num_to_percentages,
     compute_angle,
+    write_angle_warning,
 )
 import os
 import pandas as pd
@@ -110,7 +111,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
             if standardise_y_coordinates:
                 this_step, y_standardised_step = (
                     standardise_y_z_flip_gait_add_features_to_one_step(
-                        this_step, global_Y_max, cfg
+                        this_step, global_Y_max, info, cfg
                     )
                 )
                 all_steps_data[l_idx] = this_step
@@ -120,7 +121,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                 )
             else:
                 this_step = standardise_y_z_flip_gait_add_features_to_one_step(
-                    this_step, global_Y_max, cfg
+                    this_step, global_Y_max, info, cfg
                 )
                 all_steps_data[l_idx] = this_step
                 normalised_steps_data[l_idx] = normalise_one_steps_data(
@@ -136,7 +137,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
             if standardise_y_coordinates:
                 first_step, y_standardised_first_step = (
                     standardise_y_z_flip_gait_add_features_to_one_step(
-                        first_step, global_Y_max, cfg
+                        first_step, global_Y_max, info, cfg
                     )
                 )
                 all_steps_data[l_idx] = first_step
@@ -146,7 +147,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                 )
             else:
                 first_step = standardise_y_z_flip_gait_add_features_to_one_step(
-                    first_step, global_Y_max, cfg
+                    first_step, global_Y_max, info, cfg
                 )
                 all_steps_data[l_idx] = first_step
                 normalised_steps_data[l_idx] = normalise_one_steps_data(
@@ -168,7 +169,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                 if standardise_y_coordinates:
                     this_step, this_y_standardised_step = (
                         standardise_y_z_flip_gait_add_features_to_one_step(
-                            this_step, global_Y_max, cfg
+                            this_step, global_Y_max, info, cfg
                         )
                     )
                     this_normalised_step = normalise_one_steps_data(
@@ -176,7 +177,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                     )
                 else:
                     this_step = standardise_y_z_flip_gait_add_features_to_one_step(
-                        this_step, global_Y_max, cfg
+                        this_step, global_Y_max, info, cfg
                     )
                     this_normalised_step = normalise_one_steps_data(this_step, bin_num)
                 # step separators & step-to-rest concatenation
@@ -327,7 +328,7 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
 # ......................................................................................
 
 
-def standardise_y_z_flip_gait_add_features_to_one_step(step, global_Y_max, cfg):
+def standardise_y_z_flip_gait_add_features_to_one_step(step, global_Y_max, info, cfg):
     """For a single step cycle's data, standardise y & z if wanted, flip y columns if wanted (to simulate equal run direction) and add features (angles & velocities)"""
     # unpack
     standardise_z_at_SC_level = cfg["standardise_z_at_SC_level"]
@@ -354,7 +355,7 @@ def standardise_y_z_flip_gait_add_features_to_one_step(step, global_Y_max, cfg):
             non_stand_step = flip_a_steps_gait_direction(
                 non_stand_step, direction_joint, global_Y_max
             )
-        non_stand_step = add_features(non_stand_step, cfg)
+        non_stand_step = add_features(non_stand_step, info, cfg)
         return non_stand_step
 
     # user wanted y-standardisation
@@ -382,8 +383,8 @@ def standardise_y_z_flip_gait_add_features_to_one_step(step, global_Y_max, cfg):
         y_minimum = y_stand_step[y_standardisation_joint[0] + "Y"].min()
         y_stand_step[y_cols] -= y_minimum
         # add features & return
-        non_stand_step = add_features(non_stand_step, cfg)
-        y_stand_step = add_features(y_stand_step, cfg)
+        non_stand_step = add_features(non_stand_step, info, cfg)
+        y_stand_step = add_features(y_stand_step, info, cfg)
         return non_stand_step, y_stand_step
 
 
@@ -406,7 +407,7 @@ def flip_y_columns(step, global_Y_max):
     return flipped_step
 
 
-def add_features(step, cfg):
+def add_features(step, info, cfg):
     """Add Features, i.e. Angles & Velocities
 
     Note
@@ -439,7 +440,7 @@ def add_features(step, cfg):
     step_copy = step.copy()
     for legname in LEGS_COLFORMAT:
         if angles["name"]:  # if at least 1 string in list
-            step_copy = add_angles(step_copy, legname, cfg)
+            step_copy = add_angles(step_copy, legname, info, cfg)
         step_copy = add_velocities(step_copy, legname, cfg)
     # I do this since it's possible that we created two, e.g., "Pelvis Angle" cols due
     # to our leg-loop # !!! NU (see in the doc above)
@@ -447,7 +448,7 @@ def add_features(step, cfg):
     return step_copy
 
 
-def add_angles(step, legname, cfg):
+def add_angles(step, legname, info, cfg):
     """Feature #1: Joint Angles
 
     Note
@@ -491,8 +492,17 @@ def add_angles(step, legname, cfg):
             joint3[:, 1] = step[upper_joint + legname + "Z"]
         # initialise the angle vector and assign looping over timepoints
         this_angle = np.zeros(len(joint_angle))
+        broken_angle_idxs = []  # initialise broken idxs-list for each angle anew
         for t in range(len(joint_angle)):
-            this_angle[t] = compute_angle(joint_angle[t, :], joint2[t, :], joint3[t, :])
+            this_angle[t], broken = compute_angle(
+                joint_angle[t, :], joint2[t, :], joint3[t, :]
+            )
+            if broken:
+                broken_angle_idxs.append(t)
+        if broken_angle_idxs:
+            write_angle_warning(
+                step, a, angle, broken_angle_idxs, info, legname=legname
+            )
         # colnames depend on bodyside-specificity
         if angle + "Y" in step.columns:
             this_colname = angle + "Angle"

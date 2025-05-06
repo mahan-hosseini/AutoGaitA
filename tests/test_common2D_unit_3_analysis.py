@@ -138,14 +138,14 @@ def test_angles(angle_x_y, lower_x_y, upper_x_y, expected_angle):
         .to_frame()
         .T
     )
-
+    info = {}
     cfg = {}
     cfg["angles"] = {
         "name": ["angle "],
         "lower_joint": ["lower "],
         "upper_joint": ["upper "],
     }
-    step = add_angles(step, cfg)
+    step = add_angles(step, info, cfg)
     assert step["angle Angle"].values == expected_angle
 
 

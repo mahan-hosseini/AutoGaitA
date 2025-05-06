@@ -10,7 +10,7 @@ import tkinter as tk
 import customtkinter as ctk
 
 # .................................  constants  ........................................
-from autogaita.resources.constants import ISSUES_TXT_FILENAME, INFO_TEXT_WIDTH
+from autogaita.resources.constants import ISSUES_TXT_FILENAME, INFO_TEXT_WIDTH, TIME_COL
 from autogaita.universal3D.universal3D_constants import LEGS_COLFORMAT
 
 
@@ -146,6 +146,8 @@ def print_finish(info):
 
 def compute_angle(joint_angle, joint2, joint3):
     """Compute a given angle at a joint & a given timepoint"""
+    # prep our boolean to check if angle was broken
+    broken = False
     # 1) vector between our angle-joint and the other two joints
     v1 = (joint_angle[0] - joint2[0], joint_angle[1] - joint2[1])
     v2 = (joint_angle[0] - joint3[0], joint_angle[1] - joint3[1])
@@ -156,11 +158,50 @@ def compute_angle(joint_angle, joint2, joint3):
     mag_v1 = math.sqrt(v1[0] ** 2 + v1[1] ** 2)
     mag_v2 = math.sqrt(v2[0] ** 2 + v2[1] ** 2)
     # 3) cosine of the angle and angle
-    # => clamp to valid range to handle floating point errors
+    # => if needed: clamp to valid range to handle floating point errors
     cos_angle = dot_product / (mag_v1 * mag_v2)
-    cos_angle = max(-1, min(1, cos_angle))
-    angle = math.degrees(math.acos(cos_angle))
-    return angle
+    try:
+        acos_angle = math.acos(cos_angle)
+    except ValueError:  # cos_angle wasn't in the -1 to +1 range
+        cos_angle = max(-1, min(1, cos_angle))  # clamp to valid range
+        acos_angle = math.acos(cos_angle)
+        broken = True
+    angle = math.degrees(acos_angle)
+    return angle, broken
+
+
+def write_angle_warning(step, a, angles, broken_angle_idxs, info, **kwargs):
+    """Write a warning to the Issues.txt file if angles were broken"""
+    # Make sure you write the first WARNING message just once
+    issues_file = os.path.join(info["results_dir"], ISSUES_TXT_FILENAME)
+    # the file always exists in /autogaita, but not with all /tests - handling that here
+    if os.path.exists(issues_file):
+        with open(issues_file, "r") as f:
+            issues = f.read()
+    else:
+        issues = ""
+    if "arc cosine to -1" not in issues:
+        message = (
+            "\n\n***********\n! WARNING !\n***********\n"
+            + "\nWe had to limit the input of the arc cosine to -1 to +1 when "
+            + "computing some angles.\nThis likely is just a rounding issue with Python"
+            + " but could hint at problems with your tracking, check to be sure.\n\n"
+        )
+    # write the which-config broke angle - message always
+    message += "\n\nArc-cosine of angle fixed for this configuration:"
+    if "legname" in kwargs:  # handle Universal 3D legname
+        message += f"\nLeg: {kwargs['legname']}"
+    time_col_idx = step.columns.get_loc(TIME_COL)
+    start_time = step.iloc[broken_angle_idxs[0], time_col_idx]
+    end_time = step.iloc[broken_angle_idxs[-1], time_col_idx]
+    message += (
+        f"\n\nAngle: {angles['name'][a]}"
+        + f"\nLower Joint: {angles['lower_joint'][a]}"
+        + f"\nUpper Joint: {angles['upper_joint'][a]}"
+        + f"\nCycle-time: {start_time}-{end_time}s"
+    )
+    print(message)
+    write_issues_to_textfile(message, info)
 
 
 def bin_num_to_percentages(bin_num):

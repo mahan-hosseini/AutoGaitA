@@ -1,9 +1,14 @@
-from autogaita.resources.utils import standardise_primary_joint_coordinates
+from autogaita.resources.utils import (
+    standardise_primary_joint_coordinates,
+    compute_angle,
+    write_angle_warning,
+)
 from autogaita.common2D.common2D_1_preparation import some_prep as some_prep_2D
 from autogaita.universal3D.universal3D_1_preparation import some_prep as some_prep_3D
 from autogaita.common2D.common2D_2_sc_extraction import extract_stepcycles
 from autogaita.common2D.common2D_3_analysis import analyse_and_export_stepcycles
 import os
+import math
 import pandas as pd
 import pandas.testing as pdt
 import pytest
@@ -131,6 +136,62 @@ def extract_3D_cfg():
 
 
 # %% .................................  tests  .........................................
+
+
+def test_compute_angle():
+    # Test case 1: Basic case
+    joint1 = [0, 0]
+    joint2 = [1, 0]
+    joint3 = [0, 1]
+    expected_angle = 90
+    result, _ = compute_angle(joint1, joint2, joint3)
+    assert math.isclose(result, expected_angle)
+    # Test case 2: two joints are equal - this won't happen in autogaita because of the
+    # test in extract_stepcycles but I want to make sure that the function returns
+    # broken=True correctly
+    joint1 = [5, 5]
+    joint2 = [2, 2]
+    joint3 = [2, 2]
+    expected_angle = None
+    result, broken = compute_angle(joint1, joint2, joint3)
+    assert result == 0
+    assert broken is True
+
+
+def test_write_angle_warning(extract_2D_cfg, extract_2D_info):
+    # prep: remove existing Issues.txt
+    results_dir = extract_2D_info["results_dir"]
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+    issues_path = os.path.join(results_dir, "Issues.txt")
+    if os.path.exists(issues_path):
+        os.remove(issues_path)
+    # prep: more vars
+    step = pd.DataFrame()
+    step["Time"] = [0.1, 0.2, 0.3]
+    step["dummy_coord"] = [1, 2, 3]  # need this too otherwise stuff breaks
+    angles = extract_2D_cfg["angles"]
+    a = 0
+    broken_angle_idxs = [0, 2]
+    # run
+    write_angle_warning(step, a, angles, broken_angle_idxs, extract_2D_info)
+    # assert
+    with open(issues_path, "r") as f:
+        issues = f.read()
+    assert (
+        "Angle: Ankle" in issues  # bc. of extract_2D_cfg
+        and "Lower Joint: Hind paw tao" in issues
+        and "Upper Joint: Knee" in issues
+        and "Cycle-time: 0.1-0.3s" in issues
+    )
+    # run again - test legname works as expected
+    os.remove(issues_path)  # first remove previous textfile
+    write_angle_warning(
+        step, a, angles, broken_angle_idxs, extract_2D_info, legname="left"
+    )
+    with open(issues_path, "r") as f:
+        issues = f.read()
+    assert "Leg: left" in issues
 
 
 def test_correct_coordinate_standardisation(

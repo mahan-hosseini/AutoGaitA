@@ -1,10 +1,13 @@
 # %% imports
-from autogaita.resources.utils import bin_num_to_percentages, compute_angle
+from autogaita.resources.utils import (
+    bin_num_to_percentages,
+    compute_angle,
+    write_angle_warning,
+)
 import os
 import warnings
 import pandas as pd
 import numpy as np
-import math
 
 # %% constants
 from autogaita.resources.constants import TIME_COL, SC_PERCENTAGE_COL
@@ -50,14 +53,14 @@ def analyse_and_export_stepcycles(data, all_cycles, info, cfg):
         this_step = data_copy.loc[all_cycles[0][0] : all_cycles[0][1]]
         if standardise_x_coordinates:
             all_steps_data, x_standardised_steps_data = (
-                standardise_x_y_and_add_features_to_one_step(this_step, cfg)
+                standardise_x_y_and_add_features_to_one_step(this_step, info, cfg)
             )
             normalised_steps_data = normalise_one_steps_data(
                 x_standardised_steps_data, bin_num
             )
         else:
             all_steps_data = standardise_x_y_and_add_features_to_one_step(
-                this_step, cfg
+                this_step, info, cfg
             )
             normalised_steps_data = normalise_one_steps_data(all_steps_data, bin_num)
     # 2 or more steps - build dataframe
@@ -69,14 +72,14 @@ def analyse_and_export_stepcycles(data, all_cycles, info, cfg):
         first_step = data_copy.loc[all_cycles[0][0] : all_cycles[0][1]]
         if standardise_x_coordinates:
             all_steps_data, x_standardised_steps_data = (
-                standardise_x_y_and_add_features_to_one_step(first_step, cfg)
+                standardise_x_y_and_add_features_to_one_step(first_step, info, cfg)
             )
             normalised_steps_data = normalise_one_steps_data(
                 x_standardised_steps_data, bin_num
             )
         else:
             all_steps_data = standardise_x_y_and_add_features_to_one_step(
-                first_step, cfg
+                first_step, info, cfg
             )
             normalised_steps_data = normalise_one_steps_data(all_steps_data, bin_num)
         # some prep for addition of further steps
@@ -98,13 +101,15 @@ def analyse_and_export_stepcycles(data, all_cycles, info, cfg):
             this_step = data_copy.loc[all_cycles[s][0] : all_cycles[s][1]]
             if standardise_x_coordinates:
                 this_step, this_x_standardised_step = (
-                    standardise_x_y_and_add_features_to_one_step(this_step, cfg)
+                    standardise_x_y_and_add_features_to_one_step(this_step, info, cfg)
                 )
                 this_normalised_step = normalise_one_steps_data(
                     this_x_standardised_step, bin_num
                 )
             else:
-                this_step = standardise_x_y_and_add_features_to_one_step(this_step, cfg)
+                this_step = standardise_x_y_and_add_features_to_one_step(
+                    this_step, info, cfg
+                )
                 this_normalised_step = normalise_one_steps_data(this_step, bin_num)
             # step separators & step-to-rest-concatenation
             # => note that normalised_step is already based on x-stand if required
@@ -170,7 +175,7 @@ def analyse_and_export_stepcycles(data, all_cycles, info, cfg):
 # ......................................................................................
 
 
-def standardise_x_y_and_add_features_to_one_step(step, cfg):
+def standardise_x_y_and_add_features_to_one_step(step, info, cfg):
     """For a single step cycle's data, standardise x & y if wanted and add features"""
     # if user wanted this, standardise y (height) at step-cycle level
     step_copy = step.copy()
@@ -184,11 +189,11 @@ def standardise_x_y_and_add_features_to_one_step(step, cfg):
         step_copy[y_cols] -= this_y_min
     # if no x-standardisation, just add features & return non-(x-)normalised step
     if cfg["standardise_x_coordinates"] is False:
-        non_stand_step = add_features(step_copy, cfg)
+        non_stand_step = add_features(step_copy, info, cfg)
         return non_stand_step
         # else standardise x (horizontal dimension) at step-cycle level too
     else:
-        non_stand_step = add_features(step_copy, cfg)
+        non_stand_step = add_features(step_copy, info, cfg)
         x_stand_step = step_copy.copy()
         x_cols = [col for col in x_stand_step.columns if col.endswith("x")]
         # note the [0] here is important because it's still a list of len=1!!
@@ -196,11 +201,11 @@ def standardise_x_y_and_add_features_to_one_step(step, cfg):
             cfg["x_standardisation_joint"][0] + "x"
         ].min()
         x_stand_step[x_cols] -= min_x_standardisation_joint
-        x_stand_step = add_features(x_stand_step, cfg)
+        x_stand_step = add_features(x_stand_step, info, cfg)
         return non_stand_step, x_stand_step
 
 
-def add_features(step, cfg):
+def add_features(step, info, cfg):
     """Add Features, i.e. Angles & Velocities"""
     # unpack
     hind_joints = cfg["hind_joints"]
@@ -208,12 +213,12 @@ def add_features(step, cfg):
     if hind_joints:
         step = add_x_velocities(step, cfg)
     if angles["name"]:  # if there is at least 1 string in the list
-        step = add_angles(step, cfg)
+        step = add_angles(step, info, cfg)
         step = add_angular_velocities(step, cfg)
     return step
 
 
-def add_angles(step, cfg):
+def add_angles(step, info, cfg):
     """Feature #1: Joint Angles"""
     # unpack
     angles = cfg["angles"]
@@ -234,8 +239,15 @@ def add_angles(step, cfg):
         joint3[:, 1] = step[upper_joint + "y"]
         # initialise the angle vector and assign looping over timepoints
         this_angle = np.zeros(len(joint_angle))
+        broken_angle_idxs = []  # initialise broken idxs-list for each angle anew
         for t in range(len(joint_angle)):
-            this_angle[t] = compute_angle(joint_angle[t, :], joint2[t, :], joint3[t, :])
+            this_angle[t], broken = compute_angle(
+                joint_angle[t, :], joint2[t, :], joint3[t, :]
+            )
+            if broken:
+                broken_angle_idxs.append(t)
+        if broken_angle_idxs:
+            write_angle_warning(step, a, angles, broken_angle_idxs, info)
         this_colname = angle + "Angle"
         step[this_colname] = this_angle
     return step
