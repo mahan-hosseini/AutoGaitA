@@ -95,9 +95,7 @@ def test_extract_info_function(fixture_extract_folderinfo):
     assert info["mouse_num"] == [15]
     assert info["run_num"] == [3]
     # c. test that leading zeros are removed
-    folderinfo["root_dir"] = (
-        "/Users/mahan/sciebo/PythonCode/gaita_repo/tests/test_data/dlc_data/test_data/leading_zeros/"
-    )
+    folderinfo["root_dir"] = "tests/test_data/dlc_data/test_data/leading_zeros/"
     info = extract_info("DLC", folderinfo)
     assert info["mouse_num"] == [12]
     assert info["run_num"] == [3]
