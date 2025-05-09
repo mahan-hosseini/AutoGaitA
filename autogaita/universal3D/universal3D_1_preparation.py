@@ -30,6 +30,7 @@ def some_prep(info, folderinfo, cfg):
     results_dir = info["results_dir"]
     postname_string = folderinfo["postname_string"]
     sampling_rate = cfg["sampling_rate"]
+    flip_gait_direction = cfg["flip_gait_direction"]
     standardise_z_at_SC_level = cfg["standardise_z_at_SC_level"]
     analyse_average_y = cfg["analyse_average_y"]
     standardise_y_coordinates = cfg["standardise_y_coordinates"]
@@ -122,6 +123,7 @@ def some_prep(info, folderinfo, cfg):
     config_json_path = os.path.join(group_path, CONFIG_JSON_FILENAME)
     config_vars_to_json = {
         "sampling_rate": sampling_rate,
+        "flip_gait_direction": flip_gait_direction,
         "standardise_z_at_SC_level": standardise_z_at_SC_level,
         "analyse_average_y": analyse_average_y,
         "standardise_y_coordinates": standardise_y_coordinates,

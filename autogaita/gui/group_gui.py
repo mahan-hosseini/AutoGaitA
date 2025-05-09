@@ -12,7 +12,6 @@ import platform
 import json
 import copy
 
-
 # %% global constants
 from autogaita.gui.gui_constants import (
     GROUP_FG_COLOR,
@@ -917,7 +916,7 @@ def check_folderinfo_and_cfg(folderinfo, cfg):
         for key in inner_dict.keys():
             # check string vars: group dirs & names and results dir
             if key in STRING_VARS:
-                if key == "group_dirs" and len(folderinfo["load_dir"]) > 0:
+                if key == "group_dirs" and len(folderinfo["load_dir"]) == 0:
                     for g_idx, group_dir in enumerate(inner_dict[key]):
                         if not os.path.exists(group_dir):
                             this_msg = (

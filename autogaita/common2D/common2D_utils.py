@@ -64,7 +64,7 @@ def extract_info(tracking_software, folderinfo, in_GUI=False):
             for string_addition in FILE_ID_STRING_ADDITIONS:
                 try:
                     candidate_postmouse_string = string_addition + postmouse_string
-                    this_mouse_num = find_number(
+                    this_mouse_num, leading_mouse_num_zeros = find_number(
                         filename,
                         premouse_string,
                         candidate_postmouse_string,
@@ -87,7 +87,7 @@ def extract_info(tracking_software, folderinfo, in_GUI=False):
             for string_addition in FILE_ID_STRING_ADDITIONS:
                 try:
                     candidate_postrun_string = string_addition + postrun_string
-                    this_run_num = find_number(
+                    this_run_num, leading_run_num_zeros = find_number(
                         filename, prerun_string, candidate_postrun_string
                     )
                 except:
@@ -109,6 +109,14 @@ def extract_info(tracking_software, folderinfo, in_GUI=False):
                     info["name"].append(this_name)
                     info["mouse_num"].append(this_mouse_num)
                     info["run_num"].append(this_run_num)
+    # if we had to fix leading zeros, make sure to save them so we can use them in
+    # move_data_to_folders function later
+    # => make sure it's lists of strings because this is needed by the
+    #    run_singlerun_in_multiruns function later
+    if leading_mouse_num_zeros:
+        info["leading_mouse_num_zeros"] = [leading_mouse_num_zeros]
+    if leading_run_num_zeros:
+        info["leading_run_num_zeros"] = [leading_run_num_zeros]
     # this might happen if user entered wrong identifiers or folder
     if len(info["name"]) < 1:
         no_files_message = (
@@ -146,7 +154,12 @@ def find_number(fullstring, prestring, poststring):
     """Find (mouse/run) number based on user-defined strings in filenames"""
     start_idx = fullstring.find(prestring) + len(prestring)
     end_idx = fullstring.find(poststring)
-    return int(fullstring[start_idx:end_idx])
+    # handle leading zeros
+    leading_zeros = ""
+    while fullstring[start_idx] == "0" and start_idx < end_idx - 1:
+        start_idx += 1
+        leading_zeros += "0"
+    return int(fullstring[start_idx:end_idx]), leading_zeros
 
 
 # ...........................  SC extraction helpers  ..................................

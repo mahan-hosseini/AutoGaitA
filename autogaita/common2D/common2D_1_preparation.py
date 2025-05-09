@@ -45,6 +45,8 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     subtract_beam = cfg["subtract_beam"]
     convert_to_mm = cfg["convert_to_mm"]
     pixel_to_mm_ratio = cfg["pixel_to_mm_ratio"]
+    x_sc_broken_threshold = cfg["x_sc_broken_threshold"]
+    y_sc_broken_threshold = cfg["y_sc_broken_threshold"]
     standardise_y_at_SC_level = cfg["standardise_y_at_SC_level"]
     invert_y_axis = cfg["invert_y_axis"]
     flip_gait_direction = cfg["flip_gait_direction"]
@@ -196,7 +198,11 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     config_vars_to_json = {
         "sampling_rate": sampling_rate,
         "convert_to_mm": convert_to_mm,
+        "pixel_to_mm_ratio": pixel_to_mm_ratio,
+        "x_sc_broken_threshold": x_sc_broken_threshold,
+        "y_sc_broken_threshold": y_sc_broken_threshold,
         "standardise_y_at_SC_level": standardise_y_at_SC_level,
+        "flip_gait_direction": flip_gait_direction,
         "analyse_average_x": analyse_average_x,
         "standardise_x_coordinates": standardise_x_coordinates,
         "x_standardisation_joint": x_standardisation_joint,
@@ -402,11 +408,20 @@ def check_this_filename_configuration(
     prerun_string = folderinfo["prerun_string"]
     whichvideo = ""  # initialise
     found_it = False
+    # handle leading zeros that we identified previously - if none convert nums to str
+    if "leading_mouse_num_zeros" in info.keys():
+        mouse_num = info["leading_mouse_num_zeros"] + str(mouse_num)
+    else:
+        mouse_num = str(mouse_num)
+    if "leading_run_num_zeros" in info.keys():
+        run_num = info["leading_run_num_zeros"] + str(run_num)
+    else:
+        run_num = str(run_num)
     for filename in os.listdir(root_dir):
         # the following condition is True for data & beam csv
         if (
-            (premouse_string + str(mouse_num) + postmouse_string in filename)
-            and (prerun_string + str(run_num) + postrun_string in filename)
+            (premouse_string + mouse_num + postmouse_string in filename)
+            and (prerun_string + run_num + postrun_string in filename)
             and (filename.endswith(file_type_string))
         ):
             found_it = True

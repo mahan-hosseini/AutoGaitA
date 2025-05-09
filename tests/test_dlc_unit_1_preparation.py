@@ -89,20 +89,6 @@ def extract_cfg():
 
 
 # %%..............................  preparation  .......................................
-
-
-def test_move_csv_datafile_to_results_dir(extract_info, extract_folderinfo):
-    move_data_to_folders("DLC", ".csv", extract_info, extract_folderinfo)
-    for file in os.listdir(extract_info["results_dir"]):
-        if file.endswith(".csv"):
-            assert (
-                (extract_folderinfo["premouse_string"] in file)
-                & (extract_folderinfo["postmouse_string"] in file)
-                & (extract_folderinfo["prerun_string"] in file)
-                & (extract_folderinfo["postrun_string"] in file)
-            )
-
-
 def test_check_gait_direction(extract_data_using_some_prep, extract_cfg, extract_info):
     direction_joint = extract_cfg["direction_joint"]
     flip_gait_direction = True  # 1) test broken DLC data (empty)

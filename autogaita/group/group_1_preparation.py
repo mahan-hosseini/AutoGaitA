@@ -28,10 +28,11 @@ def some_prep(folderinfo, cfg):
     # Alright so the group pipeline's cfg (and thus, of course, config.json) is a bit
     # special because it includes:
     # 1) first-level config-keys, such as "joints" or "angles", that reflect what has
-    #    been analysed at the first level. These are also checked for equivalence
-    #    across groups when running this without load_dir (see the for g_idx loop
-    #    below) to ensure we are not comparing different sampling rates or so with a
-    #    group analysis
+    #    been analysed at the first level. Some of these are used in group workflow
+    #    (e.g. tracking_software when plotting or sampling_rate for PCA) and all of
+    #    these are  checked for equivalence across groups when running this without
+    #    load_dir (see the for g_idx loop below) to ensure we are not comparing
+    #    different sampling rates or so with a group analysis
     # 2) group-level config-keys, such as "do_permtest" or "PCA_variables" that define
     #    how group analysis should be done
     # Now:
@@ -145,14 +146,20 @@ def some_prep(folderinfo, cfg):
 
 
 def load_previous_runs_first_level_cfg_vars(folderinfo, cfg):
-    """There are only a few "first-level" cfg vars (like "joints") we require for group gaita's workflow - load them here"""
+    """There are a couple "first-level" cfg vars (like "joints") we require for group gaita's workflow - load them here"""
     with open(
         os.path.join(folderinfo["load_dir"], CONFIG_JSON_FILENAME), "r"
     ) as config_json_file:
         old_cfg = json.load(config_json_file)
+        cfg["sampling_rate"] = old_cfg["sampling_rate"]
         cfg["save_to_xls"] = old_cfg["save_to_xls"]
         cfg["joints"] = old_cfg["joints"]
         cfg["angles"] = old_cfg["angles"]
+        cfg["tracking_software"] = old_cfg["tracking_software"]
+        if "analyse_average_x" in old_cfg.keys():
+            cfg["analyse_average_x"] = old_cfg["analyse_average_x"]
+        if "analyse_average_y" in old_cfg.keys():
+            cfg["analyse_average_y"] = old_cfg["analyse_average_y"]
     return cfg
 
 

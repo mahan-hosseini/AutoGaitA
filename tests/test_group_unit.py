@@ -1,8 +1,15 @@
 from autogaita.group.group_main import (
+    group,
     import_data,
     avg_and_std,
+    PCA_main,
     create_stats_df,
     cluster_extent_test,
+    anova_design_sanity_check,
+    tukeys_only_info_message,
+    ANOVA_main,
+    plot_results,
+    print_finish,
 )
 from autogaita.group.group_1_preparation import some_prep
 from autogaita.group.group_2_data_processing import (
@@ -121,11 +128,21 @@ def test_check_PCA_and_stats_variables(extract_folderinfo, extract_cfg):
         )
 
 
+def test_smoke_load_dir(extract_folderinfo, extract_cfg):
+    """Test that load dir runs through without errors and produces Results"""
+    extract_folderinfo["group_names"] = ["5 mm", "12 mm", "25 mm"]
+    extract_folderinfo["load_dir"] = "example data/group"
+    group(extract_folderinfo, extract_cfg)
+    # I checked and hardcoded the 39 here, shouldn't change.
+    # If it does I want to know and this should fail
+    assert len(os.listdir(extract_folderinfo["results_dir"])) == 39
+
+
 def test_load_previous_runs_dataframes(extract_folderinfo, extract_cfg):
     """Testing if errors are raised correctly and if the loaded dfs are eqiuvalent to the ones import_data generates"""
     # NOTE
     # ----
-    # => this test fails on git actions but not locally
+    # => last tests fail on git actions but not locally
     # => quite sure it's because of how git actions' os lists the files when loading
     # => we have a similar issue in test_group_approval see os.getenv("CI") there
     # 1: fails as wanted if group name wrong (df not found in load dir)
@@ -137,7 +154,7 @@ def test_load_previous_runs_dataframes(extract_folderinfo, extract_cfg):
         )
     # 2: avg_dfs equivalent to import_data's avg_dfs
     extract_folderinfo["group_names"] = ["5 mm", "12 mm", "25 mm"]
-    extract_folderinfo["group_dirs"] = [
+    extract_folderinfo["group_dirs"] = [  # for "import_data" later
         "example data/5mm/Results/",
         "example data/12mm/Results/",
         "example data/25mm/Results/",
@@ -152,10 +169,34 @@ def test_load_previous_runs_dataframes(extract_folderinfo, extract_cfg):
     i_dfs, _, extract_cfg = import_data(extract_folderinfo, extract_cfg)
     i_avg_dfs, _ = avg_and_std(i_dfs, extract_folderinfo, extract_cfg)
     if not os.getenv("CI"):
-        for g in range(3):
+        for g in range(len(extract_folderinfo["group_names"])):
             pdt.assert_frame_equal(
                 avg_dfs[g], i_avg_dfs[g], check_dtype=False, check_exact=False
             )
+    # 3: check that it also works for Universal 3D
+    # => only do it locally, I don't want to upload the MoVi Data to git
+    if not os.getenv("CI"):
+        extract_folderinfo["group_names"] = ["crawling", "jogging"]
+        extract_folderinfo["group_dirs"] = [
+            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/crawling/Results/",
+            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/jogging/Results/",
+        ]
+        extract_folderinfo["load_dir"] = (
+            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Unit Test of load_prev_groupruns_dfs/"
+        )
+        avg_dfs, _, _, extract_cfg = load_repos_group_data(
+            extract_folderinfo, extract_cfg
+        )
+        extract_cfg["tracking_software"] = "Universal 3D"
+        extract_cfg["which_leg"] = "right"
+        extract_cfg["analyse_average_y"] = True
+        i_dfs, _, extract_cfg = import_data(extract_folderinfo, extract_cfg)
+        i_avg_dfs, _ = avg_and_std(i_dfs, extract_folderinfo, extract_cfg)
+        if not os.getenv("CI"):
+            for g in range(len(extract_folderinfo["group_names"])):
+                pdt.assert_frame_equal(
+                    avg_dfs[g], i_avg_dfs[g], check_dtype=False, check_exact=False
+                )
 
 
 # %%..............................  4. statistics  .....................................
