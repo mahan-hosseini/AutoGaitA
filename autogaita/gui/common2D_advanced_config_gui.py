@@ -2,6 +2,11 @@
 import autogaita.gui.gui_utils as gui_utils
 import autogaita.gui.gaita_widgets as gaita_widgets
 import customtkinter as ctk
+from autogaita.gui.gui_utils import create_folder_icon
+import tkinter as tk
+import os
+from tkinter import filedialog
+from customtkinter import CTkImage
 
 
 def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
@@ -204,17 +209,45 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         invert_y_axis_box.grid(row=12, column=0, columnspan=2)
 
     # Standardise all (primary) joint coordinates by a fixed decimal value
-    coordinate_standardisation_xls_label, coordinate_standardisation_xls_entry = (
-        gaita_widgets.label_and_entry_pair(
-            cfg_window,
-            "Excel file for primary-joint coordinate standardisation:",
-            cfg["coordinate_standardisation_xls"],
-            widget_cfg,
-            adv_cfg_textsize=True,
+    frame_coordinate_standardisation = ctk.CTkFrame(cfg_window, fg_color="transparent")
+    frame_coordinate_standardisation.grid(row=13, column=0, columnspan=3, rowspan=2, sticky="w")
+    cfg ["coordinate_standardisation_xls"] = tk.StringVar()
+
+    # coordinate standardisation label & entry
+    coordinate_standardisation_xls_label = ctk.CTkLabel(
+        frame_coordinate_standardisation,
+        text="Excel file for primary-joint coordinate standardisation:",
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
         )
+    coordinate_standardisation_xls_label.grid(row=0, column=0, sticky="w", padx=10)
+    coordinate_standardisation_xls_entry = ctk.CTkEntry(
+        frame_coordinate_standardisation,
+        width=250,
+        font =(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    coordinate_standardisation_xls_label.grid(row=13, column=0, columnspan=2)
-    coordinate_standardisation_xls_entry.grid(row=14, column=0, columnspan=2)
+    coordinate_standardisation_xls_entry.grid(row=0, column=1,pady=5, sticky="w")
+    # browse coordinate_standardisation_xls function
+    def browse_coordinate_standardisation_xls():
+        filetypes = [("Excel files", "*.xlsx *.xls")]
+        filename = filedialog.askopenfilename(filetypes= filetypes)
+        
+        if filename:
+            coordinate_standardisation_xls_entry.delete(0, tk.END)
+            coordinate_standardisation_xls_entry.insert(0, filename) 
+            cfg["coordinate_standardisation_xls"].set(filename)
+    # browse button
+    folder_icon= create_folder_icon() 
+    coordinate_standardisation_xls_button = ctk.CTkButton(
+        frame_coordinate_standardisation,
+        width=25,
+        text="",
+        image=folder_icon,
+        command=browse_coordinate_standardisation_xls,
+        fg_color=FG_COLOR,
+        hover_color=HOVER_COLOR
+    )
+    coordinate_standardisation_xls_button.grid(row=0, column=2, pady=5)
+   
 
     #  .............................  advanced output  .................................
     # advanced analysis header
@@ -224,7 +257,7 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         widget_cfg,
     )
     adv_cfg_output_header_label.grid(
-        row=15, column=0, rowspan=2, columnspan=2, sticky="nsew"
+        row=15, column=0, rowspan=2, columnspan=2, sticky="nsew", pady=(10, 0)
     )
 
     # number of hindlimb (primary) joints to plot
@@ -288,16 +321,45 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
     legend_outside_checkbox.grid(row=23, column=0, columnspan=2)
 
     # results dir
-    results_dir_label, results_dir_entry = gaita_widgets.label_and_entry_pair(
-        cfg_window,
-        "Save Results subfolders to directory below instead of to data's:",
-        cfg["results_dir"],
-        widget_cfg,
-        adv_cfg_textsize=True,
-    )
-    results_dir_label.grid(row=24, column=0, columnspan=2)
-    results_dir_entry.grid(row=25, column=0, columnspan=2)
-
+    # Frame for results dir
+    results_dir_frame = ctk.CTkFrame(cfg_window, fg_color="transparent")
+    results_dir_frame.grid(row=24, column=0,columnspan=3, sticky="w")
+    # results_dir label & entry
+    results_dir_entry = ctk.CTkEntry(
+        results_dir_frame,
+        width=200,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+         )
+    results_dir_label = ctk.CTkLabel(
+        results_dir_frame,
+        text="Save Results subfolders to this directory instead of to data's:",
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+        )
+    results_dir_label.grid(row=0, column=0, sticky="w", padx=10)
+    results_dir_entry.grid(row=0, column=1,sticky="w")
+    
+    # browse results_dir function
+    cfg["results_dir"] = tk.StringVar()
+    
+    def browse_results_dir():
+        folder = filedialog.askdirectory()
+        if folder:
+            results_dir_entry.delete(0, tk.END)
+            results_dir_entry.insert(0, folder)
+            cfg["results_dir"].set(folder)
+    # browse button 
+    folder_icon = create_folder_icon()
+    browse_results_dir_button = ctk.CTkButton(
+        results_dir_frame,
+        width=25,
+        text="",
+        image=folder_icon,
+        command=browse_results_dir,
+        fg_color=FG_COLOR,
+        hover_color=HOVER_COLOR
+        )
+    browse_results_dir_button.grid(row=0, column=2, padx=(0, 10), sticky="w")
+    
     # done button
     adv_cfg_done_button = ctk.CTkButton(
         cfg_window,

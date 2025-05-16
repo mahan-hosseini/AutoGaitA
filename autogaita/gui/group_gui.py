@@ -2,6 +2,7 @@
 import autogaita
 import autogaita.gui.gaita_widgets as gaita_widgets
 import autogaita.gui.gui_utils as gui_utils
+from autogaita.gui.gui_utils import create_folder_icon
 import tkinter as tk
 import customtkinter as ctk
 import pandas as pd
@@ -11,6 +12,8 @@ from threading import Thread
 import platform
 import json
 import copy
+from tkinter import filedialog
+from customtkinter import CTkImage
 
 # %% global constants
 from autogaita.gui.gui_constants import (
@@ -98,7 +101,9 @@ def run_group_gui():
     ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
     ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
     # root
-    root = ctk.CTk()
+    ghost_root = ctk.CTk()
+    ghost_root.withdraw()
+    root = ctk.CTkToplevel()
     fix_window_after_its_creation(root)
     gui_utils.configure_the_icon(root)
 
@@ -279,15 +284,39 @@ def build_mainwindow(root, group_number, root_dimensions):
                 )
             )
             group_names_entries[-1].grid(row=row_counter, column=1)
+            #group dirs frame
+            group_dirs_frame=ctk.CTkFrame(mainwindow, fg_color="transparent")
+            group_dirs_frame.grid(row=row_counter, column=2)
             # group dirs - entries
             group_dirs_entries.append(
                 ctk.CTkEntry(
-                    mainwindow,
+                    group_dirs_frame,
                     textvariable=group_dirs[g],
+                    width=240,
                     font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
                 )
             )
-            group_dirs_entries[-1].grid(row=row_counter, column=2, sticky="ew")
+            group_dirs_entries[-1].grid(row=row_counter, column=0, sticky="w")
+            # browse function 
+            def browse_group_dirs(index):
+                folder = filedialog.askdirectory()
+                if folder:
+                    group_dirs_entries[index].delete(0, tk.END)
+                    group_dirs_entries[index].insert(0, folder)
+                    group_dirs[index].set(folder)
+            # browse button
+            folder_icon = create_folder_icon()
+            browse_group_dirs_button = ctk.CTkButton(
+                group_dirs_frame,
+                width=30,
+                text="",
+                image=folder_icon,
+                command=lambda idx=g: browse_group_dirs(idx),
+                fg_color=FG_COLOR,
+                hover_color=HOVER_COLOR,
+            )
+            browse_group_dirs_button.grid(row=row_counter, column=1, sticky="w")
+
             # update row counter
             row_counter += 1
         # call row_counter a better name
@@ -304,28 +333,88 @@ def build_mainwindow(root, group_number, root_dimensions):
 
         # results dir
         results_dir = tk.StringVar(mainwindow, results_dir_string)
-        results_dir_label, results_dir_entry = gaita_widgets.label_and_entry_pair(
-            mainwindow,
-            "Path to save group-analysis results to",
-            results_dir,
-            WIDGET_CFG,
+        # frame2
+        frame2=ctk.CTkFrame(mainwindow, fg_color="transparent")
+        frame2.grid(row=last_group_row + 1, column=2, columnspan=1,rowspan=3, sticky="e", padx=(20, 10))
+        results_dir_label= ctk.CTkLabel(
+            mainwindow, 
+            text="Path to save group-analysis results to",
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+        )
+        results_dir_entry = ctk.CTkEntry(
+            frame2,
+            textvariable=results_dir,
+            width=240,
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
         )
         results_dir_label.grid(
-            row=last_group_row + 1, column=0, columnspan=3, sticky="ew"
+            row=last_group_row + 1, column=0,columnspan=2,sticky="w", padx=(10,0)
         )
         results_dir_entry.grid(
-            row=last_group_row + 2, column=0, columnspan=3, sticky="ew"
+            row=0, column=0, sticky="w"
+        )
+        # browse function
+        def browse_results_dir():
+            folder = filedialog.askdirectory()
+            if folder:
+                results_dir_entry.delete(0, tk.END)
+                results_dir_entry.insert(0, folder)
+                results_dir.set(folder)
+        # browse button
+        folder_icon = create_folder_icon()
+        browse_results_dir_button = ctk.CTkButton(
+            frame2,
+            width=30,
+            text="",
+            image=folder_icon,
+            command=browse_results_dir,
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+        )
+        browse_results_dir_button.grid(
+            row=0, column=1
         )
         # load dir
         load_dir = tk.StringVar(mainwindow, load_dir_string)
-        load_dir_label, load_dir_entry = gaita_widgets.label_and_entry_pair(
+        load_dir_label = ctk.CTkLabel(
             mainwindow,
-            "Optional: path to load previous group-data from",
-            load_dir,
-            WIDGET_CFG,
+            text="Optional: path to load previous group-data from",
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
         )
-        load_dir_label.grid(row=last_group_row + 3, column=0, columnspan=3, sticky="ew")
-        load_dir_entry.grid(row=last_group_row + 4, column=0, columnspan=3, sticky="ew")
+        load_dir_entry = ctk.CTkEntry(
+            frame2,
+            textvariable=load_dir,
+            width=240,
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE))
+         # empty label 3 for spacing
+        empty_label3 = ctk.CTkLabel(frame2, text="")
+        empty_label3.grid(
+            row=1, column=0, columnspan=3, sticky="nsew"
+        )
+        #
+        load_dir_label.grid(row=last_group_row + 3, column=0, columnspan=3,sticky="w", padx=10)
+        load_dir_entry.grid(row=2, column=0, sticky="e")
+        # browse function
+        def browse_load_dir():
+            folder = filedialog.askdirectory()
+            if folder:
+                load_dir_entry.delete(0, tk.END)
+                load_dir_entry.insert(0, folder)
+                load_dir.set(folder)
+        # browse button
+        folder_icon = create_folder_icon()
+        browse_load_dir_button = ctk.CTkButton(
+            frame2,
+            width=30,
+            text="",
+            image=folder_icon,
+            command=browse_load_dir,
+            fg_color=FG_COLOR,
+            hover_color=HOVER_COLOR,
+        )
+        browse_load_dir_button.grid(
+            row=2, column=1
+        )
         # empty label 2 for spacing
         empty_label_two = ctk.CTkLabel(mainwindow, text="")
         empty_label_two.grid(

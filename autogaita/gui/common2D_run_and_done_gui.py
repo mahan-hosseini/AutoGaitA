@@ -11,6 +11,10 @@ import autogaita.gui.gui_utils as gui_utils
 import autogaita.gui.gaita_widgets as gaita_widgets
 import customtkinter as ctk
 import tkinter as tk
+from tkinter import filedialog
+from customtkinter import CTkImage
+import os
+from autogaita.gui.gui_utils import create_folder_icon
 
 
 def build_run_and_done_windows(
@@ -36,6 +40,9 @@ def build_run_and_done_windows(
     h = root_dimensions[1]
 
     # .............................  run window  ..............................
+    #ghost_root = ctk.CTk()
+    #ghost_root.withdraw()
+    #root = ctk.CTkToplevel()
     runwindow = ctk.CTkToplevel(root)
     user_ready = tk.IntVar(runwindow, 0)  # used to know when user is ready 4 screen 3
     if analysis == "single":
@@ -209,26 +216,87 @@ def populate_run_window(
     else:
         r = 0
     # root directory
-    rootdir_label, rootdir_entry = gaita_widgets.label_and_entry_pair(
-        runwindow,
-        "Directory containing the files to be analysed",
-        results["root_dir"],
-        widget_cfg,
-        adv_cfg_textsize=True,
+    # Frame for root directory
+    frame = ctk.CTkFrame(runwindow, fg_color="transparent")
+    frame.grid(row=4, column=0,sticky="w")
+
+    results ["root_dir"] = tk.StringVar()
+    results ["sctable_filename"] = tk.StringVar()
+    
+    # root directory label & entry
+    rootdir_label= ctk.CTkLabel(
+        frame, 
+        text="Directory containing the files to be analysed:",
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE))
+    rootdir_label.grid(row=0, column=0, sticky="w", padx=10, pady=10) 
+    rootdir_entry = ctk.CTkEntry(
+        frame, 
+        width=290,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+        )   
+    rootdir_entry.grid(row=0, column=1, pady=10, sticky="w")
+
+    # browse function
+    def browse_root_dir():
+        folder = filedialog.askdirectory()
+        if folder:
+            rootdir_entry.delete(0, tk.END)
+            rootdir_entry.insert(0, folder)
+            results["root_dir"].set(folder)
+    # browse button
+    folder_icon = create_folder_icon()
+    browse_button = ctk.CTkButton(
+    frame,
+    width=30,
+    text="",
+    image=folder_icon,
+    command=browse_root_dir,
+    fg_color=FG_COLOR,
+    hover_color=HOVER_COLOR,
     )
-    rootdir_label.grid(row=r + 0, column=0)
-    rootdir_entry.grid(row=r + 1, column=0)
+    browse_button.grid(row=0, column=2, pady=10)
+   
     # stepcycle latency XLS
-    SCXLS_label, SCXLS_entry = gaita_widgets.label_and_entry_pair(
-        runwindow,
-        "Filename of the Annotation Table Excel file",
-        results["sctable_filename"],
-        widget_cfg,
-        adv_cfg_textsize=True,
-    )
-    SCXLS_label.grid(row=r + 2, column=0)
-    SCXLS_entry.grid(row=r + 3, column=0)
-    # empty label 1 (for spacing)
+    # SCXLS label & entry
+    SCXLS_label = ctk.CTkLabel(
+        frame,
+        text="Annotation Table Excel file:",
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE))
+       #adv_cfg_textsize=True
+    SCXLS_entry = ctk.CTkEntry(
+        frame, 
+        width=290,
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
+        )    
+    SCXLS_label.grid(row=1, column=0, sticky="w", padx=10, pady=(15,0))
+    SCXLS_entry.grid(row=1, column=1, sticky="w", pady=(15,0))
+    # browse_SCXLS function
+    def browse_SCXLS():
+        initial_dir = rootdir_entry.get()
+        
+        if not os.path.isdir(initial_dir):
+            initial_dir = os.getcwd()
+        
+        filetypes = [("Excel files", "*.xlsx *.xls")]
+        filename = filedialog.askopenfilename(initialdir=initial_dir, filetypes= filetypes)
+        
+        if filename:
+            SCXLS_entry.delete(0, tk.END)
+            SCXLS_entry.insert(0, filename) 
+            results["sctable_filename"].set(filename)
+    # browse SCXLS button
+    SCXLS_button = ctk.CTkButton(
+        frame, 
+        width=30,
+        image=folder_icon,
+        text="",
+        command=browse_SCXLS,
+        fg_color=FG_COLOR,
+        hover_color=HOVER_COLOR,
+        )
+    SCXLS_button.grid(row=1, column=2, pady=(15, 0))
+
+     # empty label 1 (for spacing)
     empty_label_one = ctk.CTkLabel(runwindow, text="")
     empty_label_one.grid(row=r + 4, column=0)
     # .......................  file-identifier information  ............................
