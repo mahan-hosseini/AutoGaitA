@@ -90,7 +90,9 @@ def run_common2D_gui(tracking_software):
     ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
     ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
     # root
-    root = ctk.CTk()
+    ghostroot = ctk.CTk()
+    ghostroot.withdraw()  
+    root = ctk.CTkToplevel()  
     # make window pretty
     screen_width = root.winfo_screenwidth()  # width of the screen
     screen_height = root.winfo_screenheight()  # height of the screen

@@ -1,5 +1,8 @@
 import platform
 from importlib import resources
+import os
+from PIL import Image
+from customtkinter import CTkImage
 
 
 # ...............................  general gui stuff  ..................................
@@ -49,3 +52,12 @@ def change_widget_state_based_on_checkbox(cfg, key_to_check, widget_to_change):
         widget_to_change.configure(state="normal")
     elif cfg[key_to_check].get() is False:
         widget_to_change.configure(state="disabled")
+
+def create_folder_icon():
+    folder_icon_path = os.path.join(os.path.dirname(__file__), "folder.png")
+    folder_icon_pil = Image.open(folder_icon_path)
+    return CTkImage(
+        light_image=folder_icon_pil,
+        dark_image=folder_icon_pil,
+        size=(20, 20)
+    )
