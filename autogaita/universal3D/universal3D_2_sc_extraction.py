@@ -267,6 +267,8 @@ def read_SC_info(data, SCdf, info, legname, cfg):
         # check if user input progressively later latencies
         all_cycles = check_cycle_order(all_cycles, info, legname)
         # check that none of the joints used for angles have the same value within SCs
+        # => FOR FUTURE SELF: THIS CAN RETURN NONE TOO! CONSIDER WHEN ADDING
+        #    ANOTHER CHECK!
         all_cycles = check_different_angle_joint_coords(all_cycles, data, info, cfg)
         # NOTE for future self
         # => If you are considering to remove empty lists from run_cycles note that we
@@ -274,7 +276,57 @@ def read_SC_info(data, SCdf, info, legname, cfg):
         # => Otherwise SC-level plots arent plotted correctly (ie Run3 could easily
         #    look like Run2 - we need an empty subplot panel for run2 and thus an empty
         #    list!)
+        # MoVi Check
+        if (
+            all_cycles and legname == "right"
+        ):  # because with MoVi we only analyse "right" leg
+            all_cycles = check_movi_tracking(all_cycles, data, info)
     return all_cycles
+
+
+def check_movi_tracking(all_cycles, data, info):
+    """For MoVi Data, check if there are tracking failures (i.e. consecutive zeros in a column)"""
+
+    # unpack
+    name = info["name"]
+    # text file to save stuff
+    behaviour_name = info["results_dir"].split("/")[-2]
+    info_txt_path = info["results_dir"].split("Subject")[0]
+    info_txt_name = behaviour_name + " - Broken MoVi Tracking.txt"
+
+    # initialise clean_cycles and loop over SCs
+    clean_cycles = None
+    for r, run_cycles in enumerate(all_cycles):
+        for c, cycle in enumerate(run_cycles):
+            exclude_cycle = False
+            # check if we have any zeros in the data
+            this_data = data.loc[cycle[0] : cycle[1], :]
+            zero_idxs = np.argwhere(this_data == 0)
+            # zero idxs is a list of lists with each list being the row/col idxs of the
+            # zero
+            # => can be accessed with iloc
+            for zero_idx in zero_idxs:
+                # tracking failure: the zero-col's previous or next index is also zero
+                try:
+                    previous_rows_value = this_data.iloc[zero_idx[0] - 1, zero_idx[1]]
+                except:
+                    # i.e., no previous row - some number so code doesn't break
+                    previous_rows_value = 999
+                try:
+                    next_rows_value = this_data.iloc[zero_idx[0] + 1, zero_idx[1]]
+                except:
+                    next_rows_value = 999  # i.e., no next row
+                if previous_rows_value == 0 or next_rows_value == 0:
+                    exclude_cycle = True
+            if exclude_cycle:
+                message = f"\nID {name} - Run #{r + 1} - SC #{c + 1}"
+                with open(os.path.join(info_txt_path, info_txt_name), "a") as f:
+                    f.write(message)
+            else:
+                if clean_cycles is None:  # if first valid cycle: list of empty lists
+                    clean_cycles = [[] for s in range(len(all_cycles))]
+                clean_cycles[r].append(cycle)
+    return clean_cycles
 
 
 def check_different_angle_joint_coords(all_cycles, data, info, cfg):
