@@ -1,19 +1,19 @@
 [
     {
-        "name": "Subject_5",
+        "name": "",
         "root_dir": "",
         "sctable_filename": "",
-        "postname_flag": true,
-        "postname_string": " - walking_renamed"
+        "postname_flag": false,
+        "postname_string": ""
     },
     {
-        "analyse_singlerun": true,
-        "sampling_rate": "120",
+        "analyse_singlerun": false,
+        "sampling_rate": "",
         "dont_show_plots": false,
-        "y_acceleration": false,
-        "angular_acceleration": false,
+        "y_acceleration": true,
+        "angular_acceleration": true,
         "bin_num": "25",
-        "plot_joint_number": "2",
+        "plot_joint_number": "3",
         "plot_SE": false,
         "standardise_z_at_SC_level": false,
         "standardise_z_to_a_joint": false,
@@ -22,7 +22,7 @@
         ],
         "flip_gait_direction": true,
         "analyse_average_y": false,
-        "standardise_y_coordinates": false,
+        "standardise_y_coordinates": true,
         "y_standardisation_joint": [
             "Midfoot, left"
         ],
@@ -31,7 +31,7 @@
         "results_dir": "",
         "coordinate_standardisation_xls": "",
         "joints": [
-            "Foot",
+            "Midfoot",
             "Ankle ",
             "Knee ",
             "Hip ",
@@ -41,22 +41,22 @@
             "name": [
                 "Ankle",
                 "Knee",
-                "Elbow"
+                "Hip"
             ],
             "lower_joint": [
-                "Foot",
+                "Midfoot",
                 "Ankle",
-                "Wrist"
+                "Knee"
             ],
             "upper_joint": [
                 "Knee",
                 "Hip",
-                "Shoulder"
+                "Pelvis"
             ]
         },
         "fileprep_root_dir": "",
-        "fileprep_filetype": "xlsx",
-        "fileprep_postname_string": "Subject_",
+        "fileprep_filetype": "",
+        "fileprep_postname_string": "",
         "fileprep_results_dir": "",
         "fileprep_separator": "",
         "fileprep_string_to_remove": "",

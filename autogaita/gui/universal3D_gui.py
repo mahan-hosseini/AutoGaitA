@@ -1,11 +1,10 @@
 # %% imports
 import autogaita.gui.gaita_widgets as gaita_widgets
 import autogaita.gui.gui_utils as gui_utils
-from autogaita.gui.gui_utils import create_folder_icon
 from autogaita.gui.first_level_gui_utils import (
     update_config_file,
     extract_cfg_from_json_file,
-    extract_results_from_json_file
+    extract_results_from_json_file,
 )
 from autogaita.resources.utils import try_to_run_gaita
 from autogaita.universal3D.universal3D_datafile_preparation import prepare_3D
@@ -15,7 +14,7 @@ import os
 from threading import Thread
 import platform
 from tkinter import filedialog
-from customtkinter import CTkImage
+
 
 # %% global constants
 from autogaita.gui.gui_constants import (
@@ -122,7 +121,7 @@ def run_universal3D_gui():
     # ghostroot to avoid tkinter pyimage error
     ghost_root = ctk.CTk()
     ghost_root.withdraw()
-    #root
+    # root
     root = ctk.CTkToplevel()
     # make window pretty
     screen_width = root.winfo_screenwidth()  # width of the screen
@@ -169,95 +168,39 @@ def run_universal3D_gui():
     cfgheader_label = gaita_widgets.header_label(root, "Main Configuration", WIDGET_CFG)
     cfgheader_label.grid(row=0, column=0, columnspan=2, sticky="nsew")
 
-    # Frame for root directory
-    frame = ctk.CTkFrame(root, fg_color="transparent")
-    frame.grid(row=1, column=1, sticky="w")
-
-    results ["root_dir"] = tk.StringVar()
-    results ["sctable_filename"] = tk.StringVar()
-    
-    # root directory label & entry
-    rootdir_label= ctk.CTkLabel(
-        root, 
-        text="Directory of files to be analysed:",
-        font=(WIDGET_CFG["TEXT_FONT_NAME"], WIDGET_CFG["TEXT_FONT_SIZE"]),
-        )
-    rootdir_label.grid(row=1, column=0, sticky="w", padx=10) 
-
-    rootdir_entry = ctk.CTkEntry(
-        frame, 
-        width=300,
-        #textvariable=results["root_dir"],
-        font=(WIDGET_CFG["TEXT_FONT_NAME"], WIDGET_CFG["TEXT_FONT_SIZE"]),
-        )
-    rootdir_entry.grid(row=0, column=0, pady=5, sticky="w")
-
-    # browse function
-    def browse_root_dir():
-        folder = filedialog.askdirectory()
-        if folder:
-            rootdir_entry.delete(0, tk.END)
-            rootdir_entry.insert(0, folder)
-            results["root_dir"].set(folder)
-    # browse button
-    folder_icon = create_folder_icon()
-
-    browse_button = ctk.CTkButton(
-    frame,
-    width=30,
-    text="",
-    image=folder_icon,
-    command=browse_root_dir,
-    fg_color=WIDGET_CFG["FG_COLOR"],
-    hover_color=WIDGET_CFG["HOVER_COLOR"],
-    )
-    browse_button.grid(row=0, column=1, pady=5)
-   
-    # stepcycle latency XLS
-    # Frame 2
-    frame2 = ctk.CTkFrame(root, fg_color="transparent")
-    frame2.grid(row=2, column=1, sticky="w")
-
-    # SCXLS label & entry
-    SCXLS_label = ctk.CTkLabel(
+    # root directory
+    root_dir_label = ctk.CTkLabel(
         root,
-        text="Annotation Table Excel file:",
-        font=(WIDGET_CFG["TEXT_FONT_NAME"], WIDGET_CFG["TEXT_FONT_SIZE"]),
-        )
-    SCXLS_entry = ctk.CTkEntry(
-        frame2, 
-        width=300,
-        font=(WIDGET_CFG["TEXT_FONT_NAME"], WIDGET_CFG["TEXT_FONT_SIZE"]),
-        )    
-    SCXLS_label.grid(row=2, column=0, sticky="w", padx=10)
-    SCXLS_entry.grid(row=0, column=0, sticky="w")
-   
-    # browse_SCXLS function
-    def browse_SCXLS():
-        initial_dir = rootdir_entry.get()
-        
-        if not os.path.isdir(initial_dir):
-            initial_dir = os.getcwd()
-        
-        filetypes = [("Excel files", "*.xlsx *.xls")]
-        filename = filedialog.askopenfilename(initialdir=initial_dir, filetypes= filetypes)
-        
-        if filename:
-            SCXLS_entry.delete(0, tk.END)
-            SCXLS_entry.insert(0, filename) 
-            results["sctable_filename"].set(filename)
-    # browse SCXLS button
-    SCXLS_button = ctk.CTkButton(
-        frame2, 
-        width=30,
-        image=folder_icon,
-        text="",
-        command=browse_SCXLS,
-        fg_color=WIDGET_CFG["FG_COLOR"],
-        hover_color=WIDGET_CFG["HOVER_COLOR"]
-        )
-    SCXLS_button.grid(row=0, column=1, pady=5)
- 
+        text="Directory of files to be analysed:",
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    root_dir_label.grid(row=1, column=0, sticky="w")
+    rootdir_browse = gaita_widgets.make_browse(
+        parent_window=root,
+        row=1,
+        column=1,
+        var_dict=results,
+        var_key="root_dir",
+        widget_cfg=WIDGET_CFG,
+        sticky="w",
+    )
+    # stepcycle latency XLS
+    SCXLS_label = ctk.CTkLabel(
+        root, text="Annotation Table Excel file:", font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
+    )
+    SCXLS_label.grid(row=2, column=0, sticky="w")
+    SCXLS_browse = gaita_widgets.make_browse(
+        parent_window=root,
+        row=2,
+        column=1,
+        sticky="w",
+        var_dict=results,
+        var_key="sctable_filename",
+        widget_cfg=WIDGET_CFG,
+        is_file=True,  # this is a file, not a directory
+        initial_dir=rootdir_browse.get,  # get initial dir from rootdir_entry
+    )
+
     # sampling rate
     samprate_label, samprate_entry = gaita_widgets.label_and_entry_pair(
         root,
@@ -265,7 +208,7 @@ def run_universal3D_gui():
         cfg["sampling_rate"],
         WIDGET_CFG,
     )
-    samprate_label.grid(row=3, column=0, columnspan=2, sticky="w", padx=10)
+    samprate_label.grid(row=3, column=0, columnspan=2, sticky="w")
     samprate_entry.grid(row=3, column=1)
 
     # flip gait direction
@@ -275,7 +218,7 @@ def run_universal3D_gui():
         cfg["flip_gait_direction"],
         WIDGET_CFG,
     )
-    flip_gait_direction_box.grid(row=4, column=0, columnspan=2, sticky="w", padx=10)
+    flip_gait_direction_box.grid(row=4, column=0, columnspan=2, sticky="w")
 
     # postname present checkbox
     postname_flag_checkbox = gaita_widgets.checkbox(
@@ -289,7 +232,7 @@ def run_universal3D_gui():
             results, "postname_flag", postname_entry
         ),
     )
-    postname_flag_checkbox.grid(row=5, column=0, columnspan=2,padx=10)
+    postname_flag_checkbox.grid(row=5, column=0, columnspan=2)
 
     # postname string
     postname_label, postname_entry = gaita_widgets.label_and_entry_pair(
@@ -446,48 +389,24 @@ def build_datafile_prep_window(root, results, cfg):
         fileprep_window, "Datafile Preparation", WIDGET_CFG
     )
     fileprep_header_label.grid(row=0, column=0, rowspan=2, columnspan=2, sticky="nsew")
-    # root dir
-    # Frame 4
-    frame4 = ctk.CTkFrame(fileprep_window, fg_color="transparent")
-    frame4.grid(row=2, column=1, sticky="w")
-    
-    cfg["fileprep_root_dir"] = tk.StringVar()
 
-    # fileprep root_dir label + entry
+    # fileprep_root_dir:
     fileprep_root_dir_label = ctk.CTkLabel(
         fileprep_window,
         text="Directory containing files:",
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
-        )
-    fileprep_root_dir_label.grid(row=2, column=0, sticky="w", padx=10)
-    fileprep_root_dir_entry = ctk.CTkEntry(
-        frame4,
-        width=300,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
-        )
-    fileprep_root_dir_entry.grid(row=0, column=1, pady=5, sticky="e")
-
-    # browse fileprep_root_dir function
-    folder_icon = create_folder_icon()
-
-    def browse_fileprep_root_dir():
-        folder = filedialog.askdirectory()
-        if folder:
-            fileprep_root_dir_entry.delete(0, tk.END)
-            fileprep_root_dir_entry.insert(0, folder)
-            cfg["fileprep_root_dir"].set(folder)
-    # browse button
-    browse_fileprep_root_dirbutton = ctk.CTkButton(
-    frame4,
-    width=30,
-    text="",
-    image=folder_icon,
-    command=browse_fileprep_root_dir,
-    fg_color=WIDGET_CFG["FG_COLOR"],
-    hover_color=WIDGET_CFG["HOVER_COLOR"],
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    browse_fileprep_root_dirbutton.grid(row=0, column=2, pady=5, sticky="e")
-    
+    fileprep_root_dir_label.grid(row=2, column=0)
+    fileprep_root_dir_browse = gaita_widgets.make_browse(
+        parent_window=fileprep_window,
+        row=2,
+        column=1,
+        var_dict=cfg,
+        var_key="fileprep_root_dir",
+        widget_cfg=WIDGET_CFG,
+        initial_dir=None,  # opens Desktop by default
+    )
+
     # file type
     filetype_string = "File type:"
     filetype_label = ctk.CTkLabel(
@@ -510,7 +429,7 @@ def build_datafile_prep_window(root, results, cfg):
                 font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
             )
         )
-        filetype_buttons[i].grid(row=4 + i, column=0, columnspan=2)
+        filetype_buttons[i].grid(row=4 + i, column=0, columnspan=2, pady=5)
     row_num = 4 + len(filetype_strings)  # 7
     # postname string
     fileprep_postname_label, fileprep_postname_entry = (
@@ -523,45 +442,22 @@ def build_datafile_prep_window(root, results, cfg):
     )
     fileprep_postname_label.grid(row=row_num, column=0, sticky="e")
     fileprep_postname_entry.grid(row=row_num, column=1)
-    # results dir
-    # Frame 5
-    frame5 = ctk.CTkFrame(fileprep_window, fg_color="transparent")
-    frame5.grid(row=9, column=1, sticky="w")    
-    
-    # fileprep results dir label + entry
-    fileprep_results_dir_label= ctk.CTkLabel(
+
+    # fileprep results dir
+    fileprep_results_dir_label = ctk.CTkLabel(
         fileprep_window,
         text="Directory to save results to:",
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
-        )
-    fileprep_results_dir_entry = ctk.CTkEntry(
-        frame5,
-        width=300,
-        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
-        )
-    fileprep_results_dir_label.grid(row=9, column=0, sticky="w", padx=10)
-    fileprep_results_dir_entry.grid(row=0, column=1, pady=5, sticky="e")
-
-    # fileprep_results_dir function
-    cfg["fileprep_results_dir"] = tk.StringVar()
-    def browse_fileprep_results_dir():
-        folder = filedialog.askdirectory()
-        if folder:
-            fileprep_results_dir_entry.delete(0, tk.END)
-            fileprep_results_dir_entry.insert(0, folder)
-            cfg["fileprep_results_dir"].set(folder)
-    # browse button
-    folder_icon = create_folder_icon()
-    browse_fileprep_results_dir_button = ctk.CTkButton(
-        frame5,
-        width=30,
-        text="",
-        image=folder_icon,
-        command=browse_fileprep_results_dir,
-        fg_color=WIDGET_CFG["FG_COLOR"],
-        hover_color=WIDGET_CFG["HOVER_COLOR"],
-    )   
-    browse_fileprep_results_dir_button.grid(row=0, column=2, pady=5, sticky="e")
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    fileprep_results_dir_label.grid(row=9, column=0)
+    fileprep_results_dir_browse = gaita_widgets.make_browse(
+        parent_window=fileprep_window,
+        row=9,
+        column=1,
+        var_dict=cfg,
+        var_key="fileprep_results_dir",
+        widget_cfg=WIDGET_CFG,
+    )
 
     # empty label for spacing
     empty_label_one = ctk.CTkLabel(fileprep_window, text="")
@@ -832,54 +728,34 @@ def build_cfg_window(root, cfg):
         cfg, "standardise_y_coordinates", y_standardisation_joint_entry
     )
     # standardise all (primary) joint coordinates by a fixed decimal value
-    # Frame 3
-    frame3 = ctk.CTkFrame(cfg_window, fg_color="transparent")
-    frame3.grid(row=12, column=0,sticky="w", columnspan=3)
-   
-    cfg ["coordinate_standardisation_xls"] = tk.StringVar()
 
-    # coordinate standardisation label & entry
-    coordinate_standardisation_xls_label = ctk.CTkLabel(
-        frame3,
+    # Directory for coordinate standardisation
+    coord_standardisation_label = ctk.CTkLabel(
+        cfg_window,
         text="Excel file for primary-joint coordinate standardisation:",
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
-        )
-    coordinate_standardisation_xls_label.grid(row=0, column=0, sticky="w", padx=10)
-    coordinate_standardisation_xls_entry = ctk.CTkEntry(
-        frame3,
-        width=250,
-        font =(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    coordinate_standardisation_xls_entry.grid(row=0, column=1,pady=5, sticky="w")
-
-    # browse coordinate_standardisation_xls function
-    def browse_coordinate_standardisation_xls():
-        filetypes = [("Excel files", "*.xlsx *.xls")]
-        filename = filedialog.askopenfilename(filetypes= filetypes)
-        
-        if filename:
-            coordinate_standardisation_xls_entry.delete(0, tk.END)
-            coordinate_standardisation_xls_entry.insert(0, filename) 
-            cfg["coordinate_standardisation_xls"].set(filename)
-    # browse button
-    folder_icon= create_folder_icon() 
-    coordinate_standardisation_xls_button = ctk.CTkButton(
-        frame3,
-        width=30,
-        text="",
-        image=folder_icon,
-        command=browse_coordinate_standardisation_xls,
-        fg_color=WIDGET_CFG["FG_COLOR"],
-        hover_color=WIDGET_CFG["HOVER_COLOR"])
-    coordinate_standardisation_xls_button.grid(row=0, column=2, pady=5)
-
+    coord_standardisation_label.grid(row=12, column=0, columnspan=2)
+    coord_standardisation_browse = gaita_widgets.make_browse(
+        parent_window=cfg_window,
+        row=13,
+        column=0,
+        columnspan=2,
+        sticky="n",
+        var_dict=cfg,
+        var_key="coordinate_standardisation_xls",
+        widget_cfg=WIDGET_CFG,
+        is_file=True,  # open excel file instead of directory
+        adv_cfg_textsize=True,
+        initial_dir=None,  # opens Desktop by default
+    )
     #  .............................  advanced output  .................................
     # advanced output header
     adv_cfg_output_header_label = gaita_widgets.header_label(
         cfg_window, "Output", WIDGET_CFG
     )
     adv_cfg_output_header_label.grid(
-        row=14, column=0, rowspan=2, columnspan=2, sticky="nsew", pady=(0,10)
+        row=14, column=0, rowspan=2, columnspan=2, sticky="nsew", pady=(0, 10)
     )
     # number of joints to plot
     plot_joint_num_label, plot_joint_num_entry = gaita_widgets.label_and_entry_pair(
@@ -937,45 +813,23 @@ def build_cfg_window(root, cfg):
     )
     legend_outside_checkbox.grid(row=21, column=0, columnspan=2)
 
-    # Frame 6
-    frame6 = ctk.CTkFrame(cfg_window, fg_color="transparent")
-    frame6.grid(row=22, column=0,columnspan=3, sticky="w")
-    # results_dir label & entry
-    results_dir_entry = ctk.CTkEntry(
-        frame6,
-        width=200,
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
-         )
+    # Directory to save results subfolders:
     results_dir_label = ctk.CTkLabel(
-        frame6,
+        cfg_window,
         text="Save Results subfolders to this directory instead of to data's:",
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE)
-        )
-    results_dir_label.grid(row=0, column=0, sticky="w", padx=(10,5))
-    results_dir_entry.grid(row=0, column=1,sticky="w")
-    
-    # browse results_dir function
-    cfg["results_dir"] = tk.StringVar()
-    
-    def browse_results_dir():
-        folder = filedialog.askdirectory()
-        if folder:
-            results_dir_entry.delete(0, tk.END)
-            results_dir_entry.insert(0, folder)
-            cfg["results_dir"].set(folder)
-    # browse button 
-    folder_icon = create_folder_icon()
-    browse_results_dir_button = ctk.CTkButton(
-        frame6,
-        width=30,
-        text="",
-        image=folder_icon,
-        command=browse_results_dir,
-        fg_color=WIDGET_CFG["FG_COLOR"],
-        hover_color=WIDGET_CFG["HOVER_COLOR"],
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    browse_results_dir_button.grid(row=0, column=2, padx=(0,5), sticky="w")
-
+    results_dir_label.grid(row=22, column=0, columnspan=2)
+    results_dir_browse = gaita_widgets.make_browse(
+        parent_window=cfg_window,
+        row=23,
+        column=0,
+        columnspan=2,
+        var_dict=cfg,
+        var_key="results_dir",
+        widget_cfg=WIDGET_CFG,
+        adv_cfg_textsize=True,
+    )
     # done button
     adv_cfg_done_button = ctk.CTkButton(
         cfg_window,
