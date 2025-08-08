@@ -87,9 +87,6 @@ def checkbox(window, label_text, entry_variable, widget_cfg, adv_cfg_textsize=Fa
     return checkbox
 
 
-"""Create an entry + browse button in a frame"""
-
-
 def make_browse(
     parent_window,
     row,  # row of frame in parent_window
@@ -107,6 +104,7 @@ def make_browse(
     pady=None,
     adv_cfg_textsize=False,  # if true, use ADV_CFG_TEXT_FONT_SIZE
 ):
+    """Entry & Browse button - placed in a frame. Function takes a lot of optional parameters to be able to deal with all the different use cases of this button across our different GUIs."""
 
     if (
         text_var is None and var_dict is not None

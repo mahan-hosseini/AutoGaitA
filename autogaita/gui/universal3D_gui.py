@@ -13,7 +13,6 @@ import customtkinter as ctk
 import os
 from threading import Thread
 import platform
-from tkinter import filedialog
 
 
 # %% global constants
@@ -175,7 +174,7 @@ def run_universal3D_gui():
         font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
     root_dir_label.grid(row=1, column=0, sticky="w")
-    rootdir_browse = gaita_widgets.make_browse(
+    root_dir_browse = gaita_widgets.make_browse(
         parent_window=root,
         row=1,
         column=1,
@@ -198,7 +197,7 @@ def run_universal3D_gui():
         var_key="sctable_filename",
         widget_cfg=WIDGET_CFG,
         is_file=True,  # this is a file, not a directory
-        initial_dir=rootdir_browse.get,  # get initial dir from rootdir_entry
+        initial_dir=root_dir_browse.get,  # get initial dir from root_dir_entry
     )
 
     # sampling rate
@@ -728,15 +727,13 @@ def build_cfg_window(root, cfg):
         cfg, "standardise_y_coordinates", y_standardisation_joint_entry
     )
     # standardise all (primary) joint coordinates by a fixed decimal value
-
-    # Directory for coordinate standardisation
-    coord_standardisation_label = ctk.CTkLabel(
+    coordinate_standardisation_xls_label = ctk.CTkLabel(
         cfg_window,
         text="Excel file for primary-joint coordinate standardisation:",
         font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    coord_standardisation_label.grid(row=12, column=0, columnspan=2)
-    coord_standardisation_browse = gaita_widgets.make_browse(
+    coordinate_standardisation_xls_label.grid(row=12, column=0, columnspan=2)
+    coordinate_standardisation_xls_browse = gaita_widgets.make_browse(
         parent_window=cfg_window,
         row=13,
         column=0,
@@ -813,7 +810,7 @@ def build_cfg_window(root, cfg):
     )
     legend_outside_checkbox.grid(row=21, column=0, columnspan=2)
 
-    # Directory to save results subfolders:
+    # results dir
     results_dir_label = ctk.CTkLabel(
         cfg_window,
         text="Save Results subfolders to this directory instead of to data's:",

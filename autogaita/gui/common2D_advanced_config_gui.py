@@ -2,10 +2,6 @@
 import autogaita.gui.gui_utils as gui_utils
 import autogaita.gui.gaita_widgets as gaita_widgets
 import customtkinter as ctk
-import tkinter as tk
-import os
-from tkinter import filedialog
-from customtkinter import CTkImage
 
 
 def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
@@ -206,15 +202,14 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
             adv_cfg_textsize=True,
         )
         invert_y_axis_box.grid(row=12, column=0, columnspan=2)
-    # Standardise all (primary) joint coordinates by a fixed decimal value
 
-    # Directory for coordinate_standardisation_xls :
-    xls_label = ctk.CTkLabel(
+    # Standardise all (primary) joint coordinates by a fixed decimal value
+    coordinate_standardisation_xls_label = ctk.CTkLabel(
         cfg_window,
         text="Excel file for primary-joint coordinate standardisation:",
         font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
-    xls_label.grid(row=13, column=0, columnspan=2)
+    coordinate_standardisation_xls_label.grid(row=13, column=0, columnspan=2)
     coordinate_standardisation_xls_browse = gaita_widgets.make_browse(
         parent_window=cfg_window,
         row=14,

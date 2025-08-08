@@ -32,7 +32,7 @@ def run_gui():
     ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
     ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
     # root
-    # => using ghost root because the image stuff guieaks if your window is a CTk and not
+    # => using ghost root because the image stuff breaks if your window is a CTk and not
     #    Toplevel, see https://stackoverflow.com/questions/20251161
     #                  /tkinter-tclerror-image-pyimage3-doesnt-exist
     ghost_root = ctk.CTk()

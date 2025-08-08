@@ -1,6 +1,5 @@
 import platform
 from importlib import resources
-import os
 from PIL import Image
 from customtkinter import CTkImage
 

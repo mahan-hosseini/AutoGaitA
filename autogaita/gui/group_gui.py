@@ -2,7 +2,6 @@
 import autogaita
 import autogaita.gui.gaita_widgets as gaita_widgets
 import autogaita.gui.gui_utils as gui_utils
-from autogaita.gui.gui_utils import create_folder_icon
 import tkinter as tk
 import customtkinter as ctk
 import pandas as pd
@@ -12,8 +11,6 @@ from threading import Thread
 import platform
 import json
 import copy
-from tkinter import filedialog
-from customtkinter import CTkImage
 
 # %% global constants
 from autogaita.gui.gui_constants import (
@@ -311,7 +308,7 @@ def build_mainwindow(root, group_number, root_dimensions):
 
         frame = ctk.CTkFrame(
             mainwindow, fg_color="transparent"
-        )  # need this because results_dir and load_dir must be in ONE frame, or else layout problems
+        )  # required since results_ & load_dir must be in ONE frame: else layout breaks
         frame.grid(row=last_group_row + 1, column=0, columnspan=3, rowspan=2)
         # results dir
         results_dir_label = ctk.CTkLabel(

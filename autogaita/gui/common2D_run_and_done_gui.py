@@ -11,10 +11,6 @@ import autogaita.gui.gui_utils as gui_utils
 import autogaita.gui.gaita_widgets as gaita_widgets
 import customtkinter as ctk
 import tkinter as tk
-from tkinter import filedialog
-from customtkinter import CTkImage
-import os
-from autogaita.gui.gui_utils import create_folder_icon
 
 
 def build_run_and_done_windows(
@@ -40,9 +36,6 @@ def build_run_and_done_windows(
     h = root_dimensions[1]
 
     # .............................  run window  ..............................
-    # ghost_root = ctk.CTk()
-    # ghost_root.withdraw()
-    # root = ctk.CTkToplevel()
     runwindow = ctk.CTkToplevel(root)
     user_ready = tk.IntVar(runwindow, 0)  # used to know when user is ready 4 screen 3
     if analysis == "single":
@@ -215,7 +208,6 @@ def populate_run_window(
         r = 4
     else:
         r = 0
-
     # root directory
     root_dir_label = ctk.CTkLabel(
         runwindow,
