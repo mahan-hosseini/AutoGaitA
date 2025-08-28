@@ -209,25 +209,40 @@ def populate_run_window(
     else:
         r = 0
     # root directory
-    rootdir_label, rootdir_entry = gaita_widgets.label_and_entry_pair(
+    root_dir_label = ctk.CTkLabel(
         runwindow,
-        "Directory containing the files to be analysed",
-        results["root_dir"],
-        widget_cfg,
-        adv_cfg_textsize=True,
+        text="Directory containing the files to be analysed:",
+        font=(widget_cfg["TEXT_FONT_NAME"], widget_cfg["ADV_CFG_TEXT_FONT_SIZE"]),
     )
-    rootdir_label.grid(row=r + 0, column=0)
-    rootdir_entry.grid(row=r + 1, column=0)
+    root_dir_label.grid(row=r, column=0)
+    root_dir_browse = gaita_widgets.make_browse(
+        parent_window=runwindow,
+        row=r + 1,
+        column=0,
+        var_key="root_dir",
+        var_dict=results,
+        widget_cfg=widget_cfg,
+        pady=5,
+    )
     # stepcycle latency XLS
-    SCXLS_label, SCXLS_entry = gaita_widgets.label_and_entry_pair(
+    SCXLS_label = ctk.CTkLabel(
         runwindow,
-        "Filename of the Annotation Table Excel file",
-        results["sctable_filename"],
-        widget_cfg,
-        adv_cfg_textsize=True,
+        text="Annotation Table Excel file:",
+        font=(widget_cfg["TEXT_FONT_NAME"], widget_cfg["ADV_CFG_TEXT_FONT_SIZE"]),
     )
     SCXLS_label.grid(row=r + 2, column=0)
-    SCXLS_entry.grid(row=r + 3, column=0)
+    SCXLS_browse = gaita_widgets.make_browse(
+        parent_window=runwindow,
+        row=r + 3,
+        column=0,
+        var_key="sctable_filename",
+        var_dict=results,
+        widget_cfg=widget_cfg,
+        pady=5,
+        is_file=True,
+        initial_dir=root_dir_browse.get,
+    )
+
     # empty label 1 (for spacing)
     empty_label_one = ctk.CTkLabel(runwindow, text="")
     empty_label_one.grid(row=r + 4, column=0)
