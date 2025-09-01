@@ -117,8 +117,11 @@ def run_universal3D_gui():
     # CustomTkinter vars
     ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
     ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
+    # ghostroot to avoid tkinter pyimage error
+    ghost_root = ctk.CTk()
+    ghost_root.withdraw()
     # root
-    root = ctk.CTk()
+    root = ctk.CTkToplevel()
     # make window pretty
     screen_width = root.winfo_screenwidth()  # width of the screen
     screen_height = root.winfo_screenheight()  # height of the screen
@@ -165,24 +168,37 @@ def run_universal3D_gui():
     cfgheader_label.grid(row=0, column=0, columnspan=2, sticky="nsew")
 
     # root directory
-    rootdir_label, rootdir_entry = gaita_widgets.label_and_entry_pair(
+    root_dir_label = ctk.CTkLabel(
         root,
-        "Directory containing the files to be analysed:",
-        results["root_dir"],
-        WIDGET_CFG,
+        text="Directory of files to be analysed:",
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    rootdir_label.grid(row=1, column=0, columnspan=2, sticky="w")
-    rootdir_entry.grid(row=1, column=1)
-
+    root_dir_label.grid(row=1, column=0, sticky="w")
+    root_dir_browse = gaita_widgets.make_browse(
+        parent_window=root,
+        row=1,
+        column=1,
+        var_dict=results,
+        var_key="root_dir",
+        widget_cfg=WIDGET_CFG,
+        sticky="w",
+    )
     # stepcycle latency XLS
-    SCXLS_label, SCXLS_entry = gaita_widgets.label_and_entry_pair(
-        root,
-        "Name of the Annotation Table Excel file:",
-        results["sctable_filename"],
-        WIDGET_CFG,
+    SCXLS_label = ctk.CTkLabel(
+        root, text="Annotation Table Excel file:", font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
     )
-    SCXLS_label.grid(row=2, column=0, columnspan=2, sticky="w")
-    SCXLS_entry.grid(row=2, column=1)
+    SCXLS_label.grid(row=2, column=0, sticky="w")
+    SCXLS_browse = gaita_widgets.make_browse(
+        parent_window=root,
+        row=2,
+        column=1,
+        sticky="w",
+        var_dict=results,
+        var_key="sctable_filename",
+        widget_cfg=WIDGET_CFG,
+        is_file=True,  # this is a file, not a directory
+        initial_dir=root_dir_browse.get,  # get initial dir from root_dir_entry
+    )
 
     # sampling rate
     samprate_label, samprate_entry = gaita_widgets.label_and_entry_pair(
@@ -372,17 +388,24 @@ def build_datafile_prep_window(root, results, cfg):
         fileprep_window, "Datafile Preparation", WIDGET_CFG
     )
     fileprep_header_label.grid(row=0, column=0, rowspan=2, columnspan=2, sticky="nsew")
-    # root dir
-    fileprep_root_dir_label, fileprep_root_dir_entry = (
-        gaita_widgets.label_and_entry_pair(
-            fileprep_window,
-            "Directory containing files:",
-            cfg["fileprep_root_dir"],
-            WIDGET_CFG,
-        )
+
+    # fileprep_root_dir:
+    fileprep_root_dir_label = ctk.CTkLabel(
+        fileprep_window,
+        text="Directory containing files:",
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    fileprep_root_dir_label.grid(row=2, column=0, sticky="e")
-    fileprep_root_dir_entry.grid(row=2, column=1)
+    fileprep_root_dir_label.grid(row=2, column=0)
+    fileprep_root_dir_browse = gaita_widgets.make_browse(
+        parent_window=fileprep_window,
+        row=2,
+        column=1,
+        var_dict=cfg,
+        var_key="fileprep_root_dir",
+        widget_cfg=WIDGET_CFG,
+        initial_dir=None,  # opens Desktop by default
+    )
+
     # file type
     filetype_string = "File type:"
     filetype_label = ctk.CTkLabel(
@@ -405,7 +428,7 @@ def build_datafile_prep_window(root, results, cfg):
                 font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
             )
         )
-        filetype_buttons[i].grid(row=4 + i, column=0, columnspan=2)
+        filetype_buttons[i].grid(row=4 + i, column=0, columnspan=2, pady=5)
     row_num = 4 + len(filetype_strings)  # 7
     # postname string
     fileprep_postname_label, fileprep_postname_entry = (
@@ -418,17 +441,23 @@ def build_datafile_prep_window(root, results, cfg):
     )
     fileprep_postname_label.grid(row=row_num, column=0, sticky="e")
     fileprep_postname_entry.grid(row=row_num, column=1)
-    # results dir
-    fileprep_results_dir_label, fileprep_results_dir_entry = (
-        gaita_widgets.label_and_entry_pair(
-            fileprep_window,
-            "Directory to save results to:",
-            cfg["fileprep_results_dir"],
-            WIDGET_CFG,
-        )
+
+    # fileprep results dir
+    fileprep_results_dir_label = ctk.CTkLabel(
+        fileprep_window,
+        text="Directory to save results to:",
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
     )
-    fileprep_results_dir_label.grid(row=row_num + 1, column=0, sticky="e")
-    fileprep_results_dir_entry.grid(row=row_num + 1, column=1)
+    fileprep_results_dir_label.grid(row=9, column=0)
+    fileprep_results_dir_browse = gaita_widgets.make_browse(
+        parent_window=fileprep_window,
+        row=9,
+        column=1,
+        var_dict=cfg,
+        var_key="fileprep_results_dir",
+        widget_cfg=WIDGET_CFG,
+    )
+
     # empty label for spacing
     empty_label_one = ctk.CTkLabel(fileprep_window, text="")
     empty_label_one.grid(row=row_num + 2, column=0)
@@ -698,25 +727,32 @@ def build_cfg_window(root, cfg):
         cfg, "standardise_y_coordinates", y_standardisation_joint_entry
     )
     # standardise all (primary) joint coordinates by a fixed decimal value
-    coordinate_standardisation_xls_label, coordinate_standardisation_xls_entry = (
-        gaita_widgets.label_and_entry_pair(
-            cfg_window,
-            "Excel file for primary-joint coordinate standardisation:",
-            cfg["coordinate_standardisation_xls"],
-            WIDGET_CFG,
-            adv_cfg_textsize=True,
-        )
+    coordinate_standardisation_xls_label = ctk.CTkLabel(
+        cfg_window,
+        text="Excel file for primary-joint coordinate standardisation:",
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
     coordinate_standardisation_xls_label.grid(row=12, column=0, columnspan=2)
-    coordinate_standardisation_xls_entry.grid(row=13, column=0, columnspan=2)
-
+    coordinate_standardisation_xls_browse = gaita_widgets.make_browse(
+        parent_window=cfg_window,
+        row=13,
+        column=0,
+        columnspan=2,
+        sticky="n",
+        var_dict=cfg,
+        var_key="coordinate_standardisation_xls",
+        widget_cfg=WIDGET_CFG,
+        is_file=True,  # open excel file instead of directory
+        adv_cfg_textsize=True,
+        initial_dir=None,  # opens Desktop by default
+    )
     #  .............................  advanced output  .................................
     # advanced output header
     adv_cfg_output_header_label = gaita_widgets.header_label(
         cfg_window, "Output", WIDGET_CFG
     )
     adv_cfg_output_header_label.grid(
-        row=14, column=0, rowspan=2, columnspan=2, sticky="nsew"
+        row=14, column=0, rowspan=2, columnspan=2, sticky="nsew", pady=(0, 10)
     )
     # number of joints to plot
     plot_joint_num_label, plot_joint_num_entry = gaita_widgets.label_and_entry_pair(
@@ -775,16 +811,22 @@ def build_cfg_window(root, cfg):
     legend_outside_checkbox.grid(row=21, column=0, columnspan=2)
 
     # results dir
-    results_dir_label, results_dir_entry = gaita_widgets.label_and_entry_pair(
+    results_dir_label = ctk.CTkLabel(
         cfg_window,
-        "Save Results subfolders to directory below instead of to data's",
-        cfg["results_dir"],
-        WIDGET_CFG,
-        adv_cfg_textsize=True,
+        text="Save Results subfolders to this directory instead of to data's:",
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
     results_dir_label.grid(row=22, column=0, columnspan=2)
-    results_dir_entry.grid(row=23, column=0, columnspan=2)
-
+    results_dir_browse = gaita_widgets.make_browse(
+        parent_window=cfg_window,
+        row=23,
+        column=0,
+        columnspan=2,
+        var_dict=cfg,
+        var_key="results_dir",
+        widget_cfg=WIDGET_CFG,
+        adv_cfg_textsize=True,
+    )
     # done button
     adv_cfg_done_button = ctk.CTkButton(
         cfg_window,

@@ -98,7 +98,9 @@ def run_group_gui():
     ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
     ctk.set_default_color_theme("green")  # Themes: blue , dark-blue, green
     # root
-    root = ctk.CTk()
+    ghost_root = ctk.CTk()
+    ghost_root.withdraw()
+    root = ctk.CTkToplevel()
     fix_window_after_its_creation(root)
     gui_utils.configure_the_icon(root)
 
@@ -279,15 +281,17 @@ def build_mainwindow(root, group_number, root_dimensions):
                 )
             )
             group_names_entries[-1].grid(row=row_counter, column=1)
-            # group dirs - entries
-            group_dirs_entries.append(
-                ctk.CTkEntry(
-                    mainwindow,
-                    textvariable=group_dirs[g],
-                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
-                )
+
+            group_dirs_browse = gaita_widgets.make_browse(
+                parent_window=mainwindow,
+                row=row_counter,
+                column=2,
+                text_var=group_dirs[g],
+                widget_cfg=WIDGET_CFG,
+                is_file=False,
             )
-            group_dirs_entries[-1].grid(row=row_counter, column=2, sticky="ew")
+            group_dirs_entries.append(group_dirs_browse)
+
             # update row counter
             row_counter += 1
         # call row_counter a better name
@@ -302,30 +306,47 @@ def build_mainwindow(root, group_number, root_dimensions):
             extract_results_and_load_dirs_from_json_files()
         )
 
+        frame = ctk.CTkFrame(
+            mainwindow, fg_color="transparent"
+        )  # required since results_ & load_dir must be in ONE frame: else layout breaks
+        frame.grid(row=last_group_row + 1, column=0, columnspan=3, rowspan=2)
         # results dir
-        results_dir = tk.StringVar(mainwindow, results_dir_string)
-        results_dir_label, results_dir_entry = gaita_widgets.label_and_entry_pair(
-            mainwindow,
-            "Path to save group-analysis results to",
-            results_dir,
-            WIDGET_CFG,
+        results_dir_label = ctk.CTkLabel(
+            frame,
+            text="Path to save group-analysis results to:",
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
         )
-        results_dir_label.grid(
-            row=last_group_row + 1, column=0, columnspan=3, sticky="ew"
+        results_dir_label.grid(row=0, column=0, sticky="w")
+
+        results_dir = tk.StringVar(
+            frame, results_dir_string
+        )  # need this for config file
+
+        results_dir_browse = gaita_widgets.make_browse(
+            parent_window=frame,
+            row=0,
+            column=1,
+            text_var=results_dir,
+            widget_cfg=WIDGET_CFG,
+            is_file=False,
+            entry_width=230,
         )
-        results_dir_entry.grid(
-            row=last_group_row + 2, column=0, columnspan=3, sticky="ew"
+
+        load_dir = tk.StringVar(frame, load_dir_string)
+        load_dir_label = ctk.CTkLabel(
+            frame,
+            text="Optional: path to load previous group-data from:",
+            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
         )
-        # load dir
-        load_dir = tk.StringVar(mainwindow, load_dir_string)
-        load_dir_label, load_dir_entry = gaita_widgets.label_and_entry_pair(
-            mainwindow,
-            "Optional: path to load previous group-data from",
-            load_dir,
-            WIDGET_CFG,
+        load_dir_label.grid(row=1, column=0, sticky="w")
+        load_dir_browse = gaita_widgets.make_browse(
+            parent_window=frame,
+            row=1,
+            column=1,
+            text_var=load_dir,
+            widget_cfg=WIDGET_CFG,
+            entry_width=230,
         )
-        load_dir_label.grid(row=last_group_row + 3, column=0, columnspan=3, sticky="ew")
-        load_dir_entry.grid(row=last_group_row + 4, column=0, columnspan=3, sticky="ew")
         # empty label 2 for spacing
         empty_label_two = ctk.CTkLabel(mainwindow, text="")
         empty_label_two.grid(

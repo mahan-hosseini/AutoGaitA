@@ -204,18 +204,23 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         invert_y_axis_box.grid(row=12, column=0, columnspan=2)
 
     # Standardise all (primary) joint coordinates by a fixed decimal value
-    coordinate_standardisation_xls_label, coordinate_standardisation_xls_entry = (
-        gaita_widgets.label_and_entry_pair(
-            cfg_window,
-            "Excel file for primary-joint coordinate standardisation:",
-            cfg["coordinate_standardisation_xls"],
-            widget_cfg,
-            adv_cfg_textsize=True,
-        )
+    coordinate_standardisation_xls_label = ctk.CTkLabel(
+        cfg_window,
+        text="Excel file for primary-joint coordinate standardisation:",
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
     coordinate_standardisation_xls_label.grid(row=13, column=0, columnspan=2)
-    coordinate_standardisation_xls_entry.grid(row=14, column=0, columnspan=2)
-
+    coordinate_standardisation_xls_browse = gaita_widgets.make_browse(
+        parent_window=cfg_window,
+        row=14,
+        column=0,
+        var_key="coordinate_standardisation_xls",
+        var_dict=cfg,
+        columnspan=2,
+        widget_cfg=widget_cfg,
+        adv_cfg_textsize=True,
+        is_file=True,
+    )
     #  .............................  advanced output  .................................
     # advanced analysis header
     adv_cfg_output_header_label = gaita_widgets.header_label(
@@ -224,7 +229,7 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         widget_cfg,
     )
     adv_cfg_output_header_label.grid(
-        row=15, column=0, rowspan=2, columnspan=2, sticky="nsew"
+        row=15, column=0, rowspan=2, columnspan=2, sticky="nsew", pady=(10, 0)
     )
 
     # number of hindlimb (primary) joints to plot
@@ -288,15 +293,22 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
     legend_outside_checkbox.grid(row=23, column=0, columnspan=2)
 
     # results dir
-    results_dir_label, results_dir_entry = gaita_widgets.label_and_entry_pair(
+    results_dir_label = ctk.CTkLabel(
         cfg_window,
-        "Save Results subfolders to directory below instead of to data's:",
-        cfg["results_dir"],
-        widget_cfg,
-        adv_cfg_textsize=True,
+        text="Save Results subfolders to this directory instead of to data's:",
+        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
     results_dir_label.grid(row=24, column=0, columnspan=2)
-    results_dir_entry.grid(row=25, column=0, columnspan=2)
+    results_dir_browse = gaita_widgets.make_browse(
+        parent_window=cfg_window,
+        row=25,
+        column=0,
+        columnspan=2,
+        var_key="results_dir",
+        var_dict=cfg,
+        widget_cfg=widget_cfg,
+        adv_cfg_textsize=True,
+    )
 
     # done button
     adv_cfg_done_button = ctk.CTkButton(
