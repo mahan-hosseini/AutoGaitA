@@ -726,10 +726,10 @@ def build_cfg_window(root, cfg):
     gui_utils.change_widget_state_based_on_checkbox(
         cfg, "standardise_y_coordinates", y_standardisation_joint_entry
     )
-    # standardise all (primary) joint coordinates by a fixed decimal value
+    # standardise all joint coordinates (listed in col-window) by a fixed decimal value
     coordinate_standardisation_xls_label = ctk.CTkLabel(
         cfg_window,
-        text="Excel file for primary-joint coordinate standardisation:",
+        text="Excel file for joint coordinate standardisation:",
         font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
     )
     coordinate_standardisation_xls_label.grid(row=12, column=0, columnspan=2)
