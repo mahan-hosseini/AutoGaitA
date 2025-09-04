@@ -46,7 +46,7 @@ It is strongly recommended that a separate virtual environment for AutoGaitA is 
 
 **[The AutoGaitA YouTube Channel](https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&si=mV5p2--nYvbofkPh) provides tutorials for file preparation and instructions on how to use AutoGaitA. This includes in-depth explanations of all details, (main & advanced) configurations, possibilities, and outputs.**
 
-*Please note that tutorial videos might not always reflect the most up-to-date version of our toolbox, especially in the beginning when things are regularly changing. We will make sure to record new videos whenever there are major changes though. Last tutorial-update was with v0.4.0. (August 2024).*
+*Please note that tutorial videos might not always reflect the most up-to-date version of our toolbox, especially in the beginning when things are regularly changing. We will make sure to record new videos whenever there are major changes though. If updates are just minor we refer to them in the notes below each video. Last tutorial-update was with v1.4.0. (September 2025).*
 
 ### Example Data
 We provide an example dataset in the **example data** folder of this repository, with a set of mice walking over differently wide beams and both the beam as well as body coordinates being tracked with DLC. Note that this dataset was used in our tutorial videos introducing *AutoGaitA DLC*, *AutoGaitA Group* and in our video explaining file preparation for *AutoGaitA DLC*.  We further provide a **group** folder there that can be used alongside the *AutoGaitA Group* tutorial to confirm that users generate the same set of results following our instructions.
