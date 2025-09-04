@@ -95,7 +95,7 @@ AutoGaitA's cfg files and dictionaries sometimes change as a result, which means
 We document each version's cfg-changes in [AutoGaitA Releases](https://github.com/mahan-hosseini/AutoGaitA/releases), which is particularly relevant for users wrapping custom scripts around AutoGaitA's functions.
 
 ## Reference
-If you use this code or data please [cite our preprint](https://www.biorxiv.org/content/10.1101/2024.04.14.589409v1).
+If you use this code or data please [cite our preprint](https://doi.org/10.1101/2024.04.14.589409).
 
 ## License
 AutoGaitA is licensed under [GPL v3.0](https://github.com/mahan-hosseini/AutoGaitA/blob/main/LICENSE) and Forschungszentrum Jülich GmbH holds all copyrights. 
@@ -106,6 +106,8 @@ The AutoGaitA software is provided without warranty of any kind, express or impl
 [Mahan Hosseini](https://github.com/mahan-hosseini)
 
 ## Contributors
+[Sarah Sabbagh](https://github.com/sarahhsabbagh) - Undergraduate Student
+
 [Luca Flemming](https://github.com/luca-flemming) - Undergraduate Student
 
 [Nicholas del Grosso](https://github.com/nickdelgrosso) - RSE Advisor
