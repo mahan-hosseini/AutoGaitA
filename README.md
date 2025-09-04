@@ -7,6 +7,7 @@
 [![paper: biorxiv](https://img.shields.io/badge/paper-biorxiv-blue)](https://doi.org/10.1101/2024.04.14.589409) 
 
 ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
+[![Tutorials](https://img.shields.io/badge/YouTube-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&feature=shared)
 [![X URL](https://img.shields.io/twitter/url?url=https%3A%2F%2Fx.com%2Fautogaita&style=social&label=updates)](https://x.com/autogaita)
 
 # Automated Gait Analysis in Python 🐸
@@ -68,9 +69,9 @@ Users are advised to read the **General Recommendations** section of that folder
 By default, *AutoGaitA DLC* and *AutoGaitA Universal 3D* implement standard values for mouse and human locomotion, respectively. If your analysis deviates from these standards (e.g. by focussing on another behaviour or a different species) **you must change these values!** 
 
 **Find out more about *AutoGaitA's custom joints and angles:***
-- [YouTube - AutoGaitA DLC Advanced Configuration](https://youtu.be/MP9g9kXRE_Q?feature=shared) 
-- [YouTube - AutoGaitA Universal 3D (prev. called Simi)](https://youtu.be/rTG-Fc9XI9g?feature=shared) 
-- [Documentation - AutoGaitA DLC](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.20bg7b7ymt0b)
+- [YouTube - AutoGaitA DLC/SLEAP Advanced Configuration](https://youtu.be/MP9g9kXRE_Q?feature=shared) 
+- [YouTube - AutoGaitA Universal 3D](https://youtu.be/vZyWmPcI6ao) 
+- [Documentation - AutoGaitA DLC/SLEAP](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.20bg7b7ymt0b)
 - [Documentation - AutoGaitA Universal 3D](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.uz61bpmua7qz)
 
 ### Bin number of step cycle normalisation
