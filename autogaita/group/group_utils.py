@@ -4,7 +4,11 @@ from autogaita.resources.constants import INFO_TEXT_WIDTH
 from autogaita.group.group_constants import (
     GROUP_CONFIG_TXT_FILENAME,
     PCA_CUSTOM_SCATTER_OUTER_SEPARATOR,
+    STATS_PLOTS_LEGEND_SIZE,
+    STATS_PLOTS_SUPLABEL_SIZE,
 )
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 # %% .........................  print start and finish  ................................
@@ -202,3 +206,28 @@ def check_mouse_conversion(feature, cfg, **kwargs):
                 elif "Angle" not in kwargs["stats_var"]:
                     return True
     return False
+
+
+def setup_stats_plots_vars(contrasts, bin_num):
+    """Set up variables for all stats plots"""
+    if len(contrasts) <= 5:
+        f, ax = plt.subplots(len(contrasts), 1, layout="constrained")
+        stats_plots_suplabel_size = STATS_PLOTS_SUPLABEL_SIZE
+        if len(contrasts) == 1:
+            stats_plots_legend_size = STATS_PLOTS_LEGEND_SIZE + 4
+            ax = np.atleast_1d(ax)  # quick hack so we can index ax as a list
+        else:
+            stats_plots_legend_size = STATS_PLOTS_LEGEND_SIZE
+    else:
+        if len(contrasts) == 6:  # 4 groups
+            f, ax = plt.subplots(3, 2, layout="constrained", figsize=(15, 10))
+        elif len(contrasts) == 10:  # 5 groups
+            f, ax = plt.subplots(5, 2, layout="constrained", figsize=(15, 10))
+        elif len(contrasts) == 15:  # 6 groups
+            f, ax = plt.subplots(5, 3, layout="constrained", figsize=(15, 10))
+        ax = ax.ravel()  # so we can index it as 1D array
+        stats_plots_suplabel_size = STATS_PLOTS_SUPLABEL_SIZE + 5
+        stats_plots_legend_size = STATS_PLOTS_LEGEND_SIZE + 1
+    # x is linear space between 0 and 100% with bin_num steps
+    x = np.linspace(0, 100, bin_num)
+    return f, ax, stats_plots_legend_size, stats_plots_suplabel_size, x

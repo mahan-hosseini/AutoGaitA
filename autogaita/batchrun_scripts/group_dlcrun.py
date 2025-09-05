@@ -15,22 +15,18 @@ def group_dlcrun():
         "5mm",
         "12mm",
         "25mm",
-        # Interaction Issue Dataset
-        # "Control",
-        # "Silenced",
         # Testing Dataset
         # "one",
         # "two",
+        # 6 Group Dataset
+        # "36w_5mm",
+        # "36w_12mm",
+        # "36w_25mm",
+        # "104w_5mm",
+        # "104w_12mm",
+        # "104w_25mm",
     ]
     folderinfo["group_dirs"] = [
-        # --------------------------
-        # Full Dataset (39 subjects)
-        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Sanity Test Interaction Graziana/Result 10 joints/Control Full",
-        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Sanity Test Interaction Graziana/Result 10 joints/Silenced Full/",
-        # --------------------------
-        # Reduced Dataset (5 subjects)
-        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Sanity Test Interaction Graziana/Result 10 joints/Control",
-        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Sanity Test Interaction Graziana/Result 10 joints/Silenced/",
         # --------------------------
         # Testing Dataset
         # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/Group 1/",
@@ -40,17 +36,23 @@ def group_dlcrun():
         "/Users/mahan/sciebo/PythonCode/gaita_repo/example data/5mm/Results/",
         "/Users/mahan/sciebo/PythonCode/gaita_repo/example data/12mm/Results/",
         "/Users/mahan/sciebo/PythonCode/gaita_repo/example data/25mm/Results/",
+        # --------------------------
+        # 6 Group Dataset (nothing needed)
     ]
     folderinfo["results_dir"] = (
-        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/example_data_results/"
-        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Sanity Test Interaction Graziana/Result 10 joints/Mahan Results/"
-        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/GroupResults/"
+        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/example_data_results/"
+        "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Testing/GroupResults/"
+        # "/Users/mahan/Desktop/Test6GroupResults/"
     )
-    folderinfo["load_dir"] = ""
+    folderinfo["load_dir"] = (
+        ""
+        # "/Users/mahan/sciebo/Research/AutoGaitA/Mouse/Final Mouse Results/AdultElder3BeamsForPaper"  # for 6 group analysis example
+    )
     # cfg
     cfg = {}
-    cfg["do_permtest"] = False  # True
+    cfg["do_permtest"] = True
     cfg["do_anova"] = True
+    cfg["anova_design"] = "RM ANOVA"
     cfg["permutation_number"] = 100
     cfg["PCA_n_components"] = 6
     # cfg["PCA_n_components"] = 0.33
@@ -59,14 +61,11 @@ def group_dlcrun():
     cfg["PCA_save_3D_video"] = False  # True
     cfg["PCA_bins"] = ""  # "0-10,24,50-75"
     cfg["stats_threshold"] = 0.05
-    cfg["plot_SE"] = False
-    cfg["color_palette"] = "viridis"
+    cfg["plot_SE"] = True
+    cfg["color_palette"] = "Set2"
     cfg["dont_show_plots"] = True
     cfg["legend_outside"] = True
     cfg["which_leg"] = "left"
-    cfg["anova_design"] = "RM ANOVA"
-    # cfg["anova_design"] = "Mixed ANOVA"
-    cfg["permutation_number"] = 100
     cfg["PCA_variables"] = [
         # "Hind paw tao y",
         # "Ankle y",
@@ -84,14 +83,14 @@ def group_dlcrun():
         # "Hip Angle",
     ]
     cfg["stats_variables"] = [
-        "Hind paw tao y",
-        # "Ankle y",
-        "Knee y",
+        # "Hind paw tao y",
+        "Ankle y",
+        # "Knee y",
         # "Ankle Angle",
-        "Knee Angle",
+        # "Knee Angle",
         # "Nose x",
         # "Knee y",
-        "Knee x",
+        # "Knee x",
         # "Knee Velocity",
         # "Knee Acceleration",
         # "Knee Angle",

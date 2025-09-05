@@ -16,7 +16,14 @@ def run_singlerun_in_multirun(tracking_software, idx, info, folderinfo, cfg):
     this_info = {}
     keynames = info.keys()
     for keyname in keynames:
-        this_info[keyname] = info[keyname][idx]
+        # if the key is leading mouse/run num zeros, only pass it if it is not False
+        # => we want these to not be keys in this_info if it is False due to how
+        #    leading zeros are handled in the prep script
+        if "leading_" in keyname:
+            if info[keyname][idx] is not False:
+                this_info[keyname] = info[keyname][idx]
+        else:  # pass as is for all other keys
+            this_info[keyname] = info[keyname][idx]
         if cfg["results_dir"]:
             this_info["results_dir"] = os.path.join(
                 cfg["results_dir"], this_info["name"]
@@ -51,7 +58,13 @@ def extract_info(tracking_software, folderinfo, in_GUI=False):
     elif tracking_software == "SLEAP":
         file_type = ".h5"
     # prepare output info dict and run
-    info = {"name": [], "mouse_num": [], "run_num": []}
+    info = {
+        "name": [],
+        "mouse_num": [],
+        "run_num": [],
+        "leading_mouse_num_zeros": [],
+        "leading_run_num_zeros": [],
+    }
     for filename in os.listdir(folderinfo["root_dir"]):
         # make sure we don't get wrong files
         if (
@@ -109,14 +122,10 @@ def extract_info(tracking_software, folderinfo, in_GUI=False):
                     info["name"].append(this_name)
                     info["mouse_num"].append(this_mouse_num)
                     info["run_num"].append(this_run_num)
-    # if we had to fix leading zeros, make sure to save them so we can use them in
-    # move_data_to_folders function later
-    # => make sure it's lists of strings because this is needed by the
-    #    run_singlerun_in_multiruns function later
-    if leading_mouse_num_zeros:
-        info["leading_mouse_num_zeros"] = [leading_mouse_num_zeros]
-    if leading_run_num_zeros:
-        info["leading_run_num_zeros"] = [leading_run_num_zeros]
+                    # note that leading_zeros are always appended but only transfered
+                    # to this_info dicts in singlerun_from_multi if not False
+                    info["leading_mouse_num_zeros"].append(leading_mouse_num_zeros)
+                    info["leading_run_num_zeros"].append(leading_run_num_zeros)
     # this might happen if user entered wrong identifiers or folder
     if len(info["name"]) < 1:
         no_files_message = (
@@ -159,6 +168,8 @@ def find_number(fullstring, prestring, poststring):
     while fullstring[start_idx] == "0" and start_idx < end_idx - 1:
         start_idx += 1
         leading_zeros += "0"
+    if leading_zeros == "":
+        leading_zeros = False  # important that it is False if none present
     return int(fullstring[start_idx:end_idx]), leading_zeros
 
 

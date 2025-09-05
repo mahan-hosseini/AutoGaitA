@@ -5,6 +5,7 @@ from autogaita.group.group_utils import (
     save_figures,
     ytickconvert_mm_to_cm,
     ylabel_velocity_and_acceleration,
+    setup_stats_plots_vars,
 )
 import os
 import sys
@@ -38,8 +39,6 @@ from autogaita.group.group_constants import (
     MULTCOMP_RESULT_P_IDENTIFIER,
     MULTCOMP_RESULT_SPLIT_STR,
     MULTCOMP_EXCEL_COLS,
-    STATS_PLOT_LEGEND_SIZE,  # PLOTS
-    STATS_PLOTS_SUPLABEL_SIZE,
     BOX_COLOR,
     BOX_ALPHA,
     STD_ALPHA,
@@ -324,12 +323,10 @@ def plot_permutation_test_results(
     dont_show_plots = cfg["dont_show_plots"]
     legend_outside = cfg["legend_outside"]
 
-    if len(contrasts) > 3:  # if we have 4 groups or more, N/2x2 subplot layout
-        f, ax = plt.subplots(int(round(len(contrasts) / 2)), 2, layout="constrained")
-        ax = ax.ravel()
-    else:
-        f, ax = plt.subplots(len(contrasts), 1, layout="constrained")
-    x = np.linspace(0, 100, bin_num)
+    # call preparation function for vars and loop over contrasts to plot subplots
+    f, ax, stats_plots_legend_size, stats_plots_suplabel_size, x = (
+        setup_stats_plots_vars(contrasts, bin_num)
+    )
     for c, contrast in enumerate(contrasts):
         # prepare group strings and (importantly!) index of current groups from _NAMES
         groups = [group_name for group_name in contrast.split(CONTRAST_SPLIT_STR)]
@@ -347,82 +344,46 @@ def plot_permutation_test_results(
             else:
                 std = g_std_dfs[group_idx].iloc[:, y_col]
             this_color = group_color_dict[group_name]
-            if type(ax) == np.ndarray:  # so we can do 2-group contrasts
-                ax[c].plot(x, y, color=this_color, label=group_name, zorder=1)
-                ax[c].fill_between(
-                    x,
-                    y - std,
-                    y + std,
-                    color=this_color,
-                    alpha=STD_ALPHA,
-                    lw=STD_LW,
-                    zorder=1,
-                )
-            else:
-                ax.plot(x, y, color=this_color, label=group_name, zorder=1)
-                ax.fill_between(
-                    x,
-                    y - std,
-                    y + std,
-                    color=this_color,
-                    alpha=STD_ALPHA,
-                    lw=STD_LW,
-                    zorder=1,
-                )
+            # plot line and fill between for error
+            ax[c].plot(x, y, color=this_color, label=group_name, zorder=1)
+            ax[c].fill_between(
+                x,
+                y - std,
+                y + std,
+                color=this_color,
+                alpha=STD_ALPHA,
+                lw=STD_LW,
+                zorder=1,
+            )
         # adjust legend & convert to cm (if needed) before plotting clusters
-        if type(ax) == np.ndarray:
-            if legend_outside is True:
-                ax[c].legend(
-                    fontsize=STATS_PLOT_LEGEND_SIZE,
-                    loc="center left",
-                    bbox_to_anchor=(1, 0.5),
-                )
-            elif legend_outside is False:
-                ax[c].legend(fontsize=STATS_PLOT_LEGEND_SIZE)
-            if check_mouse_conversion(feature, cfg, stats_var=stats_var):
-                ytickconvert_mm_to_cm(ax[c])
-        else:
-            if legend_outside is True:
-                ax.legend(
-                    fontsize=STATS_PLOT_LEGEND_SIZE + 4,
-                    loc="center left",
-                    bbox_to_anchor=(1, 0.5),
-                )
-            elif legend_outside is False:
-                ax.legend(fontsize=STATS_PLOT_LEGEND_SIZE + 4)
-            if check_mouse_conversion(feature, cfg, stats_var=stats_var):
-                ytickconvert_mm_to_cm(ax)
+        if legend_outside is True:
+            ax[c].legend(
+                fontsize=stats_plots_legend_size,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+            )
+        elif legend_outside is False:
+            ax[c].legend(fontsize=stats_plots_legend_size)
+        if check_mouse_conversion(feature, cfg, stats_var=stats_var):
+            ytickconvert_mm_to_cm(ax[c])
         # plot significant clusters
         # => note that clusters is a list of list with idxs between 0 & bin_num-1
         clusters = extract_all_clusters(trueobs_results_df, contrast)
-        if type(ax) == np.ndarray:
-            ymin = ax[c].get_ylim()[0]
-            ymax = ax[c].get_ylim()[1]
-        else:
-            ymin = ax.get_ylim()[0]
-            ymax = ax.get_ylim()[1]
+        ymin = ax[c].get_ylim()[0]
+        ymax = ax[c].get_ylim()[1]
         for cluster in x[clusters]:  # index x with clusters == cluster has correct val
             x_coords = [cluster[0], cluster[1], cluster[1], cluster[0]]
             y_coords = [ymin, ymin, ymax, ymax]
-            if type(ax) == np.ndarray:
-                ax[c].fill(
-                    x_coords,
-                    y_coords,
-                    color=BOX_COLOR,
-                    alpha=BOX_ALPHA,
-                    lw=STD_LW,
-                    zorder=0,
-                )
-            else:
-                ax.fill(
-                    x_coords,
-                    y_coords,
-                    color=BOX_COLOR,
-                    alpha=BOX_ALPHA,
-                    lw=STD_LW,
-                    zorder=0,
-                )
-    f.supxlabel("Percentage", fontsize=STATS_PLOTS_SUPLABEL_SIZE)
+            ax[c].fill(
+                x_coords,
+                y_coords,
+                color=BOX_COLOR,
+                alpha=BOX_ALPHA,
+                lw=STD_LW,
+                zorder=0,
+            )
+    # plotting is done: now do figure-level stuff (suplabels, save, add to GUI)
+    f.supxlabel("Percentage", fontsize=stats_plots_suplabel_size)
     # ylabels depend on whether we converted mm to cm and on the feature
     # code below calls the ylabel function for all possible cases:
     # 1) (DLC only) converted velocity & acceleration
@@ -434,10 +395,10 @@ def plot_permutation_test_results(
         if feature in ["Velocity", "Acceleration"]:
             f.supylabel(
                 ylabel_velocity_and_acceleration(feature, "x in cm", sampling_rate),
-                fontsize=STATS_PLOTS_SUPLABEL_SIZE,
+                fontsize=stats_plots_suplabel_size,
             )
         else:
-            f.supylabel(feature + " (cm)", fontsize=STATS_PLOTS_SUPLABEL_SIZE)
+            f.supylabel(feature + " (cm)", fontsize=stats_plots_suplabel_size)
     else:
         if feature in ["Velocity", "Acceleration"]:
             if "Angle" in stats_var:
@@ -449,14 +410,13 @@ def plot_permutation_test_results(
                     unit = "Y"
             f.supylabel(
                 ylabel_velocity_and_acceleration(feature, unit, sampling_rate),
-                fontsize=STATS_PLOTS_SUPLABEL_SIZE,
+                fontsize=stats_plots_suplabel_size,
             )
         else:
-            f.supylabel(feature, fontsize=STATS_PLOTS_SUPLABEL_SIZE)
+            f.supylabel(feature, fontsize=stats_plots_suplabel_size)
     figure_file_string = stats_var + " - Cluster-extent Test"
-    f.suptitle(figure_file_string, fontsize=STATS_PLOTS_SUPLABEL_SIZE)
+    f.suptitle(figure_file_string, fontsize=stats_plots_suplabel_size)
     save_figures(f, results_dir, figure_file_string)
-
     # add figure to plot panel figures list
     if dont_show_plots is False:  # -> show plot panel
         plot_panel_instance.figures.append(f)
@@ -757,8 +717,10 @@ def plot_multcomp_results(
     dont_show_plots = cfg["dont_show_plots"]
     legend_outside = cfg["legend_outside"]
 
-    f, ax = plt.subplots(len(contrasts), 1, layout="constrained")
-    x = np.linspace(0, 100, bin_num)
+    # call preparation function for vars and loop over contrasts to plot subplots
+    f, ax, stats_plots_legend_size, stats_plots_suplabel_size, x = (
+        setup_stats_plots_vars(contrasts, bin_num)
+    )
     for c, contrast in enumerate(contrasts):
         # prepare group strings and (importantly!) index of current groups from _NAMES
         groups = [group_name for group_name in contrast.split(CONTRAST_SPLIT_STR)]
@@ -776,103 +738,56 @@ def plot_multcomp_results(
             else:
                 std = g_std_dfs[group_idx].iloc[:, y_col]
             this_color = group_color_dict[group_name]
-            if type(ax) == np.ndarray:  # so we can do a 2-way contrast
-                ax[c].plot(x, y, color=this_color, label=group_name, zorder=1)
-                ax[c].fill_between(
-                    x,
-                    y - std,
-                    y + std,
-                    color=this_color,
-                    alpha=STD_ALPHA,
-                    lw=STD_LW,
-                    zorder=1,
-                )
-            else:
-                ax.plot(x, y, color=this_color, label=group_name, zorder=1)
-                ax.fill_between(
-                    x,
-                    y - std,
-                    y + std,
-                    color=this_color,
-                    alpha=STD_ALPHA,
-                    lw=STD_LW,
-                    zorder=1,
-                )
+            # plot line and fill between for error
+            ax[c].plot(x, y, color=this_color, label=group_name, zorder=1)
+            ax[c].fill_between(
+                x,
+                y - std,
+                y + std,
+                color=this_color,
+                alpha=STD_ALPHA,
+                lw=STD_LW,
+                zorder=1,
+            )
         # adjust legend & convert to cm (if needed) before plotting clusters
-        if type(ax) == np.ndarray:
-            if legend_outside is True:
-                ax[c].legend(
-                    fontsize=STATS_PLOT_LEGEND_SIZE,
-                    loc="center left",
-                    bbox_to_anchor=(1, 0.5),
-                )
-            elif legend_outside is False:
-                ax[c].legend(fontsize=STATS_PLOT_LEGEND_SIZE)
-            if check_mouse_conversion(feature, cfg, stats_var=stats_var):
-                ytickconvert_mm_to_cm(ax[c])
-        else:
-            if legend_outside is True:
-                ax.legend(
-                    fontsize=STATS_PLOT_LEGEND_SIZE + 4,
-                    loc="center left",
-                    bbox_to_anchor=(1, 0.5),
-                )
-            elif legend_outside is False:
-                ax.legend(fontsize=STATS_PLOT_LEGEND_SIZE + 4)
-            if check_mouse_conversion(feature, cfg, stats_var=stats_var):
-                ytickconvert_mm_to_cm(ax)
+        if legend_outside is True:
+            ax[c].legend(
+                fontsize=stats_plots_legend_size,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+            )
+        elif legend_outside is False:
+            ax[c].legend(fontsize=stats_plots_legend_size)
+        if check_mouse_conversion(feature, cfg, stats_var=stats_var):
+            ytickconvert_mm_to_cm(ax[c])
         # plot significant clusters
         clusters = extract_multcomp_significance_clusters(
             multcomp_df, contrast, stats_threshold
         )
-        if type(ax) == np.ndarray:
-            ymin = ax[c].get_ylim()[0]
-            ymax = ax[c].get_ylim()[1]
-        else:
-            ymin = ax.get_ylim()[0]
-            ymax = ax.get_ylim()[1]
+        ymin = ax[c].get_ylim()[0]
+        ymax = ax[c].get_ylim()[1]
         for cluster in x[clusters]:  # index x with clusters == cluster has correct val
             x_coords = [cluster[0], cluster[1], cluster[1], cluster[0]]
             y_coords = [ymin, ymin, ymax, ymax]
-            if type(ax) == np.ndarray:
-                ax[c].fill(
-                    x_coords,
-                    y_coords,
-                    color=BOX_COLOR,
-                    alpha=BOX_ALPHA,
-                    lw=STD_LW,
-                    zorder=0,
-                )
-            else:
-                ax.fill(
-                    x_coords,
-                    y_coords,
-                    color=BOX_COLOR,
-                    alpha=BOX_ALPHA,
-                    lw=STD_LW,
-                    zorder=0,
-                )
-        if type(ax) == np.ndarray:
-            # legend adjustments
-            if legend_outside is True:
-                ax[c].legend(
-                    fontsize=STATS_PLOT_LEGEND_SIZE,
-                    loc="center left",
-                    bbox_to_anchor=(1, 0.5),
-                )
-            elif legend_outside is False:
-                ax[c].legend(fontsize=STATS_PLOT_LEGEND_SIZE)
-        else:
-            # legend adjustments
-            if legend_outside is True:
-                ax.legend(
-                    fontsize=STATS_PLOT_LEGEND_SIZE + 4,
-                    loc="center left",
-                    bbox_to_anchor=(1, 0.5),
-                )
-            elif legend_outside is False:
-                ax.legend(fontsize=STATS_PLOT_LEGEND_SIZE + 4)
-    f.supxlabel("Percentage", fontsize=STATS_PLOTS_SUPLABEL_SIZE)
+            ax[c].fill(
+                x_coords,
+                y_coords,
+                color=BOX_COLOR,
+                alpha=BOX_ALPHA,
+                lw=STD_LW,
+                zorder=0,
+            )
+        # legend adjustments
+        if legend_outside is True:
+            ax[c].legend(
+                fontsize=stats_plots_legend_size,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+            )
+        elif legend_outside is False:
+            ax[c].legend(fontsize=stats_plots_legend_size)
+    # plotting is done: now do figure-level stuff (suplabels, save, add to GUI)
+    f.supxlabel("Percentage", fontsize=stats_plots_suplabel_size)
     # ylabels depend on whether we converted mm to cm and on the feature
     # code below calls the ylabel function for all possible cases:
     # 1) (DLC only) converted velocity & acceleration
@@ -884,10 +799,10 @@ def plot_multcomp_results(
         if feature in ["Velocity", "Acceleration"]:
             f.supylabel(
                 ylabel_velocity_and_acceleration(feature, "x in cm", sampling_rate),
-                fontsize=STATS_PLOTS_SUPLABEL_SIZE,
+                fontsize=stats_plots_suplabel_size,
             )
         else:
-            f.supylabel(feature + " (cm)", fontsize=STATS_PLOTS_SUPLABEL_SIZE)
+            f.supylabel(feature + " (cm)", fontsize=stats_plots_suplabel_size)
     else:
         if feature in ["Velocity", "Acceleration"]:
             if "Angle" in stats_var:
@@ -899,17 +814,16 @@ def plot_multcomp_results(
                     unit = "Y"
             f.supylabel(
                 ylabel_velocity_and_acceleration(feature, unit, sampling_rate),
-                fontsize=STATS_PLOTS_SUPLABEL_SIZE,
+                fontsize=stats_plots_suplabel_size,
             )
         else:
-            f.supylabel(feature, fontsize=STATS_PLOTS_SUPLABEL_SIZE)
+            f.supylabel(feature, fontsize=stats_plots_suplabel_size)
     figure_file_string = stats_var + " - Tukey's Multiple Comparison Test"
     f.suptitle(
         figure_file_string,
-        fontsize=STATS_PLOTS_SUPLABEL_SIZE,
+        fontsize=stats_plots_suplabel_size,
     )
     save_figures(f, results_dir, figure_file_string)
-
     # add figure to plot panel figures list
     if dont_show_plots is False:  # -> show plot panel
         plot_panel_instance.figures.append(f)

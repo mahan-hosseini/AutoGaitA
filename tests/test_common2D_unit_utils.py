@@ -97,8 +97,11 @@ def test_extract_info_function(fixture_extract_folderinfo):
     # c. test that leading zeros are removed
     folderinfo["root_dir"] = "tests/test_data/dlc_data/test_data/leading_zeros/"
     info = extract_info("DLC", folderinfo)
-    assert info["mouse_num"] == [12]
-    assert info["run_num"] == [3]
+    assert info["mouse_num"] == [12, 12]
+    # order of this might break in some test env
+    assert info["run_num"] == [4, 3]
+    assert info["leading_mouse_num_zeros"] == [False, False]
+    assert info["leading_run_num_zeros"] == ["00", False]
 
 
 # 2) Test find number function - also for leading zeros
@@ -107,7 +110,7 @@ def test_find_number_valid_case():
     prestring = "Mouse"
     poststring = "_Run"
     result = find_number(fullstring, prestring, poststring)
-    assert result == (1, "")
+    assert result == (1, False)
 
 
 def test_find_number_prestring_not_found():

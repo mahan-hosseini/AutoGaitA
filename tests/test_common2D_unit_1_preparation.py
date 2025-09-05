@@ -142,18 +142,24 @@ def test_move_data_to_folders_leading_zeros_handled(
     )
     # CARE! function: extract_info for info where we handle leading zeros
     info = extract_info("DLC", fixture_extract_folderinfo)
-    info["results_dir"] = tmp_path
+    for idx in range(len(info["name"])):
+        this_info = {}
+        # forloop below is borrowed from run_singlerun_in_multirun function
+        for keyname in info.keys():
+            if "leading_" in keyname:
+                if info[keyname][idx] is not False:
+                    this_info[keyname] = info[keyname][idx]
+            else:  # pass as is for all other keys
+                this_info[keyname] = info[keyname][idx]
+    this_info["results_dir"] = tmp_path
     # move_data... creates it, make sure it's not there
-    if os.path.exists(info["results_dir"]):
-        for file in os.listdir(info["results_dir"]):
-            os.remove(os.path.join(info["results_dir"], file))
-        os.rmdir(info["results_dir"])
-    # now make sure info is not a list
-    for key in info:
-        if isinstance(info[key], list):
-            info[key] = info[key][0]
-    move_data_to_folders("DLC", ".csv", info, fixture_extract_folderinfo)
-    assert len(os.listdir(info["results_dir"])) == 2
+    if os.path.exists(this_info["results_dir"]):
+        for file in os.listdir(this_info["results_dir"]):
+            os.remove(os.path.join(this_info["results_dir"], file))
+        os.rmdir(this_info["results_dir"])
+    # run with this_info
+    move_data_to_folders("DLC", ".csv", this_info, fixture_extract_folderinfo)
+    assert len(os.listdir(this_info["results_dir"])) == 2
 
 
 # %%..........................  cfg & string stuff  ....................................
