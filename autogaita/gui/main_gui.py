@@ -44,14 +44,14 @@ def run_gui():
     # make it so that window is central & width/heigth of it = 1/2 of screen's
     ws = root.winfo_screenwidth()  # width of the screen
     hs = root.winfo_screenheight()  # height of the screen
-    w = min(ws / 4, 800) # width for the Tk root
-    h = min(hs / 2, 800) # height for the Tk root
-    # calculate x and y coordinates for the Tk root window
-    x = (ws / 2) - (w / 2)
-    y = (hs / 2) - (h / 1.5)
-    root_dimensions = (w, h, x, y)
-    # set the dimensions of the screen and where it is placed
-    root.geometry("%dx%d+%d+%d" % root_dimensions)
+    target_w = ws / 4
+    w = max(400, min(target_w, 800))  # cap width between 400 and 800
+    h = min(hs / 2, 800)  # height for the Tk root
+    # x & y make it in the middle, slightly higher than center
+    x = (ws // 2) - (w // 2)
+    y = (hs // 2) - (h // 1.5)
+    # fix the geometry using calculated values
+    root.geometry(f"{int(w)}x{int(h)}+{int(x)}+{int(y)}")
     root.title("AutoGaitA")
     gui_utils.configure_the_icon(root)
     # Set minimum and maximum sizes for the window (if user tries to resize manually)
