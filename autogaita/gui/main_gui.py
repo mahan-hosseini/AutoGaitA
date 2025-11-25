@@ -44,8 +44,8 @@ def run_gui():
     # make it so that window is central & width/heigth of it = 1/2 of screen's
     ws = root.winfo_screenwidth()  # width of the screen
     hs = root.winfo_screenheight()  # height of the screen
-    w = ws / 4  # width for the Tk root
-    h = hs / 2  # height for the Tk root
+    w = min(ws / 4, 800) # width for the Tk root
+    h = min(hs / 2, 800) # height for the Tk root
     # calculate x and y coordinates for the Tk root window
     x = (ws / 2) - (w / 2)
     y = (hs / 2) - (h / 1.5)
