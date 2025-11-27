@@ -176,3 +176,34 @@ def get_results_and_cfg(results, cfg, analysis, variable_dict):
     this_runs_results = output_dicts[0]
     this_runs_cfg = output_dicts[1]
     return this_runs_results, this_runs_cfg
+
+
+# %%...............  name convention label of run window setup  ...................
+
+
+def setup_name_convention_label(
+    runwindow, name_convention_label, name_convention_string
+):
+    runwindow.update_idletasks()  # so we can use runwindows's width in next line
+    name_convention_label.configure(width=runwindow.winfo_width())
+    name_convention_label.tag_config("center", justify="center")  # initialise tags
+    name_convention_label.tag_config("red", foreground="#cf0234")
+    name_convention_label.tag_config("orange", foreground="#fb9a5a")
+    name_convention_label.tag_config("yellow", foreground="#fcdf7c")
+    name_convention_label.tag_config("green", foreground="#87ae73")
+    name_convention_label.tag_config("blue", foreground="#75bbfd")
+    name_convention_label.tag_config("purple", foreground="#bf77f6")
+    name_convention_label.insert("1.0", name_convention_string, "center")
+    name_convention_label.tag_add("red", "1.17", "1.20")  # [A]
+    name_convention_label.tag_add("red", "2.6", "2.11")  # C57B6
+    name_convention_label.tag_add("orange", "1.21", "1.24")  # [B]
+    name_convention_label.tag_add("orange", "2.12", "2.17")  # Mouse
+    name_convention_label.tag_add("yellow", "1.25", "1.28")  # [C]
+    name_convention_label.tag_add("yellow", "2.20", "2.24")  # 25mm
+    name_convention_label.tag_add("green", "1.29", "1.32")  # [D]
+    name_convention_label.tag_add("green", "2.25", "2.28")  # Run
+    name_convention_label.tag_add("blue", "1.33", "1.36")  # [E]
+    name_convention_label.tag_add("blue", "2.30", "2.34")  # 6DLC
+    name_convention_label.tag_add("purple", "1.36", "1.39")  # [G]
+    name_convention_label.tag_add("purple", "2.35", "2.48")  # JointTracking
+    name_convention_label.configure(state="disabled")

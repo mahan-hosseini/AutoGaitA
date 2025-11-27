@@ -2,6 +2,7 @@
 from autogaita.gui.common2D_gui_utils import (
     get_results_and_cfg,
     runanalysis,
+    setup_name_convention_label,
 )
 from autogaita.gui.first_level_gui_utils import (
     update_config_file,
@@ -243,31 +244,23 @@ def populate_run_window(
         initial_dir=root_dir_browse.get,
     )
 
-    # empty label 1 (for spacing)
-    empty_label_one = ctk.CTkLabel(runwindow, text="")
-    empty_label_one.grid(row=r + 4, column=0)
     # .......................  file-identifier information  ............................
-    # file naming convention label one
-    name_convention_string_one = (
-        "According to the [A]_[B]_[C]_[D]-[E][G] filename convention "
+    # file naming convention label (it's a textbox really)
+    name_convention_string = (
+        "According to the [A]_[B]_[C]_[D]-[E][G] filename convention"
+        + "\n(e.g. C57B6_Mouse10_25mm_Run1-6DLC-JointTracking):"
     )
-    name_convention_label_one = ctk.CTkLabel(
+    name_convention_label = ctk.CTkTextbox(
         runwindow,
-        text=name_convention_string_one,
         font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        height=2,
+        wrap="none",
+        fg_color="transparent",
     )
-    name_convention_label_one.grid(row=r + 5, column=0)
-    # file naming convention label two
-    name_convention_string_two = "(e.g. C57B6_Mouse10_25mm_Run1-6DLC-JointTracking):"
-    name_convention_label_two = ctk.CTkLabel(
-        runwindow,
-        text=name_convention_string_two,
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+    setup_name_convention_label(  # plenty of stuff going on here
+        runwindow, name_convention_label, name_convention_string
     )
-    name_convention_label_two.grid(row=r + 6, column=0)
-    # empty label 2 (for spacing)
-    empty_label_two = ctk.CTkLabel(runwindow, text="")
-    empty_label_two.grid(row=r + 7, column=0)
+    name_convention_label.grid(row=r + 4, column=0, rowspan=4, sticky="ns")
     # data string
     data_label, data_entry = gaita_widgets.label_and_entry_pair(
         runwindow,
@@ -353,6 +346,18 @@ def populate_run_window(
     finishbutton_row = r + 20
     finishbutton.grid(
         row=finishbutton_row, column=0, rowspan=2, sticky="nsew", pady=5, padx=70
+    )
+    # textbox highlighting based on entry selection
+    tag_map = {  # dict mapping entries to textbox substrings
+        data_entry: ["[G]", "JointTracking"],
+        beam_entry: ["[G]", "JointTracking"],
+        premouse_entry: ["[B]", "Mouse"],
+        postmouse_entry: ["[C]", "25mm"],
+        prerun_entry: ["[D]", "Run"],
+        postrun_entry: ["[E]", "6DLC"],
+    }
+    highlighter = gui_utils.TextHighlighter(  # initialise highlighter
+        analysis, name_convention_label, tag_map, tag_name="highlight_zoom"
     )
     # maximise widgets
     gui_utils.maximise_widgets(runwindow)
