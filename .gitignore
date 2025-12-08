@@ -3,7 +3,7 @@
 my_utils/
 dev/
 dist/
-buld/
+build/
 autogaita.egg-info/
 venv/
 **/.hypothesis/
