@@ -29,6 +29,11 @@ setup(
     version="1.4.2rc",  # rc == release candidate (before release is finished)
     author="Mahan Hosseini",
     description="Automatic Gait Analysis in Python. A toolbox to streamline and standardise the analysis of kinematics across species after ML-based body posture tracking. Despite being optimised for gait analyses, AutoGaitA has the potential to be used for any kind of kinematic analysis.",
+    entry_points={
+        "console_scripts": [
+            "autogaita = autogaita.gui.main_gui:run_gui",
+        ],
+    },
     packages=find_packages(),
     include_package_data=True,
     package_data={"": ["*.txt", "*.rst", "*.png", "*.icns", "*.ico", "*.json"]},
