@@ -614,6 +614,21 @@ def advanced_cfgwindow(mainwindow):
 
 # %%..............  LOCAL FUNCTION(S) #3 - BUILD ADD FEATURES WINDOW  ..................
 
+def select_all(key, checkbox_vars):
+    """Select all checkboxes for a given section."""
+    for var in checkbox_vars[key].values():
+        var.set(True)
+
+def deselect_all(key, checkbox_vars):
+    """Deselect all checkboxes for a given section."""
+    for var in checkbox_vars[key].values():
+        var.set(False)
+
+def restore_selection(key, checkbox_vars, initial_selection):
+    """Restore checkboxes to the initial selection from config."""
+    for feature, var in checkbox_vars[key].items():
+        var.set(feature in initial_selection[key])
+
 
 def definefeatures_window(
     mainwindow, group_names, group_dirs, results_dir, load_dir, which_leg, root
@@ -766,6 +781,74 @@ def definefeatures_window(
                 col_counter += 1
         # maximise widgets to fit frame (of scrollbar!)
         maximise_widgets(frame)
+    # Store initial selection state for restore functionality
+    initial_selection = {}
+    for key in LIST_VARS:
+        initial_selection[key] = cfg["last_runs_" + key].copy() if cfg["last_runs_" + key] else []
+
+    # Create button frames for Statistics section (column 0)
+    stats_button_frame = ctk.CTkFrame(featureswindow, fg_color="transparent")
+    stats_button_frame.grid(row=1 + scrollbar_rows, column=0, sticky="nsew", pady=5, padx=10)
+
+    stats_select_all_button = gaita_widgets.header_button(
+        stats_button_frame, "Select All", WIDGET_CFG
+    )
+    stats_select_all_button.configure(command=lambda: select_all("stats_variables", checkbox_vars))
+    stats_select_all_button.grid(row=0, column=0, sticky="ew", padx=2)
+
+    stats_deselect_all_button = gaita_widgets.header_button(
+        stats_button_frame, "Deselect All", WIDGET_CFG
+    )
+    stats_deselect_all_button.configure(command=lambda: deselect_all("stats_variables", checkbox_vars))
+    stats_deselect_all_button.grid(row=0, column=1, sticky="ew", padx=2)
+
+    has_saved_selection_stats = bool(initial_selection["stats_variables"])
+    stats_restore_button = gaita_widgets.header_button(
+        stats_button_frame, "Restore Selection", WIDGET_CFG
+    )
+    stats_restore_button.configure(
+        command=lambda: restore_selection("stats_variables", checkbox_vars, initial_selection)
+    )
+    if not has_saved_selection_stats:
+        stats_restore_button.configure(state="disabled", fg_color="#808080")
+    stats_restore_button.grid(row=0, column=2, sticky="ew", padx=2)
+
+    # Configure button frame columns to expand equally (split into thirds)
+    stats_button_frame.grid_columnconfigure(0, weight=1)
+    stats_button_frame.grid_columnconfigure(1, weight=1)
+    stats_button_frame.grid_columnconfigure(2, weight=1)
+
+    # Create button frames for PCA section (column 1)
+    PCA_button_frame = ctk.CTkFrame(featureswindow, fg_color="transparent")
+    PCA_button_frame.grid(row=1 + scrollbar_rows, column=1, sticky="nsew", pady=5, padx=10)
+
+    PCA_select_all_button = gaita_widgets.header_button(
+        PCA_button_frame, "Select All", WIDGET_CFG
+    )
+    PCA_select_all_button.configure(command=lambda: select_all("PCA_variables", checkbox_vars))
+    PCA_select_all_button.grid(row=0, column=0, sticky="ew", padx=2)
+
+    PCA_deselect_all_button = gaita_widgets.header_button(
+        PCA_button_frame, "Deselect All", WIDGET_CFG
+    )
+    PCA_deselect_all_button.configure(command=lambda: deselect_all("PCA_variables", checkbox_vars))
+    PCA_deselect_all_button.grid(row=0, column=1, sticky="ew", padx=2)
+
+    has_saved_selection_PCA = bool(initial_selection["PCA_variables"])
+    PCA_restore_button = gaita_widgets.header_button(
+        PCA_button_frame, "Restore Selection", WIDGET_CFG
+    )
+    PCA_restore_button.configure(
+        command=lambda: restore_selection("PCA_variables", checkbox_vars, initial_selection)
+    )
+    if not has_saved_selection_PCA:
+        PCA_restore_button.configure(state="disabled", fg_color="#808080")
+    PCA_restore_button.grid(row=0, column=2, sticky="ew", padx=2)
+
+    # Configure button frame columns to expand equally (split into thirds)
+    PCA_button_frame.grid_columnconfigure(0, weight=1)
+    PCA_button_frame.grid_columnconfigure(1, weight=1)
+    PCA_button_frame.grid_columnconfigure(2, weight=1)
 
     # run
     run_button = gaita_widgets.header_button(
@@ -786,7 +869,7 @@ def definefeatures_window(
         ),
     )
     run_button.grid(
-        row=1 + scrollbar_rows, column=0, columnspan=2, sticky="nsew", pady=20, padx=200
+        row=2 + scrollbar_rows, column=0, columnspan=2, sticky="nsew", pady=20, padx=200
     )
 
     # maximise widgets to fit fullscreen
