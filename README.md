@@ -17,25 +17,38 @@
 - AutoGaitA enables comparisons to be made across experimental conditions, species, disease states or genotypes. 
 - Despite being developed with gait data, AutoGaitA can be utilised for the analysis of any motor behaviour.
 
-## Getting Started
+## 🚀 Quick Start (Recommended - no Python needed!)
+This approach uses [uv](https://github.com/astral-sh/uv) for installation. It is really simple to set up:
 
-***Note!** [Our documentation](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?usp=sharing) provides step-by-step walkthroughs of how to install autogaita for **[Windows](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.28j6wu2vamre)** and **[Mac](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.ljmdh7hfayyx)***
+### 1. Install `uv`
+*   **macOS / Linux - Open your terminal & enter:**
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+*   **Windows - Open Powershell and enter:**
+    ```powershell
+    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+    ```
+    
+### 2. Install & Run AutoGaitA
+Open your terminal (Mac/Linux) or PowerShell/CMD (Windows) and run:
 
-It is strongly recommended that a separate virtual environment for AutoGaitA is created (note that the approach below creates the virtual environment to your current directory):
+```bash
+uv tool install autogaita
+autogaita
+```
 
-- Create the virtual environment:
-    - `python -m venv env_gaita`
+**🥳 That's it - AutoGaitA is now installed!** 
+You can launch it anytime by opening a terminal and entering `autogaita`.
 
-- After creation, activate the virtual environment via:
-    - *Windows:* `env_gaita\Scripts\activate`
-    - *Mac:* `source env_gaita/bin/activate`
+**To update** to the latest release (see the *Releases* panel on the right for the latest versions) open a terminal and enter: `uv tool upgrade autogaita`. 
 
-- Once activated, install AutoGaitA in the virtual environment via pip: `pip install autogaita`.
+## 🐍 Legacy Installation (pip)
+If you prefer to manage your own Python environments, use standard `pip`, or have a version before v1.4.2, you can still install AutoGaitA the traditional way.
 
-- Access the main user interface via: `autogaita`.
-    - `python -m autogaita` needed for versions earlier than v1.4.2
+Please refer to **[Our documentation](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?usp=sharing)** for step-by-step instructions on setting up a virtual environment, activating it, and installing via `pip`.
 
-- To update to the latest release (see the *Releases* panel on the right for the latest release) activate the virtual environment and: `pip install autogaita -U`. 
+For upgrading a pip-installed version activate your virtual environment and enter: `pip install autogaita -U`
 
 ## Demo Video
 *Check out the video below for a demonstration of AutoGaitA's main workflow!*
