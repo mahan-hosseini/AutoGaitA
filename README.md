@@ -121,6 +121,8 @@ The AutoGaitA software is provided without warranty of any kind, express or impl
 [Mahan Hosseini](https://github.com/mahan-hosseini)
 
 # Contributors
+[Kishan Thambu](https://github.com/thambukishan) - Undergraduate Student
+
 [Sarah Sabbagh](https://github.com/sarahhsabbagh) - Undergraduate Student
 
 [Luca Flemming](https://github.com/luca-flemming) - Undergraduate Student
