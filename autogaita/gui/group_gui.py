@@ -614,15 +614,18 @@ def advanced_cfgwindow(mainwindow):
 
 # %%..............  LOCAL FUNCTION(S) #3 - BUILD ADD FEATURES WINDOW  ..................
 
+
 def select_all(key, checkbox_vars):
     """Select all checkboxes for a given section."""
     for var in checkbox_vars[key].values():
         var.set(True)
 
+
 def deselect_all(key, checkbox_vars):
     """Deselect all checkboxes for a given section."""
     for var in checkbox_vars[key].values():
         var.set(False)
+
 
 def restore_selection(key, checkbox_vars, initial_selection):
     """Restore checkboxes to the initial selection from config."""
@@ -784,22 +787,30 @@ def definefeatures_window(
     # Store initial selection state for restore functionality
     initial_selection = {}
     for key in LIST_VARS:
-        initial_selection[key] = cfg["last_runs_" + key].copy() if cfg["last_runs_" + key] else []
+        initial_selection[key] = (
+            cfg["last_runs_" + key].copy() if cfg["last_runs_" + key] else []
+        )
 
     # Create button frames for Statistics section (column 0)
     stats_button_frame = ctk.CTkFrame(featureswindow, fg_color="transparent")
-    stats_button_frame.grid(row=1 + scrollbar_rows, column=0, sticky="nsew", pady=5, padx=10)
+    stats_button_frame.grid(
+        row=1 + scrollbar_rows, column=0, sticky="nsew", pady=5, padx=10
+    )
 
     stats_select_all_button = gaita_widgets.header_button(
         stats_button_frame, "Select All", WIDGET_CFG
     )
-    stats_select_all_button.configure(command=lambda: select_all("stats_variables", checkbox_vars))
+    stats_select_all_button.configure(
+        command=lambda: select_all("stats_variables", checkbox_vars)
+    )
     stats_select_all_button.grid(row=0, column=0, sticky="ew", padx=2)
 
     stats_deselect_all_button = gaita_widgets.header_button(
         stats_button_frame, "Deselect All", WIDGET_CFG
     )
-    stats_deselect_all_button.configure(command=lambda: deselect_all("stats_variables", checkbox_vars))
+    stats_deselect_all_button.configure(
+        command=lambda: deselect_all("stats_variables", checkbox_vars)
+    )
     stats_deselect_all_button.grid(row=0, column=1, sticky="ew", padx=2)
 
     has_saved_selection_stats = bool(initial_selection["stats_variables"])
@@ -807,7 +818,9 @@ def definefeatures_window(
         stats_button_frame, "Restore Selection", WIDGET_CFG
     )
     stats_restore_button.configure(
-        command=lambda: restore_selection("stats_variables", checkbox_vars, initial_selection)
+        command=lambda: restore_selection(
+            "stats_variables", checkbox_vars, initial_selection
+        )
     )
     if not has_saved_selection_stats:
         stats_restore_button.configure(state="disabled", fg_color="#808080")
@@ -820,18 +833,24 @@ def definefeatures_window(
 
     # Create button frames for PCA section (column 1)
     PCA_button_frame = ctk.CTkFrame(featureswindow, fg_color="transparent")
-    PCA_button_frame.grid(row=1 + scrollbar_rows, column=1, sticky="nsew", pady=5, padx=10)
+    PCA_button_frame.grid(
+        row=1 + scrollbar_rows, column=1, sticky="nsew", pady=5, padx=10
+    )
 
     PCA_select_all_button = gaita_widgets.header_button(
         PCA_button_frame, "Select All", WIDGET_CFG
     )
-    PCA_select_all_button.configure(command=lambda: select_all("PCA_variables", checkbox_vars))
+    PCA_select_all_button.configure(
+        command=lambda: select_all("PCA_variables", checkbox_vars)
+    )
     PCA_select_all_button.grid(row=0, column=0, sticky="ew", padx=2)
 
     PCA_deselect_all_button = gaita_widgets.header_button(
         PCA_button_frame, "Deselect All", WIDGET_CFG
     )
-    PCA_deselect_all_button.configure(command=lambda: deselect_all("PCA_variables", checkbox_vars))
+    PCA_deselect_all_button.configure(
+        command=lambda: deselect_all("PCA_variables", checkbox_vars)
+    )
     PCA_deselect_all_button.grid(row=0, column=1, sticky="ew", padx=2)
 
     has_saved_selection_PCA = bool(initial_selection["PCA_variables"])
@@ -839,7 +858,9 @@ def definefeatures_window(
         PCA_button_frame, "Restore Selection", WIDGET_CFG
     )
     PCA_restore_button.configure(
-        command=lambda: restore_selection("PCA_variables", checkbox_vars, initial_selection)
+        command=lambda: restore_selection(
+            "PCA_variables", checkbox_vars, initial_selection
+        )
     )
     if not has_saved_selection_PCA:
         PCA_restore_button.configure(state="disabled", fg_color="#808080")
