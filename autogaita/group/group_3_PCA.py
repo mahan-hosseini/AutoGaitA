@@ -46,7 +46,7 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
     # create the input dataframe
     PCA_df, features = create_PCA_df(avg_dfs, folderinfo, cfg)
     # run the PCA
-    PCA_df, PCA_info = run_PCA(PCA_df, features, cfg)
+    PCA_df, PCA_info = run_PCA(PCA_df, features, folderinfo, cfg)
     # save PCA info to xlsx files
     PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg)
     if PCA_info["number_of_PCs"] < 2:
@@ -197,7 +197,7 @@ def create_PCA_df(avg_dfs, folderinfo, cfg):
     return PCA_df, features
 
 
-def run_PCA(PCA_df, features, cfg):
+def run_PCA(PCA_df, features, folderinfo, cfg):
     """Runs the PCA on a limb's feature (e.g. y or z coordinates)"""
 
     # unpack
@@ -218,7 +218,19 @@ def run_PCA(PCA_df, features, cfg):
     # excel files)
     x = pd.DataFrame(x, columns=features)
     # NOTE that this next line changes the PCA_model variable!
-    PCs = PCA_model.fit_transform(x)
+    try:
+        PCs = PCA_model.fit_transform(x)
+    except ValueError:
+        # n_components was larger than min(n_samples, n_features)
+        PCA_model = PCA(n_components=0.95)
+        PCs = PCA_model.fit_transform(x)
+        PCA_fixed_message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + "\nNumber of PCA components was larger than min(n_samples, n_features)."
+            + "\nWas set to explain 95% of data variance instead."
+        )
+        print(PCA_fixed_message)
+        write_issues_to_textfile(PCA_fixed_message, folderinfo)
     # NOTE! we use number_of_PCs from here onwards (in info/plots/etc) to differentiate
     #       between n_components which can be smaller than 1!
     number_of_PCs = np.shape(PCs)[1]

@@ -306,7 +306,7 @@ def test_multcomp_df_with_scipy_example(extract_folderinfo, extract_cfg):
 
 
 # %%..................................  PCA  ...........................................
-def test_run_PCA(extract_cfg):
+def test_run_PCA(extract_folderinfo, extract_cfg):
     # Replicate the example found in https://www.kdnuggets.com/2023/05/
     # principal-component-analysis-pca-scikitlearn.html using our PCA df and PCA_info
     # structure
@@ -323,7 +323,7 @@ def test_run_PCA(extract_cfg):
     wine_data = datasets.load_wine(as_frame=True)
     wine_df = wine_data.data
     features = wine_df.columns
-    PCA_df, PCA_info = run_PCA(wine_df, features, extract_cfg)
+    PCA_df, PCA_info = run_PCA(wine_df, features, extract_folderinfo, extract_cfg)
     for i in range(3):
         # absolute values are compared because the signs can be different w. eigenvecs
         assert np.allclose(
