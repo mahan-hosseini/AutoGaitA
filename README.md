@@ -31,7 +31,7 @@ This approach uses [uv](https://github.com/astral-sh/uv) for installation. It is
     ```
     
 ## 2. Install & Run AutoGaitA
-Open your terminal (Mac/Linux) or PowerShell/CMD (Windows) and run:
+Open your terminal (Mac/Linux) or (restart) PowerShell/CMD (Windows) and run:
 
 ```bash
 uv tool install autogaita
