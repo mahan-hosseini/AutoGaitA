@@ -253,6 +253,7 @@ def populate_run_window(
     name_convention_label = ctk.CTkTextbox(
         runwindow,
         font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        width=runwindow.winfo_width(),
         height=2,
         wrap="none",
         fg_color="transparent",
@@ -260,7 +261,7 @@ def populate_run_window(
     setup_name_convention_label(  # plenty of stuff going on here
         runwindow, name_convention_label, name_convention_string
     )
-    name_convention_label.grid(row=r + 4, column=0, rowspan=4, sticky="ns")
+    name_convention_label.grid(row=r + 4, column=0, rowspan=4, sticky="nsew")
     # data string
     data_label, data_entry = gaita_widgets.label_and_entry_pair(
         runwindow,
