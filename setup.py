@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 # list of across-platform dependencies
 install_requires = [
     "customtkinter>=5.2",
-    "pandas>=2.0",
+    "pandas>=2.0,<3.0",
     "numpy>=1.24",
     "seaborn>=0.13",
     "matplotlib>=3.7",
@@ -22,7 +22,7 @@ install_requires = [
 setup(
     name="autogaita",
     python_requires=">=3.10",
-    version="1.4.5rc",  # rc == release candidate (before release is finished)
+    version="1.5.0rc",  # rc == release candidate (before release is finished)
     author="Mahan Hosseini",
     description="Automatic Gait Analysis in Python. A toolbox to streamline and standardise the analysis of kinematics across species after ML-based body posture tracking. Despite being optimised for gait analyses, AutoGaitA has the potential to be used for any kind of kinematic analysis.",
     entry_points={
