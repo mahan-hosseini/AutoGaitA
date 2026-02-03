@@ -4,6 +4,7 @@ from autogaita.resources.utils import (
     standardise_primary_joint_coordinates,
 )
 import os
+from importlib.metadata import version
 import shutil
 import json
 import pandas as pd
@@ -30,6 +31,7 @@ def some_prep(info, folderinfo, cfg):
     results_dir = info["results_dir"]
     postname_string = folderinfo["postname_string"]
     sampling_rate = cfg["sampling_rate"]
+    bin_num = cfg["bin_num"]
     flip_gait_direction = cfg["flip_gait_direction"]
     standardise_z_at_SC_level = cfg["standardise_z_at_SC_level"]
     analyse_average_y = cfg["analyse_average_y"]
@@ -119,10 +121,16 @@ def some_prep(info, folderinfo, cfg):
     z_standardisation_joint = cfg["z_standardisation_joint"][0]
     # store config json file @ group path
     # !!! NU - do this @ ID path
+    try:
+        autogaita_version = version("autogaita")
+    except Exception:
+        autogaita_version = "unknown"
     group_path = results_dir.split(name)[0]
     config_json_path = os.path.join(group_path, CONFIG_JSON_FILENAME)
     config_vars_to_json = {
+        "autogaita_version": autogaita_version,
         "sampling_rate": sampling_rate,
+        "bin_num": bin_num,
         "flip_gait_direction": flip_gait_direction,
         "standardise_z_at_SC_level": standardise_z_at_SC_level,
         "analyse_average_y": analyse_average_y,

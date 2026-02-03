@@ -5,6 +5,7 @@ from autogaita.resources.utils import (
 )
 from autogaita.common2D.common2D_constants import FILE_ID_STRING_ADDITIONS
 import os
+from importlib.metadata import version
 import shutil
 import json
 import pandas as pd
@@ -43,6 +44,7 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     beam_string = folderinfo["beam_string"]
     sampling_rate = cfg["sampling_rate"]
     subtract_beam = cfg["subtract_beam"]
+    bin_num = cfg["bin_num"]
     convert_to_mm = cfg["convert_to_mm"]
     pixel_to_mm_ratio = cfg["pixel_to_mm_ratio"]
     x_sc_broken_threshold = cfg["x_sc_broken_threshold"]
@@ -193,14 +195,21 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     y_standardisation_joint = cfg["y_standardisation_joint"][0]
     # store config json file @ group path
     # !!! NU - do this @ mouse path!
+    try:
+        autogaita_version = version("autogaita")
+    except Exception:
+        autogaita_version = "unknown"
     group_path = results_dir.split(name)[0]
     config_json_path = os.path.join(group_path, CONFIG_JSON_FILENAME)
     config_vars_to_json = {
+        "autogaita_version": autogaita_version,
         "sampling_rate": sampling_rate,
+        "bin_num": bin_num,
         "convert_to_mm": convert_to_mm,
         "pixel_to_mm_ratio": pixel_to_mm_ratio,
         "x_sc_broken_threshold": x_sc_broken_threshold,
         "y_sc_broken_threshold": y_sc_broken_threshold,
+        "invert_y_axis": invert_y_axis,
         "standardise_y_at_SC_level": standardise_y_at_SC_level,
         "flip_gait_direction": flip_gait_direction,
         "analyse_average_x": analyse_average_x,
