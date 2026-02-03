@@ -340,14 +340,21 @@ def define_bins(triallength, bin_num):
                     bins[i][j] = j + np.max(bins[i - 1]) + 1  # +1 bc. idx from 0
     # repeat the same values to make the trial longer
     elif triallength < bin_num:
-        final_list = []
-        # use remainder to fill list after triallength val until len = bin_num
-        # e.g. if triallength = 17 it goes 16, 17, 0, 1, 2, 3, 4, 5, 6
-        for i in range(bin_num):
-            idx = indices[i % len(indices)]
-            final_list.append(idx)
-        final_list.sort()  # need to sort (see above for initial order)
-        bins = final_list
+        # final_list = []
+        # new way - spread repetitions evenly as needed
+        len_diff = bin_num - triallength
+        orig_bins = np.arange(triallength)
+        repeated_bins = np.linspace(0, triallength - 1, len_diff).astype(int)
+        bins = list(np.sort(np.concatenate([orig_bins, repeated_bins])))
+        # pdb.set_trace()
+        # # old way - repeat first values
+        # # use remainder to fill list after triallength val until len = bin_num
+        # # e.g. if triallength = 17 it goes 16, 17, 0, 1, 2, 3, 4, 5, 6
+        # for i in range(bin_num):
+        #     idx = indices[i % len(indices)]
+        #     final_list.append(idx)
+        # final_list.sort()  # need to sort (see above for initial order)
+        # bins = final_list
         if (len(bins) != bin_num) | (np.max(bins) != triallength - 1):
             raise Exception("Binning bugged (shouldn't happen) - contact me.")
     # if exactly 25 points originally
