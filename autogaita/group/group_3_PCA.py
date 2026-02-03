@@ -2,16 +2,17 @@
 from autogaita.resources.utils import bin_num_to_percentages, write_issues_to_textfile
 from autogaita.group.group_utils import save_figures
 import os
-import string
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from skbio.stats.distance import DistanceMatrix, permanova
+from scipy.spatial.distance import pdist, squareform
+from statsmodels.stats.multitest import multipletests
 import openpyxl
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter
-import pdb
 
 # %% constants
 from autogaita.resources.constants import (
@@ -20,6 +21,8 @@ from autogaita.resources.constants import (
 )
 from autogaita.group.group_constants import (
     GROUP_COL,
+    CONTRAST_SPLIT_STR,
+    PCA_PERMANOVA_TXT_FILENAME,
     PCA_BARPLOT_BARCOLOR,
     PCA_BARPLOT_LINECOLOR,
     PCA_CUSTOM_SCATTER_OUTER_SEPARATOR,
@@ -47,6 +50,8 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
     PCA_df, features = create_PCA_df(avg_dfs, folderinfo, cfg)
     # run the PCA
     PCA_df, PCA_info = run_PCA(PCA_df, features, folderinfo, cfg)
+    # run the PERMANOVA
+    run_PCA_PERMANOVA(PCA_df, folderinfo, cfg)
     # save PCA info to xlsx files
     PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg)
     if PCA_info["number_of_PCs"] < 2:
@@ -79,6 +84,106 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
                 cfg,
                 plot_panel_instance,
             )
+
+
+def run_PCA_PERMANOVA(PCA_df, folderinfo, cfg):
+    """Run the PERMANOVA on the PC columns of PCA_df to assess whether group differences are statistically significant"""
+    # unpack
+    contrasts = folderinfo["contrasts"]
+    results_dir = folderinfo["results_dir"]
+    # PCA_permutation_number = cfg["permutation_number"]
+    PCA_permutation_number = 10000
+
+    # extract data array (PC_scores) and group/ID arrays
+    PC_cols = [col for col in PCA_df.columns if "PC " in col]
+    PC_scores = PCA_df[PC_cols].values
+    groups = PCA_df[GROUP_COL].values
+    IDs = PCA_df[ID_COL].values
+
+    # check for repeated measures, if so cancel PERMANOVA
+    if len(IDs) != len(np.unique(IDs)):
+        PERMANOVA_ID_warning_message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + "We found duplicate IDs in your data and are cancelling PERMANOVA "
+            + "since it is not supported for within-subject designs."
+        )
+        print(PERMANOVA_ID_warning_message)
+        write_issues_to_textfile(PERMANOVA_ID_warning_message, folderinfo)
+        return
+
+    # create a distance matrix from PC_scores
+    distances = pdist(PC_scores, metric="euclidean")
+    dist_matrix = squareform(distances)
+    skbio_dist_matrix = DistanceMatrix(dist_matrix, IDs)
+
+    # # ... QUICK HACK .....
+    # # => for human and cross-species PCA we have duplicate IDs but it is different
+    # #    people/animals so we just hack it
+    # # => note for cross-species the multiple comparison approach is currently broken
+    # #    because of ID reasons
+    # hacked_IDs = list(range(len(IDs)))
+    # skbio_dist_matrix = DistanceMatrix(dist_matrix, hacked_IDs)
+    # # ...... END HACK ......
+
+    # run PERMANOVA
+    global_result = permanova(
+        skbio_dist_matrix, groups, permutations=PCA_permutation_number
+    )
+
+    # print and store results to textfile
+    global_text_result = f"\n-------------\nPCA PERMANOVA\n-------------\n\nGlobal test - F = {global_result['test statistic']:.4f}, p = {global_result['p-value']:.4f}\n"
+    print(global_text_result)
+    permanova_textfile = os.path.join(results_dir, PCA_PERMANOVA_TXT_FILENAME)
+    with open(permanova_textfile, "a") as f:
+        f.write(global_text_result)
+
+    # if we have at least three groups, do pairwise PERMANOVA as well
+    # => note this is in line with the implementation used in Qiime2, see
+    #    https://forum.qiime2.org/t/permanova-analysis-for-distances/18649
+    if len(contrasts) > 1:
+        pairwise_text_result = "\n\nPairwise Tests\n\n"
+        pairwise_results = []
+        for contrast in contrasts:
+            group1 = contrast.split(CONTRAST_SPLIT_STR)[0]
+            group2 = contrast.split(CONTRAST_SPLIT_STR)[1]
+            # filter the data
+            pair_mask = np.isin(groups, [group1, group2])
+            pair_indices = np.where(pair_mask)[0]
+            pair_dist_matrix = skbio_dist_matrix.filter(IDs[pair_indices], strict=True)
+            # ....... HACK AGAIN .......
+            # hacked_IDs = np.array(hacked_IDs)  # else type error
+            # pair_dist_matrix = skbio_dist_matrix.filter(
+            #     hacked_IDs[pair_indices], strict=True
+            # )
+            # ...... END HACK ......
+            pair_groups = groups[pair_mask]
+            # run PERMANOVA for given pair, gives uncorrected results, append to list
+            this_pairs_results = permanova(
+                pair_dist_matrix, pair_groups, permutations=PCA_permutation_number
+            )
+            pairwise_results.append(
+                {
+                    "Comparison": f"{group1} vs {group2}",
+                    "F_statistic": this_pairs_results["test statistic"],
+                    "p_value": this_pairs_results["p-value"],
+                }
+            )
+        # now correct results with benjamini-hochberg correction and store to textfile
+        results_df = pd.DataFrame(pairwise_results)
+        p_values = results_df["p_value"].values
+        reject, p_adjusted, _, _ = multipletests(p_values, method="fdr_bh")
+        results_df["p_adjusted"] = p_adjusted
+        results_df["significant"] = reject
+        for idx, row in results_df.iterrows():
+            pairwise_text_result += (
+                f"{row['Comparison']} - F = {row['F_statistic']:.4f}, "
+                + f"uncorrected p = {row['p_value']:.4f}, "
+                + f"adjusted p = {row['p_adjusted']:.4f}, "
+                + f"significant = {row['significant']}\n"
+            )
+        print(pairwise_text_result)
+        with open(permanova_textfile, "a") as f:
+            f.write(pairwise_text_result)
 
 
 def convert_PCA_bins_to_list(folderinfo, cfg):

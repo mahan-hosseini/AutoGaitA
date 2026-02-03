@@ -11,6 +11,8 @@ install_requires = [
     "scikit-learn>=1.2",
     "pingouin>=0.5",
     "scipy>=1.11",
+    "scikit-bio>=0.7.1",
+    "statsmodels>=0.14",
     "ffmpeg-python>=0.2",
     "openpyxl>=3.1",
     "pillow>=10.3",
@@ -22,7 +24,7 @@ install_requires = [
 setup(
     name="autogaita",
     python_requires=">=3.10",
-    version="1.5.0rc",  # rc == release candidate (before release is finished)
+    version="1.5.0",  # rc == release candidate (before release is finished)
     author="Mahan Hosseini",
     description="Automatic Gait Analysis in Python. A toolbox to streamline and standardise the analysis of kinematics across species after ML-based body posture tracking. Despite being optimised for gait analyses, AutoGaitA has the potential to be used for any kind of kinematic analysis.",
     entry_points={

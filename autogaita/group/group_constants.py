@@ -1,6 +1,7 @@
 # Issues & stats results are stored in these textfiles (config json from mouseanalysis)
 GROUP_CONFIG_TXT_FILENAME = "Group Analysis Configuration.txt"
 STATS_TXT_FILENAME = "Stats Summary.txt"
+PCA_PERMANOVA_TXT_FILENAME = "PCA PERMANOVA Results.txt"
 MULTCOMP_EXCEL_FILENAME_1 = "Stats Multiple Comparison - Version 1.xlsx"
 MULTCOMP_EXCEL_FILENAME_2 = "Stats Multiple Comparison - Version 2.xlsx"
 
