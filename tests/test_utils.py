@@ -1,6 +1,7 @@
 from autogaita.resources.utils import (
     standardise_primary_joint_coordinates,
     compute_angle,
+    define_bins,
     write_angle_warning,
 )
 from autogaita.common2D.common2D_1_preparation import some_prep as some_prep_2D
@@ -9,6 +10,7 @@ from autogaita.common2D.common2D_2_sc_extraction import extract_stepcycles
 from autogaita.common2D.common2D_3_analysis import analyse_and_export_stepcycles
 import os
 import math
+import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import pytest
@@ -387,3 +389,54 @@ def test_angle_joints_not_in_joints(
         "lower_joint": ["Ankle "],
         "upper_joint": ["Hip "],
     }
+
+
+def test_define_bins_longer_trial():
+    # triallength > bin_num: should return a list of lists covering all indices
+    triallength = 100
+    bin_num = 25
+    bins = define_bins(triallength, bin_num)
+    assert isinstance(bins, list)
+    assert len(bins) == bin_num
+    # each element should be a list of indices
+    assert all(isinstance(b, list) for b in bins)
+    flattened = [i for sub in bins for i in sub]
+    assert set(flattened) == set(range(triallength))
+    assert min(flattened) == 0
+    assert max(flattened) == triallength - 1
+    # check indices are correct for moving averages
+    triallength = 8
+    bin_num = 3
+    bins = define_bins(triallength, bin_num)
+    assert bins == [[0, 1, 2], [3, 4, 5], [6, 7]]
+
+
+def test_define_bins_shorter_trial():
+    # triallength < bin_num: should return an array (or list) of length bin_num
+    # with values in the range [0, triallength-1] and max == triallength-1
+    triallength = 10
+    bin_num = 25
+    bins = define_bins(triallength, bin_num)
+    # allow either numpy array or list-like
+    bins_list = list(bins)
+    assert len(bins_list) == bin_num
+    assert all(0 <= v <= (triallength - 1) for v in bins_list)
+    assert max(bins_list) == triallength - 1
+    assert min(bins_list) == 0
+    # check that values are spaced evenly across the trial
+    triallength = 5
+    bin_num = 12
+    bins = define_bins(triallength, bin_num)
+    assert bins == [0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 4, 4]
+
+
+def test_define_bins_equal_length():
+    # triallength == bin_num: should return a list of ints equal to range(triallength)
+    triallength = 25
+    bin_num = 25
+    bins = define_bins(triallength, bin_num)
+    assert isinstance(bins, list)
+    assert len(bins) == bin_num
+    # elements should be ints 0..triallength-1
+    assert all(isinstance(b, (int, np.integer)) for b in bins)
+    assert bins == list(range(triallength))

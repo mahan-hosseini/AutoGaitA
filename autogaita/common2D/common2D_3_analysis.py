@@ -2,6 +2,7 @@
 from autogaita.resources.utils import (
     bin_num_to_percentages,
     compute_angle,
+    normalise_one_steps_data,
     write_angle_warning,
 )
 import os
@@ -292,80 +293,7 @@ def add_angular_velocities(step, cfg):
 
 
 # ......................................................................................
-# .................  helper functions b - sc length normalisation  .....................
-# ......................................................................................
-
-
-def normalise_one_steps_data(step, bin_num):
-    """Normalise all steps to be of length 25 - uses define_bins
-
-    Important
-    ---------
-    The input step here is a pd dataframe that only captures ONE stepcycle!
-    (concatenation happens in exportsteps function)
-    """
-    normalised_step = pd.DataFrame()
-    for c, col in enumerate(step.columns):
-        thistrial = step[col]
-        if c == 0:  # if first column, define bins anew
-            bins = define_bins(int(len(thistrial)), bin_num)
-        normtrial = np.zeros(bin_num)
-        if isinstance(bins[0], list):  # we need to average
-            for i in range(bin_num):
-                normtrial[i] = np.mean(thistrial.iloc[bins[i]])
-        else:  # no need to average, repeat or assign
-            for i in range(bin_num):
-                normtrial[i] = thistrial.iloc[bins[i]]
-        normalised_step[col] = normtrial
-    return normalised_step
-
-
-def define_bins(triallength, bin_num):
-    """Define bins to know which indices move which bin for normalisation"""
-    indices = list(range(triallength))
-    bins = [[] for i in range(bin_num)]
-    # moving average to make the trial shorter
-    if triallength > bin_num:
-        idx = 0
-        for i in indices:
-            idx += 1
-            if i % bin_num == 0:
-                idx = 0
-            bins[idx].append(i)  # this means that bins[0] = [0, 25, 50, etc.]
-        for i in range(len(bins)):
-            for j in range(len(bins[i])):
-                if i == 0:
-                    bins[i][j] = j
-                else:  # here we make sure it gets: bins[0] = [0, 1, 2, etc.]
-                    bins[i][j] = j + np.max(bins[i - 1]) + 1  # +1 bc. idx from 0
-    # repeat the same values to make the trial longer
-    elif triallength < bin_num:
-        # final_list = []
-        # new way - spread repetitions evenly as needed
-        len_diff = bin_num - triallength
-        orig_bins = np.arange(triallength)
-        repeated_bins = np.linspace(0, triallength - 1, len_diff).astype(int)
-        bins = list(np.sort(np.concatenate([orig_bins, repeated_bins])))
-        # pdb.set_trace()
-        # # old way - repeat first values
-        # # use remainder to fill list after triallength val until len = bin_num
-        # # e.g. if triallength = 17 it goes 16, 17, 0, 1, 2, 3, 4, 5, 6
-        # for i in range(bin_num):
-        #     idx = indices[i % len(indices)]
-        #     final_list.append(idx)
-        # final_list.sort()  # need to sort (see above for initial order)
-        # bins = final_list
-        if (len(bins) != bin_num) | (np.max(bins) != triallength - 1):
-            raise Exception("Binning bugged (shouldn't happen) - contact me.")
-    # if exactly 25 points originally
-    else:
-        for i in range(triallength):
-            bins[i] = i
-    return bins
-
-
-# ......................................................................................
-# ....................  helper functions c - xls file stuff  ...........................
+# ....................  helper functions b - xls file stuff  ...........................
 # ......................................................................................
 
 
@@ -418,7 +346,7 @@ def save_results_sheet(dataframe, save_to_xls, fullfilepath):
 
 
 # ......................................................................................
-# ....................  helper functions d - miscellaneous  ............................
+# ....................  helper functions c - miscellaneous  ............................
 # ......................................................................................
 
 

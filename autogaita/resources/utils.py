@@ -204,6 +204,66 @@ def write_angle_warning(step, a, angles, broken_angle_idxs, info, **kwargs):
     write_issues_to_textfile(message, info)
 
 
+def normalise_one_steps_data(step, bin_num):
+    """Normalise all steps to be of length 25 - uses define_bins
+
+    Important
+    ---------
+    The input step here is a pd dataframe that only captures ONE stepcycle!
+    (concatenation happens in exportsteps function)
+    """
+
+    normalised_step = pd.DataFrame(
+        data=None, index=range(bin_num), columns=step.columns
+    )
+    for c, col in enumerate(step.columns):
+        thistrial = step[col]
+        if c == 0:  # if first column, define bins anew
+            bins = define_bins(int(len(thistrial)), bin_num)
+        normtrial = np.zeros(bin_num)
+        if isinstance(bins[0], list):  # we need to average
+            for i in range(bin_num):
+                normtrial[i] = np.mean(thistrial.iloc[bins[i]])
+        else:  # no need to average, repeat or assign
+            for i in range(bin_num):
+                normtrial[i] = thistrial.iloc[bins[i]]
+        normalised_step[col] = normtrial
+    return normalised_step
+
+
+def define_bins(triallength, bin_num):
+    """Define bins to know which indices move which bin for normalisation"""
+    indices = list(range(triallength))
+    bins = [[] for i in range(bin_num)]
+    # moving average to make the trial shorter
+    if triallength > bin_num:
+        idx = 0
+        for i in indices:
+            idx += 1
+            if i % bin_num == 0:
+                idx = 0
+            bins[idx].append(i)  # this means that bins[0] = [0, 25, 50, etc.]
+        for i in range(len(bins)):
+            for j in range(len(bins[i])):
+                if i == 0:
+                    bins[i][j] = j
+                else:  # here we make sure it gets: bins[0] = [0, 1, 2, etc.]
+                    bins[i][j] = j + np.max(bins[i - 1]) + 1  # +1 bc. idx from 0
+    # extend cycle by repeating values spread evenly across cycle (via linspace)
+    elif triallength < bin_num:
+        len_diff = bin_num - triallength
+        orig_bins = np.arange(triallength)
+        repeated_bins = np.linspace(0, triallength - 1, len_diff).astype(int)
+        bins = list(np.sort(np.concatenate([orig_bins, repeated_bins])))
+        if (len(bins) != bin_num) | (np.max(bins) != triallength - 1):
+            raise Exception("Binning bugged (shouldn't happen) - contact me.")
+    # if exactly 25 points originally
+    else:
+        for i in range(triallength):
+            bins[i] = i
+    return bins
+
+
 def bin_num_to_percentages(bin_num):
     """Convert bin_num to a list of percentages"""
     # smaller than 100 means we know its integers and there are no duplicates
