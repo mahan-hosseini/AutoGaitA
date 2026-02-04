@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "autogaita"
-version = "1.5.1rc"  # rc == release candidate
+version = "1.5.2rc"  # rc == release candidate
 authors = [{name = "Mahan Hosseini", email = "autogaita@fz-juelich.de"}]
 description = "Automated Gait (and more!) Analysis in Python"
 readme = "README.md"
