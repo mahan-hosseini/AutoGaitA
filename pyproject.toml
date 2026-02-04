@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "autogaita"
-version = "1.5.0"
+version = "1.5.1rc"  # rc == release candidate
 authors = [{name = "Mahan Hosseini", email = "autogaita@fz-juelich.de"}]
 description = "Automated Gait (and more!) Analysis in Python"
 readme = "README.md"
@@ -39,8 +39,11 @@ YouTube = "https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&
 [project.scripts]
 autogaita = "autogaita.gui.main_gui:run_gui"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["autogaita*"]
+
 [tool.setuptools]
-packages = ["autogaita"]
 include-package-data = true
 
 [tool.setuptools.package-data]
