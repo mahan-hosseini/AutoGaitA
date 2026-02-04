@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autogaita"
+version = "1.5.0"
+authors = [{name = "Mahan Hosseini", email = "autogaita@fz-juelich.de"}]
+description = "Automated Gait (and more!) Analysis in Python"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "GPLv3"}
+dependencies = [
+    "customtkinter>=5.2",
+    "pandas>=2.0,<3.0",
+    "numpy>=1.24",
+    "seaborn>=0.13",
+    "matplotlib>=3.7",
+    "scikit-learn>=1.2",
+    "pingouin>=0.5",
+    "scipy>=1.11",
+    "scikit-bio>=0.7.1",
+    "statsmodels>=0.14",
+    "ffmpeg-python>=0.2",
+    "openpyxl>=3.1",
+    "pillow>=10.3",
+    "h5py>=3.11",
+    "pyobjc; sys_platform == 'darwin'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "hypothesis"]
+
+[project.urls]
+Homepage = "https://github.com/mahan-hosseini/AutoGaitA/"
+Documentation = "https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0"
+YouTube = "https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&si=JBEYuzDDRe7qz5Qd"
+
+[project.scripts]
+autogaita = "autogaita.gui.main_gui:run_gui"
+
+[tool.setuptools]
+packages = ["autogaita"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"*" = ["*.txt", "*.rst", "*.png", "*.icns", "*.ico", "*.json"]
