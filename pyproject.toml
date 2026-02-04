@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "autogaita"
-version = "1.5.2rc"  # rc == release candidate
+version = "1.5.6"  # rc == release candidate
 authors = [{name = "Mahan Hosseini", email = "autogaita@fz-juelich.de"}]
 description = "Automated Gait (and more!) Analysis in Python"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "GPLv3"}
+license = "GPL-3.0-only"
 dependencies = [
     "customtkinter>=5.2",
     "pandas>=2.0,<3.0",
@@ -19,7 +19,7 @@ dependencies = [
     "scikit-learn>=1.2",
     "pingouin>=0.5",
     "scipy>=1.11",
-    "scikit-bio>=0.7.1",
+    "scikit-bio>=0.7.1; sys_platform == 'darwin'",
     "statsmodels>=0.14",
     "ffmpeg-python>=0.2",
     "openpyxl>=3.1",

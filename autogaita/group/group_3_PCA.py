@@ -2,17 +2,25 @@
 from autogaita.resources.utils import bin_num_to_percentages, write_issues_to_textfile
 from autogaita.group.group_utils import save_figures
 import os
+import sys
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from skbio.stats.distance import DistanceMatrix, permanova
 from scipy.spatial.distance import pdist, squareform
 from statsmodels.stats.multitest import multipletests
 import openpyxl
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter
+
+# skbio throws some error on windows during build
+skbio_available = sys.platform == "darwin"
+if skbio_available:
+    try:
+        from skbio.stats.distance import DistanceMatrix, permanova
+    except ImportError:
+        skbio_available = False
 
 # %% constants
 from autogaita.resources.constants import (
@@ -50,8 +58,13 @@ def PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance):
     PCA_df, features = create_PCA_df(avg_dfs, folderinfo, cfg)
     # run the PCA
     PCA_df, PCA_info = run_PCA(PCA_df, features, folderinfo, cfg)
-    # run the PERMANOVA
-    run_PCA_PERMANOVA(PCA_df, folderinfo, cfg)
+    # run the PERMANOVA - only on mac
+    if skbio_available:
+        run_PCA_PERMANOVA(PCA_df, folderinfo, cfg)
+    else:
+        write_issues_to_textfile(
+            "\nSkipping PCA PERMANOVA (skbio is broken on Windows).", folderinfo
+        )
     # save PCA info to xlsx files
     PCA_info_to_xlsx(PCA_df, PCA_info, folderinfo, cfg)
     if PCA_info["number_of_PCs"] < 2:
