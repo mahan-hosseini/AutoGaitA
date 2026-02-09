@@ -16,7 +16,11 @@ from autogaita.group.group_2_data_processing import (
     load_previous_runs_dataframes,
     check_PCA_and_stats_variables,
 )
-from autogaita.group.group_3_PCA import run_PCA, convert_PCA_bins_to_list
+from autogaita.group.group_3_PCA import (
+    run_PCA,
+    run_PCA_PERMANOVA,
+    convert_PCA_bins_to_list,
+)
 from autogaita.group.group_4_stats import run_ANOVA, multcompare_SC_Percentages
 from autogaita.resources.utils import bin_num_to_percentages
 import os
@@ -26,6 +30,8 @@ from sklearn import datasets
 import pandas as pd
 import pandas.testing as pdt
 import numpy as np
+
+from autogaita.group.group_constants import PCA_PERMANOVA_TXT_FILENAME
 
 
 # %%................................  fixtures  ........................................
@@ -176,17 +182,22 @@ def test_load_previous_runs_dataframes(extract_folderinfo, extract_cfg):
     # 3: check that it also works for Universal 3D
     # => only do it locally, I don't want to upload the MoVi Data to git
     if not os.getenv("CI"):
-        extract_folderinfo["group_names"] = ["crawling", "jogging"]
+        extract_folderinfo["group_names"] = ["vertical_jumping", "jogging"]
+        # extract_folderinfo["group_names"] = ["crawling", "jogging"]  # failing!
         extract_folderinfo["group_dirs"] = [
-            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/crawling/Results/",
-            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/jogging/Results/",
+            # failing for crawling!
+            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/removed-for-fig-S1-crawling/",
+            # not failing for vertical_jumping
+            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/vertical_jumping/",
+            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/jogging/",
         ]
         extract_folderinfo["load_dir"] = (
-            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Unit Test of load_prev_groupruns_dfs/"
+            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/group/"
         )
         avg_dfs, _, _, extract_cfg = load_repos_group_data(
             extract_folderinfo, extract_cfg
         )
+        extract_cfg["sampling_rate"] = 120
         extract_cfg["tracking_software"] = "Universal 3D"
         extract_cfg["which_leg"] = "right"
         extract_cfg["analyse_average_y"] = True
@@ -354,6 +365,34 @@ def test_convert_PCA_bins_to_list(
     extract_cfg["bin_num"] = bin_num
     updated_cfg = convert_PCA_bins_to_list(extract_folderinfo, extract_cfg)
     assert np.array_equal(updated_cfg["PCA_bins"], np.array(expected_bins_list))
+
+
+def test_PERMANOVA_exampledata(extract_folderinfo, extract_cfg):
+    # Testing with example data copied from here https://www.youtube.com/watch?v=v7u8lHgoWig (11 min+)
+    # Test will assert that we compute the same pseudo F and p-value as in the example
+
+    # 1 - prepare vars
+    extract_folderinfo["contrasts"] = ["A & B"]
+    example_data = pd.DataFrame(
+        {
+            "ID": [1, 2, 3, 4, 5, 6, 7, 8],
+            "Group": ["A", "A", "A", "A", "B", "B", "B", "B"],
+            "PC 1": [124, 125, 127, 127, 132, 130, 132, 133],
+            "PC 2": [78, 82, 83, 79, 84, 87, 89, 88],
+        }
+    )
+    # 2 - run function & open the text file with results
+    run_PCA_PERMANOVA(example_data, extract_folderinfo, extract_cfg)
+    with open(
+        os.path.join(extract_folderinfo["results_dir"], PCA_PERMANOVA_TXT_FILENAME), "r"
+    ) as f:
+        content = f.read()
+    # 3 - assert that F & p value match the YT video
+    F_val = float(content.split("Global test - F = ")[1].split(", p = ")[0])
+    p_val = float(content.split(", p = ")[1].split("\n")[0])
+    print(F_val, p_val)
+    assert math.isclose(F_val, 22.094, abs_tol=1e-03)
+    assert math.isclose(p_val, 0.031, abs_tol=1e-02)
 
 
 def load_repos_group_data(extract_folderinfo, extract_cfg):

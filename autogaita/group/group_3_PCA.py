@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter
 
 # skbio throws some error on windows during build
+# => skbio_available is False on Windows - & not imported
 skbio_available = sys.platform == "darwin"
 if skbio_available:
     try:
