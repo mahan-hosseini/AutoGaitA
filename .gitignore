@@ -4,6 +4,7 @@ my_utils/
 dev/
 dist/
 build/
+scripts/
 autogaita.egg-info/
 venv/
 **/.hypothesis/
