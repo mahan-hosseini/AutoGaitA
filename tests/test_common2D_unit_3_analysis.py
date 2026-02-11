@@ -6,6 +6,7 @@ from autogaita.common2D.common2D_3_analysis import (
     add_angles,
     add_x_velocities,
     add_angular_velocities,
+    standardise_x_y_and_add_features_to_one_step,
 )
 from hypothesis import given
 import hypothesis.strategies as st
@@ -219,6 +220,39 @@ def test_velocities():
     }
     for key in expected_values.keys():
         assert all(expected_values[key] == step[key])
+
+
+def test_x_standardisation(extract_info, extract_cfg):
+    """Unit test of how x standardisation is done"""
+    data_len = 100
+    col_nums = 10
+    step = pd.DataFrame()
+    # 1 - build step df
+    for c in range(col_nums):
+        col_name = "Sample " + str(c) + " x"
+        this_col = np.random.randint(0, 100, data_len)
+        step[col_name] = this_col
+    # 2 - loop over cols again, have each col be x-stand-col once, revert the
+    #     x-standardisation and assert equivalence of dataframes after the fact
+    for c in range(col_nums):
+        extract_cfg.update(
+            {
+                "hind_joints": ["Sample " + str(c) + " "],
+                "angles": {"name": [], "lower_joint": [], "upper_joint": []},
+                "standardise_y_at_SC_level": False,
+                "standardise_y_to_a_joint": False,
+                "standardise_x_coordinates": True,
+                "x_standardisation_joint": ["Sample " + str(c) + " "],
+            }
+        )
+        non_stand_step, x_stand_step = standardise_x_y_and_add_features_to_one_step(
+            step, extract_info, extract_cfg
+        )
+        x_cols = [c for c in x_stand_step.columns if c.endswith("x")]
+        current_col_name = "Sample " + str(c) + " x"
+        current_x_min = non_stand_step[current_col_name].min()
+        x_stand_step[x_cols] += current_x_min
+        pdt.assert_frame_equal(non_stand_step, x_stand_step)
 
 
 def test_step_separators():
