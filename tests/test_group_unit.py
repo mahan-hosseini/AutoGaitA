@@ -262,8 +262,7 @@ def test_Mixed_ANOVA(extract_cfg):
 
 
 def test_multcomp_df_with_scipy_example(extract_folderinfo, extract_cfg):
-    # Adopted example from https://docs.scipy.org/doc/scipy-1.15.0/reference/generated/
-    # scipy.stats.tukey_hsd.html
+    # Adopted example from https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.tukey_hsd.html
     extract_folderinfo["group_names"] = ["group0", "group1", "group2"]
     extract_folderinfo["contrasts"] = [
         "group0 & group1",
