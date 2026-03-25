@@ -825,9 +825,7 @@ def extract_multcomp_significance_clusters(multcomp_df, contrast, stats_threshol
             else:
                 if significance_mask[i + 1] == False:
                     cluster.append(i)
-        # NU - to handle only 1 sig p value:
-        # if len(cluster) == 1 or len(cluster) == 2:....
-        # and then handle in plot multcomp with a dashed vertical line or so instead of # a transparent box for
+        # if cluster-len == 2 we are done - append to all clusters & move to next one
         if len(cluster) == 2:
             all_clusters.append(cluster)
             cluster = []
