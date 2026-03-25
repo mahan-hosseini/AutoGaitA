@@ -161,6 +161,8 @@ def test_bin_num_consistency(dfs, group_names, folderinfo):
         sc_breaks = np.where(pd.isnull(dfs[g][ID_COL]))[0]
         if bin_num == 0:
             bin_num = sc_breaks[0]
+        # loop over all other sc breaks and see if bin num matches that of
+        # sc_breaks[0]
         for b in range(1, len(sc_breaks)):
             this_bin_num = sc_breaks[b] - sc_breaks[b - 1] - 1
             if this_bin_num != bin_num:
@@ -168,7 +170,7 @@ def test_bin_num_consistency(dfs, group_names, folderinfo):
                     folderinfo, dfs, g, group_names, sc_breaks, b
                 )
         # handle the last step-cycle of the df (it doesn't have a sc_break after it!)
-        if (len(dfs[g]) - sc_breaks[-1] - 1) != this_bin_num:
+        if (len(dfs[g]) - sc_breaks[-1] - 1) != bin_num:
             bin_num_error_helper_function(folderinfo, dfs, g, group_names, sc_breaks, b)
     return bin_num
 
@@ -269,6 +271,22 @@ def import_and_combine_dfs(
             + " at\n"
             + group_dir
             + ".\nSkipping!"
+        )
+        print(this_message)
+        write_issues_to_textfile(this_message, folderinfo)
+    elif df.empty:
+        this_message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + which_df
+            + " Results sheet empty for ID below!"
+            + "\nThis hints at cycles being only found for one of the two "
+            + "legs with AutoGaitA Universal 3D.\nSkipping for current leg!"
+            + "\n\nID: "
+            + name
+            + "\nLeg: "
+            + which_leg
+            + "\nGroup Directory:\n"
+            + group_dir
         )
         print(this_message)
         write_issues_to_textfile(this_message, folderinfo)

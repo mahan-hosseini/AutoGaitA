@@ -176,13 +176,12 @@ def test_load_previous_runs_dataframes(extract_folderinfo, extract_cfg):
     # 3: check that it also works for Universal 3D
     # => only do it locally, I don't want to upload the MoVi Data to git
     if not os.getenv("CI"):
-        extract_folderinfo["group_names"] = ["vertical_jumping", "jogging"]
-        # extract_folderinfo["group_names"] = ["crawling", "jogging"]  # failing!
+        extract_folderinfo["group_names"] = [
+            "crawling",
+            "jogging",
+        ]
         extract_folderinfo["group_dirs"] = [
-            # failing for crawling!
-            # "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/removed-for-fig-S1-crawling/",
-            # not failing for vertical_jumping
-            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/vertical_jumping/",
+            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/removed-for-fig-S1-crawling/",
             "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/jogging/",
         ]
         extract_folderinfo["load_dir"] = (
