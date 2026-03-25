@@ -2,14 +2,8 @@ from autogaita.group.group_main import (
     group,
     import_data,
     avg_and_std,
-    PCA_main,
     create_stats_df,
     cluster_extent_test,
-    anova_design_sanity_check,
-    tukeys_only_info_message,
-    ANOVA_main,
-    plot_results,
-    print_finish,
 )
 from autogaita.group.group_1_preparation import some_prep
 from autogaita.group.group_2_data_processing import (
@@ -186,7 +180,7 @@ def test_load_previous_runs_dataframes(extract_folderinfo, extract_cfg):
         # extract_folderinfo["group_names"] = ["crawling", "jogging"]  # failing!
         extract_folderinfo["group_dirs"] = [
             # failing for crawling!
-            "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/removed-for-fig-S1-crawling/",
+            # "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/removed-for-fig-S1-crawling/",
             # not failing for vertical_jumping
             "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/vertical_jumping/",
             "/Users/mahan/sciebo/Research/AutoGaitA/Showcase 3/MOVI/Final/Cleaned Tracking (final)/jogging/",

@@ -1,6 +1,5 @@
 from autogaita.common2D.common2D_1_preparation import (
     some_prep,
-    move_data_to_folders,
     check_gait_direction,
 )
 import os

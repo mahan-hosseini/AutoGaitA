@@ -2,8 +2,6 @@ from autogaita.resources.utils import try_to_run_gaita
 import pandas as pd
 import pandas.testing as pdt
 import os
-import shutil
-import pdb
 import pytest
 
 

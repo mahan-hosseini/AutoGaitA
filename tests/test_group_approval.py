@@ -5,8 +5,6 @@ import pandas as pd
 import pandas.testing as pdt
 import filecmp
 import os
-import shutil
-import pdb
 import pytest
 
 # ...........................  GROUP APPROVAL TESTS STRUCTURE  .........................

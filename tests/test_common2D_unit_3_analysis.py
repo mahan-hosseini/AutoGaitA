@@ -8,9 +8,6 @@ from autogaita.common2D.common2D_3_analysis import (
     add_angular_velocities,
     standardise_x_y_and_add_features_to_one_step,
 )
-from hypothesis import given
-import hypothesis.strategies as st
-from hypothesis.extra.numpy import arrays
 import os
 import numpy as np
 import pandas as pd
