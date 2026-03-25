@@ -4,7 +4,7 @@ from autogaita.group.group_utils import (
     check_mouse_conversion,
     save_figures,
     ytickconvert_mm_to_cm,
-    ylabel_velocity_and_acceleration,
+    statplots_suplabels,
     plot_significant_clusters,
     setup_stats_plots_vars,
 )
@@ -372,39 +372,16 @@ def plot_permutation_test_results(
         clusters = extract_all_clusters(trueobs_results_df, contrast)
         plot_significant_clusters(ax, x, c, clusters)
     # plotting is done: now do figure-level stuff (suplabels, save, add to GUI)
-    f.supxlabel("Percentage", fontsize=stats_plots_suplabel_size)
-    # ylabels depend on whether we converted mm to cm and on the feature
-    # code below calls the ylabel function for all possible cases:
-    # 1) (DLC only) converted velocity & acceleration
-    # 2) (DLC only) converted x/y coordinates
-    # 3) (non-converted) angular velocity & acceleration
-    # 4) (non-converted) x(DLC)/Y(Universal 3D) velocity & acceleration
-    # 5) (non-converted) x(DLC)/Y(Universal 3D) coordinates
-    if check_mouse_conversion(feature, cfg, stats_var=stats_var):
-        if feature in ["Velocity", "Acceleration"]:
-            f.supylabel(
-                ylabel_velocity_and_acceleration(feature, "x in cm", sampling_rate),
-                fontsize=stats_plots_suplabel_size,
-            )
-        else:
-            f.supylabel(feature + " (cm)", fontsize=stats_plots_suplabel_size)
-    else:
-        if feature in ["Velocity", "Acceleration"]:
-            if "Angle" in stats_var:
-                unit = "degrees"
-            else:
-                if tracking_software in ["DLC", "SLEAP"]:
-                    unit = "x in pixels"
-                elif tracking_software == "Universal 3D":
-                    unit = "Y"
-            f.supylabel(
-                ylabel_velocity_and_acceleration(feature, unit, sampling_rate),
-                fontsize=stats_plots_suplabel_size,
-            )
-        else:
-            f.supylabel(feature, fontsize=stats_plots_suplabel_size)
-    figure_file_string = stats_var + " - Cluster-extent Test"
-    f.suptitle(figure_file_string, fontsize=stats_plots_suplabel_size)
+    figure_file_string = statplots_suplabels(
+        "cluster",
+        stats_var,
+        f,
+        tracking_software,
+        feature,
+        cfg,
+        stats_plots_suplabel_size,
+        sampling_rate,
+    )
     save_figures(f, results_dir, figure_file_string)
     # add figure to plot panel figures list
     if dont_show_plots is False:  # -> show plot panel
@@ -764,41 +741,15 @@ def plot_multcomp_results(
         elif legend_outside is False:
             ax[c].legend(fontsize=stats_plots_legend_size)
     # plotting is done: now do figure-level stuff (suplabels, save, add to GUI)
-    f.supxlabel("Percentage", fontsize=stats_plots_suplabel_size)
-    # ylabels depend on whether we converted mm to cm and on the feature
-    # code below calls the ylabel function for all possible cases:
-    # 1) (DLC only) converted velocity & acceleration
-    # 2) (DLC only) converted x/y coordinates
-    # 3) (non-converted) angular velocity & acceleration
-    # 4) (non-converted) x(DLC)/Y(Universal 3D) velocity & acceleration
-    # 5) (non-converted) x(DLC)/Y(Universal 3D) coordinates
-    if check_mouse_conversion(feature, cfg, stats_var=stats_var):
-        if feature in ["Velocity", "Acceleration"]:
-            f.supylabel(
-                ylabel_velocity_and_acceleration(feature, "x in cm", sampling_rate),
-                fontsize=stats_plots_suplabel_size,
-            )
-        else:
-            f.supylabel(feature + " (cm)", fontsize=stats_plots_suplabel_size)
-    else:
-        if feature in ["Velocity", "Acceleration"]:
-            if "Angle" in stats_var:
-                unit = "degrees"
-            else:
-                if tracking_software in ["DLC", "SLEAP"]:
-                    unit = "x in pixels"
-                elif tracking_software == "Universal 3D":
-                    unit = "Y"
-            f.supylabel(
-                ylabel_velocity_and_acceleration(feature, unit, sampling_rate),
-                fontsize=stats_plots_suplabel_size,
-            )
-        else:
-            f.supylabel(feature, fontsize=stats_plots_suplabel_size)
-    figure_file_string = stats_var + " - Tukey's Multiple Comparison Test"
-    f.suptitle(
-        figure_file_string,
-        fontsize=stats_plots_suplabel_size,
+    figure_file_string = statplots_suplabels(
+        "tukeys",
+        stats_var,
+        f,
+        tracking_software,
+        feature,
+        cfg,
+        stats_plots_suplabel_size,
+        sampling_rate,
     )
     save_figures(f, results_dir, figure_file_string)
     # add figure to plot panel figures list

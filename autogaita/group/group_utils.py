@@ -206,6 +206,56 @@ def plot_significant_clusters(ax, x, c, clusters):
             )
 
 
+def statplots_suplabels(
+    which_test,
+    stats_var,
+    fig,
+    tracking_software,
+    feature,
+    cfg,
+    stats_plots_suplabel_size,
+    sampling_rate,
+):
+    """Set up suplabels of statistics figures. units depend on features!"""
+    fig.supxlabel("Percentage", fontsize=stats_plots_suplabel_size)
+    # ylabels depend on whether we converted mm to cm and on the feature
+    # code below calls the ylabel function for all possible cases:
+    # 1) (DLC only) converted velocity & acceleration
+    # 2) (DLC only) converted x/y coordinates
+    # 3) (non-converted) angular velocity & acceleration
+    # 4) (non-converted) x(DLC)/Y(Universal 3D) velocity & acceleration
+    # 5) (non-converted) x(DLC)/Y(Universal 3D) coordinates
+    if check_mouse_conversion(feature, cfg, stats_var=stats_var):
+        if feature in ["Velocity", "Acceleration"]:
+            fig.supylabel(
+                ylabel_velocity_and_acceleration(feature, "x in cm", sampling_rate),
+                fontsize=stats_plots_suplabel_size,
+            )
+        else:
+            fig.supylabel(feature + " (cm)", fontsize=stats_plots_suplabel_size)
+    else:
+        if feature in ["Velocity", "Acceleration"]:
+            if "Angle" in stats_var:
+                unit = "degrees"
+            else:
+                if tracking_software in ["DLC", "SLEAP"]:
+                    unit = "x in pixels"
+                elif tracking_software == "Universal 3D":
+                    unit = "Y"
+            fig.supylabel(
+                ylabel_velocity_and_acceleration(feature, unit, sampling_rate),
+                fontsize=stats_plots_suplabel_size,
+            )
+        else:
+            fig.supylabel(feature, fontsize=stats_plots_suplabel_size)
+    if which_test == "cluster":
+        figure_file_string = stats_var + " - Cluster-extent Test"
+    elif which_test == "tukeys":
+        figure_file_string = stats_var + " - Tukey's Multiple Comparison Test"
+    fig.suptitle(figure_file_string, fontsize=stats_plots_suplabel_size)
+    return figure_file_string
+
+
 # %% ........................  misc. helper functions  .................................
 def tukeys_only_info_message(folderinfo):
     """Inform user about the fact that we are only doing Tukeys due to our ANOVA sanity check failing"""
