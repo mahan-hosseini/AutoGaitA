@@ -2,6 +2,9 @@ import os
 from autogaita.resources.utils import write_issues_to_textfile
 from autogaita.resources.constants import INFO_TEXT_WIDTH
 from autogaita.group.group_constants import (
+    BOX_COLOR,
+    BOX_ALPHA,
+    STD_LW,
     GROUP_CONFIG_TXT_FILENAME,
     PCA_CUSTOM_SCATTER_OUTER_SEPARATOR,
     STATS_PLOTS_LEGEND_SIZE,
@@ -166,6 +169,41 @@ def ylabel_velocity_and_acceleration(feature, unit, sampling_rate):
     ylabel += str(int((1 / sampling_rate) * 1000))
     ylabel += " ms)"
     return ylabel
+
+
+def plot_significant_clusters(ax, x, c, clusters):
+    """Plot clusters indicating significance in stats plots.
+    Note that c indexes contrast and should only be used to index axis.
+    It has nothing to do with clusters. The clusters variable contains only
+    the significant clusters of this given contast. See the note below.
+    """
+    # Note that clusters is a list of lists with each inner list having clusters' start
+    # and end idxs @ 0 and 1 idx
+    # => That means if we only have a single p value that is significant, the
+    #    start and end ix will be the same. We can use that to handle those
+    #    cases differently (with vline) - see if condition in the end
+    ymin = ax[c].get_ylim()[0]
+    ymax = ax[c].get_ylim()[1]
+    for cluster in x[clusters]:  # index x with clusters == cluster has correct val
+        x_coords = [cluster[0], cluster[1], cluster[1], cluster[0]]
+        y_coords = [ymin, ymin, ymax, ymax]
+        ax[c].fill(
+            x_coords,
+            y_coords,
+            color=BOX_COLOR,
+            alpha=BOX_ALPHA,
+            lw=STD_LW,
+            zorder=0,
+        )
+        if cluster[0] == cluster[1]:  # only a single p-val sig.
+            ax[c].vlines(
+                cluster[0],
+                ymin,
+                ymax,
+                color=BOX_COLOR,
+                alpha=BOX_ALPHA,
+                linewidth=5,
+            )
 
 
 # %% ........................  misc. helper functions  .................................

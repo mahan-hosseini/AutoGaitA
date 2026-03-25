@@ -5,6 +5,7 @@ from autogaita.group.group_utils import (
     save_figures,
     ytickconvert_mm_to_cm,
     ylabel_velocity_and_acceleration,
+    plot_significant_clusters,
     setup_stats_plots_vars,
 )
 import os
@@ -369,19 +370,7 @@ def plot_permutation_test_results(
         # plot significant clusters
         # => note that clusters is a list of list with idxs between 0 & bin_num-1
         clusters = extract_all_clusters(trueobs_results_df, contrast)
-        ymin = ax[c].get_ylim()[0]
-        ymax = ax[c].get_ylim()[1]
-        for cluster in x[clusters]:  # index x with clusters == cluster has correct val
-            x_coords = [cluster[0], cluster[1], cluster[1], cluster[0]]
-            y_coords = [ymin, ymin, ymax, ymax]
-            ax[c].fill(
-                x_coords,
-                y_coords,
-                color=BOX_COLOR,
-                alpha=BOX_ALPHA,
-                lw=STD_LW,
-                zorder=0,
-            )
+        plot_significant_clusters(ax, x, c, clusters)
     # plotting is done: now do figure-level stuff (suplabels, save, add to GUI)
     f.supxlabel("Percentage", fontsize=stats_plots_suplabel_size)
     # ylabels depend on whether we converted mm to cm and on the feature
@@ -764,19 +753,7 @@ def plot_multcomp_results(
         clusters = extract_multcomp_significance_clusters(
             multcomp_df, contrast, stats_threshold
         )
-        ymin = ax[c].get_ylim()[0]
-        ymax = ax[c].get_ylim()[1]
-        for cluster in x[clusters]:  # index x with clusters == cluster has correct val
-            x_coords = [cluster[0], cluster[1], cluster[1], cluster[0]]
-            y_coords = [ymin, ymin, ymax, ymax]
-            ax[c].fill(
-                x_coords,
-                y_coords,
-                color=BOX_COLOR,
-                alpha=BOX_ALPHA,
-                lw=STD_LW,
-                zorder=0,
-            )
+        plot_significant_clusters(ax, x, c, clusters)
         # legend adjustments
         if legend_outside is True:
             ax[c].legend(
