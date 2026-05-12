@@ -30,7 +30,7 @@ This approach uses [uv](https://github.com/astral-sh/uv) for installation. It is
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
     ```
 
-* Restart terminal / powershell for Step 2.
+* **Restart terminal / powershell for Step 2.**
     
 ## 2. Install & Run AutoGaitA
 Open your terminal (Mac/Linux) or PowerShell/CMD (Windows) and run:
