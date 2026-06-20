@@ -5,6 +5,11 @@ PCA_PERMANOVA_TXT_FILENAME = "PCA PERMANOVA Results.txt"
 MULTCOMP_EXCEL_FILENAME_1 = "Stats Multiple Comparison - Version 1.xlsx"
 MULTCOMP_EXCEL_FILENAME_2 = "Stats Multiple Comparison - Version 2.xlsx"
 
+# FIRST LEVEL CONFIG VARS TO NOT CHECK FOR EQUIVALENCE
+FIRST_LEVEL_CFG_VARS_TO_NOT_CHECK = [
+    "sc_times_in_frames",
+]
+
 # EXPORT XLS
 NORM_SHEET_NAME = "Normalised Stepcycles"
 ORIG_SHEET_NAME = "Original Stepcycles"

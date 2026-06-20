@@ -14,7 +14,6 @@ import pandas.testing as pdt
 from hypothesis import given, strategies as st, settings, HealthCheck
 import pytest
 
-
 # %%..............................  fixtures  ..........................................
 # NOTE
 # ----
@@ -84,6 +83,7 @@ def fixture_extract_cfg():
     cfg["standardise_x_coordinates"] = True
     cfg["x_standardisation_joint"] = ["Hind paw tao"]
     cfg["coordinate_standardisation_xls"] = ""
+    cfg["sc_times_in_frames"] = False
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",

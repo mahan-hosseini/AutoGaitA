@@ -243,6 +243,15 @@ def populate_run_window(
         is_file=True,
         initial_dir=root_dir_browse.get,
     )
+    # sc times are in frames checkbox
+    sc_times_in_frames_checkbox = gaita_widgets.checkbox(
+        runwindow,
+        "Annotation times are in frames, not seconds",
+        cfg["sc_times_in_frames"],
+        widget_cfg,
+        adv_cfg_textsize=True,
+    )
+    sc_times_in_frames_checkbox.grid(row=r + 4, column=0)
 
     # .......................  file-identifier information  ............................
     # file naming convention label (it's a textbox really)
@@ -261,7 +270,7 @@ def populate_run_window(
     setup_name_convention_label(  # plenty of stuff going on here
         runwindow, name_convention_label, name_convention_string
     )
-    name_convention_label.grid(row=r + 4, column=0, rowspan=4, sticky="nsew")
+    name_convention_label.grid(row=r + 5, column=0, rowspan=4, sticky="nsew")
     # data string
     data_label, data_entry = gaita_widgets.label_and_entry_pair(
         runwindow,
@@ -270,8 +279,8 @@ def populate_run_window(
         widget_cfg,
         adv_cfg_textsize=True,
     )
-    data_label.grid(row=r + 8, column=0)
-    data_entry.grid(row=r + 9, column=0)
+    data_label.grid(row=r + 9, column=0)
+    data_entry.grid(row=r + 10, column=0)
     # beam string
     beam_label, beam_entry = gaita_widgets.label_and_entry_pair(
         runwindow,
@@ -280,8 +289,8 @@ def populate_run_window(
         widget_cfg,
         adv_cfg_textsize=True,
     )
-    beam_label.grid(row=r + 10, column=0)
-    beam_entry.grid(row=r + 11, column=0)
+    beam_label.grid(row=r + 11, column=0)
+    beam_entry.grid(row=r + 12, column=0)
     # premouse_num string
     premouse_label, premouse_entry = gaita_widgets.label_and_entry_pair(
         runwindow,
@@ -290,8 +299,8 @@ def populate_run_window(
         widget_cfg,
         adv_cfg_textsize=True,
     )
-    premouse_label.grid(row=r + 12, column=0)
-    premouse_entry.grid(row=r + 13, column=0)
+    premouse_label.grid(row=r + 13, column=0)
+    premouse_entry.grid(row=r + 14, column=0)
     # postmouse_num string
     postmouse_label, postmouse_entry = gaita_widgets.label_and_entry_pair(
         runwindow,
@@ -300,8 +309,8 @@ def populate_run_window(
         widget_cfg,
         adv_cfg_textsize=True,
     )
-    postmouse_label.grid(row=r + 14, column=0)
-    postmouse_entry.grid(row=r + 15, column=0)
+    postmouse_label.grid(row=r + 15, column=0)
+    postmouse_entry.grid(row=r + 16, column=0)
     # prerun string
     prerun_label, prerun_entry = gaita_widgets.label_and_entry_pair(
         runwindow,
@@ -310,8 +319,8 @@ def populate_run_window(
         widget_cfg,
         adv_cfg_textsize=True,
     )
-    prerun_label.grid(row=r + 16, column=0)
-    prerun_entry.grid(row=r + 17, column=0)
+    prerun_label.grid(row=r + 17, column=0)
+    prerun_entry.grid(row=r + 18, column=0)
     # postrun string
     postrun_label, postrun_entry = gaita_widgets.label_and_entry_pair(
         runwindow,
@@ -320,8 +329,8 @@ def populate_run_window(
         widget_cfg,
         adv_cfg_textsize=True,
     )
-    postrun_label.grid(row=r + 18, column=0)
-    postrun_entry.grid(row=r + 19, column=0)
+    postrun_label.grid(row=r + 19, column=0)
+    postrun_entry.grid(row=r + 20, column=0)
     # button confirming being done
     # => change value of user_ready in this call
     finishbutton = ctk.CTkButton(
@@ -344,7 +353,7 @@ def populate_run_window(
             user_ready.set(1),
         ),
     )
-    finishbutton_row = r + 20
+    finishbutton_row = r + 21
     finishbutton.grid(
         row=finishbutton_row, column=0, rowspan=2, sticky="nsew", pady=5, padx=70
     )

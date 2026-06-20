@@ -30,6 +30,7 @@
         "legend_outside": true,
         "results_dir": "",
         "coordinate_standardisation_xls": "",
+        "sc_times_in_frames": false,
         "joints": [
             "Midfoot",
             "Ankle ",

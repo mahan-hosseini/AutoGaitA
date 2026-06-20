@@ -35,6 +35,7 @@ def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
     root_dir = folderinfo["root_dir"]
     sctable_filename = folderinfo["sctable_filename"]
     sampling_rate = cfg["sampling_rate"]
+    sc_times_in_frames = cfg["sc_times_in_frames"]
 
     # load the table - try some filename & ending options
     if os.path.exists(os.path.join(root_dir, sctable_filename)):
@@ -92,7 +93,7 @@ def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
     # ==> Important that there are parentheses around mouse & runs cond!!!
     while (
         (SCdf.iloc[next_mouse_idx, mouse_col].values[0] == mouse_num)
-        | (np.isnan(SCdf.iloc[next_mouse_idx, mouse_col].values[0]))
+        | (pd.isna(SCdf.iloc[next_mouse_idx, mouse_col].values[0]))
     ) & (next_mouse_idx[0] != len(SCdf) - 1):
         next_mouse_idx += 1  # this becomes first idx of next mouse's runs
     # slicing is exclusive, so indexing the first row of next mouse means we
@@ -118,7 +119,7 @@ def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
     sc_num = 0
     for column in SCdf.columns:
         if STANCEEND_COL in column:
-            if np.isnan(SCdf[column][info_row].values[0]) == False:
+            if pd.isna(SCdf[column][info_row].values[0]) == False:
                 sc_num += 1
     if sc_num == 0:
         handle_issues("no_scs", info)
@@ -147,48 +148,61 @@ def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
             end_col = SCdf.columns.get_loc(STANCEEND_COL + "." + str(s))
         user_scnum += 1
         # extract the SC times
-        start_in_s = float(SCdf.iloc[info_row, start_col].values[0])
-        end_in_s = float(SCdf.iloc[info_row, end_col].values[0])
-        # see if we are rounding to fix inaccurate user input
-        # => account for python's float precision leading to inaccuracies
-        # => two important steps here (sanity_check_vals only used for these checks)
-        # 1. round to 10th decimal to fix python making
-        #    3211.999999999999999995 out of 3212
-        sanity_check_start = round(start_in_s * sampling_rate, 10)
-        sanity_check_end = round(end_in_s * sampling_rate, 10)
-        # 2. comparing abs(sanity check vals) to 1e-7 just to be 1000% sure
-        if (abs(sanity_check_start % 1) > 1e-7) | (abs(sanity_check_end % 1) > 1e-7):
-            round_message = (
+        sc_extraction_error = False
+        # --- SCs ARE IN SECONDS, CONVERT TO FRAMES ---
+        if not sc_times_in_frames:
+            sc_start = float(SCdf.iloc[info_row, start_col].values[0])
+            sc_end = float(SCdf.iloc[info_row, end_col].values[0])
+            # see if we are rounding to fix inaccurate user input
+            # => account for python's float precision leading to inaccuracies
+            #    - IMPORTANT: accounting for this via using round() before int()
+            #      when assigning to all_cycles after the sanity check
+            # => two important steps here (sanity_check_vals only used for these checks)
+            # 1. round to 10th decimal to fix python making
+            #    3211.999999999999999995 out of 3212
+            sanity_check_start = round(sc_start * sampling_rate, 10)
+            sanity_check_end = round(sc_end * sampling_rate, 10)
+            # 2. comparing abs(sanity check vals) to 1e-7 just to be 1000% sure
+            if (abs(sanity_check_start % 1) > 1e-7) | (
+                abs(sanity_check_end % 1) > 1e-7
+            ):
+                round_message = (
+                    "\n***********\n! WARNING !\n***********\n"
+                    + f"SC latencies of {sc_start}s to {sc_end}"
+                    + "s were not provided in units of the frame rate!"
+                    + "\nWe thus use the nearest possible frame(s)."
+                    + "\nDouble check if this worked as expected or fix annotation table!"
+                )
+                print(round_message)
+                write_issues_to_textfile(round_message, info)
+            # assign to all_cycles (note int() rounds down!)
+            try:
+                all_cycles[s] = [  # account for float point precision with round!
+                    int(round(sc_start * sampling_rate)),
+                    int(round(sc_end * sampling_rate)),
+                ]
+            except:
+                sc_extraction_error = True
+        # --- SCs ARE IN FRAMES, JUST ASSIGN TO ALL_CYCLES ---
+        else:
+            try:
+                sc_start = int(SCdf.iloc[info_row, start_col].values[0])
+                sc_end = int(SCdf.iloc[info_row, end_col].values[0])
+                all_cycles[s] = [sc_start, sc_end]
+            except:
+                sc_extraction_error = True
+        # check if there were issues with extraction, if so, throw warning
+        if sc_extraction_error is True:
+            extraction_error_message = (
                 "\n***********\n! WARNING !\n***********\n"
-                + "SC latencies of "
-                + str(start_in_s)
-                + "s to "
-                + str(end_in_s)
-                + "s were not provided in units of the frame rate!"
-                + "\nWe thus use the previous possible frame(s)."
-                + "\nDouble check if this worked as expected or fix annotation table!"
-            )
-            print(round_message)
-            write_issues_to_textfile(round_message, info)
-        # assign to all_cycles (note int() rounds down!)
-        try:
-            all_cycles[s] = [
-                int(start_in_s * sampling_rate),
-                int(end_in_s * sampling_rate),
-            ]
-        except:
-            assign_error_message = (
-                "\n***********\n! WARNING !\n***********\n"
-                + "Unable to assign SC latencies of:"
-                + str(start_in_s)
-                + "s to "
-                + str(end_in_s)
+                + f"Unable to assign SC of: {sc_start} to {sc_end}"
                 + "\nThis could indicate that your Swing/Stance columns of your "
                 + "Annotation Table are not named correctly."
                 + "\nPlease double-check & re-run!"
             )
-            print(assign_error_message)
-            write_issues_to_textfile(assign_error_message, info)
+            print(extraction_error_message)
+            write_issues_to_textfile(extraction_error_message, info)
+
         # check if we are in data-bounds
         if (all_cycles[s][0] in data.index) & (all_cycles[s][1] in data.index):
             pass
@@ -196,11 +210,7 @@ def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
             all_cycles[s] = [None, None]  # so they can be cleaned later
             this_message = (
                 "\n***********\n! WARNING !\n***********\n"
-                + "SC latencies of: "
-                + str(start_in_s)
-                + "s to "
-                + str(end_in_s)
-                + "s not in data/video range!"
+                + f"SC of: {sc_start} to {sc_end} not in data/video range!"
                 + "\nSkipping!"
             )
             print(this_message)

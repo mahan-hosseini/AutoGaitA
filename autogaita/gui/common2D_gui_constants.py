@@ -36,6 +36,7 @@ TK_BOOL_VARS = [
     "flip_gait_direction",
     "analyse_average_x",
     "legend_outside",
+    "sc_times_in_frames",
 ]
 TK_STR_VARS = [
     "mouse_num",  # (config file's) results dict

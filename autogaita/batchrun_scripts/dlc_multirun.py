@@ -44,6 +44,7 @@ def dlc_multirun():
     cfg["standardise_x_coordinates"] = True
     cfg["x_standardisation_joint"] = ["Hind paw tao"]
     cfg["coordinate_standardisation_xls"] = ""
+    cfg["sc_times_in_frames"] = False
     cfg["results_dir"] = ""
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [

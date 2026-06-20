@@ -4,7 +4,6 @@ import pandas.testing as pdt
 import os
 import pytest
 
-
 # ............................  SIMI APPROVAL TESTS STRUCTURE  .........................
 # 1. Run autogaita.simi for Subject (with the cfg used there)
 # 2. Load the "Average Stepcycles".xlsx file from the repo and compare for
@@ -58,6 +57,7 @@ def extract_cfg():
     cfg["standardise_y_coordinates"] = True
     cfg["y_standardisation_joint"] = ["Midfoot, left"]
     cfg["coordinate_standardisation_xls"] = ""
+    cfg["sc_times_in_frames"] = False
     cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis "]
     cfg["angles"] = {
         "name": ["Ankle", "Knee", "Hip"],

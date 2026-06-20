@@ -8,6 +8,7 @@ import seaborn as sns
 # %% constants
 from autogaita.resources.constants import ISSUES_TXT_FILENAME, CONFIG_JSON_FILENAME
 from autogaita.group.group_constants import (
+    FIRST_LEVEL_CFG_VARS_TO_NOT_CHECK,
     GROUP_CONFIG_TXT_FILENAME,
     STATS_TXT_FILENAME,
     MULTCOMP_EXCEL_FILENAME_1,
@@ -15,7 +16,6 @@ from autogaita.group.group_constants import (
     ORIG_SHEET_NAME,
     CONTRAST_SPLIT_STR,
 )
-
 
 # %% .................  workflow step #1 - unpack & prepare vars  ....................
 
@@ -88,6 +88,8 @@ def some_prep(folderinfo, cfg):
             ) as config_json_file:
                 config_vars_from_json = json.load(config_json_file)
                 for key in config_vars_from_json.keys():
+                    if key in FIRST_LEVEL_CFG_VARS_TO_NOT_CHECK:
+                        continue  # skip equivalence check for this key
                     # assigning like this ensure all keys are in all jsons across groups
                     if g_idx == 0:
                         cfg[key] = config_vars_from_json[key]

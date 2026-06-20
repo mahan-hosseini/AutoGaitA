@@ -16,7 +16,6 @@ from autogaita.universal3D.universal3D_constants import (
     STANCEEND_COL,
 )
 
-
 # %% workflow step #2 - SC extraction (reading user-provided SC Table)
 
 
@@ -59,6 +58,7 @@ def read_SC_info(data, SCdf, info, legname, cfg):
     # unpack
     name = info["name"]
     sampling_rate = cfg["sampling_rate"]
+    sc_times_in_frames = cfg["sc_times_in_frames"]
 
     # very first sanity check - see if table columns are labelled correctly
     valid_col_flags = [
@@ -97,8 +97,7 @@ def read_SC_info(data, SCdf, info, legname, cfg):
     if start_row.empty:
         this_message = (
             "\n******************\n! CRITICAL ERROR !\n******************\n"
-            + "\nNo timestamp information found for ID: "
-            + name
+            + f"\nNo timestamp information found for ID: {name}"
             + "\nCheck your Annotation Table & try again!"
         )
         print(this_message)
@@ -108,8 +107,7 @@ def read_SC_info(data, SCdf, info, legname, cfg):
     if len(start_row) > 1:
         this_message = (
             "\n******************\n! CRITICAL ERROR !\n******************\n"
-            + "\nID "
-            + name
+            + f"\nID {name}"
             + " was found more than once in ID column!"
             + "\nCheck your Annotation Table & try again!"
         )
@@ -119,20 +117,26 @@ def read_SC_info(data, SCdf, info, legname, cfg):
     # c. find start row of current leg (whileloop works for both legs)
     while SCdf.iloc[start_row, leg_col].values[0] != legname:
         start_row += 1
-    end_row = start_row
-    while isinstance(SCdf.iloc[end_row, run_col].values[0], int) & (
-        end_row != len(SCdf) - 1
-    ):
-        end_row += 1
+    # the way end_row is found will break for floats so make sure to convert those to
+    # ints, leave nans as they are!
+    # => first check if end_row is a nan row. If yes, end_row will point to that row
+    #    and the loop will be excited. this is correct bc. we use it w. iloc (exclusive)
+    # => then check that the user didnt put 3.5 or something, if so warning & move on
+    for end_row in range(int(start_row.values[0]), len(SCdf)):
+        this_run_value = SCdf.iloc[end_row, run_col]
+        if pd.isna(this_run_value):  # if we have a nan row, its end row!
+            break
+        if isinstance(this_run_value, float) and not this_run_value.is_integer():
+            print(
+                f"\nID:{name}, Leg: {legname} - runvalue {this_run_value} is not a whole number!"
+            )
+    end_row = pd.Index([end_row])  # so it's an index like start_row
     # quick sanity checks that user input was correct
     if end_row != start_row:
-        if not np.isnan(SCdf.iloc[end_row, leg_col].values[0]):
+        if not pd.isna(SCdf.iloc[end_row, leg_col].values[0]):
             this_message = (
                 "\n******************\n! CRITICAL ERROR !\n******************\n"
-                + "\nID: "
-                + name
-                + ", Leg: "
-                + legname
+                + f"\nID: {name}, Leg: {legname}"
                 + "\nRun & Leg columns of Annotation "
                 + "Table seem wrong! \nYou need to have an "
                 + "empty row before each new leg or subject!"
@@ -169,16 +173,13 @@ def read_SC_info(data, SCdf, info, legname, cfg):
         run_scnums[r] = 0
         for column in SCdf.columns:
             if STANCEEND_COL in column:
-                if not np.isnan(SCdf[column][run_row].values[0]):
+                if not pd.isna(SCdf[column][run_row].values[0]):
                     total_scnum += 1
                     run_scnums[r] += 1
     if user_scnum != total_scnum:  # warn the user, take the values we found
         this_message = (
             "\n***********\n! WARNING !\n***********\n"
-            + "\nID: "
-            + name
-            + ", Leg: "
-            + legname
+            + f"\nID {name}, Leg: {legname}"
             + "\nMismatch between SC num. of XLS SC Column ("
             + str(user_scnum)
             + ") & \nSCs with values in Swing/"
@@ -210,35 +211,58 @@ def read_SC_info(data, SCdf, info, legname, cfg):
                 # str(s) because colnames match s for s>0 (& @else our loop starts @ 1)!
                 start_col = SCdf.columns.get_loc(SWINGSTART_COL + "." + str(s))
                 end_col = SCdf.columns.get_loc(STANCEEND_COL + "." + str(s))
-            # time as floats
-            start_in_s = float(SCdf.iloc[run_row, start_col].values[0])
-            end_in_s = float(SCdf.iloc[run_row, end_col].values[0])
-            # see if we are rounding to fix inaccurate user input
-            # => account for python's float precision leading to inaccuracies
-            # => two important steps here (sanity_check_vals only used for these checks)
-            # 1. round to 10th decimal to fix python making
-            #    3211.999999999999999995 out of 3212
-            sanity_check_start = round(start_in_s * sampling_rate, 10)
-            sanity_check_end = round(end_in_s * sampling_rate, 10)
-            # 2. comparing abs(sanity check vals) to 1e-7 just to be 1000% sure
-            if (abs(sanity_check_start % 1) > 1e-7) | (
-                abs(sanity_check_end % 1) > 1e-7
-            ):
-                round_message = (
+            # extract the SC times
+            sc_extraction_error = False
+            # --- SCs ARE IN SECONDS, CONVERT TO FRAMES ---
+            if not sc_times_in_frames:
+                start_in_s = float(SCdf.iloc[run_row, start_col].values[0])
+                end_in_s = float(SCdf.iloc[run_row, end_col].values[0])
+                # see if we are rounding to fix inaccurate user input
+                # => account for python's float precision leading to inaccuracies
+                #    - IMPORTANT: accounting for this via using round() before int()
+                #      when assigning to all_cycles after the sanity check
+                # => two important steps here (sanity_check_vals only for these checks)
+                # 1. round to 10th decimal to fix python making
+                #    3211.999999999999999995 out of 3212
+                sanity_check_start = round(start_in_s * sampling_rate, 10)
+                sanity_check_end = round(end_in_s * sampling_rate, 10)
+                # 2. comparing abs(sanity check vals) to 1e-7 just to be 1000% sure
+                if (abs(sanity_check_start % 1) > 1e-7) | (
+                    abs(sanity_check_end % 1) > 1e-7
+                ):
+                    round_message = (
+                        "\n***********\n! WARNING !\n***********\n"
+                        + f"SC latencies of {start_in_s}s to {end_in_s}s "
+                        + "were not provided in units of the frame rate!"
+                        + "\nWe thus use the nearest possible frame(s)."
+                        + "\nDouble check if this worked as expected or fix annotation table!"
+                    )
+                    print(round_message)
+                    write_issues_to_textfile(round_message, info)
+                # assign to all_cycles (round() handles float point precision issues!)
+                try:
+                    all_cycles[r][s][0] = int(round(start_in_s * sampling_rate))
+                    all_cycles[r][s][1] = int(round(end_in_s * sampling_rate))
+                except:
+                    sc_extraction_error = True
+            # --- SCs ARE IN FRAMES, JUST ASSIGN TO ALL_CYCLES ---
+            else:
+                try:
+                    all_cycles[r][s][0] = int(SCdf.iloc[run_row, start_col].values[0])
+                    all_cycles[r][s][1] = int(SCdf.iloc[run_row, end_col].values[0])
+                except:
+                    sc_extraction_error = True
+            # check if there were issues with extraction, if so, throw warning
+            if sc_extraction_error is True:
+                extraction_error_message = (
                     "\n***********\n! WARNING !\n***********\n"
-                    + "SC latencies of "
-                    + str(start_in_s)
-                    + "s to "
-                    + str(end_in_s)
-                    + "s were not provided in units of the frame rate!"
-                    + "\nWe thus use the previous possible frame(s)."
-                    + "\nDouble check if this worked as expected or fix annotation table!"
+                    + f"Unable to assign SC of run #{r + 1}, SC #{s + 1}"
+                    + "\nThis could indicate that your Swing/Stance columns of your "
+                    + "Annotation Table are not named correctly."
+                    + "\nPlease double-check & re-run!"
                 )
-                print(round_message)
-                write_issues_to_textfile(round_message, info)
-            # assign to all_cycles (note int() rounds down!)
-            all_cycles[r][s][0] = int(start_in_s * sampling_rate)
-            all_cycles[r][s][1] = int(end_in_s * sampling_rate)
+                print(extraction_error_message)
+                write_issues_to_textfile(extraction_error_message, info)
             # check if we are in data bounds
             if (all_cycles[r][s][0] in data.index) & (
                 all_cycles[r][s][1] in data.index
@@ -258,6 +282,7 @@ def read_SC_info(data, SCdf, info, legname, cfg):
                 )
                 print(this_message)
                 write_issues_to_textfile(this_message, info)
+
     # ............................  clean all_cycles  ..................................
     # check if we skipped latencies because they were out of data-bounds
     all_cycles = check_cycle_out_of_bounds(all_cycles)

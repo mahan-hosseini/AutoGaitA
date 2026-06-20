@@ -10,7 +10,9 @@ def universal3D_singlerun():
     """
     # folderinfo
     folderinfo = {}
-    folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Human/Testing2/"
+    folderinfo["root_dir"] = (
+        "/Users/mahan/sciebo/PythonCode/gaita_repo/tests/test_data/universal3D_data/test_data/"
+    )
     # folderinfo["root_dir"] = "/Users/mahan/sciebo/Research/AutoGaitA/Fly/3D Data/"
     folderinfo["results_dir"] = ""
     folderinfo["sctable_filename"] = "SC Latency Table"
@@ -32,6 +34,7 @@ def universal3D_singlerun():
     cfg["flip_gait_direction"] = True
     cfg["analyse_average_y"] = True
     cfg["standardise_y_coordinates"] = True
+    cfg["sc_times_in_frames"] = False
     cfg["y_standardisation_joint"] = ["Midfoot, left"]
     cfg["coordinate_standardisation_xls"] = ""
     cfg["joints"] = [
@@ -51,7 +54,7 @@ def universal3D_singlerun():
     }
     # info
     info = {}
-    info["name"] = "SK"  # "A1"  #  # analyse this dataset
+    info["name"] = "TestSubject"  # "A1"  #  # analyse this dataset
     if folderinfo["results_dir"]:
         info["results_dir"] = os.path.join(folderinfo["results_dir"], info["name"])
     else:

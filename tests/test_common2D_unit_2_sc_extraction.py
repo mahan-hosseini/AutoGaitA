@@ -9,10 +9,18 @@ from autogaita.common2D.common2D_utils import (
     check_tracking_xy_thresholds,
     check_tracking_SLEAP_nans,
 )
+from autogaita.common2D.common2D_constants import (
+    SCXLS_MOUSECOLS,
+    SCXLS_RUNCOLS,
+    SCXLS_SCCOLS,
+    SWINGSTART_COL,
+    STANCEEND_COL,
+)
 from hypothesis import given, strategies as st, settings, HealthCheck
 import os
 import numpy as np
 import pytest
+import openpyxl
 
 
 # %%................................  fixtures  ........................................
@@ -75,6 +83,7 @@ def extract_cfg():
     cfg["standardise_x_coordinates"] = True
     cfg["x_standardisation_joint"] = ["Hind paw tao"]
     cfg["coordinate_standardisation_xls"] = ""
+    cfg["sc_times_in_frames"] = False
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",
@@ -93,6 +102,32 @@ def extract_cfg():
         "upper_joint": ["Knee ", "Hip ", "Iliac Crest "],
     }
     return cfg
+
+
+@pytest.fixture
+def create_a_frames_annotation_table(tmp_path):
+    """Building and storing an annotation table using frames to tmp_path."""
+
+    # Mirror the golden-path SCs [[284, 317], [318, 359], [413, 441]] as frames
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(
+        [
+            SCXLS_MOUSECOLS[0],
+            SCXLS_RUNCOLS[0],
+            SCXLS_SCCOLS[0],
+            SWINGSTART_COL,
+            STANCEEND_COL,
+            SWINGSTART_COL + ".1",
+            STANCEEND_COL + ".1",
+            SWINGSTART_COL + ".2",
+            STANCEEND_COL + ".2",
+        ]
+    )
+    ws.append([15, 3, 3, 284, 317, 318, 359, 413, 441])
+    table_path = tmp_path / "frames_annotation_table.xlsx"
+    wb.save(table_path)
+    return str(tmp_path), "frames_annotation_table.xlsx"
 
 
 # %%..............................  test golden path  ..................................
@@ -359,6 +394,68 @@ def test_clean_cycles_6_SLEAP_nan_removals(
         extract_cfg,
     )
     assert clean_cycles == [[555, 666]]
+
+
+# %%................... test sc_times_in_frames ....................................
+
+
+def test_sc_times_in_frames_golden_path(
+    extract_data_using_some_prep,
+    extract_info,
+    extract_folderinfo,
+    extract_cfg,
+    create_a_frames_annotation_table,
+):
+    root_dir, sctable_filename = create_a_frames_annotation_table
+    extract_cfg["sc_times_in_frames"] = True
+    extract_folderinfo["root_dir"] = root_dir
+    extract_folderinfo["sctable_filename"] = sctable_filename
+    expected_cycles = [[284, 317], [318, 359], [413, 441]]
+    assert (
+        extract_stepcycles(
+            "DLC",
+            extract_data_using_some_prep,
+            extract_info,
+            extract_folderinfo,
+            extract_cfg,
+        )
+        == expected_cycles
+    )
+
+
+def test_sc_times_in_frames_matches_sc_times_in_seconds(
+    extract_data_using_some_prep,
+    extract_info,
+    extract_folderinfo,
+    extract_cfg,
+    create_a_frames_annotation_table,
+):
+    """Both modes must produce identical all_cycles for equivalent annotations."""
+    # seconds-based (default, uses correct_annotation_table.xlsx)
+    extract_cfg["sc_times_in_frames"] = False
+    cycles_from_seconds = extract_stepcycles(
+        "DLC",
+        extract_data_using_some_prep,
+        extract_info,
+        extract_folderinfo,
+        extract_cfg,
+    )
+
+    # frames-based (uses tmp_path table written by fixture)
+    frame_cfg = extract_cfg.copy()
+    frame_cfg["sc_times_in_frames"] = True
+    root_dir, sctable_filename = create_a_frames_annotation_table
+    extract_folderinfo["root_dir"] = root_dir
+    extract_folderinfo["sctable_filename"] = sctable_filename
+    cycles_from_frames = extract_stepcycles(
+        "DLC",
+        extract_data_using_some_prep,
+        extract_info,
+        extract_folderinfo,
+        frame_cfg,
+    )
+
+    assert cycles_from_seconds == cycles_from_frames
 
 
 # ...............................  helper functions  ...................................

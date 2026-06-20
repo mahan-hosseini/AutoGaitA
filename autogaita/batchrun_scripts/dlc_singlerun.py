@@ -47,6 +47,7 @@ def dlc_singlerun():
     cfg["coordinate_standardisation_xls"] = (
         "/Users/mahan/sciebo/PythonCode/gaita_repo/autogaita/resources/Coordinate Standardisation Table Template.xlsx"
     )
+    cfg["sc_times_in_frames"] = False
     cfg["hind_joints"] = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
     cfg["fore_joints"] = [
         "Front paw tao ",

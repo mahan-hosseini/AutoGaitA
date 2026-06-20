@@ -14,7 +14,6 @@ import os
 from threading import Thread
 import platform
 
-
 # %% global constants
 from autogaita.gui.gui_constants import (
     UNIVERSAL3D_FG_COLOR,
@@ -60,6 +59,7 @@ TK_BOOL_VARS = [
     "analyse_average_y",
     "legend_outside",
     "fileprep_3D_DLC",
+    "sc_times_in_frames",
 ]
 TK_STR_VARS = [
     "sampling_rate",
@@ -183,6 +183,7 @@ def run_universal3D_gui():
         widget_cfg=WIDGET_CFG,
         sticky="w",
     )
+
     # stepcycle latency XLS
     SCXLS_label = ctk.CTkLabel(
         root, text="Annotation Table Excel file:", font=(TEXT_FONT_NAME, TEXT_FONT_SIZE)
@@ -199,6 +200,14 @@ def run_universal3D_gui():
         is_file=True,  # this is a file, not a directory
         initial_dir=root_dir_browse.get,  # get initial dir from root_dir_entry
     )
+    # sc times are in frames checkbox
+    sc_times_in_frames_checkbox = gaita_widgets.checkbox(
+        root,
+        "Annotation times are in frames, not seconds",
+        cfg["sc_times_in_frames"],
+        WIDGET_CFG,
+    )
+    sc_times_in_frames_checkbox.grid(row=3, column=0, columnspan=2, sticky="w")
 
     # sampling rate
     samprate_label, samprate_entry = gaita_widgets.label_and_entry_pair(
@@ -207,8 +216,8 @@ def run_universal3D_gui():
         cfg["sampling_rate"],
         WIDGET_CFG,
     )
-    samprate_label.grid(row=3, column=0, columnspan=2, sticky="w")
-    samprate_entry.grid(row=3, column=1)
+    samprate_label.grid(row=4, column=0, columnspan=2, sticky="w")
+    samprate_entry.grid(row=4, column=1)
 
     # flip gait direction
     flip_gait_direction_box = gaita_widgets.checkbox(
@@ -217,7 +226,7 @@ def run_universal3D_gui():
         cfg["flip_gait_direction"],
         WIDGET_CFG,
     )
-    flip_gait_direction_box.grid(row=4, column=0, columnspan=2, sticky="w")
+    flip_gait_direction_box.grid(row=5, column=0, columnspan=2, sticky="w")
 
     # postname present checkbox
     postname_flag_checkbox = gaita_widgets.checkbox(
@@ -231,7 +240,7 @@ def run_universal3D_gui():
             results, "postname_flag", postname_entry
         ),
     )
-    postname_flag_checkbox.grid(row=5, column=0, columnspan=2)
+    postname_flag_checkbox.grid(row=6, column=0, columnspan=2)
 
     # postname string
     postname_label, postname_entry = gaita_widgets.label_and_entry_pair(
@@ -240,13 +249,13 @@ def run_universal3D_gui():
         results["postname_string"],
         WIDGET_CFG,
     )
-    postname_label.grid(row=6, column=0, sticky="e")
+    postname_label.grid(row=7, column=0, sticky="e")
     postname_entry.configure(state="disabled")
-    postname_entry.grid(row=6, column=1, sticky="w")
+    postname_entry.grid(row=7, column=1, sticky="w")
 
     # empty label 1 (for spacing)
     empty_label_one = ctk.CTkLabel(root, text="")
-    empty_label_one.grid(row=7, column=0)
+    empty_label_one.grid(row=8, column=0)
 
     # ..........................  advanced cfg section  ................................
 
@@ -254,7 +263,7 @@ def run_universal3D_gui():
     advanced_cfg_header_label = gaita_widgets.header_label(
         root, "Advanced Configuration", WIDGET_CFG
     )
-    advanced_cfg_header_label.grid(row=8, column=0, columnspan=2, sticky="nsew")
+    advanced_cfg_header_label.grid(row=9, column=0, columnspan=2, sticky="nsew")
 
     # data file preparation window
     datafile_prep_button = gaita_widgets.header_button(
@@ -263,7 +272,7 @@ def run_universal3D_gui():
     datafile_prep_button.configure(
         command=lambda: build_datafile_prep_window(root, results, cfg),
     )
-    datafile_prep_button.grid(row=9, column=0, columnspan=2)
+    datafile_prep_button.grid(row=10, column=0, columnspan=2)
 
     # column name information window
     column_info_button = gaita_widgets.header_button(
@@ -272,7 +281,7 @@ def run_universal3D_gui():
     column_info_button.configure(
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
-    column_info_button.grid(row=10, column=0, columnspan=2)
+    column_info_button.grid(row=11, column=0, columnspan=2)
 
     # advanced cfg
     cfg_window_button = gaita_widgets.header_button(
@@ -281,17 +290,17 @@ def run_universal3D_gui():
     cfg_window_button.configure(
         command=lambda: (build_cfg_window(root, cfg)),
     )
-    cfg_window_button.grid(row=11, column=0, columnspan=2)
+    cfg_window_button.grid(row=12, column=0, columnspan=2)
 
     # empty label 2 (for spacing)
     empty_label_two = ctk.CTkLabel(root, text="")
-    empty_label_two.grid(row=12, column=0)
+    empty_label_two.grid(row=13, column=0)
 
     # ............................  run & exit section  ................................
 
     # run analysis label
     runheader_label = gaita_widgets.header_label(root, "Run Analysis", WIDGET_CFG)
-    runheader_label.grid(row=13, column=0, columnspan=2, sticky="nsew")
+    runheader_label.grid(row=14, column=0, columnspan=2, sticky="nsew")
 
     # single video checkbox
     singlevideo_checkbox = gaita_widgets.checkbox(
@@ -305,14 +314,14 @@ def run_universal3D_gui():
             cfg, "analyse_singlerun", ID_entry
         ),
     )
-    singlevideo_checkbox.grid(row=14, column=0, columnspan=2)
+    singlevideo_checkbox.grid(row=15, column=0, columnspan=2)
 
     # ID string info
     ID_label, ID_entry = gaita_widgets.label_and_entry_pair(
         root, "ID to be analysed:", results["name"], WIDGET_CFG
     )
-    ID_label.grid(row=15, column=0, sticky="e")
-    ID_entry.grid(row=15, column=1, sticky="w")
+    ID_label.grid(row=16, column=0, sticky="e")
+    ID_entry.grid(row=16, column=1, sticky="w")
     gui_utils.change_widget_state_based_on_checkbox(cfg, "analyse_singlerun", ID_entry)
 
     # run analysis button
@@ -332,11 +341,11 @@ def run_universal3D_gui():
             build_donewindow(results, root, root_dimensions),
         )
     )
-    run_button.grid(row=16, column=0, columnspan=2, padx=10, pady=(10, 5))
+    run_button.grid(row=17, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # empty label 3 (for spacing)
     empty_label_three = ctk.CTkLabel(root, text="")
-    empty_label_three.grid(row=17, column=0)
+    empty_label_three.grid(row=18, column=0)
 
     # close program button
     exit_button = gaita_widgets.exit_button(
@@ -359,7 +368,7 @@ def run_universal3D_gui():
             root.after(5000, root.destroy),
         ),
     )
-    exit_button.grid(row=18, column=0, columnspan=2, padx=10, pady=(10, 5))
+    exit_button.grid(row=19, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # maximise widgets
     gui_utils.maximise_widgets(root)

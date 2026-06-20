@@ -50,6 +50,7 @@ def extract_cfg():
     cfg["standardise_y_coordinates"] = True
     cfg["y_standardisation_joint"] = ["Midfoot, left "]
     cfg["coordinate_standardisation_xls"] = ""
+    cfg["sc_times_in_frames"] = False
     cfg["joints"] = [
         "Midfoot",
         "Ankle",
