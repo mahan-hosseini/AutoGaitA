@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.resources.utils import write_issues_to_textfile
+from autogaita.resources.utils import write_issues_to_textfile, coerce_to_float
 from autogaita.common2D.common2D_utils import (
     check_cycle_out_of_bounds,
     check_cycle_duplicates,
@@ -54,6 +54,11 @@ def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
         SCdf = pd.read_excel(SCdf_full_filename)
     except:
         SCdf = pd.read_excel(SCdf_full_filename, engine="openpyxl")
+
+    # coerce all SC latency cols to numeric (in case Excel cols were text-type)
+    for col in SCdf.columns:
+        if SWINGSTART_COL in col or STANCEEND_COL in col:
+            SCdf[col] = SCdf[col].apply(coerce_to_float)
 
     # see if table columns are labelled correctly (try a couple to allow user typos)
     valid_col_flags = [False, False, False]

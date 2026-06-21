@@ -1,5 +1,5 @@
 # %% imports
-from autogaita.resources.utils import write_issues_to_textfile
+from autogaita.resources.utils import write_issues_to_textfile, coerce_to_float
 import os
 import pandas as pd
 import numpy as np
@@ -43,6 +43,11 @@ def extract_stepcycles(data, info, folderinfo, cfg):
         SCdf = pd.read_excel(SCdf_full_filename)
     except:
         SCdf = pd.read_excel(SCdf_full_filename, engine="openpyxl")
+
+    # coerce all SC latency cols to numeric (in case Excel cols were text-type)
+    for col in SCdf.columns:
+        if SWINGSTART_COL in col or STANCEEND_COL in col:
+            SCdf[col] = SCdf[col].apply(coerce_to_float)
 
     # extract & return all_cycles
     all_cycles = {"left": [], "right": []}
@@ -124,7 +129,9 @@ def read_SC_info(data, SCdf, info, legname, cfg):
     # => then check that the user didnt put 3.5 or something, if so warning & move on
     for end_row in range(int(start_row.values[0]), len(SCdf)):
         this_run_value = SCdf.iloc[end_row, run_col]
-        if pd.isna(this_run_value):  # if we have a nan row, its end row!
+        if (
+            pd.isna(this_run_value) or this_run_value == ""
+        ):  # if we have a nan row, its end row!
             break
         if isinstance(this_run_value, float) and not this_run_value.is_integer():
             print(

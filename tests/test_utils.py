@@ -3,6 +3,7 @@ from autogaita.resources.utils import (
     compute_angle,
     define_bins,
     write_angle_warning,
+    coerce_to_float,
 )
 from autogaita.common2D.common2D_1_preparation import some_prep as some_prep_2D
 from autogaita.universal3D.universal3D_1_preparation import some_prep as some_prep_3D
@@ -14,6 +15,10 @@ import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import pytest
+import tempfile
+
+
+from autogaita.universal3D.universal3D_constants import SWINGSTART_COL, STANCEEND_COL
 
 
 # %%...........................  2D GaitA fixtures  ....................................
@@ -441,3 +446,126 @@ def test_define_bins_equal_length():
     # elements should be ints 0..triallength-1
     assert all(isinstance(b, (int, np.integer)) for b in bins)
     assert bins == list(range(triallength))
+
+
+# ------ Tests of converting SC XLS to SCdf handling different Excel col types ---
+
+
+def write_and_read_excel(df):
+    """Helper: write df to a temp xlsx and read it back as pandas would."""
+    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+        path = f.name
+    try:
+        df.to_excel(path, index=False)
+        return pd.read_excel(path)
+    finally:
+        os.unlink(path)
+
+
+# unit tests of coerce function
+def test_coerce_plain_float():
+    assert coerce_to_float(2.58) == 2.58
+
+
+def test_coerce_plain_int():
+    assert coerce_to_float(3) == 3.0
+
+
+def test_coerce_string_dot():
+    assert coerce_to_float("2.58") == 2.58
+
+
+def test_coerce_string_comma():
+    assert coerce_to_float("2,58") == 2.58
+
+
+def test_coerce_nan_float():
+    assert pd.isna(coerce_to_float(float("nan")))
+
+
+def test_coerce_nan_string():
+    assert pd.isna(coerce_to_float("nan"))
+
+
+def test_coerce_none():
+    assert pd.isna(coerce_to_float(None))
+
+
+def test_coerce_empty_string():
+    assert pd.isna(coerce_to_float(""))
+
+
+def test_coerce_garbage_string():
+    assert pd.isna(coerce_to_float("abc"))
+
+
+def test_coerce_scientific_notation():
+    assert coerce_to_float("2.58E+0") == pytest.approx(2.58)
+
+
+# XLS Col coercion integration tests
+
+
+def _make_sc_df(swing_vals, stance_vals):
+    """Build a minimal SCdf with swing/stance cols and write/read via Excel."""
+    df = pd.DataFrame(
+        {
+            SWINGSTART_COL: swing_vals,
+            STANCEEND_COL: stance_vals,
+        }
+    )
+    return write_and_read_excel(df)
+
+
+def _apply_coercion(SCdf):
+    """Mirror the coercion logic from extract_stepcycles."""
+    for col in SCdf.columns:
+        if SWINGSTART_COL in col or STANCEEND_COL in col:
+            SCdf[col] = SCdf[col].apply(coerce_to_float)
+    return SCdf
+
+
+def test_numeric_excel_column():
+    """Standard case: numeric Excel column, should pass through unchanged."""
+    SCdf = _make_sc_df([2.58, 5.12], [3.10, 6.00])
+    SCdf = _apply_coercion(SCdf)
+    assert SCdf[SWINGSTART_COL].iloc[0] == pytest.approx(2.58)
+    assert SCdf[STANCEEND_COL].iloc[1] == pytest.approx(6.00)
+
+
+def test_string_column_dot_decimal():
+    """Text Excel column with dot decimals."""
+    SCdf = _make_sc_df(["2.58", "5.12"], ["3.10", "6.00"])
+    SCdf = _apply_coercion(SCdf)
+    assert SCdf[SWINGSTART_COL].iloc[0] == pytest.approx(2.58)
+
+
+def test_string_column_comma_decimal():
+    """Text Excel column with comma decimals (European locale)."""
+    SCdf = _make_sc_df(["2,58", "5,12"], ["3,10", "6,00"])
+    SCdf = _apply_coercion(SCdf)
+    assert SCdf[SWINGSTART_COL].iloc[0] == pytest.approx(2.58)
+    assert SCdf[STANCEEND_COL].iloc[1] == pytest.approx(6.00)
+
+
+def test_nan_values_preserved():
+    """NaN cells should remain NaN after coercion."""
+    SCdf = _make_sc_df([None, 2.58], [None, 3.10])
+    SCdf = _apply_coercion(SCdf)
+    assert SCdf[SWINGSTART_COL].isna().any()
+    assert SCdf[STANCEEND_COL].isna().any()
+    assert SCdf[SWINGSTART_COL].iloc[1] == pytest.approx(2.58)
+
+
+def test_mixed_numeric_and_string():
+    """Mixed column (some numeric, some string with dot) — object dtype."""
+    SCdf = _make_sc_df([2.58, "5.12"], [3.10, "6.00"])
+    SCdf = _apply_coercion(SCdf)
+    assert SCdf[SWINGSTART_COL].iloc[1] == pytest.approx(5.12)
+
+
+def test_integer_values():
+    """Whole number timestamps (sc_times_in_frames=True case)."""
+    SCdf = _make_sc_df([100, 200], [150, 250])
+    SCdf = _apply_coercion(SCdf)
+    assert SCdf[SWINGSTART_COL].iloc[0] == 100.0

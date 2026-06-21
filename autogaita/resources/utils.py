@@ -434,6 +434,17 @@ def standardise_primary_joint_coordinates(data, tracking_software, info, cfg):
     return data, cfg
 
 
+def coerce_to_float(x):
+    """Helper function to coerce values to float for SC Extraction from Excel Files.
+    Is used with df.apply to apply to all cells of cols with SC latencies."""
+    if isinstance(x, str):
+        x = x.replace(",", ".")  # handle European decimal separator
+    try:
+        return float(x)
+    except (ValueError, TypeError):
+        return np.nan
+
+
 # ................................  plot panel  ........................................
 class PlotPanel:
     def __init__(self, fg_color, hover_color):
