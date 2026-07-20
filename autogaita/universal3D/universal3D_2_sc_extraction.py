@@ -108,17 +108,25 @@ def read_SC_info(data, SCdf, info, legname, cfg):
         print(this_message)
         write_issues_to_textfile(this_message, info)
         return
-    # b. check if this subjects ID was found more than once, if so - stop!
+    # b. check if this subject's ID was entered more than once
     if len(start_row) > 1:
-        this_message = (
-            "\n******************\n! CRITICAL ERROR !\n******************\n"
-            + f"\nID {name}"
-            + " was found more than once in ID column!"
-            + "\nCheck your Annotation Table & try again!"
-        )
-        print(this_message)
-        write_issues_to_textfile(this_message, info)
-        return
+        # if all rows are directly consecutive, the user just repeated the ID
+        # instead of leaving it blank after the first row - fix this so the rest
+        # of the code (which expects a single ID row per subject) works as-is
+        if all(np.diff(start_row) == 1):
+            SCdf.loc[start_row[1:], header_columns[0]] = np.nan
+            start_row = start_row[:1]
+        else:  # ID re-appears after other rows - malformed table
+            this_message = (
+                "\n******************\n! CRITICAL ERROR !\n******************\n"
+                + f"\nID {name}"
+                + " was found in non-subsequent rows of the Annotation Table!"
+                + "\nEntries of the same ID must be in directly consecutive rows."
+                + "\nCheck your Annotation Table & try again!"
+            )
+            print(this_message)
+            write_issues_to_textfile(this_message, info)
+            return
     # c. find start row of current leg (whileloop works for both legs)
     while SCdf.iloc[start_row, leg_col].values[0] != legname:
         start_row += 1

@@ -82,10 +82,17 @@ def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
     if len(mouse_row) == 0:
         handle_issues("no_mouse", info)
         return
-    # this mouse was included more than once
+    # this mouse's ID was entered more than once
     if len(mouse_row) > 1:
-        handle_issues("double_mouse", info)
-        return
+        # if all rows are directly consecutive, the user just repeated the ID
+        # instead of leaving it blank after the first row - fix this so the rest
+        # of the code (which expects blank continuation rows) works as-is
+        if all(np.diff(mouse_row) == 1):
+            SCdf.loc[mouse_row[1:], header_columns[0]] = np.nan
+            mouse_row = mouse_row[:1]
+        else:  # ID re-appears after other IDs' rows - malformed table
+            handle_issues("nonsubsequent_mouse", info)
+            return
 
     next_mouse_idx = mouse_row  # search idx of first row of next mouse
 

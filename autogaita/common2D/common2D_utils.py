@@ -432,12 +432,15 @@ def handle_issues(condition, info):
         )
         print(this_message)
         write_issues_to_textfile(this_message, info)
-    # 5:
-    elif condition == "double_mouse":
+    # 5: same ID entered in more than one row, but those rows aren't consecutive
+    #    (a repeated-but-consecutive ID is auto-fixed upstream and never reaches here)
+    elif condition == "nonsubsequent_mouse":
         this_message = (
             "\n***********\n! WARNING !\n***********\n"
-            + "Skipped since ID found more than once in "
-            + "Annotation Table!"
+            + "Skipped since ID was found more than once in non-subsequent rows "
+            + "of the Annotation Table!\nEntries of the same ID must be in "
+            + "subsequent (i.e., directly consecutive) rows - check your "
+            + "Annotation Table & try again!"
         )
         print(this_message)
         write_issues_to_textfile(this_message, info)

@@ -19,6 +19,7 @@ from autogaita.common2D.common2D_constants import (
 from hypothesis import given, strategies as st, settings, HealthCheck
 import os
 import numpy as np
+import pandas as pd
 import pytest
 import openpyxl
 
@@ -130,6 +131,40 @@ def create_a_frames_annotation_table(tmp_path):
     return str(tmp_path), "frames_annotation_table.xlsx"
 
 
+@pytest.fixture
+def create_a_duplicate_ID_annotation_table(tmp_path, extract_folderinfo):
+    """Copy the real Annotation Table but repeat mouse 15's ID on every row of its
+    block instead of leaving it blank after the first row - mirrors a user filling
+    in the ID column instead of using the blank-continuation-row convention.
+    extract_stepcycles should auto-collapse this back to the normal format and
+    produce identical all_cycles.
+    """
+    real_table_path = os.path.join(
+        extract_folderinfo["root_dir"], extract_folderinfo["sctable_filename"]
+    )
+    SCdf = pd.read_excel(real_table_path)
+
+    mouse_col = "Mouse"
+    # find all row-indices belonging to mouse 15's contiguous block (ID row + all
+    # following blank-ID rows, up to but excluding the next mouse)
+    in_mouse_block = False
+    block_idxs = []
+    for idx, row in SCdf.iterrows():
+        cell_val = row[mouse_col]
+        if cell_val == 15:
+            in_mouse_block = True
+        elif not pd.isna(cell_val):
+            in_mouse_block = False
+        if in_mouse_block:
+            block_idxs.append(idx)
+
+    SCdf.loc[block_idxs, mouse_col] = 15  # repeat ID on every block row
+
+    table_path = tmp_path / "duplicate_ID_annotation_table.xlsx"
+    SCdf.to_excel(table_path, index=False)
+    return str(tmp_path), "duplicate_ID_annotation_table.xlsx"
+
+
 # %%..............................  test golden path  ..................................
 
 
@@ -147,6 +182,41 @@ def test_golden_path_extract_stepcycles(
         )
         == expected_cycles
     )
+
+
+def test_extract_stepcycles_with_duplicate_ID_matches_golden_path(
+    extract_data_using_some_prep,
+    extract_info,
+    extract_folderinfo,
+    extract_cfg,
+    create_a_duplicate_ID_annotation_table,
+):
+    """A table where mouse 15's ID is repeated (instead of left blank) on every row
+    of its contiguous block must auto-collapse and produce identical all_cycles to
+    the normal blank-formatted table.
+    """
+    expected_cycles = [[284, 317], [318, 359], [413, 441]]
+    golden_cycles = extract_stepcycles(
+        "DLC",
+        extract_data_using_some_prep,
+        extract_info,
+        extract_folderinfo,
+        extract_cfg,
+    )
+    assert golden_cycles == expected_cycles
+
+    root_dir, sctable_filename = create_a_duplicate_ID_annotation_table
+    duplicate_id_folderinfo = extract_folderinfo.copy()
+    duplicate_id_folderinfo["root_dir"] = root_dir
+    duplicate_id_folderinfo["sctable_filename"] = sctable_filename
+    duplicate_id_cycles = extract_stepcycles(
+        "DLC",
+        extract_data_using_some_prep,
+        extract_info,
+        duplicate_id_folderinfo,
+        extract_cfg,
+    )
+    assert duplicate_id_cycles == expected_cycles
 
 
 # %%...................  test Annotation Table checks & handle_issues  .................
@@ -267,7 +337,7 @@ def test_handle_issues_5_double_ID_in_annotation_table_in_extract_stepcycles(
     )
     with open(os.path.join(extract_info["results_dir"], "Issues.txt")) as f:
         content = f.read()
-    assert "ID found more than once in Annotation Table!" in content
+    assert "ID was found more than once in non-subsequent rows" in content
 
 
 # .....................  test clean all_cycles local functions  ........................

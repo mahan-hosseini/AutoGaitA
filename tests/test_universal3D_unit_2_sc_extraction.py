@@ -118,6 +118,40 @@ def create_a_frames_annotation_table(tmp_path, extract_cfg, extract_folderinfo):
     return str(tmp_path), "frames_SC_Latency_Table.xlsx"
 
 
+@pytest.fixture
+def create_a_duplicate_ID_annotation_table(tmp_path, extract_folderinfo):
+    """Copy the real Annotation Table but repeat TestSubject's ID on every row of
+    their block instead of leaving it blank after the first row - mirrors a user
+    filling in the ID column instead of using the blank-continuation-row
+    convention. extract_stepcycles should auto-collapse this back to the normal
+    format and produce identical all_cycles.
+    """
+    real_table_path = os.path.join(
+        extract_folderinfo["root_dir"], extract_folderinfo["sctable_filename"]
+    )
+    SCdf = pd.read_excel(real_table_path, engine="openpyxl")
+
+    subj_col = "Subject"
+    # find all row-indices belonging to TestSubject's contiguous block (ID row +
+    # all following blank-subject rows, up to but excluding the next subject)
+    in_subject_block = False
+    block_idxs = []
+    for idx, row in SCdf.iterrows():
+        cell_val = row[subj_col]
+        if str(cell_val) == "TestSubject":
+            in_subject_block = True
+        elif not pd.isna(cell_val):
+            in_subject_block = False
+        if in_subject_block:
+            block_idxs.append(idx)
+
+    SCdf.loc[block_idxs, subj_col] = "TestSubject"  # repeat ID on every block row
+
+    table_path = tmp_path / "duplicate_ID_SC_Latency_Table.xlsx"
+    SCdf.to_excel(table_path, index=False, engine="openpyxl")
+    return str(tmp_path), "duplicate_ID_SC_Latency_Table.xlsx"
+
+
 # ..................................  tests  .........................................
 
 
@@ -196,3 +230,33 @@ def test_cycles_after_frames_times_matches_original_cycles(
     )
 
     assert frames_cycles == expected_cycles
+
+
+def test_cycles_after_duplicate_ID_matches_original_cycles(
+    extract_data,
+    extract_info,
+    extract_folderinfo,
+    extract_cfg,
+    create_a_duplicate_ID_annotation_table,
+):
+    """A table where TestSubject's ID is repeated (instead of left blank) on every
+    row of their contiguous block must auto-collapse and produce identical
+    all_cycles to the normal blank-formatted table.
+    """
+    os.makedirs(extract_info["results_dir"], exist_ok=True)
+
+    data = extract_data
+
+    expected_cycles = extract_stepcycles(
+        data, extract_info, extract_folderinfo, extract_cfg
+    )
+
+    root_dir, sctable_filename = create_a_duplicate_ID_annotation_table
+    duplicate_id_folderinfo = extract_folderinfo.copy()
+    duplicate_id_folderinfo["root_dir"] = root_dir
+    duplicate_id_folderinfo["sctable_filename"] = sctable_filename
+    duplicate_id_cycles = extract_stepcycles(
+        data, extract_info, duplicate_id_folderinfo, extract_cfg
+    )
+
+    assert duplicate_id_cycles == expected_cycles

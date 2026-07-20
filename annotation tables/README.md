@@ -3,7 +3,7 @@
 In this folder we provide template and example Annotation Tables for *AutoGaitA DLC* and *AutoGaitA Universal 3D*. Use **[this link](https://fz-juelich.sciebo.de/s/CsfBx72yCKfnyAJ)** to download all files. Users are advised to first watch our **[instruction videos on YouTube](https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&si=mV5p2--nYvbofkPh)**, then fill out a template Annotation Table with their time information and use the example Annotation Tables to confirm correct formatting.
 
 ## General Recommendations
-1. Enter time in frames or in seconds with time of videos starting at zero (i.e., the first frame corresponds to 1 / sampling rate (in Hz) seconds). 
+1. Enter frame numbers or time in seconds with time of videos starting at zero (i.e., the first frame corresponds to 1 / sampling rate (in Hz) seconds). If entering frame numbers make sure to check the option for it in the GUI. 
 2. Please save .xlsx files.
 3. Please use numeric columns for time stamps (text columns are not recommended but in theory work if you use dots for decimals (e.g. 2.58)).
 4. Please define step-cycles as the start of one swing-phase (in the _Swing (ti)_ columns) to the end of the subsequent stance-phase/start of the next swing-phase (in the _Stance (te)_ columns).
