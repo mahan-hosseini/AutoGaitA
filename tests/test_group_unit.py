@@ -15,7 +15,11 @@ from autogaita.group.group_3_PCA import (
     run_PCA_PERMANOVA,
     convert_PCA_bins_to_list,
 )
-from autogaita.group.group_4_stats import run_ANOVA, multcompare_SC_Percentages
+from autogaita.group.group_4_stats import (
+    run_ANOVA,
+    multcompare_SC_Percentages,
+    save_multcomp_pvalues_to_excel,
+)
 from autogaita.resources.utils import bin_num_to_percentages
 import os
 import math
@@ -24,8 +28,14 @@ from sklearn import datasets
 import pandas as pd
 import pandas.testing as pdt
 import numpy as np
+import openpyxl
 
-from autogaita.group.group_constants import PCA_PERMANOVA_TXT_FILENAME
+from autogaita.group.group_constants import (
+    PCA_PERMANOVA_TXT_FILENAME,
+    MULTCOMP_EXCEL_FILENAME_1,
+    MULTCOMP_RESULT_SPLIT_STR,
+)
+from autogaita.resources.constants import SC_PERCENTAGE_COL
 
 
 # %%................................  fixtures  ........................................
@@ -306,6 +316,39 @@ def test_multcomp_df_with_scipy_example(extract_folderinfo, extract_cfg):
     correct_results = [-4.6, -0.260, 4.34, 0.014, 0.980, 0.02, -8.249, -3.909, 0.691, -0.951, 3.389, 7.989]  
     for r, result in enumerate(correct_results):
         assert math.isclose(result, multcomp_df.iloc[0, r+1], abs_tol=0.001)
+
+
+def test_significance_stars_are_thresholded_correctly(tmp_path):
+    """Ensure that the significance-star column (col 6) of the multiple-
+    comparison Excel must map p-values to ***/**/*/n.s. correctly. I write this test after catching a bug where ** / *** were unreachable (every significant result showed a single *).
+    """
+    contrasts = ["A", "B", "C", "D"]
+    # one p-value per band: expect ***, **, *, n.s. respectively
+    p_values = {"A": 0.0005, "B": 0.005, "C": 0.03, "D": 0.2}
+    expected_stars = ["***", "**", "*", "n.s."]
+    # build a 1-SC-percentage-row multcomp_df in the exact column format the writer reads
+    row = {SC_PERCENTAGE_COL: 0.0}
+    for contrast in contrasts:
+        split = MULTCOMP_RESULT_SPLIT_STR + contrast
+        row["q" + split] = 1.0  # dummy
+        row["p" + split] = p_values[contrast]
+        row["CI low" + split] = 0.0  # dummy
+        row["CI high" + split] = 1.0  # dummy
+    # float64 dtype so .loc[...] returns numpy scalars that support .round(4)
+    multcomp_df = pd.DataFrame([row]).astype(float)
+
+    folderinfo = {"contrasts": contrasts, "results_dir": str(tmp_path)}
+    cfg = {"stats_threshold": 0.05}
+    save_multcomp_pvalues_to_excel(multcomp_df, "TestVar", folderinfo, cfg)
+
+    workbook = openpyxl.load_workbook(os.path.join(tmp_path, MULTCOMP_EXCEL_FILENAME_1))
+    sheet = workbook["TestVar"]
+    # single SC block: header row 1, empty row 2, "% cycle" row 3, contrast rows 4-7;
+    # significance level is column 6 (F)
+    actual_stars = [
+        sheet.cell(row=4 + i, column=6).value for i in range(len(contrasts))
+    ]
+    assert actual_stars == expected_stars
 
 
 # %%..................................  PCA  ...........................................

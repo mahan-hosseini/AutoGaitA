@@ -1040,12 +1040,13 @@ def save_multcomp_pvalues_to_excel(multcomp_df, stats_var, folderinfo, cfg):
                 value=this_mask,
             )
             # col 6: significance level
-            if this_p < 0.05:
-                this_sig_level = "*"
+            # NOTE: ensure the smallest p is first because we use < and "elif"
+            if this_p < 0.001:
+                this_sig_level = "***"
             elif this_p < 0.01:
                 this_sig_level = "**"
-            elif this_p < 0.001:
-                this_sig_level = "***"
+            elif this_p < 0.05:
+                this_sig_level = "*"
             else:
                 this_sig_level = "n.s."
             sheet.cell(
