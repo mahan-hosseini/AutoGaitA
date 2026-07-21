@@ -185,12 +185,11 @@ def some_prep(info, folderinfo, cfg):
         write_issues_to_textfile(unable_to_convert_message, info)
         raise ValueError(unable_to_convert_message)
 
-    # Standardise y columns to be positive & afterwards save global y_max for flipping
+    # Standardise y columns to be positive
     y_cols = [col for col in data.columns if col.endswith("Y")]
     global_Y_min = min(data[y_cols].min())
     if global_Y_min < 0:
         data[y_cols] += abs(global_Y_min)
-    global_Y_max = max(data[y_cols].max())
 
     # Standardise all Z columns to global Z minimum or a user-provided joint
     z_cols = [col for col in data.columns if col.endswith("Z")]  # Find all Z cols
@@ -210,6 +209,11 @@ def some_prep(info, folderinfo, cfg):
         data, cfg = standardise_primary_joint_coordinates(
             data, tracking_software, info, cfg
         )
+    # Save the global y_max used for flipping immediately before returning
+    # => Importantly, this ensures that we compute it after coordinate-standardisation,
+    #    which affects the scale of all values and, thus, if we compute the max y
+    #    before it would not be the max y really
+    global_Y_max = max(data[y_cols].max())
     return data, global_Y_max
 
 

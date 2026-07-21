@@ -274,6 +274,21 @@ def test_correct_coordinate_standardisation(
         )
 
 
+def test_global_Y_max_reflects_standardised_data(
+    extract_3D_info, extract_3D_folderinfo, extract_3D_cfg
+):
+    """The global_Y_max returned by universal3D some_prep must be computed AFTER coordinate-standardisation divides the Y columns. Otherwise it would reflect the pre-division scale, which corrupts gait-flipping"""
+    extract_3D_cfg["coordinate_standardisation_xls"] = (
+        "tests/test_data/utils/Correct Universal 3D CoordStand Table.xlsx"
+    )
+    data, global_Y_max = some_prep_3D(
+        extract_3D_info, extract_3D_folderinfo, extract_3D_cfg
+    )
+    y_cols = [col for col in data.columns if col.endswith("Y")]
+    # global_Y_max must match the max of the standardised data that is actually returned
+    assert global_Y_max == pytest.approx(max(data[y_cols].max()))
+
+
 def test_angles_are_unaffected_by_coordinate_standardisation(
     extract_2D_info, extract_2D_folderinfo, extract_2D_cfg
 ):
