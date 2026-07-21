@@ -362,7 +362,10 @@ def check_tracking_SLEAP_nans(all_cycles, data, info, cfg):
     hind_joints = cfg["hind_joints"]
     angles = cfg["angles"]
     # all joints to test for NaNs
-    all_joints = hind_joints
+    # Important to use list() here so we copy cfg["hind_joints"]. If we would go
+    # all_joints = cfg... we would mutate the dict in place here and mess up with
+    # places where the dict is used downstream
+    all_joints = list(hind_joints)
     for key in angles.keys():
         all_joints += angles[key]
     # columns to check

@@ -457,6 +457,7 @@ def test_clean_cycles_6_SLEAP_nan_removals(
     all_cycles = [[111, 222], [333, 444], [555, 666]]
     data.loc[123, "Hind paw tao y"] = np.nan
     data.loc[444, "Elbow x"] = np.nan
+    hind_joints_before = list(extract_cfg["hind_joints"])
     clean_cycles = check_tracking_SLEAP_nans(
         all_cycles,
         data,
@@ -464,6 +465,28 @@ def test_clean_cycles_6_SLEAP_nan_removals(
         extract_cfg,
     )
     assert clean_cycles == [[555, 666]]
+    # the NaN check must not mutate cfg["hind_joints"] (see dedicated test below)
+    assert extract_cfg["hind_joints"] == hind_joints_before
+
+
+def test_check_tracking_SLEAP_nans_does_not_mutate_hind_joints(
+    extract_data_using_some_prep, extract_info, extract_cfg
+):
+    """check_tracking_SLEAP_nans leaves cfg["hind_joints"] untouched. It would mess up processing downstream if the cfg dict itself is changed."""
+    extract_cfg["angles"] = {
+        "name": ["Elbow "],
+        "lower_joint": ["Wrist "],
+        "upper_joint": ["Lower Shoulder "],
+    }
+    data = extract_data_using_some_prep.copy()
+    all_cycles = [[111, 222], [333, 444], [555, 666]]
+    hind_joints_before = list(extract_cfg["hind_joints"])
+    check_tracking_SLEAP_nans(all_cycles, data, extract_info, extract_cfg)
+    # contents of hind_joints must be identical before and after the call
+    assert extract_cfg["hind_joints"] == hind_joints_before
+    # and specifically no angle-joint name may have leaked in
+    for angle_joint in ["Elbow ", "Wrist ", "Lower Shoulder "]:
+        assert angle_joint not in extract_cfg["hind_joints"]
 
 
 # %%................... test sc_times_in_frames ....................................
