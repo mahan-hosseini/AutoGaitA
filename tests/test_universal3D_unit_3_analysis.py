@@ -1,6 +1,8 @@
 from autogaita.universal3D.universal3D_3_analysis import (
     standardise_y_z_flip_gait_add_features_to_one_step,
     add_features,
+    create_both_average_and_std_sheets,
+    compute_average_and_std_data,
 )
 from hypothesis import HealthCheck, given, settings, strategies as st
 import pytest
@@ -247,3 +249,70 @@ def test_standardise_y_coordinates_gait_flipping(
     reverted_step = y_stand_step.copy()
     reverted_step[y_cols] += steps_y_min
     pdt.assert_frame_equal(reverted_step, non_stand_step)
+
+
+# %%.................  combined ("both") Average & Std sheet logic  ....................
+def _make_leg_normalised_steps(steps, bin_num):
+    """Build a per-leg normalised-steps df: each step is bin_num rows indexed 0..bin_num-1
+    (the structure compute_average_and_std_data expects), stacked vertically."""
+    frames = [pd.DataFrame(step, index=range(bin_num)) for step in steps]
+    return pd.concat(frames, axis=0)
+
+
+def test_both_sheet_transfers_bodyside_and_pools_central():
+    """The combined ("both") Average & Std sheets must (1) TRANSFER body-side columns from
+    the ACTIVE (stepping) leg rather than blending active with contralateral data, and
+    (2) POOL central/axial columns across both legs' step cycles - a true combined mean/SD,
+    NOT the mean of the two per-leg curves (which is wrong when step counts differ)."""
+    bin_num = 2
+    analyse_average_y = True
+    # unequal step counts on purpose: left = 2 SCs, right = 3 SCs
+    left_steps = [
+        {"Ankle, left X": [1, 2], "Ankle, right X": [10, 11], "Pelvis X": [100, 101]},
+        {"Ankle, left X": [3, 4], "Ankle, right X": [12, 13], "Pelvis X": [102, 103]},
+    ]
+    right_steps = [
+        {"Ankle, left X": [20, 21], "Ankle, right X": [5, 6], "Pelvis X": [200, 201]},
+        {"Ankle, left X": [22, 23], "Ankle, right X": [7, 8], "Pelvis X": [202, 203]},
+        {"Ankle, left X": [24, 25], "Ankle, right X": [9, 10], "Pelvis X": [204, 205]},
+    ]
+    left_norm = _make_leg_normalised_steps(left_steps, bin_num)
+    right_norm = _make_leg_normalised_steps(right_steps, bin_num)
+    normalised_steps_data = [left_norm, right_norm, pd.DataFrame(data=None)]
+    # per-leg average & std via the real pipeline function
+    left_avg, left_std = compute_average_and_std_data(
+        left_norm, bin_num, analyse_average_y
+    )
+    right_avg, right_std = compute_average_and_std_data(
+        right_norm, bin_num, analyse_average_y
+    )
+    average_data = [left_avg, right_avg, pd.DataFrame(data=None)]
+    std_data = [left_std, right_std, pd.DataFrame(data=None)]
+
+    average_data, std_data, only_one_valid_leg = create_both_average_and_std_sheets(
+        average_data, std_data, normalised_steps_data, bin_num, analyse_average_y
+    )
+    both_avg, both_std = average_data[-1], std_data[-1]
+    assert only_one_valid_leg is False
+
+    # (1) body-side columns are the active leg's sheet, unchanged
+    np.testing.assert_allclose(both_avg["Ankle, left X"], left_avg["Ankle, left X"])
+    np.testing.assert_allclose(both_avg["Ankle, right X"], right_avg["Ankle, right X"])
+    np.testing.assert_allclose(both_std["Ankle, left X"], left_std["Ankle, left X"])
+    np.testing.assert_allclose(both_std["Ankle, right X"], right_std["Ankle, right X"])
+
+    # (2) central column: true pooled mean/std over all 5 steps
+    pooled = np.concatenate(
+        [
+            np.array([s["Pelvis X"] for s in left_steps]),
+            np.array([s["Pelvis X"] for s in right_steps]),
+        ],
+        axis=0,
+    )  # shape (5, bin_num)
+    np.testing.assert_allclose(both_avg["Pelvis X"], pooled.mean(axis=0))
+    np.testing.assert_allclose(both_std["Pelvis X"], pooled.std(axis=0))
+    # ...and this genuinely differs from the old mean-of-two-curves behaviour (unequal N)
+    mean_of_curves = 0.5 * (
+        left_avg["Pelvis X"].to_numpy() + right_avg["Pelvis X"].to_numpy()
+    )
+    assert not np.allclose(both_avg["Pelvis X"].to_numpy(), mean_of_curves)

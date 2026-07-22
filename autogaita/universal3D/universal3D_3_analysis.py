@@ -17,6 +17,7 @@ from autogaita.universal3D.universal3D_constants import (
     LEGS,
     LEGS_COLFORMAT,
     OUTPUTS,
+    BOTH_ACTIVE_SHEET_NAME,
     ORIGINAL_XLS_FILENAME,
     Y_STANDARDISED_XLS_FILENAME,
     NORMALISED_XLS_FILENAME,
@@ -252,12 +253,16 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
     #    called with [0] to index the output-tuple and get only the df from the function
     all_steps_data = combine_legs(all_steps_data, "concatenate")[0]
     normalised_steps_data = combine_legs(normalised_steps_data, "concatenate")[0]
-    average_data = combine_legs(average_data, "average")[0]
     if standardise_y_coordinates:
         y_standardised_steps_data = combine_legs(
             y_standardised_steps_data, "concatenate"
         )[0]
-    std_data, only_one_valid_leg = combine_legs(std_data, "average")  # legvalidity here
+    # build the combined ("both") Average & Std sheets: body-side columns are
+    # transferred from the active (stepping) leg & central/axial columns are pooled
+    # across both legs
+    average_data, std_data, only_one_valid_leg = create_both_average_and_std_sheets(
+        average_data, std_data, normalised_steps_data, bin_num, analyse_average_y
+    )
     # 1b) inform user if only one leg had valid SCs (affects 3rd sheet!)
     if only_one_valid_leg:
         this_message = (
@@ -290,6 +295,14 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                     results[output]["sc_num"] = sc_num[1]
         else:
             results[output]["sc_num"] = sc_num[idx]
+        # quick prep: the combined Average/Std sheet gets a distinct name flagging its
+        # semantics (body-side cols = active leg, central cols = pooled). Original/
+        # Normalised keep "both" (what output is in the loop) since they merely
+        # concatenate both legs' steps.
+        # => so if left or right leg this is equal to output, otherwise we use the
+        #    custom sheet name
+        avg_std_sheet = BOTH_ACTIVE_SHEET_NAME if output == OUTPUTS[-1] else output
+        # ----- CONCATENATING DFs -----
         save_results_sheet(
             all_steps_data[idx],
             output,
@@ -302,18 +315,6 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
             os.path.join(results_dir, name + NORMALISED_XLS_FILENAME),
             only_one_valid_leg,
         )
-        save_results_sheet(
-            average_data[idx],
-            output,
-            os.path.join(results_dir, name + AVERAGE_XLS_FILENAME),
-            only_one_valid_leg,
-        )
-        save_results_sheet(
-            std_data[idx],
-            output,
-            os.path.join(results_dir, name + STD_XLS_FILENAME),
-            only_one_valid_leg,
-        )
         if standardise_y_coordinates:
             save_results_sheet(
                 y_standardised_steps_data[idx],
@@ -321,6 +322,19 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
                 os.path.join(results_dir, name + Y_STANDARDISED_XLS_FILENAME),
                 only_one_valid_leg,
             )
+        # ----- COMBINING DFs -----
+        save_results_sheet(
+            average_data[idx],
+            avg_std_sheet,
+            os.path.join(results_dir, name + AVERAGE_XLS_FILENAME),
+            only_one_valid_leg,
+        )
+        save_results_sheet(
+            std_data[idx],
+            avg_std_sheet,
+            os.path.join(results_dir, name + STD_XLS_FILENAME),
+            only_one_valid_leg,
+        )
     return results
 
 
@@ -695,6 +709,77 @@ def combine_legs(dataframe_list, combination_procedure):
                 this_data[:, 1] = np.asarray(dataframe_list[1][col])
                 dataframe_list[-1][col] = np.mean(this_data, axis=1)
     return dataframe_list, only_one_valid_leg
+
+
+def create_both_average_and_std_sheets(
+    average_data, std_data, normalised_steps_data, bin_num, analyse_average_y
+):
+    """Build the combined ("both") Average & Std sheets correctly.
+
+    This approach copies each body-side column (that has ", left " or ", right ") from the sheet where that side is the ACTIVE (stepping) leg - left sheet for ", left ", right sheet for ", right ".
+    For central / axial columns (no leg identifier, e.g. Pelvis/Spine) we POOL DATA across BOTH legs' step cycles to get a true combined mean & SD (not a mean of the two per-leg means or stds, which would be only correct if both legs have the same number of step cycles).
+
+    average_data/std_data are [left, right, both] lists; we fill the both (-1) index and
+    return them together with only_one_valid_leg (same semantics as combine_legs).
+    """
+    # detect a single valid leg the same way combine_legs does (invalid leg's av/std df
+    # has only the SC_PERCENTAGE_COL column)
+    only_one_valid_leg = False
+    if (
+        len(average_data[0].columns) == 1
+        and average_data[0].columns[0] == SC_PERCENTAGE_COL
+    ):
+        only_one_valid_leg = "right"
+    if (
+        len(average_data[1].columns) == 1
+        and average_data[1].columns[0] == SC_PERCENTAGE_COL
+    ):
+        only_one_valid_leg = "left"
+    # ONLY ONE LEG VALID
+    # => "both" is just a copy of that leg (as combine_legs did)
+    if only_one_valid_leg == "left":
+        average_data[-1] = average_data[0].copy()
+        std_data[-1] = std_data[0].copy()
+        return average_data, std_data, only_one_valid_leg
+    elif only_one_valid_leg == "right":
+        average_data[-1] = average_data[1].copy()
+        std_data[-1] = std_data[1].copy()
+        return average_data, std_data, only_one_valid_leg
+    # BOTH LEGS ARE VALID - INITIALISE BOTH DFs as LEFT DFs.
+    # => start from the left sheet - it gives the canonical column set & order,
+    #    and its ", left " columns are already the active left leg (correct as-is)
+    both_average = average_data[0].copy()
+    both_std = std_data[0].copy()
+    # PREP POOLED NORM DFs
+    # => reuse compute_average_and_std_data (identical binning & np.mean/np.std as the
+    #    per-leg sheets)
+    pooled_normalised_steps = pd.concat(
+        [normalised_steps_data[0], normalised_steps_data[1]], axis=0
+    )
+    pooled_average, pooled_std = compute_average_and_std_data(
+        pooled_normalised_steps, bin_num, analyse_average_y
+    )
+    # LOOP over all cols and
+    # => if left - leave as initialised
+    # => if right - copy avg/std df[1]
+    # => if central - copy the pooled df's col
+    for col in both_average.columns:
+        if col == SC_PERCENTAGE_COL:
+            continue
+        elif LEGS_COLFORMAT[0] in col:  # ", left " -> already correct (from left sheet)
+            continue
+        elif (
+            LEGS_COLFORMAT[1] in col
+        ):  # ", right " -> transfer from the active right leg
+            both_average[col] = average_data[1][col].to_numpy()
+            both_std[col] = std_data[1][col].to_numpy()
+        else:  # central/axial column (no leg identifier) -> true pooled statistic
+            both_average[col] = pooled_average[col].to_numpy()
+            both_std[col] = pooled_std[col].to_numpy()
+    # FINALLY - assign to average/std dfs list last index (-1)
+    average_data[-1] = both_average
+    std_data[-1] = both_std
+    return average_data, std_data, only_one_valid_leg
 
 
 # ......................................................................................

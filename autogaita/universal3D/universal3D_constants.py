@@ -4,6 +4,11 @@ from autogaita.resources.constants import TIME_COL
 LEGS = ["left", "right"]
 LEGS_COLFORMAT = [", left ", ", right "]
 OUTPUTS = LEGS + ["both"]
+# sheet name of the combined ("both") sheet in the Average & Std XLS files
+# => NOT plain "both" (as in the Original/Normalised files, which concatenate steps) because
+#    here body-side columns show each side during its OWN (active) step cycle, while central/
+#    axial columns are pooled across both legs' steps - see create_both_average_and_std_sheets
+BOTH_ACTIVE_SHEET_NAME = "both (stepping side,pooled mid)"
 # sc extraction
 SCXLS_SUBJCOLS = [
     "Participant",

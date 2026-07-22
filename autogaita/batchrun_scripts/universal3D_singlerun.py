@@ -37,20 +37,11 @@ def universal3D_singlerun():
     cfg["sc_times_in_frames"] = False
     cfg["y_standardisation_joint"] = ["Midfoot, left"]
     cfg["coordinate_standardisation_xls"] = ""
-    cfg["joints"] = [
-        # "R1-ThCx",
-        "Midfoot",
-        "Ankle",
-        "Knee",
-        "Hip",
-        "Pelvis",
-        "Shoulder",
-        "Neck",
-    ]
+    cfg["joints"] = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis "]
     cfg["angles"] = {
-        "name": ["Ankle", "Knee"],
-        "lower_joint": ["Midfoot", "Ankle"],
-        "upper_joint": ["Knee", "Hip"],
+        "name": ["Ankle", "Knee", "Hip"],
+        "lower_joint": ["Midfoot", "Ankle", "Knee"],
+        "upper_joint": ["Knee", "Hip", "Pelvis "],
     }
     # info
     info = {}
