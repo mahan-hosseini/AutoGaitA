@@ -10,6 +10,7 @@ from autogaita.group.group_utils import (
 )
 import os
 import sys
+import warnings
 import pandas as pd
 import numpy as np
 import string
@@ -559,28 +560,33 @@ def run_ANOVA(stats_df, stats_var, cfg):
     #    behave as expected
     # => Still decided to leave these lines here as they are because they do not
     #    affect anything really
-    if anova_design == "RM ANOVA":
-        result = stats_df.rm_anova(
-            dv=stats_var, within=[SC_PERCENTAGE_COL, GROUP_COL], subject=ID_COL
-        )
-    elif anova_design == "Mixed ANOVA":
-        result = stats_df.mixed_anova(
-            dv=stats_var,
-            within=SC_PERCENTAGE_COL,
-            between=GROUP_COL,
-            subject=ID_COL,
-        )
-    elif anova_design == "2-way RM ANOVA":
-        result = stats_df.rm_anova(
-            dv=stats_var, within=[factor_1_col, factor_2_col], subject=ID_COL
-        )
-    elif anova_design == "2-way Mixed ANOVA":
-        result = stats_df.mixed_anova(
-            dv=stats_var,
-            within=within_factor_col,
-            between=between_factor_col,
-            subject=ID_COL,
-        )
+    # About filtering warnings below
+    # => pingouin's sphericity/epsilon computation uses pandas' groupby (axis=1), which
+    #    was deprecated in pd 3.0. I pin pd to <3.0 so this will never be a problem.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", FutureWarning)
+        if anova_design == "RM ANOVA":
+            result = stats_df.rm_anova(
+                dv=stats_var, within=[SC_PERCENTAGE_COL, GROUP_COL], subject=ID_COL
+            )
+        elif anova_design == "Mixed ANOVA":
+            result = stats_df.mixed_anova(
+                dv=stats_var,
+                within=SC_PERCENTAGE_COL,
+                between=GROUP_COL,
+                subject=ID_COL,
+            )
+        elif anova_design == "2-way RM ANOVA":
+            result = stats_df.rm_anova(
+                dv=stats_var, within=[factor_1_col, factor_2_col], subject=ID_COL
+            )
+        elif anova_design == "2-way Mixed ANOVA":
+            result = stats_df.mixed_anova(
+                dv=stats_var,
+                within=within_factor_col,
+                between=between_factor_col,
+                subject=ID_COL,
+            )
     return result
 
 
