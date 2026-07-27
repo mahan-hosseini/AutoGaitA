@@ -9,6 +9,7 @@ import seaborn as sns
 from autogaita.resources.constants import ISSUES_TXT_FILENAME, CONFIG_JSON_FILENAME
 from autogaita.group.group_constants import (
     FIRST_LEVEL_CFG_VARS_TO_NOT_CHECK,
+    CFG_KEYS_NOT_FOR_JSON,
     GROUP_CONFIG_TXT_FILENAME,
     STATS_TXT_FILENAME,
     MULTCOMP_EXCEL_FILENAME_1,
@@ -121,10 +122,28 @@ def some_prep(folderinfo, cfg):
     if os.path.exists(config_json_path):
         with open(config_json_path, "r") as config_json_file:
             existing_cfg = json.load(config_json_file)
-        existing_cfg.update({key: cfg[key] for key in cfg if key in existing_cfg})
+        # if results_dir was a first-level results_dir the cfg update stuff below will
+        # break. just force users to have a separate results_dir for group analysis
+        if "PCA_variables" not in existing_cfg:
+            error_message = (
+                "\n*********\n! ERROR !\n*********\n"
+                + "The results directory you chose already contains a config.json "
+                + "from a first-level (DLC/SLEAP/3D) analysis:\n"
+                + config_json_path
+                + "\nPlease choose a results directory that is NOT a first-level "
+                + "Results folder and try again."
+            )
+            write_issues_to_textfile(error_message, folderinfo)
+            raise ValueError(error_message)
+        # otherwise this run's cfg wins; keys only in the old file (none expected) survive
+        existing_cfg.update(cfg)
         cfg = existing_cfg  # update cfg with existing keys
+    # exclude cycler vars (not json serialisable) & "loaded" which is just for a test
     with open(config_json_path, "w") as config_json_file:
-        json.dump(cfg, config_json_file)
+        json.dump(
+            {key: cfg[key] for key in cfg if key not in CFG_KEYS_NOT_FOR_JSON},
+            config_json_file,
+        )
 
     # create this plot stuff manually (cycler objects cannot be written to json)
     cfg["group_color_cycler"] = plt.cycler(

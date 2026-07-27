@@ -8,6 +8,19 @@ MULTCOMP_EXCEL_FILENAME_2 = "Stats Multiple Comparison - Version 2.xlsx"
 # FIRST LEVEL CONFIG VARS TO NOT CHECK FOR EQUIVALENCE
 FIRST_LEVEL_CFG_VARS_TO_NOT_CHECK = [
     "sc_times_in_frames",
+    "autogaita_version",
+    "pixel_to_mm_ratio",
+    "coordinate_standardisation_xls",
+]
+
+# DERIVED CFG KEYS TO NOT WRITE TO CONFIG.JSON
+# => cyclers not json serialisable and loaded is just used in a unit test
+CFG_KEYS_NOT_FOR_JSON = [
+    "group_color_cycler",
+    "group_color_dict",
+    "joint_color_cycler",
+    "angle_color_cycler",
+    "loaded",
 ]
 
 # EXPORT XLS
