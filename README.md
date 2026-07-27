@@ -54,7 +54,7 @@ For upgrading a pip-installed version activate your virtual environment and ente
 
 # Demo Video
 *Check out the video below for a demonstration of AutoGaitA's main workflow!*
-<p><a href="https://youtu.be/_HIZVuUzpzk?feature=shared">
+<p><a href="https://youtu.be/5_ZwC4z-pn0?si=cQL3G3_y2L5xXaW6">
 <img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/autogaita/resources/pic_to_demo_for_repo.png" width="550">
 
 # Tutorials & Examples
