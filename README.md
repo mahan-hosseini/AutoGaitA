@@ -74,7 +74,9 @@ Annotation Table example and template files for *AutoGaitA DLC* and *AutoGaitA U
 Users are advised to read the **General Recommendations** section of that folder, use the template to enter their data's timestamp information and to then compare the resulting table with our example to check formatting. Users working with ImageJ/FIJI are encouraged to check out the [AnnotationTable-Plugin](https://github.com/luca-flemming/AnnotationTable-Plugin) developed by our contributor Luca Flemming.
 
 # Documentation
+<p><a href="https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?usp=sharing">
 <img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/autogaita/resources/pic_to_doc_for_repo.png" width="550">
+
 **[The AutoGaitA Documentation](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?usp=sharing) provides complete guidelines on installation, file preparation, AutoGaitA GUIs, using AutoGaitA via the command line, installing FFmpeg for rotating 3D PCA videos, lists known issues and FAQ.**  
 
 # Two important options
