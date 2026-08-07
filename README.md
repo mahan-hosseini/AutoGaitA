@@ -75,7 +75,7 @@ Users are advised to read the **General Recommendations** section of that folder
 
 # Documentation
 <p><a href="https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?usp=sharing">
-<img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/autogaita/resources/pic_to_doc_for_repo.png" width="600">
+<img src="https://github.com/mahan-hosseini/AutoGaitA/blob/main/autogaita/resources/pic_to_doc_for_repo.png" width="650">
 
 **[The AutoGaitA Documentation](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?usp=sharing) provides complete guidelines on installation, file preparation, AutoGaitA GUIs, using AutoGaitA via the command line, installing FFmpeg for rotating 3D PCA videos, lists known issues and FAQ.**  
 
