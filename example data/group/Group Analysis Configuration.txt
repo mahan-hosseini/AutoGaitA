@@ -62,7 +62,7 @@ Hip Angle Acceleration
 
 PC-Number Configuration
 -----------------------
-10.0 principal components
+10 principal components
 
 
 ----------------------------------------------------------------
@@ -77,6 +77,6 @@ Ankle Angle
 Configuration
 -------------
 RM ANOVA
-Cluster-extent permutation test with 10000 permutations
+No Permutation Test
 Alpha Level of 5.0%
 

@@ -49,31 +49,67 @@ def extract_cfg():
     cfg = {}
     cfg["do_permtest"] = False
     cfg["do_anova"] = True
-    cfg["permutation_number"] = 100
-    cfg["PCA_n_components"] = 3
-    cfg["PCA_custom_scatter_PCs"] = ""
-    cfg["PCA_save_3D_video"] = False
-    cfg["PCA_bins"] = ""
-    cfg["stats_threshold"] = 0.05
-    cfg["plot_SE"] = False
-    cfg["color_palette"] = "viridis"
-    cfg["dont_show_plots"] = True
-    cfg["legend_outside"] = True
-    cfg["which_leg"] = "left"
     cfg["anova_design"] = "RM ANOVA"
-    cfg["permutation_number"] = 100
+    cfg["permutation_number"] = 10000
+    cfg["stats_threshold"] = 0.05
+    cfg["which_leg"] = "right"
+    cfg["PCA_n_components"] = 10
+    cfg["PCA_custom_scatter_PCs"] = ""
+    cfg["PCA_save_3D_video"] = True
+    cfg["PCA_bins"] = ""
+    cfg["plot_SE"] = True
+    cfg["color_palette"] = "Set2"
+    cfg["dont_show_plots"] = False
+    cfg["legend_outside"] = True
     # NOTE - PCA & stats lists MUST be kept in this order
     # (otherwise PCA.Info & Stats.txt wont be equivalent to TRUE_DATA's)
     # => it's this order because it resulted from group_gui input (and thus corresponds to the checkbox-order of the features window)
+    cfg["stats_variables"] = ["Ankle y", "Ankle Angle"]
     cfg["PCA_variables"] = [
+        "Nose x",
+        "Nose y",
+        "Ear base x",
+        "Ear base y",
+        "Front paw tao x",
+        "Front paw tao y",
+        "Wrist x",
+        "Wrist y",
+        "Elbow x",
+        "Elbow y",
+        "Lower Shoulder x",
+        "Lower Shoulder y",
+        "Upper Shoulder x",
+        "Upper Shoulder y",
+        "Iliac Crest x",
+        "Iliac Crest y",
+        "Hip x",
+        "Hip y",
+        "Knee x",
         "Knee y",
+        "Ankle x",
         "Ankle y",
+        "Hind paw tao x",
         "Hind paw tao y",
+        "Hind paw tao Velocity",
+        "Hind paw tao Acceleration",
+        "Ankle Velocity",
+        "Ankle Acceleration",
+        "Knee Velocity",
+        "Knee Acceleration",
+        "Hip Velocity",
+        "Hip Acceleration",
+        "Iliac Crest Velocity",
+        "Iliac Crest Acceleration",
         "Ankle Angle",
         "Knee Angle",
         "Hip Angle",
+        "Ankle Angle Velocity",
+        "Ankle Angle Acceleration",
+        "Knee Angle Velocity",
+        "Knee Angle Acceleration",
+        "Hip Angle Velocity",
+        "Hip Angle Acceleration",
     ]
-    cfg["stats_variables"] = cfg["PCA_variables"]
     return cfg
 
 

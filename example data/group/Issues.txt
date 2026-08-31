@@ -9,4 +9,4 @@ We found duplicate IDs in your data and are cancelling PERMANOVA since it is not
 
 Following IDs with valid data in all conditions after first-level analyses will be included in RM ANOVA:
 
-['17.0', '15.0', '18.0']
+['15.0', '17.0', '18.0']

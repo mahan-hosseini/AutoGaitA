@@ -228,6 +228,10 @@ def extract_save_to_xls_and_test_PCA_config(folderinfo, cfg):
                 + "just don't choose any variables for it."
             )
             cfg["PCA_n_components"] = 2  # make sure to update in cfg dict
+        # this is stupid but it's to ensure integers else approval test fails when
+        # comparing GUI to test-run-results
+        if cfg["PCA_n_components"] > 1:
+            cfg["PCA_n_components"] = int(cfg["PCA_n_components"])
     # small fix to ensure that PCA vars don't have duplicates (this would have severe
     # consequences for run_PCA since features of PCA_model output and "my" features var
     # would not match)
