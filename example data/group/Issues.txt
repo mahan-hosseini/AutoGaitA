@@ -1,0 +1,12 @@
+
+***********
+! WARNING !
+***********
+We found duplicate IDs in your data and are cancelling PERMANOVA since it is not supported for within-subject designs.
+********
+! INFO !
+********
+
+Following IDs with valid data in all conditions after first-level analyses will be included in RM ANOVA:
+
+['18.0', '15.0', '17.0']

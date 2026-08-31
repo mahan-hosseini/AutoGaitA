@@ -2,7 +2,7 @@
 ***********
 ! WARNING !
 ***********
-Skipped since no SCs in latency XLS!
+Skipped since no SCs in Annotation Table!
 ***********
 ! WARNING !
 ***********

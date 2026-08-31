@@ -1,0 +1,82 @@
+
+----------------------------------------------------------------
+                 A U T O G A I T A | G R O U P                 
+----------------------------------------------------------------
+
+Group Names
+-----------
+5mm
+12mm
+25mm
+
+
+----------------------------------------------------------------
+    P R I N C I P A L | C O M P O N E N T | A N A L Y S I S    
+----------------------------------------------------------------
+
+Features
+--------
+Nose x
+Nose y
+Ear base x
+Ear base y
+Front paw tao x
+Front paw tao y
+Wrist x
+Wrist y
+Elbow x
+Elbow y
+Lower Shoulder x
+Lower Shoulder y
+Upper Shoulder x
+Upper Shoulder y
+Iliac Crest x
+Iliac Crest y
+Hip x
+Hip y
+Knee x
+Knee y
+Ankle x
+Ankle y
+Hind paw tao x
+Hind paw tao y
+Hind paw tao Velocity
+Hind paw tao Acceleration
+Ankle Velocity
+Ankle Acceleration
+Knee Velocity
+Knee Acceleration
+Hip Velocity
+Hip Acceleration
+Iliac Crest Velocity
+Iliac Crest Acceleration
+Ankle Angle
+Knee Angle
+Hip Angle
+Ankle Angle Velocity
+Ankle Angle Acceleration
+Knee Angle Velocity
+Knee Angle Acceleration
+Hip Angle Velocity
+Hip Angle Acceleration
+
+PC-Number Configuration
+-----------------------
+10.0 principal components
+
+
+----------------------------------------------------------------
+                      S T A T I S T I C S                      
+----------------------------------------------------------------
+
+Features
+--------
+Ankle y
+Ankle Angle
+
+Configuration
+-------------
+RM ANOVA
+Cluster-extent permutation test with 10000 permutations
+Alpha Level of 5.0%
+

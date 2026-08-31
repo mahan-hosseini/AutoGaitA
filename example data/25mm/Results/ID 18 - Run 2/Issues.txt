@@ -1,2 +1,2 @@
 
-...excluding SC #1 - DLC tracking failed!
+...excluding SC #1 - Tracking failed (coordinate-jump larger than x/y threshold)!
