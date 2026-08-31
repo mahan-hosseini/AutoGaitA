@@ -14,7 +14,7 @@ Here we provide example mouse data for users to explore *AutoGaitA*. Note that t
 In this folder we provide example .csv coordinate files as well as corresponding videos of DLC-tracked mice. This dataset can be used with *AutoGaitA DLC* to extract kinematic features. Users can either try to replicate the *Results* folder, generated with the default settings, or play around with custom joints/angles (e.g., trying to extract features of the forelimb). However, users are advised to use the *Results* folder as provided here if they'd like to perform a 3-group analyses using AutoGaitA Group (see below).
 
 ## 12 & 5mm
-In these folders we only provide the Original and Normalised Stepcycles Excel files in the *Results* folder of mice walking over 12mm and 5mm wide beams (to limit this folder's overall size). The three *Results* folders can be used with *AutoGaitA Group* to assess how our five example mice adapt to the beam-width perturbation. See our instructions tutorial for a walkthrough using this dataset.
+In these folders we only provide the Original, X-Standardised and Normalised Stepcycles Excel files in the *Results* folder of mice walking over 12mm and 5mm wide beams (to limit this folder's overall size). The three *Results* folders can be used with *AutoGaitA Group* to assess how our five example mice adapt to the beam-width perturbation. See our instructions tutorial for a walkthrough using this dataset.
 
 ## group 
 In this folder we provide the result of analysing the three-group contrast of beam-width as shown in the [corresponding tutorial video](https://youtu.be/M8bHk7Usrb0?si=zNdmUMzcO0fMZ-Uh)

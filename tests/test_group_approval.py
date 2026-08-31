@@ -55,7 +55,7 @@ def extract_cfg():
     cfg["which_leg"] = "right"
     cfg["PCA_n_components"] = 10
     cfg["PCA_custom_scatter_PCs"] = ""
-    cfg["PCA_save_3D_video"] = True
+    cfg["PCA_save_3D_video"] = False
     cfg["PCA_bins"] = ""
     cfg["plot_SE"] = True
     cfg["color_palette"] = "Set2"
