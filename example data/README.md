@@ -3,7 +3,7 @@
 Here we provide example mouse data for users to explore *AutoGaitA*. Note that this dataset was used in our tutorial videos introducing *AutoGaitA DLC*, *AutoGaitA Group* and in our video explaining file preparation for *AutoGaitA DLC*. 
 
 ## Download Link
-[Click here to download the datasets](https://fz-juelich.sciebo.de/s/kp2NHHNg3GiFaSN)
+[Click here to download the datasets](https://fz-juelich.sciebo.de/s/JNnCr4Tczw6YwLR)
 
 ## Content
 - **Example complete dataset** (i.e., .csv and video files, Annotation Table, and complete Results folder) with DLC-tracked body and beam (i.e.) coordinates for mice walking on a 25mm wide beam.
