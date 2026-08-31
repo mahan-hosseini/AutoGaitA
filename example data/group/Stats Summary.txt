@@ -8,19 +8,19 @@
 
 -------------------
 C O M P A R I S O N
-    5mm & 12mm    
+   5 mm & 12 mm   
 -------------------
 No significant clusters!
 
 -------------------
 C O M P A R I S O N
-    5mm & 25mm    
+   5 mm & 25 mm   
 -------------------
 No significant clusters!
 
 -------------------
 C O M P A R I S O N
-    12mm & 25mm    
+   12 mm & 25 mm   
 -------------------
 No significant clusters!
 
@@ -32,19 +32,19 @@ No significant clusters!
 
 -------------------
 C O M P A R I S O N
-    5mm & 12mm    
+   5 mm & 12 mm   
 -------------------
 No significant clusters!
 
 -------------------
 C O M P A R I S O N
-    5mm & 25mm    
+   5 mm & 25 mm   
 -------------------
 No significant clusters!
 
 -------------------
 C O M P A R I S O N
-    12mm & 25mm    
+   12 mm & 25 mm   
 -------------------
 No significant clusters!
 
@@ -65,7 +65,7 @@ A N O V A  T A B L E
 
 -------------------
 C O M P A R I S O N
-    5mm & 12mm    
+   5 mm & 12 mm   
 -------------------
 Significant clusters at:
 
@@ -78,7 +78,7 @@ Significant clusters at:
 
 -------------------
 C O M P A R I S O N
-    5mm & 25mm    
+   5 mm & 25 mm   
 -------------------
 Significant clusters at:
 
@@ -90,7 +90,7 @@ Significant clusters at:
 
 -------------------
 C O M P A R I S O N
-    12mm & 25mm    
+   12 mm & 25 mm   
 -------------------
 No significant clusters!
 
@@ -111,7 +111,7 @@ A N O V A  T A B L E
 
 -------------------
 C O M P A R I S O N
-    5mm & 12mm    
+   5 mm & 12 mm   
 -------------------
 Significant clusters at:
 
@@ -125,7 +125,7 @@ Significant clusters at:
 
 -------------------
 C O M P A R I S O N
-    5mm & 25mm    
+   5 mm & 25 mm   
 -------------------
 Significant clusters at:
 
@@ -138,7 +138,7 @@ Significant clusters at:
 
 -------------------
 C O M P A R I S O N
-    12mm & 25mm    
+   12 mm & 25 mm   
 -------------------
 Significant clusters at:
 

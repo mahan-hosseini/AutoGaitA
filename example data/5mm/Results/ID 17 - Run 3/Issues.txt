@@ -1,6 +1,0 @@
-
-***********
-! WARNING !
-***********
-Mismatch between stepcycle number of SC Number column & entries in swing/stance latency columns!
-Using all valid swing/stance entries.
