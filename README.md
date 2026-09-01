@@ -11,7 +11,9 @@
 
 # Automated Gait Analysis in Python 🐸
 
-**Breaking News 🥳** Our paper has recently been [published in PNAS](https://www.pnas.org/doi/10.1073/pnas.2534093123)! Check it out for a cross-species analysis of age-related changes in locomotion using AutoGaitA. Also please cite it if you should end up using our tool in your research 🙏
+**Breaking News 🚨 Our paper has recently been [published in PNAS](https://www.pnas.org/doi/10.1073/pnas.2534093123)🥳**
+
+Check it out for a cross-species analysis of age-related changes in locomotion using AutoGaitA. Also please cite it if you should end up using our tool in your research 🙏
 
 - AutoGaitA simplifies, accelerates, and standardises gait analyses (as well as the analysis of other rhythmic behaviours) after body posture tracking in 2D with [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut) and [SLEAP](https://github.com/talmolab/sleap) or any kind of, marker-based as well as marker-less, method for obtaining 3D coordinates. 
 - AutoGaitA's first-level tools provide a wide range of automated kinematic analyses for each input video and AutoGaitA Group allows the comparison of up to six groups. 
