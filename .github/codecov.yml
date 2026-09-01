@@ -1,0 +1,32 @@
+# Codecov configuration for AutoGaitA
+# Docs: https://docs.codecov.com/docs/codecov-yaml
+
+coverage:
+  status:
+    # Overall project coverage: allow small dips so a PR is not blocked by
+    # unrelated noise, but flag real regressions.
+    project:
+      default:
+        target: auto
+        threshold: 1%
+        informational: false
+    # Coverage of the lines the PR actually touches. Kept informational so that
+    # first-time contributors are not blocked by a red check.
+    patch:
+      default:
+        target: 80%
+        threshold: 5%
+        informational: true
+
+# The GUI modules are customtkinter windows that cannot be meaningfully
+# exercised in headless CI; excluding them keeps the reported number
+# representative of the analysis code users depend on.
+ignore:
+  - "autogaita/gui/**"
+  - "autogaita/batchrun_scripts/**"
+  - "tests/**"
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: true

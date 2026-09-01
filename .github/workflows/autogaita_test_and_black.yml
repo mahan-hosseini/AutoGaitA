@@ -1,4 +1,5 @@
-# This workflow will install Python dependencies, run tests with a variety of Python versions and lint using black 
+# This workflow will install Python dependencies, run tests with a variety of Python versions,
+# report coverage to Codecov and lint using black
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
 name: autogaita tests
@@ -21,23 +22,33 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install .[dev]
+        python -m pip install pytest-cov
     - name: Test with pytest
       env:
         CI: true
       run: |
-        pytest
+        pytest --cov=autogaita --cov-report=xml --cov-report=term
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.12'
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        flags: unittests
+        name: autogaita-py${{ matrix.python-version }}
+        fail_ci_if_error: false
 
   black:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: psf/black@stable
-        with: 
+        with:
           version: "24.8.0"
