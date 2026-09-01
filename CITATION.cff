@@ -1,13 +1,11 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite our preprint."
+message: "If you use this software, please cite our PNAS paper."
 authors:
 - family-names: "Hosseini"
   given-names: "Mahan"
   orcid: "https://orcid.org/0000-0003-2889-6227"
 title: "AutoGaitA - Automated Gait Analysis in Python"
-version: 1.4.1
-doi: 10.5281/zenodo.15373063
-date-released: 2024-04-18
+doi: 10.5281/zenodo.14446173
 url: "https://github.com/mahan-hosseini/AutoGaitA"
 preferred-citation:
   type: article
@@ -50,8 +48,9 @@ preferred-citation:
   - family-names: "Gatto"
     given-names: "Graziana"
     orcid: "https://orcid.org/0000-0002-4244-8925"
-  doi: "10.1101/2024.04.14.589409"
-  journal: "bioRxiv 2024.04.14.589409"
-  title: "AutoGaitA: A versatile quantitative framework for kinematic analyses across species,
-perturbations and behaviours"
-  year: 2024
+  doi: "https://doi.org/10.1073/pnas.2534093123"
+  journal: "Proceedings of the National Academy of Sciences"
+  title: "Cross-species identification of conserved and divergent locomotor kinematic strategies using AutoGaitA"
+  issue: 35
+  volume: 123
+  year: 2026
