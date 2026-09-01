@@ -1,10 +1,11 @@
 ![AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/blob/main/autogaita/resources/logo.png?raw=true)
 ![Repository Active](https://www.repostatus.org/badges/latest/active.svg)
-[![Test AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/autogaita_test_and_black.yml/badge.svg)](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/autogaita_test_and_black.yml)
+[![paper: PNAS](https://img.shields.io/badge/paper-PNAS-blue)](https://www.pnas.org/doi/10.1073/pnas.2534093123) 
 ![Python](https://img.shields.io/badge/python-v3.10+-blue.svg)
 [![PyPI - Version](https://img.shields.io/pypi/v/autogaita)](https://pypi.org/project/autogaita/)
 ![license: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)
-[![paper: PNAS](https://img.shields.io/badge/paper-PNAS-blue)](https://www.pnas.org/doi/10.1073/pnas.2534093123) 
+[![Test AutoGaitA](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/autogaita_test_and_black.yml/badge.svg)](https://github.com/mahan-hosseini/AutoGaitA/actions/workflows/autogaita_test_and_black.yml)
+[![codecov](https://codecov.io/gh/mahan-hosseini/AutoGaitA/branch/main/graph/badge.svg)](https://codecov.io/gh/mahan-hosseini/AutoGaitA)
 ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![Tutorials](https://img.shields.io/badge/YouTube-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&feature=shared)
 [![X URL](https://img.shields.io/twitter/url?url=https%3A%2F%2Fx.com%2Fautogaita&style=social&label=updates)](https://x.com/autogaita)
@@ -134,10 +135,12 @@ The AutoGaitA software is provided without warranty of any kind, express or impl
 
 [Luca Flemming](https://github.com/luca-flemming) - Undergraduate Student
 
+[Laura Bushelli](https://github.com/LauraSchoenhals)
+
 [Nicholas del Grosso](https://github.com/nickdelgrosso) - RSE Advisor
 
 # Contributing
-If you would like to contribute to the AutoGaitA toolbox, feel free to open a pull request or contact us at autogaita@fz-juelich.de! 
+If you would like to contribute to the AutoGaitA toolbox, please see our [contributing guidelines](CONTRIBUTING.md). You are also very welcome to just contact us at autogaita@fz-juelich.de!
 
 We are looking forward to your input and ideas 😊
 
