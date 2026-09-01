@@ -1,7 +1,6 @@
 # Contributing to AutoGaitA
 
-Thank you for your interest in AutoGaitA! We are a small team at Forschungszentrum
-Jülich and the University of Cologne, and we genuinely welcome outside
+Thank you for your interest in AutoGaitA, we genuinely welcome outside
 contributions — whether that is a bug report, a documentation fix, support for a
 new tracking format, or a new kinematic feature.
 
@@ -83,6 +82,8 @@ code in the stage where it belongs, and put anything shared between the 2D and
 3D pipelines in `autogaita/resources/utils.py`. The group pipeline follows a similar 
 sequential procedure in main.
 
+Also see the [AutoGaitA without the GUI section in our Documentation](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.ash8fh2tnng2) for more details on the coding conventions and how GUI parts are linked to variables.
+
 ## What we expect from a pull request
 
 1. **Branch from `main`** and keep one logical change per pull request. Small,
@@ -105,12 +106,7 @@ sequential procedure in main.
    (`test_dlc_approval.py`, `test_universal3D_approval.py`,
    `test_group_approval.py`) will flag it — please explain in the pull request
    why the new values are correct.
-4. **Code is formatted with [black](https://black.readthedocs.io/).** Our CI
-   enforces this:
-
-   ```bash
-   black .
-   ```
+4. **Code is formatted with [black](https://black.readthedocs.io/).** 
 
 5. **Describe the change.** In the pull request, tell us what problem it solves,
    how you tested it, and — if it affects analysis output — what users should
@@ -135,8 +131,7 @@ contributions we may ask you to confirm this in writing.
 
 ## Credit
 
-We take credit seriously. Contributors are listed in the README, and
-contributions that materially shape the toolbox are acknowledged in future publications appropriately. 
+Contributors are listed in the README, and contributions that materially shape the toolbox are acknowledged in future publications appropriately. 
 If you would like to be listed differently — or not at all — just tell us.
 
 We are looking forward to your input and ideas 😊
