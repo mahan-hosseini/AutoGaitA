@@ -11,7 +11,7 @@
 
 # Automated Gait Analysis in Python 🐸
 
-**Breaking News 🚨 Our paper has recently been [published in PNAS](https://www.pnas.org/doi/10.1073/pnas.2534093123)🥳**
+**🚨 Breaking News 🚨 Our paper has recently been [published in PNAS](https://www.pnas.org/doi/10.1073/pnas.2534093123) 🥳**
 
 Check it out for a cross-species analysis of age-related changes in locomotion using AutoGaitA. Also please cite it if you should end up using our tool in your research 🙏
 
