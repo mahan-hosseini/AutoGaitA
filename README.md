@@ -4,18 +4,19 @@
 ![Python](https://img.shields.io/badge/python-v3.10+-blue.svg)
 [![PyPI - Version](https://img.shields.io/pypi/v/autogaita)](https://pypi.org/project/autogaita/)
 ![license: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)
-[![paper: biorxiv](https://img.shields.io/badge/paper-biorxiv-blue)](https://doi.org/10.1101/2024.04.14.589409) 
-
+[![paper: PNAS](https://img.shields.io/badge/paper-PNAS-blue)](https://www.pnas.org/doi/10.1073/pnas.2534093123) 
 ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![Tutorials](https://img.shields.io/badge/YouTube-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&feature=shared)
 [![X URL](https://img.shields.io/twitter/url?url=https%3A%2F%2Fx.com%2Fautogaita&style=social&label=updates)](https://x.com/autogaita)
 
 # Automated Gait Analysis in Python 🐸
 
-- AutoGaitA simplifies, accelerates, and standardises gait analyses (as well as the analysis of other rhythmic behaviours) after body posture tracking in 2D with [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut) and [SLEAP](https://github.com/talmolab/sleap) or marker-based as well as marker-less methods for obtaining 3D coordinates. 
+**Breaking News 🥳** Our paper has recently been [published in PNAS](https://www.pnas.org/doi/10.1073/pnas.2534093123)! Check it out for a cross-species analysis of age-related changes in locomotion using AutoGaitA. Also please cite it if you should end up using our tool in your research 🙏
+
+- AutoGaitA simplifies, accelerates, and standardises gait analyses (as well as the analysis of other rhythmic behaviours) after body posture tracking in 2D with [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut) and [SLEAP](https://github.com/talmolab/sleap) or any kind of, marker-based as well as marker-less, method for obtaining 3D coordinates. 
 - AutoGaitA's first-level tools provide a wide range of automated kinematic analyses for each input video and AutoGaitA Group allows the comparison of up to six groups. 
-- AutoGaitA enables comparisons to be made across experimental conditions, species, disease states or genotypes. 
-- Despite being developed with gait data, AutoGaitA can be utilised for the analysis of any motor behaviour.
+- AutoGaitA enables comparisons to be made across experimental conditions, species, disease states, genotypes or behaviours. You can also easily compare different kinds of the same behaviour (e.g. slips vs. successful steps) in the same animals.
+- Despite being developed with gait data, AutoGaitA can be utilised for the analysis of any rhythmic motor behaviour.
 
 # 🚀 Quick Start (Recommended - no Python needed!)
 This approach uses [uv](https://github.com/astral-sh/uv) for installation. It is really simple to set up:
@@ -114,7 +115,7 @@ AutoGaitA's cfg files and dictionaries sometimes change as a result, which means
 We document each version's cfg-changes in [AutoGaitA Releases](https://github.com/mahan-hosseini/AutoGaitA/releases), which is particularly relevant for users wrapping custom scripts around AutoGaitA's functions.
 
 # Reference
-If you use this code or data please [cite our preprint](https://doi.org/10.1101/2024.04.14.589409).
+If you use this code or data please [cite our paper](https://www.pnas.org/doi/10.1073/pnas.2534093123).
 
 # License
 AutoGaitA is licensed under [GPL v3.0](https://github.com/mahan-hosseini/AutoGaitA/blob/main/LICENSE) and Forschungszentrum Jülich GmbH holds all copyrights. 
