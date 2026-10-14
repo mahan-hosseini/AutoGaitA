@@ -27,6 +27,7 @@ CFG_KEYS_NOT_FOR_JSON = [
 NORM_SHEET_NAME = "Normalised Stepcycles"
 ORIG_SHEET_NAME = "Original Stepcycles"
 X_STANDARDISED_SHEET_NAME = "X-Standardised Stepcycles"
+AVG_SHEET_NAME = "Average Stepcycle"
 NORM_GROUP_SHEET_NAME = "Normalised Group Stepcycles"
 ORIG_GROUP_SHEET_NAME = "Original Group Stepcycles"
 X_STAND_GROUP_SHEET_NAME = "X-Standardised Group Stepcycles"

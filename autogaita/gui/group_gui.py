@@ -28,7 +28,7 @@ from autogaita.gui.gui_constants import (
     AUTOGAITA_FOLDER_PATH,
     get_widget_cfg_dict,  # function!
 )
-from autogaita.group.group_constants import NORM_SHEET_NAME, AVG_GROUP_SHEET_NAME
+from autogaita.group.group_constants import AVG_SHEET_NAME, AVG_GROUP_SHEET_NAME
 
 # these colors are GUI-specific - add to common widget cfg
 FG_COLOR = GROUP_FG_COLOR
@@ -693,7 +693,7 @@ def definefeatures_window(
             # next operator means we loop lazy - stop once we find it & return None if av
             # sheet not in dir
             av_sheet_path = next(
-                (file for file in IDs_files if NORM_SHEET_NAME in file), None
+                (file for file in IDs_files if AVG_SHEET_NAME in file), None
             )
             if av_sheet_path:  # won't be true if no AVXLS found
                 full_path = os.path.join(some_IDs_dir, av_sheet_path)
