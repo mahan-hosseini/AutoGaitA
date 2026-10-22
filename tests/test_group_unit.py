@@ -16,6 +16,8 @@ from autogaita.group.group_3_PCA import (
     convert_PCA_bins_to_list,
 )
 from autogaita.group.group_4_stats import (
+    compute_and_assign_clustersize,
+    extract_all_clusters,
     run_ANOVA,
     multcompare_SC_Percentages,
     save_multcomp_pvalues_to_excel,
@@ -34,6 +36,12 @@ from autogaita.group.group_constants import (
     PCA_PERMANOVA_TXT_FILENAME,
     MULTCOMP_EXCEL_FILENAME_1,
     MULTCOMP_RESULT_SPLIT_STR,
+    CONTRASTS_COL,
+    TTEST_P_COL,
+    TTEST_T_COL,
+    TTEST_MASK_COL,
+    CLUSTER_TMASS_COL,
+    CLUSTER_MASK_COL,
 )
 from autogaita.resources.constants import SC_PERCENTAGE_COL
 
@@ -250,6 +258,71 @@ def test_load_dfs_stats_df_perm_test_smoke(extract_folderinfo, extract_cfg):
     )
 
 
+# each case: {contrast: (t values, sig. masks)} & the expected tmass of all rows
+clustersize_cases = [
+    # sig. pos. cluster immediately followed by a sig. neg. one
+    ({"A": ([3, 3, -4, -4, 1], [True, True, True, True, False])}, [6, 6, 8, 8, 0]),
+    # sign switch at the last bin
+    ({"A": ([1, 3, 3, -5], [False, True, True, True])}, [0, 6, 6, 5]),
+    # all bins sig. - with & without a sign switch
+    ({"A": ([3, 3, -4, -4], [True, True, True, True])}, [6, 6, 8, 8]),
+    ({"A": ([3, 3, 3, 3], [True, True, True, True])}, [12, 12, 12, 12]),
+    # A ends with a sig. cluster & B starts with one of the same sign
+    (
+        {
+            "A": ([1, 2, 3, 3], [False, False, True, True]),
+            "B": ([5, 5, 1, 0.5], [True, True, False, False]),
+        },
+        [0, 0, 6, 6, 10, 10, 0, 0],
+    ),
+    # A ends with a sig. cluster & B starts with one of the opposite sign
+    (
+        {
+            "A": ([1, 2, 3, 3], [False, False, True, True]),
+            "B": ([-5, -5, 1, 0.5], [True, True, False, False]),
+        },
+        [0, 0, 6, 6, 10, 10, 0, 0],
+    ),
+]
+
+
+@pytest.mark.parametrize("contrast_data, expected_tmass", clustersize_cases)
+def test_compute_and_assign_clustersize_sign_switch(contrast_data, expected_tmass):
+    """Ensure each cluster's tmass is computed separately. I wrote this test after catching a bug where a sig. pos. cluster immediately followed by a sig. neg. cluster were treated as the same cluster."""
+    results_df = build_permtest_results_df(contrast_data)
+    # call once per contrast in order - like compute_first_level_results does
+    for contrast in contrast_data:
+        results_df = compute_and_assign_clustersize(results_df, contrast)
+    assert np.allclose(results_df[CLUSTER_TMASS_COL], expected_tmass)
+
+
+def test_extract_all_clusters():
+    results_df = pd.DataFrame(
+        {
+            CONTRASTS_COL: ["A"] * 6 + ["B"] * 6 + ["C"] * 4 + ["D"] * 3 + ["E"] * 3,
+            TTEST_T_COL: [1, 3, 3, -4, -4, 1]
+            + [1, 3, 3, 4, 4, 1]
+            + [2, 0, 3, 3]
+            + [3, 3, -3]
+            + [0, 0, 3],
+            CLUSTER_MASK_COL: [False, True, True, True, True, False] * 2
+            + [True, False, True, True]
+            + [True, True, True]
+            + [False, False, True],
+        }
+    )
+    # A: sig. pos. & sig. neg. clusters must be reported separately
+    assert extract_all_clusters(results_df, "A") == [[1, 2], [3, 4]]
+    # B: a sig. run of the same sign stays a single cluster
+    assert extract_all_clusters(results_df, "B") == [[1, 4]]
+    # C: single-bin cluster (start == end) & a cluster ending at the last idx
+    assert extract_all_clusters(results_df, "C") == [[0, 0], [2, 3]]
+    # D: sign switch onto the last idx
+    assert extract_all_clusters(results_df, "D") == [[0, 1], [2, 2]]
+    # E: single sig. bin at the last idx
+    assert extract_all_clusters(results_df, "E") == [[2, 2]]
+
+
 def test_Mixed_ANOVA(extract_cfg):
     # Adopted example data from https://real-statistics.com/
     # See the Mixed ANOVA xlsx file for complete link
@@ -439,6 +512,25 @@ def load_repos_group_data(extract_folderinfo, extract_cfg):
         extract_folderinfo, extract_cfg
     )
     return avg_dfs, g_avg_dfs, g_std_dfs, extract_cfg
+
+
+def build_permtest_results_df(contrast_data):
+    """Build a permutation test's first-level results df from each contrast's t values
+    & significance masks"""
+    rows = []
+    for contrast, (tvals, masks) in contrast_data.items():
+        for s, (tval, mask) in enumerate(zip(tvals, masks)):
+            rows.append(
+                {
+                    CONTRASTS_COL: contrast,
+                    SC_PERCENTAGE_COL: s,
+                    TTEST_P_COL: 1.0,  # dummy
+                    TTEST_T_COL: float(tval),
+                    TTEST_MASK_COL: mask,
+                    CLUSTER_TMASS_COL: 0.0,
+                }
+            )
+    return pd.DataFrame(rows)
 
 
 # NOTE !!!

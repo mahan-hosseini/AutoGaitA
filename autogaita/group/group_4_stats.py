@@ -229,20 +229,46 @@ def compute_and_assign_clustersize(results_df, contrast):
     this_cluster_indices = []
     # loop over current contrast, update tmass, cluster size & indices if p was
     # significant
+    # => note there are two cases where we assign tmass to results_df because the
+    #    current cluster is over
+    #    1. a sig. pos. cluster was followed by a sig. neg. cluster or vice versa
+    #    2. a sig. cluster was followed by a non-sig. p value
     for i in np.where(results_df[CONTRASTS_COL] == contrast)[0]:
-        if results_df.iloc[i, ttest_mask_col_idx] == True:
-            this_tmass += abs(results_df.iloc[i, ttest_tval_col_idx])  # tval
-            this_cluster_size += 1  # cluster size
-            this_cluster_indices.append(i)
+        this_tval = results_df.iloc[i, ttest_tval_col_idx]
+        this_tsign = np.sign(this_tval)
+        if results_df.iloc[i, ttest_mask_col_idx] == True:  # t was sig!
+            # consider sign-switches, i.e., a sig. pos cluster being immediately
+            # followed by a sig. neg. cluster
+            # => compare against the current cluster's last t (not i-1) so we never
+            #    look at a row of the previous contrast
+            if this_cluster_indices:
+                prev_tsign = np.sign(
+                    results_df.iloc[this_cluster_indices[-1], ttest_tval_col_idx]
+                )
+            else:  # no running cluster - this t starts a new one
+                prev_tsign = this_tsign
+            # if the sign did not change, same cluster - keep incrementing our
+            # variables & move on to the next i
+            if prev_tsign == this_tsign:
+                this_tmass += abs(this_tval)
+                this_cluster_size += 1
+                this_cluster_indices.append(i)
+            # ASSIGN CASE #1 - if sign switch, assign vars of previous cluster to df
+            # and reset vars with the start of this cluster (e.g. cluster size just 1)
+            else:
+                results_df.iloc[this_cluster_indices, tmass_col_idx] = this_tmass
+                this_tmass = abs(this_tval)
+                this_cluster_size = 1
+                this_cluster_indices = [i]
             # handle the case of results_df ending with a sig. cluster
             if i == max(np.where(results_df[CONTRASTS_COL] == contrast)[0]):
                 results_df.iloc[this_cluster_indices, tmass_col_idx] = this_tmass
         else:
-            # if p was not significant, assign the previous cluster & reset our vars
-            # => note this else also occurs when we keep having nonsig ts but for those
-            #    nothing happens... coding it like this might make it a bit slower than
-            #    a more sophisticated conditional logic here but the difference should
-            #    be minimal so I just keep it as is
+            # ASSIGN CASE #2 - if p was not significant, assign the previous cluster &
+            # reset our vars (e.g. cluster size = 0)
+            # => note this else also occurs when we keep having nonsig ts - for those
+            #    we just keep assigning the tmass of 0 to the col. there might be a
+            #    more efficient way but whatever
             results_df.iloc[this_cluster_indices, tmass_col_idx] = this_tmass
             this_tmass = 0.0
             this_cluster_size = 0
@@ -290,10 +316,10 @@ def test_trueobs_clusters(
     # loop over results, check each clustersize, assign final p value & mask
     for i in range(len(trueobs_results_df)):
         # tmass
+        # => add +1 on both sides so p can never be exactly 0
         this_p = (
-            sum(max_tmass >= trueobs_results_df.iloc[i, cluster_tmass_col_idx])
-            / permutation_number
-        )
+            sum(max_tmass >= trueobs_results_df.iloc[i, cluster_tmass_col_idx]) + 1
+        ) / (permutation_number + 1)
         trueobs_results_df.iloc[i, cluster_p_col_idx] = this_p
         if this_p < stats_threshold:
             trueobs_results_df.iloc[i, cluster_mask_col_idx] = True
@@ -393,8 +419,20 @@ def extract_all_clusters(trueobs_results_df, contrast):
     """Find indices of all (perm.) significant clusters"""
     contrast_mask = trueobs_results_df[CONTRASTS_COL] == contrast
     significance_mask = list(trueobs_results_df.loc[contrast_mask, CLUSTER_MASK_COL])
+    t_signs = list(np.sign(trueobs_results_df.loc[contrast_mask, TTEST_T_COL]))
     all_clusters = []
     cluster = []
+    # the logic of this loop is: cluster starts empty, at the first mask == True
+    # cluster's len is 0 so we append i. Then as soon as cluster's len becomes 2, the
+    # cluster ends. This only happens if
+    # 1) i is the last idx (len of mask -1)
+    # 2) next i's mask (i+1) is False (not sig at the 2nd level - current cluster over)
+    # 3) next i's t sign is not equal to current i's (2 sig clusters of opposite signs)
+    #    as soon as cluster len is 2, we append it to all_clusters, create an empty list
+    #    for cluster again and start anew with the next time mask is True and len
+    #    (cluster) is 0
+    # special case: single bin clusters become [i, i] this is correct & expected
+    # downstream
     for i, mask in enumerate(significance_mask):
         if mask == True:
             if len(cluster) == 0:
@@ -402,7 +440,11 @@ def extract_all_clusters(trueobs_results_df, contrast):
             if i == (len(significance_mask) - 1):
                 cluster.append(i)
             else:
-                if significance_mask[i + 1] == False:
+                # cluster ends if next p is not sig. or if t's sign switches (i.e.,
+                # a sig. pos. cluster immediately followed by a sig. neg. one)
+                if (significance_mask[i + 1] == False) or (
+                    t_signs[i + 1] != t_signs[i]
+                ):
                     cluster.append(i)
         if len(cluster) == 2:
             all_clusters.append(cluster)
@@ -942,7 +984,12 @@ def save_stats_summary_to_text(
                         message
                         + "Cluster p value = "
                         + str(
-                            this_contrast_results_df.iloc[cluster[0], cluster_p_colidx]
+                            round(
+                                this_contrast_results_df.iloc[
+                                    cluster[0], cluster_p_colidx
+                                ],
+                                4,
+                            )
                         )
                     )
 
