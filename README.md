@@ -9,6 +9,7 @@
 ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![Tutorials](https://img.shields.io/badge/YouTube-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtube.com/playlist?list=PLCn5T7K_H8K56NIcEsfDK664OP7cN_Bad&feature=shared)
 [![X URL](https://img.shields.io/twitter/url?url=https%3A%2F%2Fx.com%2Fautogaita&style=social&label=updates)](https://x.com/autogaita)
+[![JuRSE Code Pick Nov 2026](https://img.shields.io/badge/JuRSE_Code_Pick-Nov_2026-blue)](https://www.fz-juelich.de/en/rse/community-initiatives/jurse-code-of-the-month/november-2026)
 
 # Automated Gait Analysis in Python 🐸
 
