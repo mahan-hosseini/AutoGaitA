@@ -6,6 +6,7 @@ from autogaita.resources.utils import (
     normalise_one_steps_data,
     write_angle_warning,
 )
+from autogaita.universal3D.universal3D_utils import interpolate_xyz_nans
 import os
 import pandas as pd
 import numpy as np
@@ -64,6 +65,10 @@ def analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg):
     standardise_y_coordinates = cfg["standardise_y_coordinates"]
     # do everything on a copy of the data df
     data_copy = data.copy()
+    # interpolate NaNs of all joints' X/Y/Z (SCs with too many NaNs are already gone)
+    # => before steps are extracted, so gait direction (from a step's first Y value)
+    #    and features are never computed from NaNs
+    data_copy = interpolate_xyz_nans(data_copy)
     # for exports, we don't need all_cycles to be separated for runs
     # ==> transform to a list of all SCs for each leg
     all_cycles = flatten_all_cycles(all_cycles)

@@ -396,12 +396,14 @@ def check_tracking_nans(all_cycles, data, info, cfg):
             this_cycles_nan_fracs > MAX_INTERPOLATE_NAN_FRAC
         ]
         if not too_many_nans.empty:
-            NaN_joint = too_many_nans.index[0]
+            nan_cols = "; ".join(
+                f"{col} ({frac:.1%})" for col, frac in too_many_nans.items()
+            )
             this_message = (
                 "\n...excluding SC #"
                 + str(c + 1)
-                + f" - Tracking failed ({too_many_nans.iloc[0]:.1%} NaN at "
-                + f"{NaN_joint}, max. allowed is {MAX_INTERPOLATE_NAN_FRAC:.0%})!"
+                + f" - Tracking failed (NaN at {nan_cols} - max. allowed is "
+                + f"{MAX_INTERPOLATE_NAN_FRAC:.0%})!"
             )
             print(this_message)
             write_issues_to_textfile(this_message, info)

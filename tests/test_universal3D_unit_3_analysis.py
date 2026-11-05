@@ -4,6 +4,7 @@ from autogaita.universal3D.universal3D_3_analysis import (
     create_both_average_and_std_sheets,
     compute_average_and_std_data,
 )
+from autogaita.universal3D.universal3D_utils import interpolate_xyz_nans
 from hypothesis import HealthCheck, given, settings, strategies as st
 import pytest
 import pandas as pd
@@ -316,3 +317,24 @@ def test_both_sheet_transfers_bodyside_and_pools_central():
         left_avg["Pelvis X"].to_numpy() + right_avg["Pelvis X"].to_numpy()
     )
     assert not np.allclose(both_avg["Pelvis X"].to_numpy(), mean_of_curves)
+
+
+# %%..............................  NaN interpolation  .................................
+def test_interpolate_xyz_nans_fills_xyz_and_leaves_other_cols_alone():
+    data = pd.DataFrame(
+        {
+            "Time": [0.0, 0.1, 0.2, 0.3, 0.4],
+            "Pelvis X": [np.nan, 1.0, np.nan, 3.0, np.nan],
+            "Knee, left Y": [10.0, np.nan, np.nan, np.nan, 50.0],
+            "Knee, right Z": [np.nan, np.nan, 2.0, 2.0, 4.0],
+            "Leg": ["left", np.nan, "left", "left", "left"],
+        }
+    )
+    result = interpolate_xyz_nans(data.copy())
+    # leading/trailing NaNs take the nearest valid value, interior gaps are linear
+    assert result["Pelvis X"].tolist() == [1.0, 1.0, 2.0, 3.0, 3.0]
+    assert result["Knee, left Y"].tolist() == [10.0, 20.0, 30.0, 40.0, 50.0]
+    assert result["Knee, right Z"].tolist() == [2.0, 2.0, 2.0, 2.0, 4.0]
+    # non-coordinate columns are untouched (incl. their NaNs)
+    pdt.assert_series_equal(result["Time"], data["Time"])
+    pdt.assert_series_equal(result["Leg"], data["Leg"])

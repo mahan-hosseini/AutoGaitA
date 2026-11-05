@@ -1,6 +1,7 @@
 from autogaita.dlc.dlc_main import dlc
 from autogaita.common2D.common2D_1_preparation import some_prep
 from autogaita.common2D.common2D_2_sc_extraction import extract_stepcycles
+from autogaita.common2D.common2D_3_analysis import analyse_and_export_stepcycles
 from autogaita.common2D.common2D_utils import (
     check_cycle_out_of_bounds,
     check_cycle_duplicates,
@@ -458,6 +459,7 @@ def test_clean_cycles_6_nan_removals(
     data = extract_data_using_some_prep.copy()
     all_cycles = [[111, 222], [333, 444], [555, 666]]  # each SC is 112 frames
     data.loc[111:140, "Hind paw tao y"] = np.nan  # 30 / 112 = 27% NaN => exclude
+    data.loc[111:150, "Knee x"] = np.nan  # 40 / 112 = 36% NaN => exclude
     data.loc[444, "Elbow x"] = np.nan  # 1 / 112 = 0.9% NaN => keep
     hind_joints_before = list(extract_cfg["hind_joints"])
     clean_cycles = check_tracking_nans(
@@ -467,6 +469,10 @@ def test_clean_cycles_6_nan_removals(
         extract_cfg,
     )
     assert clean_cycles == [[333, 444], [555, 666]]
+    with open(os.path.join(extract_info["results_dir"], ISSUES_TXT_FILENAME)) as f:
+        content = f.read()
+    # all offending columns are listed (in joint order), separated by "; "
+    assert "NaN at Hind paw tao y (26.8%); Knee x (35.7%) - max" in content
     # the NaN check must not mutate cfg["hind_joints"] (see dedicated test below)
     assert extract_cfg["hind_joints"] == hind_joints_before
 
@@ -524,6 +530,51 @@ def test_check_tracking_nans_does_not_mutate_hind_joints(
     # and specifically no angle-joint name may have leaked in
     for angle_joint in ["Elbow ", "Wrist ", "Lower Shoulder "]:
         assert angle_joint not in extract_cfg["hind_joints"]
+
+
+def test_nan_handling_from_sc_extraction_to_averages(
+    extract_data_using_some_prep, extract_info, extract_folderinfo, extract_cfg
+):
+    """Set coordinates of ID 15 - Run 3 to NaN like SLEAP does when tracking fails,
+    then run SC extraction & analysis on it
+
+    1. frames 0-199 & 700-830 (40% of the recording, outside of all SCs): all x/y are
+       NaN => nothing is excluded because of them
+    2. SC #1 (284-317): 29% NaN in Knee y (analysed) => excluded
+    3. SC #2 (318-359): 9.5% NaN in Ankle x (analysed) => kept & interpolated
+    4. SC #3 (413-441): 69% NaN in Nose x (not analysed) => warning only
+    => averages & SDs must not contain any NaN
+    """
+    data = extract_data_using_some_prep
+    clean_cycles = extract_stepcycles(
+        "DLC", data.copy(), extract_info, extract_folderinfo, extract_cfg
+    )
+    # frames below were chosen for these SCs
+    assert len(data) == 831
+    assert clean_cycles == [[284, 317], [318, 359], [413, 441]]
+    xy_cols = [col for col in data.columns if col.endswith((" x", " y"))]
+    data.loc[0:199, xy_cols] = np.nan
+    data.loc[700:830, xy_cols] = np.nan
+    data.loc[284:293, "Knee y"] = np.nan
+    data.loc[330:333, "Ankle x"] = np.nan
+    data.loc[413:432, "Nose x"] = np.nan
+
+    # SC extraction - only SC #1 is removed
+    all_cycles = extract_stepcycles(
+        "DLC", data, extract_info, extract_folderinfo, extract_cfg
+    )
+    assert all_cycles == [[318, 359], [413, 441]]
+    with open(os.path.join(extract_info["results_dir"], ISSUES_TXT_FILENAME)) as f:
+        issues = f.read()
+    assert issues.count("excluding SC") == 1
+    assert "excluding SC #1 - Tracking failed" in issues
+    assert "NaN at Knee y" in issues
+    assert "Nose x" in issues  # warning about the non-analysed joint
+
+    # analysis - remaining NaNs are interpolated, so results must be NaN-free
+    results = analyse_and_export_stepcycles(data, all_cycles, extract_info, extract_cfg)
+    for key in ["average_data", "std_data"]:
+        assert not results[key].isna().any().any(), f"NaN in {key}"
 
 
 # %%................... test sc_times_in_frames ....................................

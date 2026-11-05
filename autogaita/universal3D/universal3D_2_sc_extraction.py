@@ -1,5 +1,6 @@
 # %% imports
 from autogaita.resources.utils import write_issues_to_textfile, coerce_to_float
+from autogaita.universal3D.universal3D_utils import transform_joint_and_leg_to_colname
 import os
 import pandas as pd
 import numpy as np
@@ -14,6 +15,7 @@ from autogaita.universal3D.universal3D_constants import (
     SCXLS_SCCOLS,
     SWINGSTART_COL,
     STANCEEND_COL,
+    MAX_INTERPOLATE_NAN_FRAC,
 )
 
 # %% workflow step #2 - SC extraction (reading user-provided SC Table)
@@ -53,6 +55,8 @@ def extract_stepcycles(data, info, folderinfo, cfg):
     all_cycles = {"left": [], "right": []}
     for legname in LEGS:
         all_cycles[legname] = read_SC_info(data, SCdf, info, legname, cfg)
+    # after both legs so users get one warning only
+    warn_about_nans_of_non_analysed_joints(all_cycles, data, info, cfg)
     return all_cycles
 
 
@@ -308,6 +312,10 @@ def read_SC_info(data, SCdf, info, legname, cfg):
         all_cycles = check_cycle_order(all_cycles, info, legname)
         # check that none of the joints used for angles have the same value within SCs
         all_cycles = check_different_angle_joint_coords(all_cycles, data, info, cfg)
+        # check that no analysed joint is too often NaN within SCs
+        # => remaining NaNs are interpolated in stage 3
+        if all_cycles:  # can be None if no SC had different angle joint coords
+            all_cycles = check_tracking_nans(all_cycles, data, info, cfg, legname)
         # NOTE for future self
         # => If you are considering to remove empty lists from run_cycles note that we
         #    need them for the case of Runs 1 & 3 having SCs but 2 not having any
@@ -408,6 +416,112 @@ def check_a_single_cycle_for_joint_coords(cycle, angles, data, r, c, info):
                     write_issues_to_textfile(this_message, info)
                     return None  # removes this SC
     return cycle  # if we never returned None, this SC is valid
+
+
+def check_tracking_nans(all_cycles, data, info, cfg, legname):
+    """Exclude SCs in which an analysed joint's X, Y or Z is more than
+    MAX_INTERPOLATE_NAN_FRAC NaN
+
+    Note
+    ----
+    Remaining NaNs are linearly interpolated in stage 3 (see interpolate_xyz_nans), so
+    this check decides which SCs are tracked well enough for that to be trustworthy.
+    => Analysed joints = joints & angle joints
+    => Like in check_different_angle_joint_coords, we check both legs' columns for each
+       SC, because both legs' features are computed for each SC later
+    => Other joints are interpolated too but never exclude an SC, see
+       warn_about_nans_of_non_analysed_joints
+    """
+    columns = get_analysed_coordinate_columns(data, cfg)
+    clean_cycles = None
+    for r, run_cycles in enumerate(all_cycles):
+        for c, cycle in enumerate(run_cycles):
+            nan_fracs = data.loc[cycle[0] : cycle[1], columns].isna().mean()
+            too_many_nans = nan_fracs[nan_fracs > MAX_INTERPOLATE_NAN_FRAC]
+            if too_many_nans.empty:
+                if clean_cycles is None:  # if first valid cycle: list of empty lists
+                    clean_cycles = [[] for s in range(len(all_cycles))]
+                clean_cycles[r].append(cycle)
+            else:
+                # "; " because 3D colnames contain commas (e.g. "Knee, left Y")
+                nan_cols = "; ".join(
+                    f"{col} ({frac:.1%})" for col, frac in too_many_nans.items()
+                )
+                this_message = (
+                    "\n***********\n! WARNING !\n***********\n"
+                    + f"{legname} leg - Run #{r + 1} - SC #{c + 1} - Tracking failed "
+                    + f"(NaN at {nan_cols} - max. allowed is "
+                    + f"{MAX_INTERPOLATE_NAN_FRAC:.0%}) - Skipping!"
+                )
+                print(this_message)
+                write_issues_to_textfile(this_message, info)
+    return clean_cycles
+
+
+def warn_about_nans_of_non_analysed_joints(all_cycles, data, info, cfg):
+    """Warn about X/Y/Z columns of non-analysed joints that are more than
+    MAX_INTERPOLATE_NAN_FRAC NaN in at least one remaining SC of any leg
+
+    These columns don't exclude SCs, but they are interpolated in stage 3 and can be
+    chosen as group PCA or stats features - users should know they're estimated to quite some extent
+    """
+    analysed_columns = get_analysed_coordinate_columns(data, cfg)
+    other_columns = [
+        col
+        for col in data.columns
+        if col.endswith((" X", " Y", " Z")) and col not in analysed_columns
+    ]
+    remaining_cycles = []
+    for legname in LEGS:
+        if all_cycles[legname]:  # None if no valid SCs for this leg
+            for run_cycles in all_cycles[legname]:
+                remaining_cycles += run_cycles
+    noisy_other_columns = []
+    for col in other_columns:
+        for cycle in remaining_cycles:
+            if data.loc[cycle[0] : cycle[1], col].isna().mean() > (
+                MAX_INTERPOLATE_NAN_FRAC
+            ):
+                noisy_other_columns.append(col)
+                break
+    if noisy_other_columns:
+        this_message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + "These columns are more than "
+            + f"{MAX_INTERPOLATE_NAN_FRAC:.0%} NaN in at least one step cycle:\n"
+            + ", ".join(noisy_other_columns)
+            + "\nThey are not part of your analysed joints, so no step cycles were "
+            + "excluded because of them, but their missing values were linearly "
+            + "interpolated.\nAvoid using them as group PCA or stats features!"
+        )
+        print(this_message)
+        write_issues_to_textfile(this_message, info)
+
+
+def get_analysed_coordinate_columns(data, cfg):
+    """Return the X/Y/Z columns of all joints & angle joints (of both legs if the
+    joint is bodyside-specific)"""
+    # list() so we don't mutate cfg["joints"] when adding angle joints
+    all_joints = list(cfg["joints"])
+    for key in cfg["angles"].keys():
+        all_joints += cfg["angles"][key]
+    columns = []
+    for joint in all_joints:
+        for feature in ["X", "Y", "Z"]:
+            if joint + feature in data.columns:  # bodyside-nonspecific, e.g. "Pelvis "
+                candidate_cols = [joint + feature]
+            else:  # bodyside-specific, e.g. "Hip" => "Hip, left X" & "Hip, right X"
+                candidate_cols = [
+                    transform_joint_and_leg_to_colname(joint, legname, feature)
+                    for legname in LEGS
+                ]
+            for col in candidate_cols:
+                # make sure you do not add duplicate cols to columns
+                # => happens if cfg[angle] and cfg[joint] both add a col & skip cols
+                #    missing from data (some_prep only validated (left-side) Y cols)
+                if col in data.columns and col not in columns:
+                    columns.append(col)
+    return columns
 
 
 # ..............................  helper functions  ....................................

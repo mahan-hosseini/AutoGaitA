@@ -1,14 +1,21 @@
 from autogaita.universal3D.universal3D_1_preparation import some_prep
 from autogaita.universal3D.universal3D_2_sc_extraction import (
     check_different_angle_joint_coords,
+    check_tracking_nans,
+    warn_about_nans_of_non_analysed_joints,
+    get_analysed_coordinate_columns,
     extract_stepcycles,
 )
+from autogaita.universal3D.universal3D_3_analysis import analyse_and_export_stepcycles
 from autogaita.universal3D.universal3D_constants import (
     SWINGSTART_COL,
     STANCEEND_COL,
+    MAX_INTERPOLATE_NAN_FRAC,
 )
+from autogaita.resources.constants import ISSUES_TXT_FILENAME
 import os
 import pytest
+import numpy as np
 import pandas as pd
 
 # %%................................  fixtures  ........................................
@@ -196,6 +203,139 @@ def test_clean_cycles_different_angle_joint_coords(
         check_different_angle_joint_coords(all_cycles, data, extract_info, extract_cfg)
         is None
     )
+
+
+# %%................... test NaN checks .............................................
+
+
+def test_analysed_coordinate_columns_cover_both_legs_and_all_axes(
+    extract_data, extract_cfg
+):
+    joints_before = list(extract_cfg["joints"])
+    columns = get_analysed_coordinate_columns(extract_data, extract_cfg)
+    # Midfoot, Ankle, Knee & Hip are bodyside-specific => 4 joints x 2 legs x XYZ
+    assert len(columns) == 24
+    assert "Hip, right X" in columns and "Midfoot, left Z" in columns
+    assert "Pelvis Y" not in columns  # not a joint or angle joint in extract_cfg
+    assert extract_cfg["joints"] == joints_before  # angle joints must not leak in
+
+
+def test_clean_cycles_nan_removals(extract_data, extract_info, extract_cfg):
+    """An SC is excluded only if an analysed joint is > MAX_INTERPOLATE_NAN_FRAC NaN
+    within it - a single NaN is interpolated later and doesn't exclude the SC"""
+    data = extract_data
+    all_cycles = [[[111, 222], [333, 444]], [[555, 666], [777, 888]]]  # 112 frames
+    # right leg's column excludes this (left leg's) SC too - both legs are analysed
+    data.loc[111:140, "Knee, right Z"] = np.nan  # 30 / 112 = 27% NaN => exclude
+    data.loc[111:150, "Hip, left Y"] = np.nan  # 40 / 112 = 36% NaN => exclude
+    data.loc[444, "Ankle, left Y"] = np.nan  # 1 / 112 = 0.9% NaN => keep
+    all_cycles = check_tracking_nans(
+        all_cycles, data, extract_info, extract_cfg, "left"
+    )
+    assert all_cycles == [[[333, 444]], [[555, 666], [777, 888]]]
+    with open(os.path.join(extract_info["results_dir"], ISSUES_TXT_FILENAME)) as f:
+        content = f.read()
+    assert "left leg - Run #1 - SC #1" in content
+    # all offending columns are listed (in joint order), separated by "; "
+    assert "NaN at Knee, right Z (26.8%); Hip, left Y (35.7%) - max" in content
+    # removing all remaining SCs returns None (like check_different_angle_joint_coords)
+    data.loc[300:900, "Hip, left X"] = np.nan
+    assert (
+        check_tracking_nans(all_cycles, data, extract_info, extract_cfg, "left") is None
+    )
+
+
+@pytest.mark.parametrize(
+    "n_nan_frames, expected_cycles",
+    [(10, [[[100, 199]]]), (11, None)],  # SC has 100 frames => 10% is still allowed
+)
+def test_clean_cycles_nan_fraction_boundary(
+    n_nan_frames, expected_cycles, extract_data, extract_info, extract_cfg
+):
+    data = extract_data
+    data.loc[100 : 100 + n_nan_frames - 1, "Midfoot, left Z"] = np.nan
+    assert MAX_INTERPOLATE_NAN_FRAC == 0.1  # otherwise update n_nan_frames above
+    clean_cycles = check_tracking_nans(
+        [[[100, 199]]], data, extract_info, extract_cfg, "left"
+    )
+    assert clean_cycles == expected_cycles
+
+
+def test_non_analysed_joint_nans_only_warn(
+    extract_data, extract_info, extract_cfg, capsys
+):
+    """Pelvis is neither a joint nor an angle joint, so its NaNs must not exclude the SC
+    - users must be warned though, but only about NaNs within remaining SCs"""
+    data = extract_data
+    data.loc[333:400, "Pelvis Z"] = np.nan  # 68 / 112 = 61% NaN
+    data.loc[1000:1100, "Pelvis Y"] = np.nan  # outside of all SCs => no warning
+    all_cycles = check_tracking_nans(
+        [[[333, 444]]], data, extract_info, extract_cfg, "left"
+    )
+    assert all_cycles == [[[333, 444]]]
+    capsys.readouterr()  # only check the warning's output below
+    warn_about_nans_of_non_analysed_joints(
+        {"left": all_cycles, "right": None}, data, extract_info, extract_cfg
+    )
+    assert "Pelvis Z" in capsys.readouterr().out
+    with open(os.path.join(extract_info["results_dir"], ISSUES_TXT_FILENAME)) as f:
+        content = f.read()
+    assert "WARNING" in content and "Pelvis Z" in content
+    assert "Pelvis Y" not in content
+
+
+def test_nan_handling_from_sc_extraction_to_averages(
+    extract_info, extract_folderinfo, extract_cfg
+):
+    """Set coordinates of TestSubject's data to NaN like marker dropouts would, then
+    run SC extraction & analysis on it
+
+    1. frames 0-249 & 1560-1608 (19% of the recording, outside of all SCs): all X/Y/Z
+       are NaN => nothing is excluded because of them
+    2. left run 1 SC 1 (303-396): 32% NaN in Knee, left Y (analysed) => excluded
+    3. left run 2 SC 1 (747-851): 8% NaN in Ankle, right Z (analysed) => kept
+    4. left run 3 SC 1 (1202-1312) & right run 3 SC 1 (1145-1257): up to 71% NaN in
+       Skull Z (not analysed) => warning only
+    => averages & SDs must not contain any NaN
+    """
+    data, global_Y_max = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    clean_cycles = extract_stepcycles(
+        data.copy(), extract_info, extract_folderinfo, extract_cfg
+    )
+    # frames below were chosen for these SCs
+    assert len(data) == 1609
+    assert clean_cycles["left"][0][0] == [303, 396]
+    assert clean_cycles["left"][1][0] == [747, 851]
+    assert clean_cycles["left"][2][0] == [1202, 1312]
+    assert clean_cycles["right"][2][0] == [1145, 1257]
+    xyz_cols = [col for col in data.columns if col.endswith((" X", " Y", " Z"))]
+    data.loc[0:249, xyz_cols] = np.nan
+    data.loc[1560:1608, xyz_cols] = np.nan
+    data.loc[303:332, "Knee, left Y"] = np.nan
+    data.loc[780:787, "Ankle, right Z"] = np.nan
+    data.loc[1202:1280, "Skull Z"] = np.nan
+
+    # SC extraction - only left run 1 SC 1 is removed
+    all_cycles = extract_stepcycles(data, extract_info, extract_folderinfo, extract_cfg)
+    expected_cycles = clean_cycles
+    expected_cycles["left"][0] = expected_cycles["left"][0][1:]
+    assert all_cycles == expected_cycles
+    with open(os.path.join(extract_info["results_dir"], ISSUES_TXT_FILENAME)) as f:
+        issues = f.read()
+    assert issues.count("Tracking failed") == 1
+    assert "left leg - Run #1 - SC #1 - Tracking failed" in issues
+    assert "NaN at Knee, left Y" in issues
+    assert "Skull Z" in issues  # warning about the non-analysed joint
+
+    # analysis - remaining NaNs are interpolated, so results must be NaN-free
+    results = analyse_and_export_stepcycles(
+        data, all_cycles, global_Y_max, extract_info, extract_cfg
+    )
+    n_clean_left_scs = sum(len(run_cycles) for run_cycles in clean_cycles["left"])
+    assert results["left"]["sc_num"] == n_clean_left_scs  # (already 1 less, see above)
+    for output in ["left", "right", "both"]:
+        for key in ["average_data", "std_data"]:
+            assert not results[output][key].isna().any().any(), f"NaN: {output} {key}"
 
 
 # %%................... test sc_times_in_frames ...................................
