@@ -11,6 +11,7 @@ FIRST_LEVEL_CFG_VARS_TO_NOT_CHECK = [
     "autogaita_version",
     "pixel_to_mm_ratio",
     "coordinate_standardisation_xls",
+    "interpolate_data",
 ]
 
 # DERIVED CFG KEYS TO NOT WRITE TO CONFIG.JSON

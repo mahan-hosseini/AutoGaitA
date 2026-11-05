@@ -21,6 +21,7 @@
             "Midfoot, left"
         ],
         "flip_gait_direction": true,
+        "interpolate_data": false,
         "analyse_average_y": false,
         "standardise_y_coordinates": true,
         "y_standardisation_joint": [

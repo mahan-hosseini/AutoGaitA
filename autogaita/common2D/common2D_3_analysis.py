@@ -47,11 +47,14 @@ def analyse_and_export_stepcycles(data, all_cycles, info, cfg):
     analyse_average_x = cfg["analyse_average_x"]
     bin_num = cfg["bin_num"]
     standardise_x_coordinates = cfg["standardise_x_coordinates"]
+    interpolate_data = cfg["interpolate_data"]
+
     # do everything on a copy of the data df
     data_copy = data.copy()
-    # fill NaNs of all joints' x/y
+    # if wanted, fill NaNs of all joints' x/y
     # => SCs with too many NaNs in joints of interest are already gone
-    data_copy = interpolate_xy_nans(data_copy)
+    if interpolate_data:
+        data_copy = interpolate_xy_nans(data_copy)
     # exactly 1 step
     if len(all_cycles) == 1:
         this_step = data_copy.loc[all_cycles[0][0] : all_cycles[0][1]]

@@ -32,6 +32,7 @@ def universal3D_singlerun():
     cfg["color_palette"] = "Set2"
     cfg["legend_outside"] = True
     cfg["flip_gait_direction"] = True
+    cfg["interpolate_data"] = False
     cfg["analyse_average_y"] = True
     cfg["standardise_y_coordinates"] = True
     cfg["sc_times_in_frames"] = False

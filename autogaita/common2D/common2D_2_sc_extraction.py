@@ -7,6 +7,7 @@ from autogaita.common2D.common2D_utils import (
     check_differing_angle_joint_coords,
     check_tracking_xy_thresholds,
     check_tracking_nans,
+    report_interpolated_nans,
     handle_issues,
 )
 import os
@@ -36,6 +37,7 @@ def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
     sctable_filename = folderinfo["sctable_filename"]
     sampling_rate = cfg["sampling_rate"]
     sc_times_in_frames = cfg["sc_times_in_frames"]
+    interpolate_data = cfg["interpolate_data"]
 
     # load the table - try some filename & ending options
     if os.path.exists(os.path.join(root_dir, sctable_filename)):
@@ -247,9 +249,11 @@ def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
     all_cycles = check_tracking_xy_thresholds(all_cycles, data, info, cfg)
     if not all_cycles:
         return None
-    # check if any analysed joint is too often NaN in an SC
-    # => NaNs are interpolated in stage 3
+    # exclude SCs with NaNs (any NaN, or too many NaNs in analysed joints if we
+    # interpolate - remaining NaNs are then interpolated in stage 3)
     all_cycles = check_tracking_nans(all_cycles, data, info, cfg)
     if not all_cycles:
         return None
+    if interpolate_data:  # tell users which & how much data is estimated
+        report_interpolated_nans(all_cycles, data, info, cfg)
     return all_cycles

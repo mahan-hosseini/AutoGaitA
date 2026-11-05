@@ -360,41 +360,40 @@ def check_tracking_xy_thresholds(all_cycles, data, info, cfg):
 
 
 def check_tracking_nans(all_cycles, data, info, cfg):
-    """Exclude SCs in which an analysed joint's x or y is more than
-    MAX_INTERPOLATE_NAN_FRAC NaN, and warn about other joints that are.
+    """Exclude SCs with NaNs - depending on cfg["interpolate_data"]
 
-    Remaining NaNs are linearly interpolated in stage 3 (see interpolate_xy_nans), so
-    this check decides which SCs are tracked well enough for that to be trustworthy.
-    => Analysed joints = hind joints & angle joints.
-    => Other joints are interpolated too (so group's PCA never raises an error because
-       of NaNs, but they never exclude an SC - we only warn so users don't pick them as group features of interest.
+    Note
+    ----
+    1) interpolate_data is False: exclude SCs with any NaN in any x/y column (of all
+       joints, not just analysed ones) - so group's PCA never raises an error because
+       of NaNs
+    2) interpolate_data is True: exclude SCs in which an analysed joint's x or y is
+       more than MAX_INTERPOLATE_NAN_FRAC NaN
+       => Remaining NaNs are linearly interpolated in stage 3 (see
+          interpolate_xy_nans), so this check decides which SCs are tracked well
+          enough for that to be trustworthy.
+       => Analysed joints = hind joints & angle joints.
+       => Other joints are interpolated too (so group's PCA never raises an error
+          because of NaNs), but they never exclude an SC - see
+          report_interpolated_nans
     """
     # unpack
-    hind_joints = cfg["hind_joints"]
-    angles = cfg["angles"]
-    # all joints to test for NaNs
-    # Important to use list() here so we copy cfg["hind_joints"]. If we would go
-    # all_joints = cfg... we would mutate the dict in place here and mess up with
-    # places where the dict is used downstream
-    all_joints = list(hind_joints)
-    for key in angles.keys():
-        all_joints += angles[key]
-    # columns to check
-    columns = []
-    for joint in all_joints:
-        for coord_col in [joint + "x", joint + "y"]:
-            if coord_col not in columns:  # angle joints can also be hind joints
-                columns.append(coord_col)
-    other_columns = [
-        col for col in data.columns if col.endswith((" x", " y")) and col not in columns
-    ]
+    interpolate_data = cfg["interpolate_data"]
+
+    # check whether to interpolate or remove SCs - setting max_nan_frac accordingly
+    if interpolate_data:
+        columns = get_analysed_coordinate_columns(cfg)
+        max_nan_frac = MAX_INTERPOLATE_NAN_FRAC
+        max_nan_string = f"max. allowed is {MAX_INTERPOLATE_NAN_FRAC:.0%}"
+    else:
+        columns = [col for col in data.columns if col.endswith((" x", " y"))]
+        max_nan_frac = 0  # i.e. any NaN excludes the SC
+        max_nan_string = "interpolation is off, so no NaN are allowed"
     # check for NaNs
     clean_cycles = None
     for c, cycle in enumerate(all_cycles):
         this_cycles_nan_fracs = data.loc[cycle[0] : cycle[1], columns].isna().mean()
-        too_many_nans = this_cycles_nan_fracs[
-            this_cycles_nan_fracs > MAX_INTERPOLATE_NAN_FRAC
-        ]
+        too_many_nans = this_cycles_nan_fracs[this_cycles_nan_fracs > max_nan_frac]
         if not too_many_nans.empty:
             nan_cols = "; ".join(
                 f"{col} ({frac:.1%})" for col, frac in too_many_nans.items()
@@ -402,8 +401,7 @@ def check_tracking_nans(all_cycles, data, info, cfg):
             this_message = (
                 "\n...excluding SC #"
                 + str(c + 1)
-                + f" - Tracking failed (NaN at {nan_cols} - max. allowed is "
-                + f"{MAX_INTERPOLATE_NAN_FRAC:.0%})!"
+                + f" - Tracking failed (NaN at {nan_cols} - {max_nan_string})!"
             )
             print(this_message)
             write_issues_to_textfile(this_message, info)
@@ -412,28 +410,78 @@ def check_tracking_nans(all_cycles, data, info, cfg):
                 clean_cycles = [cycle]  # also makes a 2xscs list of lists
             else:
                 clean_cycles.append(cycle)
-    # warn about non-analysed joints that would mostly be interpolated in kept SCs
-    if clean_cycles and other_columns:
-        noisy_other_columns = []
-        for col in other_columns:
-            for cycle in clean_cycles:
-                this_nan_frac = data.loc[cycle[0] : cycle[1], col].isna().mean()
-                if this_nan_frac > MAX_INTERPOLATE_NAN_FRAC:
-                    noisy_other_columns.append(col)
-                    break
-        if noisy_other_columns:
-            this_message = (
-                "\n***********\n! WARNING !\n***********\n"
-                + "These columns are more than "
-                + f"{MAX_INTERPOLATE_NAN_FRAC:.0%} NaN in at least one step cycle:\n"
-                + ", ".join(noisy_other_columns)
-                + "\nThey are not part of your analysed joints, so no step cycles were "
-                + "excluded because of them, but their missing values were linearly "
-                + "interpolated.\nAvoid using them as group PCA or stats features!"
-            )
-            print(this_message)
-            write_issues_to_textfile(this_message, info)
     return clean_cycles
+
+
+def report_interpolated_nans(all_cycles, data, info, cfg):
+    """Inform users which columns are interpolated in which SC (and by how much) &
+    warn about non-analysed joints that are more than MAX_INTERPOLATE_NAN_FRAC NaN
+
+    Note
+    ----
+    Only called if cfg["interpolate_data"] is True, after check_tracking_nans, so
+    all_cycles only holds the SCs we keep. Analysed joints are never above
+    MAX_INTERPOLATE_NAN_FRAC here, but non-analysed joints can be - they are
+    interpolated in stage 3 too & users can choose them as group PCA or stats features
+    """
+    xy_cols = [col for col in data.columns if col.endswith((" x", " y"))]
+    analysed_columns = get_analysed_coordinate_columns(cfg)
+    # 1) which columns of which SC are interpolated & by how much
+    report_lines = []
+    noisy_other_columns = []
+    for cycle in all_cycles:
+        nan_fracs = data.loc[cycle[0] : cycle[1], xy_cols].isna().mean()
+        nan_fracs = nan_fracs[nan_fracs > 0]
+        if not nan_fracs.empty:
+            start_time = round(data[TIME_COL][cycle[0]], 4)
+            end_time = round(data[TIME_COL][cycle[1]], 4)
+            report_lines.append(
+                f"SC {start_time}-{end_time}s: "
+                + "; ".join(f"{col} ({frac:.1%})" for col, frac in nan_fracs.items())
+            )
+        for col, frac in nan_fracs.items():
+            if (
+                col not in analysed_columns
+                and frac > MAX_INTERPOLATE_NAN_FRAC
+                and col not in noisy_other_columns
+            ):
+                noisy_other_columns.append(col)
+    if report_lines:
+        this_message = (
+            "\nInterpolated missing values (in % of the step cycle's frames):\n"
+            + "\n".join(report_lines)
+        )
+        print(this_message)
+        write_issues_to_textfile(this_message, info)
+    # 2) warn about non-analysed joints that are mostly interpolated in kept SCs
+    if noisy_other_columns:
+        this_message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + "These columns are more than "
+            + f"{MAX_INTERPOLATE_NAN_FRAC:.0%} NaN in at least one step cycle:\n"
+            + ", ".join(noisy_other_columns)
+            + "\nThey are not part of your analysed joints, so no step cycles were "
+            + "excluded because of them, but their missing values were linearly "
+            + "interpolated.\nAvoid using them as group PCA or stats features!"
+        )
+        print(this_message)
+        write_issues_to_textfile(this_message, info)
+
+
+def get_analysed_coordinate_columns(cfg):
+    """Return the x/y columns of all hind joints & angle joints"""
+    # Important to use list() here so we copy cfg["hind_joints"]. If we would go
+    # all_joints = cfg... we would mutate the dict in place here and mess up with
+    # places where the dict is used downstream
+    all_joints = list(cfg["hind_joints"])
+    for key in cfg["angles"].keys():
+        all_joints += cfg["angles"][key]
+    columns = []
+    for joint in all_joints:
+        for coord_col in [joint + "x", joint + "y"]:
+            if coord_col not in columns:  # angle joints can also be hind joints
+                columns.append(coord_col)
+    return columns
 
 
 def interpolate_xy_nans(data):

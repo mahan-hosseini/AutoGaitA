@@ -190,6 +190,15 @@ def run_common2D_gui(tracking_software):
     )
     flip_gait_direction_box.grid(row=4, column=0, columnspan=3, sticky="w")
 
+    # interpolate missing values (NaNs) - else SCs with any NaN are excluded
+    interpolate_data_box = gaita_widgets.checkbox(
+        root,
+        "Interpolate missing values",
+        cfg["interpolate_data"],
+        WIDGET_CFG,
+    )
+    interpolate_data_box.grid(row=5, column=0, columnspan=3, sticky="w")
+
     # plot plots to python
     showplots_checkbox = gaita_widgets.checkbox(
         root,
@@ -197,7 +206,7 @@ def run_common2D_gui(tracking_software):
         cfg["dont_show_plots"],
         WIDGET_CFG,
     )
-    showplots_checkbox.grid(row=5, column=0, columnspan=2, sticky="w")
+    showplots_checkbox.grid(row=6, column=0, columnspan=2, sticky="w")
 
     # bin number of SC normalisation
     bin_num_label, bin_num_entry = gaita_widgets.label_and_entry_pair(
@@ -206,12 +215,12 @@ def run_common2D_gui(tracking_software):
         cfg["bin_num"],
         WIDGET_CFG,
     )
-    bin_num_label.grid(row=6, column=0, columnspan=2, sticky="w")
-    bin_num_entry.grid(row=6, column=2, sticky="w")
+    bin_num_label.grid(row=7, column=0, columnspan=2, sticky="w")
+    bin_num_entry.grid(row=7, column=2, sticky="w")
 
     # empty label 1 (for spacing)
     empty_label_one = ctk.CTkLabel(root, text="")
-    empty_label_one.grid(row=7, column=0)
+    empty_label_one.grid(row=8, column=0)
 
     # ..........................  advanced cfg section  ................................
     # advanced header string
@@ -220,7 +229,7 @@ def run_common2D_gui(tracking_software):
         "Advanced Configuration",
         WIDGET_CFG,
     )
-    advanced_cfg_header_label.grid(row=8, column=0, columnspan=3, sticky="nsew")
+    advanced_cfg_header_label.grid(row=9, column=0, columnspan=3, sticky="nsew")
 
     # column name information window
     column_info_button = gaita_widgets.header_button(
@@ -229,7 +238,7 @@ def run_common2D_gui(tracking_software):
     column_info_button.configure(
         command=lambda: build_column_info_window(root, cfg, WIDGET_CFG, root_dimensions)
     )
-    column_info_button.grid(row=9, column=0, columnspan=3)
+    column_info_button.grid(row=10, column=0, columnspan=3)
 
     # advanced cfg
     cfg_window_button = gaita_widgets.header_button(
@@ -238,15 +247,15 @@ def run_common2D_gui(tracking_software):
     cfg_window_button.configure(
         command=lambda: build_cfg_window(root, cfg, WIDGET_CFG, root_dimensions)
     )
-    cfg_window_button.grid(row=10, column=0, columnspan=3)
+    cfg_window_button.grid(row=11, column=0, columnspan=3)
 
     # empty label 2 (for spacing)
     empty_label_two = ctk.CTkLabel(root, text="")
-    empty_label_two.grid(row=11, column=0)
+    empty_label_two.grid(row=12, column=0)
 
     # run analysis label
     runheader_label = gaita_widgets.header_label(root, "Run Analysis", WIDGET_CFG)
-    runheader_label.grid(row=12, column=0, columnspan=3, sticky="nsew")
+    runheader_label.grid(row=13, column=0, columnspan=3, sticky="nsew")
 
     # single gaita button
     onevid_button = gaita_widgets.header_button(root, "One Video", WIDGET_CFG)
@@ -261,7 +270,7 @@ def run_common2D_gui(tracking_software):
             root_dimensions,
         )
     )
-    onevid_button.grid(row=13, column=1, sticky="ew")
+    onevid_button.grid(row=14, column=1, sticky="ew")
 
     # multi gaita button
     multivid_button = gaita_widgets.header_button(root, "Batch Analysis", WIDGET_CFG)
@@ -276,11 +285,11 @@ def run_common2D_gui(tracking_software):
             root_dimensions,
         )
     )
-    multivid_button.grid(row=14, column=1, sticky="ew")
+    multivid_button.grid(row=15, column=1, sticky="ew")
 
     # empty label 2 (for spacing)
     empty_label_two = ctk.CTkLabel(root, text="")
-    empty_label_two.grid(row=15, column=0)
+    empty_label_two.grid(row=16, column=0)
 
     # close & exit button
     exit_button = gaita_widgets.exit_button(root, WIDGET_CFG)
@@ -302,7 +311,7 @@ def run_common2D_gui(tracking_software):
             root.after(5000, root.destroy),
         ),
     )
-    exit_button.grid(row=16, column=0, columnspan=3)
+    exit_button.grid(row=17, column=0, columnspan=3)
 
     # # .........................  widget configuration  ...............................
 
@@ -310,10 +319,10 @@ def run_common2D_gui(tracking_software):
     # => Silent_Creme is some undocumented option that makes stuff uniform
     #   see: https://stackoverflow.com/questions/45847313/tkinter-grid-rowconfigure-weight-doesnt-work
     root.columnconfigure(list(range(3)), weight=1, uniform="Silent_Creme")
-    root.rowconfigure(list(range(17)), weight=1, uniform="Silent_Creme")
+    root.rowconfigure(list(range(18)), weight=1, uniform="Silent_Creme")
 
     # then un-maximise main config rows to have them grouped together
-    root.rowconfigure(list(range(1, 7)), weight=0)
+    root.rowconfigure(list(range(1, 8)), weight=0)
 
     # main loop
     root.mainloop()

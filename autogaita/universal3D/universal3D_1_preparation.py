@@ -38,6 +38,7 @@ def some_prep(info, folderinfo, cfg):
     standardise_y_coordinates = cfg["standardise_y_coordinates"]
     standardise_z_to_a_joint = cfg["standardise_z_to_a_joint"]
     coordinate_standardisation_xls = cfg["coordinate_standardisation_xls"]
+    interpolate_data = cfg["interpolate_data"]
     tracking_software = "Universal 3D"  # hardcoded for this toolbox
 
     # .............................  move data  ........................................
@@ -141,6 +142,7 @@ def some_prep(info, folderinfo, cfg):
         "coordinate_standardisation_xls": coordinate_standardisation_xls,
         "joints": joints,
         "angles": angles,
+        "interpolate_data": interpolate_data,
         "tracking_software": tracking_software,
     }
     # note - using "w" will overwrite/truncate file, thus no need to remove it if exists

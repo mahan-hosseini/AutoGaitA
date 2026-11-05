@@ -27,6 +27,7 @@ def extract_stepcycles(data, info, folderinfo, cfg):
     # unpack
     root_dir = folderinfo["root_dir"]
     sctable_filename = folderinfo["sctable_filename"]
+    interpolate_data = cfg["interpolate_data"]
 
     # load the table - try some filename & ending options
     if os.path.exists(os.path.join(root_dir, sctable_filename)):
@@ -55,8 +56,9 @@ def extract_stepcycles(data, info, folderinfo, cfg):
     all_cycles = {"left": [], "right": []}
     for legname in LEGS:
         all_cycles[legname] = read_SC_info(data, SCdf, info, legname, cfg)
-    # after both legs so users get one warning only
-    warn_about_nans_of_non_analysed_joints(all_cycles, data, info, cfg)
+    # after both legs so users get one report & warning only
+    if interpolate_data:  # tell users which & how much data is estimated
+        report_interpolated_nans(all_cycles, data, info, cfg)
     return all_cycles
 
 
@@ -419,25 +421,41 @@ def check_a_single_cycle_for_joint_coords(cycle, angles, data, r, c, info):
 
 
 def check_tracking_nans(all_cycles, data, info, cfg, legname):
-    """Exclude SCs in which an analysed joint's X, Y or Z is more than
-    MAX_INTERPOLATE_NAN_FRAC NaN
+    """Exclude SCs with NaNs - depending on cfg["interpolate_data"]
 
     Note
     ----
-    Remaining NaNs are linearly interpolated in stage 3 (see interpolate_xyz_nans), so
-    this check decides which SCs are tracked well enough for that to be trustworthy.
-    => Analysed joints = joints & angle joints
-    => Like in check_different_angle_joint_coords, we check both legs' columns for each
-       SC, because both legs' features are computed for each SC later
-    => Other joints are interpolated too but never exclude an SC, see
-       warn_about_nans_of_non_analysed_joints
+    1) interpolate_data is False: exclude SCs with any NaN in any X/Y/Z column (of all
+       joints, not just analysed ones) - so group's PCA never raises an error because
+       of NaNs
+    2) interpolate_data is True: exclude SCs in which an analysed joint's X, Y or Z is
+       more than MAX_INTERPOLATE_NAN_FRAC NaN
+       => Remaining NaNs are linearly interpolated in stage 3 (see
+          interpolate_xyz_nans), so this check decides which SCs are tracked well
+          enough for that to be trustworthy.
+       => Analysed joints = joints & angle joints
+       => Like in check_different_angle_joint_coords, we check both legs' columns for
+          each SC, because both legs' features are computed for each SC later
+       => Other joints are interpolated too but never exclude an SC, see
+          report_interpolated_nans
     """
-    columns = get_analysed_coordinate_columns(data, cfg)
+
+    # unpack
+    interpolate_data = cfg["interpolate_data"]
+
+    if interpolate_data:
+        columns = get_analysed_coordinate_columns(data, cfg)
+        max_nan_frac = MAX_INTERPOLATE_NAN_FRAC
+        max_nan_string = f"max. allowed is {MAX_INTERPOLATE_NAN_FRAC:.0%}"
+    else:
+        columns = [col for col in data.columns if col.endswith((" X", " Y", " Z"))]
+        max_nan_frac = 0  # i.e. any NaN excludes the SC
+        max_nan_string = "interpolation is off, so no NaN are allowed"
     clean_cycles = None
     for r, run_cycles in enumerate(all_cycles):
         for c, cycle in enumerate(run_cycles):
             nan_fracs = data.loc[cycle[0] : cycle[1], columns].isna().mean()
-            too_many_nans = nan_fracs[nan_fracs > MAX_INTERPOLATE_NAN_FRAC]
+            too_many_nans = nan_fracs[nan_fracs > max_nan_frac]
             if too_many_nans.empty:
                 if clean_cycles is None:  # if first valid cycle: list of empty lists
                     clean_cycles = [[] for s in range(len(all_cycles))]
@@ -450,40 +468,61 @@ def check_tracking_nans(all_cycles, data, info, cfg, legname):
                 this_message = (
                     "\n***********\n! WARNING !\n***********\n"
                     + f"{legname} leg - Run #{r + 1} - SC #{c + 1} - Tracking failed "
-                    + f"(NaN at {nan_cols} - max. allowed is "
-                    + f"{MAX_INTERPOLATE_NAN_FRAC:.0%}) - Skipping!"
+                    + f"(NaN at {nan_cols} - {max_nan_string}) - Skipping!"
                 )
                 print(this_message)
                 write_issues_to_textfile(this_message, info)
     return clean_cycles
 
 
-def warn_about_nans_of_non_analysed_joints(all_cycles, data, info, cfg):
-    """Warn about X/Y/Z columns of non-analysed joints that are more than
-    MAX_INTERPOLATE_NAN_FRAC NaN in at least one remaining SC of any leg
+def report_interpolated_nans(all_cycles, data, info, cfg):
+    """Inform users which columns are interpolated in which SC (and by how much) &
+    warn about non-analysed joints that are more than MAX_INTERPOLATE_NAN_FRAC NaN
 
-    These columns don't exclude SCs, but they are interpolated in stage 3 and can be
-    chosen as group PCA or stats features - users should know they're estimated to quite some extent
+    Note
+    ----
+    Only called if cfg["interpolate_data"] is True, after both legs' SCs went through
+    check_tracking_nans, so all_cycles only holds the SCs we keep. Analysed joints are
+    never above MAX_INTERPOLATE_NAN_FRAC here, but non-analysed joints can be - they
+    are interpolated in stage 3 too & users can choose them as group PCA or stats
+    features, so they should know they're estimated to quite some extent
     """
+    xyz_cols = [col for col in data.columns if col.endswith((" X", " Y", " Z"))]
     analysed_columns = get_analysed_coordinate_columns(data, cfg)
-    other_columns = [
-        col
-        for col in data.columns
-        if col.endswith((" X", " Y", " Z")) and col not in analysed_columns
-    ]
-    remaining_cycles = []
-    for legname in LEGS:
-        if all_cycles[legname]:  # None if no valid SCs for this leg
-            for run_cycles in all_cycles[legname]:
-                remaining_cycles += run_cycles
+    # 1) which columns of which SC are interpolated & by how much
+    report_lines = []
     noisy_other_columns = []
-    for col in other_columns:
-        for cycle in remaining_cycles:
-            if data.loc[cycle[0] : cycle[1], col].isna().mean() > (
-                MAX_INTERPOLATE_NAN_FRAC
-            ):
-                noisy_other_columns.append(col)
-                break
+    for legname in LEGS:
+        if not all_cycles[legname]:  # None if no valid SCs for this leg
+            continue
+        for r, run_cycles in enumerate(all_cycles[legname]):
+            for cycle in run_cycles:
+                nan_fracs = data.loc[cycle[0] : cycle[1], xyz_cols].isna().mean()
+                nan_fracs = nan_fracs[nan_fracs > 0]
+                if not nan_fracs.empty:
+                    start_time = round(data[TIME_COL][cycle[0]], 4)
+                    end_time = round(data[TIME_COL][cycle[1]], 4)
+                    report_lines.append(
+                        f"{legname} leg - Run #{r + 1} - SC {start_time}-{end_time}s: "
+                        + "; ".join(
+                            f"{col} ({frac:.1%})" for col, frac in nan_fracs.items()
+                        )
+                    )
+                for col, frac in nan_fracs.items():
+                    if (
+                        col not in analysed_columns
+                        and frac > MAX_INTERPOLATE_NAN_FRAC
+                        and col not in noisy_other_columns
+                    ):
+                        noisy_other_columns.append(col)
+    if report_lines:
+        this_message = (
+            "\nInterpolated missing values (in % of the step cycle's frames):\n"
+            + "\n".join(report_lines)
+        )
+        print(this_message)
+        write_issues_to_textfile(this_message, info)
+    # 2) warn about non-analysed joints that are mostly interpolated in kept SCs
     if noisy_other_columns:
         this_message = (
             "\n***********\n! WARNING !\n***********\n"

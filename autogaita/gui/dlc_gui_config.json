@@ -32,6 +32,7 @@
         ],
         "invert_y_axis": true,
         "flip_gait_direction": true,
+        "interpolate_data": false,
         "analyse_average_x": false,
         "standardise_x_coordinates": false,
         "x_standardisation_joint": [

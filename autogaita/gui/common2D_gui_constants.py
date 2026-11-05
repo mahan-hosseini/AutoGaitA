@@ -34,6 +34,7 @@ TK_BOOL_VARS = [
     "standardise_x_coordinates",
     "invert_y_axis",
     "flip_gait_direction",
+    "interpolate_data",
     "analyse_average_x",
     "legend_outside",
     "sc_times_in_frames",

@@ -56,6 +56,7 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     standardise_x_coordinates = cfg["standardise_x_coordinates"]
     standardise_y_to_a_joint = cfg["standardise_y_to_a_joint"]
     coordinate_standardisation_xls = cfg["coordinate_standardisation_xls"]
+    interpolate_data = cfg["interpolate_data"]
 
     # .............................  move data  ........................................
     # => slightly different for DLC or SLEAP (see local functions below)
@@ -221,6 +222,7 @@ def some_prep(tracking_software, info, folderinfo, cfg):
         "hind_joints": hind_joints,
         "fore_joints": fore_joints,
         "angles": angles,
+        "interpolate_data": interpolate_data,
         "tracking_software": tracking_software,
     }
     # note - using "w" will overwrite/truncate file, thus no need to remove it if exists

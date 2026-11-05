@@ -74,6 +74,7 @@ def fixture_extract_cfg():
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
     cfg["standardise_y_at_SC_level"] = False
+    cfg["interpolate_data"] = False
     cfg["standardise_y_to_a_joint"] = True
     cfg["y_standardisation_joint"] = ["Knee"]
     cfg["plot_joint_number"] = 3

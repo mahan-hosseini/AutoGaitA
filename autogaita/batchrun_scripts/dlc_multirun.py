@@ -40,6 +40,7 @@ def dlc_multirun():
     cfg["legend_outside"] = True
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = True
+    cfg["interpolate_data"] = False
     cfg["analyse_average_x"] = True
     cfg["standardise_x_coordinates"] = True
     cfg["x_standardisation_joint"] = ["Hind paw tao"]

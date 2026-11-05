@@ -41,6 +41,7 @@ def sleap_multirun():
     cfg["legend_outside"] = True
     cfg["invert_y_axis"] = True
     cfg["flip_gait_direction"] = False
+    cfg["interpolate_data"] = False
     cfg["analyse_average_x"] = False
     cfg["standardise_x_coordinates"] = False
     cfg["x_standardisation_joint"] = ["Midfoot"]

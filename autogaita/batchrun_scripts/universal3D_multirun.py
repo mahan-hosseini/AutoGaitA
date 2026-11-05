@@ -31,6 +31,7 @@ def universal3D_multirun():
     cfg["color_palette"] = "viridis"
     cfg["legend_outside"] = True
     cfg["flip_gait_direction"] = False
+    cfg["interpolate_data"] = False
     cfg["analyse_average_y"] = True
     cfg["standardise_y_coordinates"] = True
     cfg["y_standardisation_joint"] = ["Foot"]

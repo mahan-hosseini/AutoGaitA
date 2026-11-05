@@ -56,6 +56,7 @@ TK_BOOL_VARS = [
     "standardise_y_coordinates",
     "postname_flag",
     "flip_gait_direction",
+    "interpolate_data",
     "analyse_average_y",
     "legend_outside",
     "fileprep_3D_DLC",
@@ -228,6 +229,15 @@ def run_universal3D_gui():
     )
     flip_gait_direction_box.grid(row=5, column=0, columnspan=2, sticky="w")
 
+    # interpolate missing values (NaNs) - else SCs with any NaN are excluded
+    interpolate_data_box = gaita_widgets.checkbox(
+        root,
+        "Interpolate missing values",
+        cfg["interpolate_data"],
+        WIDGET_CFG,
+    )
+    interpolate_data_box.grid(row=6, column=0, columnspan=2, sticky="w")
+
     # postname present checkbox
     postname_flag_checkbox = gaita_widgets.checkbox(
         root,
@@ -240,7 +250,7 @@ def run_universal3D_gui():
             results, "postname_flag", postname_entry
         ),
     )
-    postname_flag_checkbox.grid(row=6, column=0, columnspan=2)
+    postname_flag_checkbox.grid(row=7, column=0, columnspan=2)
 
     # postname string
     postname_label, postname_entry = gaita_widgets.label_and_entry_pair(
@@ -249,13 +259,13 @@ def run_universal3D_gui():
         results["postname_string"],
         WIDGET_CFG,
     )
-    postname_label.grid(row=7, column=0, sticky="e")
+    postname_label.grid(row=8, column=0, sticky="e")
     postname_entry.configure(state="disabled")
-    postname_entry.grid(row=7, column=1, sticky="w")
+    postname_entry.grid(row=8, column=1, sticky="w")
 
     # empty label 1 (for spacing)
     empty_label_one = ctk.CTkLabel(root, text="")
-    empty_label_one.grid(row=8, column=0)
+    empty_label_one.grid(row=9, column=0)
 
     # ..........................  advanced cfg section  ................................
 
@@ -263,7 +273,7 @@ def run_universal3D_gui():
     advanced_cfg_header_label = gaita_widgets.header_label(
         root, "Advanced Configuration", WIDGET_CFG
     )
-    advanced_cfg_header_label.grid(row=9, column=0, columnspan=2, sticky="nsew")
+    advanced_cfg_header_label.grid(row=10, column=0, columnspan=2, sticky="nsew")
 
     # data file preparation window
     datafile_prep_button = gaita_widgets.header_button(
@@ -272,7 +282,7 @@ def run_universal3D_gui():
     datafile_prep_button.configure(
         command=lambda: build_datafile_prep_window(root, results, cfg),
     )
-    datafile_prep_button.grid(row=10, column=0, columnspan=2)
+    datafile_prep_button.grid(row=11, column=0, columnspan=2)
 
     # column name information window
     column_info_button = gaita_widgets.header_button(
@@ -281,7 +291,7 @@ def run_universal3D_gui():
     column_info_button.configure(
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
-    column_info_button.grid(row=11, column=0, columnspan=2)
+    column_info_button.grid(row=12, column=0, columnspan=2)
 
     # advanced cfg
     cfg_window_button = gaita_widgets.header_button(
@@ -290,17 +300,17 @@ def run_universal3D_gui():
     cfg_window_button.configure(
         command=lambda: (build_cfg_window(root, cfg)),
     )
-    cfg_window_button.grid(row=12, column=0, columnspan=2)
+    cfg_window_button.grid(row=13, column=0, columnspan=2)
 
     # empty label 2 (for spacing)
     empty_label_two = ctk.CTkLabel(root, text="")
-    empty_label_two.grid(row=13, column=0)
+    empty_label_two.grid(row=14, column=0)
 
     # ............................  run & exit section  ................................
 
     # run analysis label
     runheader_label = gaita_widgets.header_label(root, "Run Analysis", WIDGET_CFG)
-    runheader_label.grid(row=14, column=0, columnspan=2, sticky="nsew")
+    runheader_label.grid(row=15, column=0, columnspan=2, sticky="nsew")
 
     # single video checkbox
     singlevideo_checkbox = gaita_widgets.checkbox(
@@ -314,14 +324,14 @@ def run_universal3D_gui():
             cfg, "analyse_singlerun", ID_entry
         ),
     )
-    singlevideo_checkbox.grid(row=15, column=0, columnspan=2)
+    singlevideo_checkbox.grid(row=16, column=0, columnspan=2)
 
     # ID string info
     ID_label, ID_entry = gaita_widgets.label_and_entry_pair(
         root, "ID to be analysed:", results["name"], WIDGET_CFG
     )
-    ID_label.grid(row=16, column=0, sticky="e")
-    ID_entry.grid(row=16, column=1, sticky="w")
+    ID_label.grid(row=17, column=0, sticky="e")
+    ID_entry.grid(row=17, column=1, sticky="w")
     gui_utils.change_widget_state_based_on_checkbox(cfg, "analyse_singlerun", ID_entry)
 
     # run analysis button
@@ -341,11 +351,11 @@ def run_universal3D_gui():
             build_donewindow(results, root, root_dimensions),
         )
     )
-    run_button.grid(row=17, column=0, columnspan=2, padx=10, pady=(10, 5))
+    run_button.grid(row=18, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # empty label 3 (for spacing)
     empty_label_three = ctk.CTkLabel(root, text="")
-    empty_label_three.grid(row=18, column=0)
+    empty_label_three.grid(row=19, column=0)
 
     # close program button
     exit_button = gaita_widgets.exit_button(
@@ -368,7 +378,7 @@ def run_universal3D_gui():
             root.after(5000, root.destroy),
         ),
     )
-    exit_button.grid(row=19, column=0, columnspan=2, padx=10, pady=(10, 5))
+    exit_button.grid(row=20, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # maximise widgets
     gui_utils.maximise_widgets(root)

@@ -2,7 +2,7 @@ from autogaita.universal3D.universal3D_1_preparation import some_prep
 from autogaita.universal3D.universal3D_2_sc_extraction import (
     check_different_angle_joint_coords,
     check_tracking_nans,
-    warn_about_nans_of_non_analysed_joints,
+    report_interpolated_nans,
     get_analysed_coordinate_columns,
     extract_stepcycles,
 )
@@ -56,6 +56,7 @@ def extract_cfg():
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
     cfg["standardise_z_at_SC_level"] = True
+    cfg["interpolate_data"] = False
     cfg["standardise_z_to_a_joint"] = True
     cfg["z_standardisation_joint"] = ["Midfoot, left "]
     cfg["plot_joint_number"] = 5
@@ -223,6 +224,7 @@ def test_analysed_coordinate_columns_cover_both_legs_and_all_axes(
 def test_clean_cycles_nan_removals(extract_data, extract_info, extract_cfg):
     """An SC is excluded only if an analysed joint is > MAX_INTERPOLATE_NAN_FRAC NaN
     within it - a single NaN is interpolated later and doesn't exclude the SC"""
+    extract_cfg["interpolate_data"] = True
     data = extract_data
     all_cycles = [[[111, 222], [333, 444]], [[555, 666], [777, 888]]]  # 112 frames
     # right leg's column excludes this (left leg's) SC too - both legs are analysed
@@ -252,6 +254,7 @@ def test_clean_cycles_nan_removals(extract_data, extract_info, extract_cfg):
 def test_clean_cycles_nan_fraction_boundary(
     n_nan_frames, expected_cycles, extract_data, extract_info, extract_cfg
 ):
+    extract_cfg["interpolate_data"] = True
     data = extract_data
     data.loc[100 : 100 + n_nan_frames - 1, "Midfoot, left Z"] = np.nan
     assert MAX_INTERPOLATE_NAN_FRAC == 0.1  # otherwise update n_nan_frames above
@@ -266,6 +269,7 @@ def test_non_analysed_joint_nans_only_warn(
 ):
     """Pelvis is neither a joint nor an angle joint, so its NaNs must not exclude the SC
     - users must be warned though, but only about NaNs within remaining SCs"""
+    extract_cfg["interpolate_data"] = True
     data = extract_data
     data.loc[333:400, "Pelvis Z"] = np.nan  # 68 / 112 = 61% NaN
     data.loc[1000:1100, "Pelvis Y"] = np.nan  # outside of all SCs => no warning
@@ -274,14 +278,67 @@ def test_non_analysed_joint_nans_only_warn(
     )
     assert all_cycles == [[[333, 444]]]
     capsys.readouterr()  # only check the warning's output below
-    warn_about_nans_of_non_analysed_joints(
+    report_interpolated_nans(
         {"left": all_cycles, "right": None}, data, extract_info, extract_cfg
     )
-    assert "Pelvis Z" in capsys.readouterr().out
+    # check the warning's own text ("Pelvis Z" alone is also in the report line)
+    warning = "in at least one step cycle:\nPelvis Z"
+    assert warning in capsys.readouterr().out
     with open(os.path.join(extract_info["results_dir"], ISSUES_TXT_FILENAME)) as f:
         content = f.read()
-    assert "WARNING" in content and "Pelvis Z" in content
+    assert warning in content
     assert "Pelvis Y" not in content
+    # the report lists the SC (by leg, run & time) with how much of it is interpolated
+    assert "left leg - Run #1 - SC 3.33-4.44s: Pelvis Z (60.7%)" in content
+
+
+def test_report_interpolated_nans(extract_data, extract_info, extract_cfg, capsys):
+    """report_interpolated_nans lists every interpolated column of every kept SC (also
+    below MAX_INTERPOLATE_NAN_FRAC) & warns once per non-analysed column above it
+
+    left run 1 SC 111-222: Knee, left Y 5.4% & Skull Z 50.0% => one line, columns in
+                           the data's order
+    left run 2 SC 333-444: Pelvis Y 5.4% & Skull Z 30.4% => Skull Z is warned about
+                           only once, Pelvis Y is not analysed but below 10% =>
+                           reported, not warned
+    right run 1 SC 555-666: no NaN => not reported
+    """
+    extract_cfg["interpolate_data"] = True
+    clean_data = extract_data.copy()
+    data = clean_data.copy()
+    all_cycles = {"left": [[[111, 222]], [[333, 444]]], "right": [[[555, 666]]]}
+    data.loc[111:116, "Knee, left Y"] = np.nan  # 6 / 112 = 5.4%
+    data.loc[111:166, "Skull Z"] = np.nan  # 56 / 112 = 50.0%
+    data.loc[400:405, "Pelvis Y"] = np.nan  # 6 / 112 = 5.4%
+    data.loc[333:366, "Skull Z"] = np.nan  # 34 / 112 = 30.4%
+    issues_path = os.path.join(extract_info["results_dir"], ISSUES_TXT_FILENAME)
+
+    def read_issues():  # prep may already have written to Issues.txt (or not at all)
+        if not os.path.exists(issues_path):
+            return ""
+        with open(issues_path) as f:
+            return f.read()
+
+    issues_before = read_issues()
+    capsys.readouterr()  # discard prep's console output
+    report_interpolated_nans(all_cycles, data, extract_info, extract_cfg)
+    console = capsys.readouterr().out
+    new_issues = read_issues()[len(issues_before) :]
+    expected_report = (
+        "Interpolated missing values (in % of the step cycle's frames):\n"
+        + "left leg - Run #1 - SC 1.11-2.22s: Knee, left Y (5.4%); Skull Z (50.0%)\n"
+        + "left leg - Run #2 - SC 3.33-4.44s: Pelvis Y (5.4%); Skull Z (30.4%)"
+    )
+    # exactly one column in the warning: Skull Z once, no Knee, left Y / Pelvis Y
+    expected_warning = "in at least one step cycle:\nSkull Z\nThey are not part"
+    for output in [console, new_issues]:
+        assert expected_report in output
+        assert "right leg" not in output
+        assert expected_warning in output
+    # without NaNs in the SCs nothing is printed or written
+    report_interpolated_nans(all_cycles, clean_data, extract_info, extract_cfg)
+    assert capsys.readouterr().out == ""
+    assert read_issues() == issues_before + new_issues
 
 
 def test_nan_handling_from_sc_extraction_to_averages(
@@ -298,6 +355,7 @@ def test_nan_handling_from_sc_extraction_to_averages(
        Skull Z (not analysed) => warning only
     => averages & SDs must not contain any NaN
     """
+    extract_cfg["interpolate_data"] = True
     data, global_Y_max = some_prep(extract_info, extract_folderinfo, extract_cfg)
     clean_cycles = extract_stepcycles(
         data.copy(), extract_info, extract_folderinfo, extract_cfg
@@ -325,7 +383,11 @@ def test_nan_handling_from_sc_extraction_to_averages(
     assert issues.count("Tracking failed") == 1
     assert "left leg - Run #1 - SC #1 - Tracking failed" in issues
     assert "NaN at Knee, left Y" in issues
-    assert "Skull Z" in issues  # warning about the non-analysed joint
+    # report lists interpolated columns per SC - also those below the 10% limit
+    assert "Interpolated missing values" in issues
+    assert "left leg - Run #2 - SC 7.47-8.51s: Ankle, right Z (7.6%)" in issues
+    # warning about the non-analysed joint
+    assert "in at least one step cycle:\nSkull Z" in issues
 
     # analysis - remaining NaNs are interpolated, so results must be NaN-free
     results = analyse_and_export_stepcycles(
@@ -333,6 +395,56 @@ def test_nan_handling_from_sc_extraction_to_averages(
     )
     n_clean_left_scs = sum(len(run_cycles) for run_cycles in clean_cycles["left"])
     assert results["left"]["sc_num"] == n_clean_left_scs  # (already 1 less, see above)
+    for output in ["left", "right", "both"]:
+        for key in ["average_data", "std_data"]:
+            assert not results[output][key].isna().any().any(), f"NaN: {output} {key}"
+
+
+def test_nan_handling_without_interpolation(
+    extract_info, extract_folderinfo, extract_cfg
+):
+    """With interpolate_data off, any NaN in any X/Y/Z column within an SC excludes it
+
+    1. frames 0-249 (outside of all SCs): all X/Y/Z are NaN => nothing excluded
+    2. frame 320: 1 NaN in Knee, left Y (analysed) => left run 1 SC 1 (303-396) excluded
+    3. frame 1000: 1 NaN in Skull Z (not analysed) => right run 2 SC 2 (904-1019)
+       excluded
+    => nothing is interpolated & averages & SDs must not contain any NaN
+    """
+    assert extract_cfg["interpolate_data"] is False  # the default
+    data, global_Y_max = some_prep(extract_info, extract_folderinfo, extract_cfg)
+    clean_cycles = extract_stepcycles(
+        data.copy(), extract_info, extract_folderinfo, extract_cfg
+    )
+    # frames below were chosen so that each NaN lies in one SC of one leg only
+    assert clean_cycles["left"][0][0] == [303, 396]
+    assert clean_cycles["right"][0][0] == [348, 448]  # doesn't include frame 320
+    assert clean_cycles["right"][1][1] == [904, 1019]
+    assert clean_cycles["left"][1][1] == [852, 959]  # doesn't include frame 1000
+    xyz_cols = [col for col in data.columns if col.endswith((" X", " Y", " Z"))]
+    data.loc[0:249, xyz_cols] = np.nan
+    data.loc[320, "Knee, left Y"] = np.nan
+    data.loc[1000, "Skull Z"] = np.nan
+
+    # SC extraction - exactly these two SCs are removed
+    all_cycles = extract_stepcycles(data, extract_info, extract_folderinfo, extract_cfg)
+    expected_cycles = clean_cycles
+    expected_cycles["left"][0] = expected_cycles["left"][0][1:]
+    expected_cycles["right"][1] = expected_cycles["right"][1][:1]
+    assert all_cycles == expected_cycles
+    with open(os.path.join(extract_info["results_dir"], ISSUES_TXT_FILENAME)) as f:
+        issues = f.read()
+    assert issues.count("Tracking failed") == 2
+    assert "left leg - Run #1 - SC #1 - Tracking failed" in issues
+    assert "NaN at Knee, left Y (1.1%) - interpolation is off" in issues
+    assert "right leg - Run #2 - SC #2 - Tracking failed" in issues
+    assert "NaN at Skull Z (0.9%) - interpolation is off" in issues
+    assert "Interpolated missing values" not in issues  # no report without interp.
+
+    # analysis - results must be NaN-free without interpolating anything
+    results = analyse_and_export_stepcycles(
+        data, all_cycles, global_Y_max, extract_info, extract_cfg
+    )
     for output in ["left", "right", "both"]:
         for key in ["average_data", "std_data"]:
             assert not results[output][key].isna().any().any(), f"NaN: {output} {key}"

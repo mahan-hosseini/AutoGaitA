@@ -52,6 +52,7 @@ def extract_cfg():
     cfg["bin_num"] = 25
     cfg["plot_SE"] = True
     cfg["standardise_z_at_SC_level"] = True
+    cfg["interpolate_data"] = False
     cfg["standardise_z_to_a_joint"] = True
     cfg["z_standardisation_joint"] = ["Midfoot, left"]
     cfg["plot_joint_number"] = 5
