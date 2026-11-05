@@ -5,6 +5,7 @@ from autogaita.resources.utils import (
     normalise_one_steps_data,
     write_angle_warning,
 )
+from autogaita.common2D.common2D_utils import interpolate_xy_nans
 import os
 import warnings
 import pandas as pd
@@ -19,7 +20,6 @@ from autogaita.common2D.common2D_constants import (
     STD_XLS_FILENAME,
     X_STANDARDISED_XLS_FILENAME,
 )
-
 
 # %% workflow step #3 - analysis: normalise SCs & export (orig. & norm.) XLS files
 # Note
@@ -49,6 +49,9 @@ def analyse_and_export_stepcycles(data, all_cycles, info, cfg):
     standardise_x_coordinates = cfg["standardise_x_coordinates"]
     # do everything on a copy of the data df
     data_copy = data.copy()
+    # fill NaNs of all joints' x/y
+    # => SCs with too many NaNs in joints of interest are already gone
+    data_copy = interpolate_xy_nans(data_copy)
     # exactly 1 step
     if len(all_cycles) == 1:
         this_step = data_copy.loc[all_cycles[0][0] : all_cycles[0][1]]

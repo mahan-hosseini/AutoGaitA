@@ -7,9 +7,11 @@ from autogaita.common2D.common2D_utils import (
     check_cycle_order,
     check_differing_angle_joint_coords,
     check_tracking_xy_thresholds,
-    check_tracking_SLEAP_nans,
+    check_tracking_nans,
 )
+from autogaita.resources.constants import ISSUES_TXT_FILENAME
 from autogaita.common2D.common2D_constants import (
+    MAX_INTERPOLATE_NAN_FRAC,
     SCXLS_MOUSECOLS,
     SCXLS_RUNCOLS,
     SCXLS_SCCOLS,
@@ -443,36 +445,71 @@ def test_clean_cycles_5_DLC_tracking(
         )
 
 
-def test_clean_cycles_6_SLEAP_nan_removals(
+def test_clean_cycles_6_nan_removals(
     extract_data_using_some_prep, extract_info, extract_cfg
 ):
-    """We just pretend that this is SLEAP data - whatever"""
-    extract_cfg["joints"] = ["Hind paw tao ", "Ankle "]
+    """An SC is excluded only if an analysed joint is > MAX_INTERPOLATE_NAN_FRAC NaN
+    within it - a single NaN is interpolated later and doesn't exclude the SC"""
     extract_cfg["angles"] = {
         "name": ["Elbow "],
         "lower_joint": ["Wrist "],
         "upper_joint": ["Lower Shoulder "],
     }
     data = extract_data_using_some_prep.copy()
-    all_cycles = [[111, 222], [333, 444], [555, 666]]
-    data.loc[123, "Hind paw tao y"] = np.nan
-    data.loc[444, "Elbow x"] = np.nan
+    all_cycles = [[111, 222], [333, 444], [555, 666]]  # each SC is 112 frames
+    data.loc[111:140, "Hind paw tao y"] = np.nan  # 30 / 112 = 27% NaN => exclude
+    data.loc[444, "Elbow x"] = np.nan  # 1 / 112 = 0.9% NaN => keep
     hind_joints_before = list(extract_cfg["hind_joints"])
-    clean_cycles = check_tracking_SLEAP_nans(
+    clean_cycles = check_tracking_nans(
         all_cycles,
         data,
         extract_info,
         extract_cfg,
     )
-    assert clean_cycles == [[555, 666]]
+    assert clean_cycles == [[333, 444], [555, 666]]
     # the NaN check must not mutate cfg["hind_joints"] (see dedicated test below)
     assert extract_cfg["hind_joints"] == hind_joints_before
 
 
-def test_check_tracking_SLEAP_nans_does_not_mutate_hind_joints(
+@pytest.mark.parametrize(
+    "n_nan_frames, expected_cycles",
+    [(10, [[100, 199]]), (11, None)],  # SC has 100 frames => 10% is still allowed
+)
+def test_clean_cycles_7_nan_fraction_boundary(
+    n_nan_frames,
+    expected_cycles,
+    extract_data_using_some_prep,
+    extract_info,
+    extract_cfg,
+):
+    data = extract_data_using_some_prep.copy()
+    all_cycles = [[100, 199]]
+    data.loc[100 : 100 + n_nan_frames - 1, "Knee x"] = np.nan
+    assert MAX_INTERPOLATE_NAN_FRAC == 0.1  # otherwise update n_nan_frames above
+    clean_cycles = check_tracking_nans(all_cycles, data, extract_info, extract_cfg)
+    assert clean_cycles == expected_cycles
+
+
+def test_clean_cycles_8_non_analysed_joint_nans_only_warn(
+    extract_data_using_some_prep, extract_info, extract_cfg, capsys
+):
+    """Nose is neither a hind nor an angle joint, so its NaNs must not exclude the SC
+    - users must be warned though (console & Issues.txt)"""
+    data = extract_data_using_some_prep.copy()
+    all_cycles = [[333, 444], [555, 666]]
+    data.loc[555:620, "Nose x"] = np.nan  # 66 / 112 = 59% NaN
+    clean_cycles = check_tracking_nans(all_cycles, data, extract_info, extract_cfg)
+    assert clean_cycles == all_cycles
+    assert "Nose x" in capsys.readouterr().out
+    with open(os.path.join(extract_info["results_dir"], ISSUES_TXT_FILENAME)) as f:
+        issues = f.read()
+    assert "WARNING" in issues and "Nose x" in issues
+
+
+def test_check_tracking_nans_does_not_mutate_hind_joints(
     extract_data_using_some_prep, extract_info, extract_cfg
 ):
-    """check_tracking_SLEAP_nans leaves cfg["hind_joints"] untouched. It would mess up processing downstream if the cfg dict itself is changed."""
+    """check_tracking_nans leaves cfg["hind_joints"] untouched. It would mess up processing downstream if the cfg dict itself is changed."""
     extract_cfg["angles"] = {
         "name": ["Elbow "],
         "lower_joint": ["Wrist "],
@@ -481,7 +518,7 @@ def test_check_tracking_SLEAP_nans_does_not_mutate_hind_joints(
     data = extract_data_using_some_prep.copy()
     all_cycles = [[111, 222], [333, 444], [555, 666]]
     hind_joints_before = list(extract_cfg["hind_joints"])
-    check_tracking_SLEAP_nans(all_cycles, data, extract_info, extract_cfg)
+    check_tracking_nans(all_cycles, data, extract_info, extract_cfg)
     # contents of hind_joints must be identical before and after the call
     assert extract_cfg["hind_joints"] == hind_joints_before
     # and specifically no angle-joint name may have leaked in

@@ -3,6 +3,7 @@ from autogaita.common2D.common2D_1_preparation import (
     check_and_expand_cfg,
     check_and_fix_cfg_strings,
     flip_mouse_body,
+    check_gait_direction,
     some_prep,  # note that first input of some_prep is set to "DLC" when not mattering!
 )
 from autogaita.common2D.common2D_utils import extract_info
@@ -10,6 +11,7 @@ import os
 import copy
 import math
 import numpy as np
+import pandas as pd
 import pandas.testing as pdt
 from hypothesis import given, strategies as st, settings, HealthCheck
 import pytest
@@ -338,3 +340,16 @@ def test_flip_mouse_body(
         function_flipped_series = function_flipped_series.astype(float)
         manually_flipped_series = global_x_max - test_data[col]
         pdt.assert_series_equal(function_flipped_series, manually_flipped_series)
+
+
+def test_SLEAP_gait_direction_is_detected_despite_NaNs(tmp_path):
+    """np.median returns NaN if there's any NaN, which previously made the right-to-left check always False - with nanmedian the recording must still be flipped"""
+    info = {"name": "ID 1 - Run 1", "results_dir": str(tmp_path)}
+    x = np.linspace(100, 1, 100)  # right => left
+    x[[5, 20, 70]] = np.nan  # NaNs in both halves
+    data = pd.DataFrame({"Hind paw tao x": x, "Hind paw tao y": np.ones(100)})
+    flipped_data = check_gait_direction("SLEAP", data, "Hind paw tao ", True, info)
+    assert flipped_data["Flipped"].all()
+    assert (
+        flipped_data["Hind paw tao x"].iloc[0] < flipped_data["Hind paw tao x"].iloc[-1]
+    )

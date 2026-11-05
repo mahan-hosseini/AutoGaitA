@@ -6,7 +6,7 @@ from autogaita.common2D.common2D_utils import (
     check_cycle_order,
     check_differing_angle_joint_coords,
     check_tracking_xy_thresholds,
-    check_tracking_SLEAP_nans,
+    check_tracking_nans,
     handle_issues,
 )
 import os
@@ -247,9 +247,9 @@ def extract_stepcycles(tracking_software, data, info, folderinfo, cfg):
     all_cycles = check_tracking_xy_thresholds(all_cycles, data, info, cfg)
     if not all_cycles:
         return None
-    # for SLEAP - check if there were any NaNs in any joints/angle-joints in SCs
-    if tracking_software == "SLEAP":
-        all_cycles = check_tracking_SLEAP_nans(all_cycles, data, info, cfg)
-        if not all_cycles:
-            return None
+    # check if any analysed joint is too often NaN in an SC
+    # => NaNs are interpolated in stage 3
+    all_cycles = check_tracking_nans(all_cycles, data, info, cfg)
+    if not all_cycles:
+        return None
     return all_cycles

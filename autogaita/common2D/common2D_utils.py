@@ -1,5 +1,8 @@
 # %% imports
-from autogaita.common2D.common2D_constants import FILE_ID_STRING_ADDITIONS
+from autogaita.common2D.common2D_constants import (
+    FILE_ID_STRING_ADDITIONS,
+    MAX_INTERPOLATE_NAN_FRAC,
+)
 from autogaita.resources.utils import try_to_run_gaita, write_issues_to_textfile
 import os
 import copy
@@ -356,8 +359,16 @@ def check_tracking_xy_thresholds(all_cycles, data, info, cfg):
     return clean_cycles
 
 
-def check_tracking_SLEAP_nans(all_cycles, data, info, cfg):
-    """In SLEAP if tracking fails it generates NaNs - make sure we don't have those in any SC in any joint or angle-joint"""
+def check_tracking_nans(all_cycles, data, info, cfg):
+    """Exclude SCs in which an analysed joint's x or y is more than
+    MAX_INTERPOLATE_NAN_FRAC NaN, and warn about other joints that are.
+
+    Remaining NaNs are linearly interpolated in stage 3 (see interpolate_xy_nans), so
+    this check decides which SCs are tracked well enough for that to be trustworthy.
+    => Analysed joints = hind joints & angle joints.
+    => Other joints are interpolated too (so group's PCA never raises an error because
+       of NaNs, but they never exclude an SC - we only warn so users don't pick them as group features of interest.
+    """
     # unpack
     hind_joints = cfg["hind_joints"]
     angles = cfg["angles"]
@@ -371,23 +382,26 @@ def check_tracking_SLEAP_nans(all_cycles, data, info, cfg):
     # columns to check
     columns = []
     for joint in all_joints:
-        columns.append(joint + "x")
-        columns.append(joint + "y")
+        for coord_col in [joint + "x", joint + "y"]:
+            if coord_col not in columns:  # angle joints can also be hind joints
+                columns.append(coord_col)
+    other_columns = [
+        col for col in data.columns if col.endswith((" x", " y")) and col not in columns
+    ]
     # check for NaNs
     clean_cycles = None
     for c, cycle in enumerate(all_cycles):
-        exclude_this_cycle = False  # reset
-        for col in columns:
-            this_data = data.loc[cycle[0] : cycle[1], col]
-            if any(this_data.isna()):
-                exclude_this_cycle = True
-                NaN_joint = col
-                break
-        if exclude_this_cycle == True:
+        this_cycles_nan_fracs = data.loc[cycle[0] : cycle[1], columns].isna().mean()
+        too_many_nans = this_cycles_nan_fracs[
+            this_cycles_nan_fracs > MAX_INTERPOLATE_NAN_FRAC
+        ]
+        if not too_many_nans.empty:
+            NaN_joint = too_many_nans.index[0]
             this_message = (
                 "\n...excluding SC #"
                 + str(c + 1)
-                + f" - Tracking failed (NaN found at {NaN_joint})!"
+                + f" - Tracking failed ({too_many_nans.iloc[0]:.1%} NaN at "
+                + f"{NaN_joint}, max. allowed is {MAX_INTERPOLATE_NAN_FRAC:.0%})!"
             )
             print(this_message)
             write_issues_to_textfile(this_message, info)
@@ -396,7 +410,44 @@ def check_tracking_SLEAP_nans(all_cycles, data, info, cfg):
                 clean_cycles = [cycle]  # also makes a 2xscs list of lists
             else:
                 clean_cycles.append(cycle)
+    # warn about non-analysed joints that would mostly be interpolated in kept SCs
+    if clean_cycles and other_columns:
+        noisy_other_columns = []
+        for col in other_columns:
+            for cycle in clean_cycles:
+                this_nan_frac = data.loc[cycle[0] : cycle[1], col].isna().mean()
+                if this_nan_frac > MAX_INTERPOLATE_NAN_FRAC:
+                    noisy_other_columns.append(col)
+                    break
+        if noisy_other_columns:
+            this_message = (
+                "\n***********\n! WARNING !\n***********\n"
+                + "These columns are more than "
+                + f"{MAX_INTERPOLATE_NAN_FRAC:.0%} NaN in at least one step cycle:\n"
+                + ", ".join(noisy_other_columns)
+                + "\nThey are not part of your analysed joints, so no step cycles were "
+                + "excluded because of them, but their missing values were linearly "
+                + "interpolated.\nAvoid using them as group PCA or stats features!"
+            )
+            print(this_message)
+            write_issues_to_textfile(this_message, info)
     return clean_cycles
+
+
+def interpolate_xy_nans(data):
+    """Linearly interpolate NaNs in all x/y coordinate columns
+
+    Note
+    ----
+    Done for all joints, not just analysed ones, because group PCA breaks on any NaN
+    and users can pick any joint's coordinates as a PCA feature.
+    => check_tracking_nans (stage 2) has already excluded SCs with too many NaNs
+    => limit_direction="both" also fills leading/trailing NaNs - note that these are
+       filled with the nearest valid value (i.e. constant), not interpolated per se
+    """
+    xy_cols = [col for col in data.columns if col.endswith((" x", " y"))]
+    data[xy_cols] = data[xy_cols].interpolate(method="linear", limit_direction="both")
+    return data
 
 
 def handle_issues(condition, info):

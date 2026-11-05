@@ -544,7 +544,9 @@ def check_gait_direction(
     elif tracking_software == "SLEAP":
         # beloow if condition means that the mouse ran from right to left
         # => in this case we flip
-        if np.median(data[direction_joint + "x"][: len(data) // 2]) > np.median(
+        # => nanmedian because SLEAP writes NaN when tracking fails & np.median would
+        #    then return NaN, making this comparison always False (i.e., never flip)
+        if np.nanmedian(data[direction_joint + "x"][: len(data) // 2]) > np.nanmedian(
             data[direction_joint + "x"][len(data) // 2 :]
         ):
             if flip_gait_direction:

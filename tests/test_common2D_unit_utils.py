@@ -1,6 +1,12 @@
 import pytest
-from autogaita.common2D.common2D_utils import extract_info, find_number
+from autogaita.common2D.common2D_utils import (
+    extract_info,
+    find_number,
+    interpolate_xy_nans,
+)
 import os
+import numpy as np
+import pandas as pd
 import pytest
 
 
@@ -136,3 +142,24 @@ def test_find_number_leading_zeros():
     poststring = "Run"
     result = find_number(fullstring, prestring, poststring)
     assert result == (1, "00")
+
+
+# %%..............................  NaN interpolation  .................................
+def test_interpolate_xy_nans_fills_xy_and_leaves_other_cols_alone():
+    data = pd.DataFrame(
+        {
+            "Time": [0.0, 0.1, 0.2, 0.3, 0.4],
+            "Flipped": [False] * 5,
+            "Knee x": [np.nan, 1.0, np.nan, 3.0, np.nan],
+            "Knee y": [10.0, np.nan, np.nan, np.nan, 50.0],
+            "Knee likelihood": [np.nan, 0.9, np.nan, 0.9, 0.9],
+        }
+    )
+    result = interpolate_xy_nans(data.copy())
+    # leading/trailing NaNs take the nearest valid value, interior gaps are linear
+    assert result["Knee x"].tolist() == [1.0, 1.0, 2.0, 3.0, 3.0]
+    assert result["Knee y"].tolist() == [10.0, 20.0, 30.0, 40.0, 50.0]
+    # non-coordinate columns are untouched (incl. their NaNs)
+    pd.testing.assert_series_equal(result["Knee likelihood"], data["Knee likelihood"])
+    pd.testing.assert_series_equal(result["Time"], data["Time"])
+    pd.testing.assert_series_equal(result["Flipped"], data["Flipped"])

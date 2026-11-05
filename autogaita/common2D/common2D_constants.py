@@ -21,6 +21,7 @@ SCXLS_RUNCOLS = ["Run", "run", "Runs", "runs", "Trial", "trial", "Trials", "tria
 SCXLS_SCCOLS = ["SC Number", "SC number", "sc number", "SC Num", "sc num", "SC num"]
 SWINGSTART_COL = "Swing (ti)"
 STANCEEND_COL = "Stance (te)"
+MAX_INTERPOLATE_NAN_FRAC = 0.1  # max. fraction of NaN per SC - else excluded
 
 # 3 - analysis
 ORIGINAL_XLS_FILENAME = " - Original Stepcycles"  # filenames of sheet exports
