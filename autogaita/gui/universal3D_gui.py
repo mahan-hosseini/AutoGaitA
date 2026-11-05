@@ -232,7 +232,7 @@ def run_universal3D_gui():
     # interpolate missing values (NaNs) - else SCs with any NaN are excluded
     interpolate_data_box = gaita_widgets.checkbox(
         root,
-        "Interpolate missing values",
+        "Interpolate missing coordinate values",
         cfg["interpolate_data"],
         WIDGET_CFG,
     )
