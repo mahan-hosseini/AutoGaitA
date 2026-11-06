@@ -5,6 +5,7 @@ import numpy as np
 import os
 import traceback
 import math
+from contextlib import contextmanager
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import tkinter as tk
 import customtkinter as ctk
@@ -452,8 +453,27 @@ class PlotPanel:
         self.current_fig_index = 0
         self.fg_color = fg_color
         self.hover_color = hover_color
+        self.loading_screen = None  # only exists while it's shown
+        self.animation_job = None
 
     # .........................  loading screen  ................................
+    @contextmanager
+    def loading_screen_while(self, show):
+        """Show the loading screen while the with-block runs (if show is True)
+
+        Note
+        ----
+        The screen is always closed after the block, however it ended (success, early
+        return or error), so failed analyses never leave a dangling window behind.
+        => If successful, plot_results closed it already, which makes this a no-op
+        """
+        if show:
+            self.build_plot_panel_loading_screen()
+        try:
+            yield
+        finally:
+            self.destroy_plot_panel_loading_screen()
+
     def build_plot_panel_loading_screen(self):
         """Builds a loading screen that is shown while plots are generated"""
         # Build window
@@ -475,13 +495,35 @@ class PlotPanel:
 
     # Cycle through loading labels to animate the loading screen
     def animate(self, counter):
+        screen = self.loading_screen
+        if screen is None:  # closed in the meantime - stop animating
+            return
         self.loading_label.configure(text=self.loading_label_strings[counter])
-        self.loading_screen.after(
+        self.animation_job = screen.after(
             500, self.animate, (counter + 1) % len(self.loading_label_strings)
         )
 
     def destroy_plot_panel_loading_screen(self):
-        self.loading_screen.destroy()
+        """Close the loading screen (does nothing if there is none)
+
+        Note
+        ----
+        Analyses run in a separate thread, so the tk thread can still have queued events
+        of this window. Destroying it right away raises a TclError once they are
+        handled, so hide it, cancel the animation & destroy it later (like exit buttons)
+        => Users can also close this window themselves at any time. Calling it then
+           raises a TclError too, which must not end the run or hide an analysis error
+        """
+        screen = self.loading_screen
+        if screen is None:
+            return
+        self.loading_screen = None
+        try:
+            screen.after_cancel(self.animation_job)
+            screen.withdraw()
+            screen.after(5000, screen.destroy)
+        except tk.TclError:
+            pass  # users closed the window themselves, so there's nothing left to close
 
     # .........................  plot panel   ................................
     def build_plot_panel(self):
@@ -586,7 +628,3 @@ class PlotPanel:
         self.plotwindow.title(
             f"AutoGaitA Plot Panel {self.current_fig_index + 1}/{len(self.figures)}"
         )
-
-    def destroy_plot_panel(self):
-        # Needed if no SCs after checks
-        self.loading_screen.destroy()

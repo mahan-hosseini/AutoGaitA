@@ -44,16 +44,9 @@ def group(folderinfo, cfg):
     7) perform the RM-/Mixed-ANOVA
     8) plots
     """
-    # .............. initiate plot panel class and build loading screen ................
+    # .......................  initiate plot panel class  ..............................
     # create class instance independently of "dont_show_plots" to not break the code
     plot_panel_instance = PlotPanel(GROUP_FG_COLOR, GROUP_HOVER_COLOR)
-
-    if cfg["dont_show_plots"] is True:
-        pass  # going on without building the loading screen
-
-    elif cfg["dont_show_plots"] is False:  # -> show plot panel
-        # build loading screen
-        plot_panel_instance.build_plot_panel_loading_screen()
 
     # ................................  preparation  ...................................
     # => either creates and sanity-checks folderinfo & cfg or loads it from a previous
@@ -85,54 +78,58 @@ def group(folderinfo, cfg):
         except (FileNotFoundError, ValueError):
             return
 
-    # ...................................  PCA  ........................................
-    if cfg["PCA_variables"]:  # empty lists are falsey!
-        PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance)
-    plt.close("all")  # OK since all figures passed to save-funcs & PlotPanel
+    # ...........................  PCA, stats & plots  .................................
+    # all of these add figures to PlotPanel
+    # => loading screen only now so that failed analyses never open any window
+    with plot_panel_instance.loading_screen_while(not cfg["dont_show_plots"]):
+        # .................................  PCA  ......................................
+        if cfg["PCA_variables"]:  # empty lists are falsey!
+            PCA_main(avg_dfs, folderinfo, cfg, plot_panel_instance)
+        plt.close("all")  # OK since all figures passed to save-funcs & PlotPanel
 
-    # ..............................  prepare statistics  ..............................
-    stats_df = create_stats_df(avg_dfs, folderinfo, cfg)
+        # ............................  prepare statistics  ............................
+        stats_df = create_stats_df(avg_dfs, folderinfo, cfg)
 
-    # ......................  cluster-extent permutation test  .........................
-    if cfg["stats_variables"]:  # empty lists are falsey!
-        if cfg["do_permtest"]:
-            for stats_var in cfg["stats_variables"]:
-                cluster_extent_test(
-                    stats_df,
-                    g_avg_dfs,
-                    g_std_dfs,
-                    stats_var,
-                    folderinfo,
-                    cfg,
-                    plot_panel_instance,
-                )
-        plt.close("all")
+        # ....................  cluster-extent permutation test  .......................
+        if cfg["stats_variables"]:  # empty lists are falsey!
+            if cfg["do_permtest"]:
+                for stats_var in cfg["stats_variables"]:
+                    cluster_extent_test(
+                        stats_df,
+                        g_avg_dfs,
+                        g_std_dfs,
+                        stats_var,
+                        folderinfo,
+                        cfg,
+                        plot_panel_instance,
+                    )
+            plt.close("all")
 
-        # ..................................  ANOVA  ...................................
-        if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
-            if anova_design_sanity_check(stats_df, folderinfo, cfg) is not True:
-                just_do_tukeys = True
-                tukeys_only_info_message(folderinfo)
-            else:
-                just_do_tukeys = False
-            # this function is called ANOVA_main even though we might just run Tukeys
-            # with it and not exactly an ANOVA as well
-            # => see conditions in sanity check setting just_do_tukeys
-            for stats_var in cfg["stats_variables"]:
-                ANOVA_main(
-                    stats_df,
-                    g_avg_dfs,
-                    g_std_dfs,
-                    stats_var,
-                    just_do_tukeys,
-                    folderinfo,
-                    cfg,
-                    plot_panel_instance,
-                )
-        plt.close("all")
+            # ................................  ANOVA  .................................
+            if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
+                if anova_design_sanity_check(stats_df, folderinfo, cfg) is not True:
+                    just_do_tukeys = True
+                    tukeys_only_info_message(folderinfo)
+                else:
+                    just_do_tukeys = False
+                # this function is called ANOVA_main even though we might just run
+                # Tukeys with it and not exactly an ANOVA as well
+                # => see conditions in sanity check setting just_do_tukeys
+                for stats_var in cfg["stats_variables"]:
+                    ANOVA_main(
+                        stats_df,
+                        g_avg_dfs,
+                        g_std_dfs,
+                        stats_var,
+                        just_do_tukeys,
+                        folderinfo,
+                        cfg,
+                        plot_panel_instance,
+                    )
+            plt.close("all")
 
-    # ..................................  plots  .......................................
-    plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance)
+        # ................................  plots  .....................................
+        plot_results(g_avg_dfs, g_std_dfs, folderinfo, cfg, plot_panel_instance)
 
     # ..............................  print finish  ....................................
     print_finish(folderinfo)

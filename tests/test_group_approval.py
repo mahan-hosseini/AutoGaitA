@@ -59,7 +59,7 @@ def extract_cfg():
     cfg["PCA_bins"] = ""
     cfg["plot_SE"] = True
     cfg["color_palette"] = "Set2"
-    cfg["dont_show_plots"] = False
+    cfg["dont_show_plots"] = True
     cfg["legend_outside"] = True
     # NOTE - PCA & stats lists MUST be kept in this order
     # (otherwise PCA.Info & Stats.txt wont be equivalent to TRUE_DATA's)

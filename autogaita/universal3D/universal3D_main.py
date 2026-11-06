@@ -48,16 +48,9 @@ def universal3D(info, folderinfo, cfg):
     4) step cycle normalisaion, dataframe creation & XLS-exportation
     5) plots
     """
-    # .............. initiate plot panel class and build loading screen ................
+    # .......................  initiate plot panel class  ..............................
     # create class instance independently of "dont_show_plots" to not break the code
     plot_panel_instance = PlotPanel(UNIVERSAL3D_FG_COLOR, UNIVERSAL3D_HOVER_COLOR)
-
-    if cfg["dont_show_plots"] is True:
-        pass  # going on without building the loading screen
-
-    elif cfg["dont_show_plots"] is False:  # -> show plot panel
-        # build loading screen
-        plot_panel_instance.build_plot_panel_loading_screen()
 
     # ...............................  preparation  ....................................
     data, global_Y_max = some_prep(info, folderinfo, cfg)
@@ -68,15 +61,15 @@ def universal3D(info, folderinfo, cfg):
     all_cycles = extract_stepcycles(data, info, folderinfo, cfg)
     all_cycles = check_stepcycles(all_cycles, info)
     if not all_cycles:  # only None if both leg's SCs were None
-        if cfg["dont_show_plots"] is False:  # otherwise stuck at loading
-            plot_panel_instance.destroy_plot_panel()
         return
 
     # ......  main analysis: y-flipping, features, df-creation & exports  ..............
     results = analyse_and_export_stepcycles(data, all_cycles, global_Y_max, info, cfg)
 
     # ..................................  plots  .......................................
-    plot_results(results, all_cycles, info, cfg, plot_panel_instance)
+    # loading screen only now so that failed analyses never open any window
+    with plot_panel_instance.loading_screen_while(not cfg["dont_show_plots"]):
+        plot_results(results, all_cycles, info, cfg, plot_panel_instance)
 
     # ..............................  print finish  ....................................
     print_finish(info)

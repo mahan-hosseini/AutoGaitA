@@ -31,16 +31,9 @@ def sleap(info, folderinfo, cfg):
     4) step cycle normalisation, dataframe creation & XLS-exportation
     5) plots
     """
-    # .............. initiate plot panel class and build loading screen ................
+    # .......................  initiate plot panel class  ..............................
     # create class instance independently of "dont_show_plots" to not break the code
     plot_panel_instance = PlotPanel(SLEAP_FG_COLOR, SLEAP_HOVER_COLOR)
-
-    if cfg["dont_show_plots"] is True:
-        pass  # going on without building the loading screen
-
-    elif cfg["dont_show_plots"] is False:  # -> show plot panel
-        # build loading screen
-        plot_panel_instance.build_plot_panel_loading_screen()
 
     # ................................  preparation  ...................................
     tracking_software = "SLEAP"  # IMPORTANT var for some_prep!
@@ -52,15 +45,15 @@ def sleap(info, folderinfo, cfg):
     all_cycles = extract_stepcycles(tracking_software, data, info, folderinfo, cfg)
     if all_cycles is None:
         handle_issues("scs_invalid", info)
-        if cfg["dont_show_plots"] is False:  # otherwise stuck at loading
-            plot_panel_instance.destroy_plot_panel()
         return
 
     # .........  main analysis: sc-lvl y-norm, features, df-creation & export ..........
     results = analyse_and_export_stepcycles(data, all_cycles, info, cfg)
 
     # ................................  plots  .........................................
-    plot_results(info, results, cfg, plot_panel_instance)
+    # loading screen only now so that failed analyses never open any window
+    with plot_panel_instance.loading_screen_while(not cfg["dont_show_plots"]):
+        plot_results(info, results, cfg, plot_panel_instance)
 
     # ............................  print finish  ......................................
     print_finish(info)

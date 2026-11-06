@@ -12,6 +12,7 @@ from autogaita.common2D.common2D_utils import (
     report_interpolated_nans,
 )
 from autogaita.resources.constants import ISSUES_TXT_FILENAME
+from autogaita.resources.utils import PlotPanel
 from autogaita.common2D.common2D_constants import (
     MAX_INTERPOLATE_NAN_FRAC,
     SCXLS_MOUSECOLS,
@@ -256,6 +257,30 @@ def test_handle_issues_1_all_SCs_invalid_because_all_cycles_empty_in_dlc(
     assert ("Skipped since all SCs invalid!" in content) & (
         "not in data/video" in content
     )
+
+
+def test_no_loading_screen_if_all_SCs_invalid(
+    extract_info, extract_folderinfo, extract_cfg, monkeypatch
+):
+    """Failed analyses must not open any window - not even with plots turned on"""
+    windows_built = []
+    monkeypatch.setattr(
+        PlotPanel,
+        "build_plot_panel_loading_screen",
+        lambda self: windows_built.append("loading screen"),
+    )
+    monkeypatch.setattr(
+        PlotPanel, "build_plot_panel", lambda self: windows_built.append("plot panel")
+    )
+    extract_cfg["dont_show_plots"] = False
+    extract_folderinfo["root_dir"] = os.path.join(
+        extract_folderinfo["root_dir"], "flawed_files"
+    )
+    extract_folderinfo["sctable_filename"] = "flawed_table_all_ID_15_SCs_invalid"
+    dlc(extract_info, extract_folderinfo, extract_cfg)
+    assert windows_built == []
+    with open(os.path.join(extract_info["results_dir"], ISSUES_TXT_FILENAME)) as f:
+        assert "Skipped since all SCs invalid!" in f.read()
 
 
 def test_handle_issues_2_no_scs_of_given_mouse_and_run_in_extract_stepcycles(

@@ -4,6 +4,7 @@ from autogaita.resources.utils import (
     define_bins,
     write_angle_warning,
     coerce_to_float,
+    PlotPanel,
 )
 from autogaita.common2D.common2D_1_preparation import some_prep as some_prep_2D
 from autogaita.universal3D.universal3D_1_preparation import some_prep as some_prep_3D
@@ -16,6 +17,7 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 import tempfile
+import tkinter as tk
 
 
 from autogaita.universal3D.universal3D_constants import SWINGSTART_COL, STANCEEND_COL
@@ -586,3 +588,133 @@ def test_integer_values():
     SCdf = _make_sc_df([100, 200], [150, 250])
     SCdf = _apply_coercion(SCdf)
     assert SCdf[SWINGSTART_COL].iloc[0] == 100.0
+
+
+# %%.......................  PlotPanel's loading screen  ...............................
+class FakeLoadingScreen:
+    """Records what PlotPanel does with its window, so tests don't need a display"""
+
+    def __init__(self):
+        self.calls = []
+        self.closed_by_user = False
+
+    def after_cancel(self, job):
+        self.calls.append(("after_cancel", job))
+
+    def withdraw(self):
+        if self.closed_by_user:  # what tk does if the window doesn't exist anymore
+            raise tk.TclError('bad window path name ".!ctktoplevel"')
+        self.calls.append(("withdraw",))
+
+    def after(self, ms, func):
+        self.calls.append(("after", ms, func))
+
+    def destroy(self):
+        self.calls.append(("destroy",))
+
+
+@pytest.fixture
+def fake_plot_panel(monkeypatch):
+    """A PlotPanel that builds a FakeLoadingScreen, returned with a list of those"""
+    plot_panel = PlotPanel("fg_color", "hover_color")
+    built_screens = []
+
+    def fake_build():
+        plot_panel.loading_screen = FakeLoadingScreen()
+        plot_panel.animation_job = "animation job"
+        built_screens.append(plot_panel.loading_screen)
+
+    monkeypatch.setattr(plot_panel, "build_plot_panel_loading_screen", fake_build)
+    return plot_panel, built_screens
+
+
+def test_closing_loading_screen_is_safe_and_only_happens_once(fake_plot_panel):
+    """Destroying right away raises a TclError if the tk thread still has queued events
+    of the window, so it has to be hidden first & be destroyed later"""
+    plot_panel, _ = fake_plot_panel
+    plot_panel.build_plot_panel_loading_screen()
+    screen = plot_panel.loading_screen
+    plot_panel.destroy_plot_panel_loading_screen()
+    expected_calls = [
+        ("after_cancel", "animation job"),
+        ("withdraw",),
+        ("after", 5000, screen.destroy),
+    ]
+    assert screen.calls == expected_calls
+    assert plot_panel.loading_screen is None
+    plot_panel.destroy_plot_panel_loading_screen()  # no-op
+    assert screen.calls == expected_calls
+
+
+def test_closing_without_loading_screen_is_a_no_op():
+    PlotPanel("fg_color", "hover_color").destroy_plot_panel_loading_screen()
+
+
+def test_closing_loading_screen_is_safe_if_users_closed_it(fake_plot_panel):
+    """Users can close the window with its X button while the analysis is running"""
+    plot_panel, _ = fake_plot_panel
+    plot_panel.build_plot_panel_loading_screen()
+    plot_panel.loading_screen.closed_by_user = True
+    plot_panel.destroy_plot_panel_loading_screen()
+    assert plot_panel.loading_screen is None
+
+
+def test_loading_screen_while_keeps_analysis_error_if_users_closed_window(
+    fake_plot_panel,
+):
+    """try_to_run_gaita has to get the real error so that it can log it & move on"""
+    plot_panel, _ = fake_plot_panel
+    with pytest.raises(KeyError):
+        with plot_panel.loading_screen_while(True):
+            plot_panel.loading_screen.closed_by_user = True
+            raise KeyError("something went wrong in the analysis")
+
+
+def test_animation_stops_after_loading_screen_was_closed():
+    """loading_label doesn't exist here, so this would raise if animate went on"""
+    PlotPanel("fg_color", "hover_color").animate(counter=1)
+
+
+def test_loading_screen_while_shows_screen_during_block_only(fake_plot_panel):
+    plot_panel, built_screens = fake_plot_panel
+    with plot_panel.loading_screen_while(True):
+        assert plot_panel.loading_screen is built_screens[0]
+    assert plot_panel.loading_screen is None
+    assert ("withdraw",) in built_screens[0].calls
+
+
+def test_loading_screen_while_closes_screen_on_error(fake_plot_panel):
+    plot_panel, built_screens = fake_plot_panel
+    with pytest.raises(ValueError):
+        with plot_panel.loading_screen_while(True):
+            raise ValueError("something went wrong in the analysis")
+    assert plot_panel.loading_screen is None
+    assert ("withdraw",) in built_screens[0].calls
+
+
+def test_loading_screen_while_closes_screen_on_early_return(fake_plot_panel):
+    plot_panel, built_screens = fake_plot_panel
+
+    def return_early():
+        with plot_panel.loading_screen_while(True):
+            return
+
+    return_early()
+    assert plot_panel.loading_screen is None
+    assert ("withdraw",) in built_screens[0].calls
+
+
+def test_loading_screen_while_closes_only_once_if_plot_results_closed_it(
+    fake_plot_panel,
+):
+    plot_panel, built_screens = fake_plot_panel
+    with plot_panel.loading_screen_while(True):
+        plot_panel.destroy_plot_panel_loading_screen()  # what plot_results does
+    assert len(built_screens[0].calls) == 3
+
+
+def test_loading_screen_while_does_not_show_screen_if_unwanted(fake_plot_panel):
+    plot_panel, built_screens = fake_plot_panel
+    with plot_panel.loading_screen_while(False):
+        pass
+    assert built_screens == []

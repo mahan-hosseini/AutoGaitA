@@ -13,6 +13,8 @@ from autogaita.universal3D.universal3D_constants import (
     MAX_INTERPOLATE_NAN_FRAC,
 )
 from autogaita.resources.constants import ISSUES_TXT_FILENAME
+from autogaita.resources.utils import PlotPanel
+import importlib
 import os
 import pytest
 import numpy as np
@@ -448,6 +450,36 @@ def test_nan_handling_without_interpolation(
     for output in ["left", "right", "both"]:
         for key in ["average_data", "std_data"]:
             assert not results[output][key].isna().any().any(), f"NaN: {output} {key}"
+
+
+# %%................... test loading screen .........................................
+
+
+def test_no_loading_screen_if_no_valid_SCs(
+    extract_info, extract_folderinfo, extract_cfg, monkeypatch
+):
+    """Failed analyses must not open any window - not even with plots turned on"""
+    windows_built = []
+    monkeypatch.setattr(
+        PlotPanel,
+        "build_plot_panel_loading_screen",
+        lambda self: windows_built.append("loading screen"),
+    )
+    monkeypatch.setattr(
+        PlotPanel, "build_plot_panel", lambda self: windows_built.append("plot panel")
+    )
+    # importlib since autogaita.universal3D is the function, not the subpackage
+    universal3D_main = importlib.import_module("autogaita.universal3D.universal3D_main")
+    monkeypatch.setattr(
+        universal3D_main,
+        "extract_stepcycles",
+        lambda *args: {"left": None, "right": None},
+    )
+    extract_cfg["dont_show_plots"] = False
+    universal3D_main.universal3D(extract_info, extract_folderinfo, extract_cfg)
+    assert windows_built == []
+    with open(os.path.join(extract_info["results_dir"], ISSUES_TXT_FILENAME)) as f:
+        assert "no valid SCs found for any leg" in f.read()
 
 
 # %%................... test sc_times_in_frames ...................................
