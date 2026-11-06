@@ -422,7 +422,6 @@ def build_datafile_prep_window(root, results, cfg):
         var_dict=cfg,
         var_key="fileprep_root_dir",
         widget_cfg=WIDGET_CFG,
-        initial_dir=None,  # opens Desktop by default
     )
 
     # file type
@@ -763,7 +762,6 @@ def build_cfg_window(root, cfg):
         widget_cfg=WIDGET_CFG,
         is_file=True,  # open excel file instead of directory
         adv_cfg_textsize=True,
-        initial_dir=None,  # opens Desktop by default
     )
     #  .............................  advanced output  .................................
     # advanced output header

@@ -100,7 +100,7 @@ def make_browse(
     var_dict=None,  # dictionary of var_key e.g. cfg, results
     is_file=False,  # ask for directory instead of file
     filetypes=None,  # to set default filetype
-    initial_dir=None,  # function to get initial directory
+    initial_dir=None,  # function returning a path to try before the entry's own path
     pady=None,
     adv_cfg_textsize=False,  # if true, use ADV_CFG_TEXT_FONT_SIZE
 ):
@@ -141,12 +141,10 @@ def make_browse(
             desktop_dir = os.path.join(os.path.expanduser("~"), "Desktop")
         except:
             desktop_dir = os.path.join(os.path.expanduser("~"))
-        if initial_dir is None:
-            dir_path = desktop_dir  # default directory: Desktop
-        else:
-            dir_path = initial_dir()  # call function to get initial directory
-        if not os.path.exists(dir_path):
-            dir_path = desktop_dir
+        candidate_paths = [entry.get()]
+        if initial_dir is not None:
+            candidate_paths.insert(0, initial_dir())
+        dir_path = find_browse_start_dir(candidate_paths, desktop_dir)
 
         if is_file:
             selected = filedialog.askopenfilename(
@@ -177,3 +175,20 @@ def make_browse(
     )
     button.grid(row=0, column=2, padx=5)
     return entry
+
+
+def find_browse_start_dir(candidate_paths, default_dir):
+    """Return the folder a browse dialog should open in.
+
+    Uses the first candidate that is a folder or that sits in an existing folder, so
+    file paths and paths that no longer exist still open somewhere useful. Returns
+    default_dir if no candidate qualifies.
+    """
+    for path in candidate_paths:
+        path = path.strip()
+        if os.path.isdir(path):
+            return path
+        parent_dir = os.path.dirname(path)
+        if os.path.isdir(parent_dir):
+            return parent_dir
+    return default_dir
