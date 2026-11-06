@@ -292,24 +292,6 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
     )
     legend_outside_checkbox.grid(row=23, column=0, columnspan=2)
 
-    # results dir
-    results_dir_label = ctk.CTkLabel(
-        cfg_window,
-        text="Save Results subfolders to this directory instead of to data's:",
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
-    )
-    results_dir_label.grid(row=24, column=0, columnspan=2)
-    results_dir_browse = gaita_widgets.make_browse(
-        parent_window=cfg_window,
-        row=25,
-        column=0,
-        columnspan=2,
-        var_key="results_dir",
-        var_dict=cfg,
-        widget_cfg=widget_cfg,
-        adv_cfg_textsize=True,
-    )
-
     # done button
     adv_cfg_done_button = ctk.CTkButton(
         cfg_window,
@@ -320,8 +302,8 @@ def build_cfg_window(root, cfg, widget_cfg, root_dimensions):
         command=lambda: cfg_window.destroy(),
     )
     adv_cfg_done_button.grid(
-        row=26, column=0, columnspan=2, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=24, column=0, columnspan=2, rowspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # maximise widgets
     cfg_window.columnconfigure(list(range(2)), weight=1, uniform="Silent_Creme")
-    cfg_window.rowconfigure(list(range(25)), weight=1, uniform="Silent_Creme")
+    cfg_window.rowconfigure(list(range(24)), weight=1, uniform="Silent_Creme")

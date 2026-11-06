@@ -263,9 +263,26 @@ def run_universal3D_gui():
     postname_entry.configure(state="disabled")
     postname_entry.grid(row=8, column=1, sticky="w")
 
+    # results dir
+    results_dir_label = ctk.CTkLabel(
+        root,
+        text="Save Results subfolders to this directory instead of to data's:",
+        font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+    )
+    results_dir_label.grid(row=9, column=0, columnspan=2)
+    results_dir_browse = gaita_widgets.make_browse(
+        parent_window=root,
+        row=10,
+        column=0,
+        columnspan=2,
+        var_dict=cfg,
+        var_key="results_dir",
+        widget_cfg=WIDGET_CFG,
+    )
+
     # empty label 1 (for spacing)
     empty_label_one = ctk.CTkLabel(root, text="")
-    empty_label_one.grid(row=9, column=0)
+    empty_label_one.grid(row=11, column=0)
 
     # ..........................  advanced cfg section  ................................
 
@@ -273,7 +290,7 @@ def run_universal3D_gui():
     advanced_cfg_header_label = gaita_widgets.header_label(
         root, "Advanced Configuration", WIDGET_CFG
     )
-    advanced_cfg_header_label.grid(row=10, column=0, columnspan=2, sticky="nsew")
+    advanced_cfg_header_label.grid(row=12, column=0, columnspan=2, sticky="nsew")
 
     # data file preparation window
     datafile_prep_button = gaita_widgets.header_button(
@@ -282,7 +299,7 @@ def run_universal3D_gui():
     datafile_prep_button.configure(
         command=lambda: build_datafile_prep_window(root, results, cfg),
     )
-    datafile_prep_button.grid(row=11, column=0, columnspan=2)
+    datafile_prep_button.grid(row=13, column=0, columnspan=2)
 
     # column name information window
     column_info_button = gaita_widgets.header_button(
@@ -291,7 +308,7 @@ def run_universal3D_gui():
     column_info_button.configure(
         command=lambda: build_column_info_window(root, cfg, root_dimensions),
     )
-    column_info_button.grid(row=12, column=0, columnspan=2)
+    column_info_button.grid(row=14, column=0, columnspan=2)
 
     # advanced cfg
     cfg_window_button = gaita_widgets.header_button(
@@ -300,17 +317,17 @@ def run_universal3D_gui():
     cfg_window_button.configure(
         command=lambda: (build_cfg_window(root, cfg)),
     )
-    cfg_window_button.grid(row=13, column=0, columnspan=2)
+    cfg_window_button.grid(row=15, column=0, columnspan=2)
 
     # empty label 2 (for spacing)
     empty_label_two = ctk.CTkLabel(root, text="")
-    empty_label_two.grid(row=14, column=0)
+    empty_label_two.grid(row=16, column=0)
 
     # ............................  run & exit section  ................................
 
     # run analysis label
     runheader_label = gaita_widgets.header_label(root, "Run Analysis", WIDGET_CFG)
-    runheader_label.grid(row=15, column=0, columnspan=2, sticky="nsew")
+    runheader_label.grid(row=17, column=0, columnspan=2, sticky="nsew")
 
     # single video checkbox
     singlevideo_checkbox = gaita_widgets.checkbox(
@@ -324,14 +341,14 @@ def run_universal3D_gui():
             cfg, "analyse_singlerun", ID_entry
         ),
     )
-    singlevideo_checkbox.grid(row=16, column=0, columnspan=2)
+    singlevideo_checkbox.grid(row=18, column=0, columnspan=2)
 
     # ID string info
     ID_label, ID_entry = gaita_widgets.label_and_entry_pair(
         root, "ID to be analysed:", results["name"], WIDGET_CFG
     )
-    ID_label.grid(row=17, column=0, sticky="e")
-    ID_entry.grid(row=17, column=1, sticky="w")
+    ID_label.grid(row=19, column=0, sticky="e")
+    ID_entry.grid(row=19, column=1, sticky="w")
     gui_utils.change_widget_state_based_on_checkbox(cfg, "analyse_singlerun", ID_entry)
 
     # run analysis button
@@ -351,11 +368,11 @@ def run_universal3D_gui():
             build_donewindow(results, root, root_dimensions),
         )
     )
-    run_button.grid(row=18, column=0, columnspan=2, padx=10, pady=(10, 5))
+    run_button.grid(row=20, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # empty label 3 (for spacing)
     empty_label_three = ctk.CTkLabel(root, text="")
-    empty_label_three.grid(row=19, column=0)
+    empty_label_three.grid(row=21, column=0)
 
     # close program button
     exit_button = gaita_widgets.exit_button(
@@ -378,7 +395,7 @@ def run_universal3D_gui():
             root.after(5000, root.destroy),
         ),
     )
-    exit_button.grid(row=20, column=0, columnspan=2, padx=10, pady=(10, 5))
+    exit_button.grid(row=22, column=0, columnspan=2, padx=10, pady=(10, 5))
 
     # maximise widgets
     gui_utils.maximise_widgets(root)
@@ -827,23 +844,6 @@ def build_cfg_window(root, cfg):
     )
     legend_outside_checkbox.grid(row=21, column=0, columnspan=2)
 
-    # results dir
-    results_dir_label = ctk.CTkLabel(
-        cfg_window,
-        text="Save Results subfolders to this directory instead of to data's:",
-        font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
-    )
-    results_dir_label.grid(row=22, column=0, columnspan=2)
-    results_dir_browse = gaita_widgets.make_browse(
-        parent_window=cfg_window,
-        row=23,
-        column=0,
-        columnspan=2,
-        var_dict=cfg,
-        var_key="results_dir",
-        widget_cfg=WIDGET_CFG,
-        adv_cfg_textsize=True,
-    )
     # done button
     adv_cfg_done_button = ctk.CTkButton(
         cfg_window,
@@ -854,7 +854,7 @@ def build_cfg_window(root, cfg):
         command=lambda: cfg_window.destroy(),
     )
     adv_cfg_done_button.grid(
-        row=24, column=0, rowspan=2, columnspan=2, sticky="nsew", padx=10, pady=(10, 5)
+        row=22, column=0, rowspan=2, columnspan=2, sticky="nsew", padx=10, pady=(10, 5)
     )
     # maximise widgets
     cfg_window.columnconfigure(list(range(2)), weight=1, uniform="Silent_Creme")
