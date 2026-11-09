@@ -112,6 +112,18 @@ def test_extract_info_function(fixture_extract_folderinfo):
     assert info["leading_run_num_zeros"] == ["00", False]
 
 
+def test_extract_info_ignores_case_of_identifiers(fixture_extract_folderinfo):
+    # file identifiers are case-insensitive, so changing their case must not matter
+    folderinfo = fixture_extract_folderinfo
+    folderinfo["premouse_string"] = "MOUSE"
+    folderinfo["postmouse_string"] = "_25MM"
+    folderinfo["prerun_string"] = "Run"
+    folderinfo["postrun_string"] = "-6dlc"
+    info = extract_info("DLC", folderinfo)
+    assert info["mouse_num"] == [15]
+    assert info["run_num"] == [3]
+
+
 # 2) Test find number function - also for leading zeros
 def test_find_number_valid_case():
     fullstring = "Mouse1_Run002"
@@ -141,6 +153,15 @@ def test_find_number_leading_zeros():
     fullstring = "Mouse001Run002"
     prestring = "Mouse"
     poststring = "Run"
+    result = find_number(fullstring, prestring, poststring)
+    assert result == (1, "00")
+
+
+def test_find_number_ignores_case():
+    # file identifiers are case-insensitive
+    fullstring = "mouse001_RUN002"
+    prestring = "MOUSE"
+    poststring = "_run"
     result = find_number(fullstring, prestring, poststring)
     assert result == (1, "00")
 

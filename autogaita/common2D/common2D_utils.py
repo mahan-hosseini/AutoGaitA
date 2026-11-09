@@ -70,10 +70,12 @@ def extract_info(tracking_software, folderinfo, in_GUI=False):
     }
     for filename in os.listdir(folderinfo["root_dir"]):
         # make sure we don't get wrong files
+        # => file identifiers are case-insensitive, so compare in lower case
+        filename_lower = filename.lower()
         if (
-            (premouse_string in filename)
-            & (prerun_string in filename)
-            & (filename.endswith(file_type))
+            (premouse_string.lower() in filename_lower)
+            & (prerun_string.lower() in filename_lower)
+            & (filename_lower.endswith(file_type))
         ):
             # ID number - fill in "_" for user if needed
             this_mouse_num = False
@@ -163,7 +165,15 @@ def extract_info(tracking_software, folderinfo, in_GUI=False):
 
 
 def find_number(fullstring, prestring, poststring):
-    """Find (mouse/run) number based on user-defined strings in filenames"""
+    """Find (mouse/run) number based on user-defined strings in filenames
+
+    Note
+    ----
+    File identifiers are case-insensitive, so all strings are compared in lower case
+    """
+    fullstring = fullstring.lower()
+    prestring = prestring.lower()
+    poststring = poststring.lower()
     start_idx = fullstring.find(prestring) + len(prestring)
     end_idx = fullstring.find(poststring)
     # handle leading zeros

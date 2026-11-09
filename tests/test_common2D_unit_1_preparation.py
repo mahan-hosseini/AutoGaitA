@@ -9,6 +9,7 @@ from autogaita.common2D.common2D_1_preparation import (
 from autogaita.common2D.common2D_utils import extract_info
 import os
 import copy
+import shutil
 import math
 import numpy as np
 import pandas as pd
@@ -133,6 +134,96 @@ def test_move_data_to_folders_smoke_normal(
             )
 
 
+def test_move_data_to_folders_ignores_case_of_identifiers(
+    fixture_extract_info, fixture_extract_folderinfo
+):
+    # file identifiers are case-insensitive, so changing their case must not matter
+    fixture_extract_folderinfo["data_string"] = "siminewoct"
+    fixture_extract_folderinfo["beam_string"] = "BEAMTRAINING"
+    fixture_extract_folderinfo["premouse_string"] = "mOUSE"
+    fixture_extract_folderinfo["postmouse_string"] = "25MM"
+    fixture_extract_folderinfo["prerun_string"] = "RUN"
+    fixture_extract_folderinfo["postrun_string"] = "6dlc"
+    move_data_to_folders(
+        "DLC", ".csv", fixture_extract_info, fixture_extract_folderinfo
+    )
+    # copies must keep their original filenames, else they can't be opened on Linux
+    # => compare names, since CI runs on macOS where file systems ignore case
+    original_csvs = sorted(
+        f
+        for f in os.listdir(fixture_extract_folderinfo["root_dir"])
+        if f.endswith(".csv")
+    )
+    copied_csvs = sorted(
+        f for f in os.listdir(fixture_extract_info["results_dir"]) if f.endswith(".csv")
+    )
+    assert copied_csvs == original_csvs
+
+
+def test_some_prep_ignores_case_of_identifiers(
+    fixture_extract_info, fixture_extract_folderinfo, fixture_extract_cfg
+):
+    # file identifiers are case-insensitive, so changing their case must not matter
+    # => deepcopy cfg because some_prep changes it in place
+    expected_data = some_prep(
+        "DLC",
+        fixture_extract_info,
+        fixture_extract_folderinfo,
+        copy.deepcopy(fixture_extract_cfg),
+    )
+    folderinfo = copy.deepcopy(fixture_extract_folderinfo)
+    folderinfo["data_string"] = "siminewoct"
+    folderinfo["beam_string"] = "BEAMTRAINING"
+    folderinfo["premouse_string"] = "MOUSE"
+    folderinfo["prerun_string"] = "Run"
+    data = some_prep(
+        "DLC", fixture_extract_info, folderinfo, copy.deepcopy(fixture_extract_cfg)
+    )
+    pdt.assert_frame_equal(data, expected_data)
+
+
+def test_files_with_uppercase_names_and_extension_are_found(
+    tmp_path, fixture_extract_info, fixture_extract_folderinfo, fixture_extract_cfg
+):
+    # file identifiers are case-insensitive, so the case of filenames must not matter
+    # either - including the file extension (e.g. ".CSV")
+    expected_data = some_prep(
+        "DLC",
+        fixture_extract_info,
+        fixture_extract_folderinfo,
+        copy.deepcopy(fixture_extract_cfg),
+    )
+    # copy the data & beam csv files under fully upper-cased names
+    upper_root_dir = os.path.join(tmp_path, "upper_root")
+    os.makedirs(upper_root_dir)
+    upper_csvs = []
+    for filename in os.listdir(fixture_extract_folderinfo["root_dir"]):
+        if filename.endswith(".csv"):
+            shutil.copy2(
+                os.path.join(fixture_extract_folderinfo["root_dir"], filename),
+                os.path.join(upper_root_dir, filename.upper()),
+            )
+            upper_csvs.append(filename.upper())
+    folderinfo = copy.deepcopy(fixture_extract_folderinfo)
+    folderinfo["root_dir"] = upper_root_dir
+    # extract_info finds the files
+    info = extract_info("DLC", folderinfo)
+    assert info["mouse_num"] == [15]
+    assert info["run_num"] == [3]
+    # some_prep loads the same data
+    data = some_prep(
+        "DLC", fixture_extract_info, folderinfo, copy.deepcopy(fixture_extract_cfg)
+    )
+    pdt.assert_frame_equal(data, expected_data)
+    # copies keep their original (upper-case) filenames
+    copied_csvs = [
+        f
+        for f in os.listdir(fixture_extract_info["results_dir"])
+        if f.lower().endswith(".csv")
+    ]
+    assert sorted(copied_csvs) == sorted(upper_csvs)
+
+
 def test_move_data_to_folders_leading_zeros_handled(
     tmp_path, fixture_extract_folderinfo
 ):
@@ -244,12 +335,15 @@ def test_removal_of_wrong_strings_from_cfg_key(
     assert not test_result  # empty list is falsey
 
 
+@pytest.mark.parametrize("change_case", [str, str.upper, str.lower])
 def test_wrong_data_and_beam_strings(
-    fixture_extract_info, fixture_extract_folderinfo, fixture_extract_cfg
+    change_case, fixture_extract_info, fixture_extract_folderinfo, fixture_extract_cfg
 ):
-    fixture_extract_folderinfo["beam_string"] = fixture_extract_folderinfo[
-        "data_string"
-    ]
+    # file identifiers are case-insensitive, so strings only differing in case are
+    # identical too
+    fixture_extract_folderinfo["beam_string"] = change_case(
+        fixture_extract_folderinfo["data_string"]
+    )
     some_prep(
         "DLC", fixture_extract_info, fixture_extract_folderinfo, fixture_extract_cfg
     )

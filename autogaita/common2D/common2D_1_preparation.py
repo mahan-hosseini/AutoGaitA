@@ -40,8 +40,9 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     # DON'T unpack (joint) cfg-keys that are tested later by check_and_expand_cfg
     name = info["name"]
     results_dir = info["results_dir"]
-    data_string = folderinfo["data_string"]
-    beam_string = folderinfo["beam_string"]
+    # file identifiers are case-insensitive - lower them & only use them to compare!
+    data_string = folderinfo["data_string"].lower()
+    beam_string = folderinfo["beam_string"].lower()
     sampling_rate = cfg["sampling_rate"]
     subtract_beam = cfg["subtract_beam"]
     bin_num = cfg["bin_num"]
@@ -93,8 +94,7 @@ def some_prep(tracking_software, info, folderinfo, cfg):
             "\n******************\n! CRITICAL ERROR !\n******************\n"
             + "Unable to identify ANY RELEVANT FILES for "
             + name
-            + "!\nThis is likely due to issues with unique file name identifiers.. "
-            + "check capitalisation!"
+            + "!\nThis is likely due to issues with unique file name identifiers!"
         )
         write_issues_to_textfile(no_files_error, info)
         print(no_files_error)
@@ -115,9 +115,12 @@ def some_prep(tracking_software, info, folderinfo, cfg):
             return
         beamdf = pd.DataFrame(data=None)
         beamdf_duplicate_error = ""
+    # => compare lowered filenames but use the original ones to read files, since
+    #    Linux file systems are case-sensitive
     for filename in os.listdir(results_dir):  # import
-        if filename.endswith(file_type_string):
-            if data_string in filename:
+        filename_lower = filename.lower()
+        if filename_lower.endswith(file_type_string):
+            if data_string in filename_lower:
                 if datadf.empty:
                     if tracking_software == "DLC":
                         datadf = pd.read_csv(os.path.join(results_dir, filename))
@@ -131,7 +134,7 @@ def some_prep(tracking_software, info, folderinfo, cfg):
                         + "per video!"
                     )
             if subtract_beam:
-                if beam_string in filename:
+                if beam_string in filename_lower:
                     if beamdf.empty:
                         if tracking_software == "DLC":
                             beamdf = pd.read_csv(os.path.join(results_dir, filename))
@@ -409,14 +412,17 @@ def check_this_filename_configuration(
     results_dir,
 ):
     # unpack
+    # => file identifiers are case-insensitive - lower them & only use them to compare!
     name = info["name"]
     mouse_num = info["mouse_num"]
     run_num = info["run_num"]
     root_dir = folderinfo["root_dir"]
-    data_string = folderinfo["data_string"]
-    beam_string = folderinfo["beam_string"]
-    premouse_string = folderinfo["premouse_string"]
-    prerun_string = folderinfo["prerun_string"]
+    data_string = folderinfo["data_string"].lower()
+    beam_string = folderinfo["beam_string"].lower()
+    premouse_string = folderinfo["premouse_string"].lower()
+    postmouse_string = postmouse_string.lower()
+    prerun_string = folderinfo["prerun_string"].lower()
+    postrun_string = postrun_string.lower()
     whichvideo = ""  # initialise
     found_it = False
     # handle leading zeros that we identified previously - if none convert nums to str
@@ -429,11 +435,14 @@ def check_this_filename_configuration(
     else:
         run_num = str(run_num)
     for filename in os.listdir(root_dir):
+        # compare lowered filenames but use the original ones to copy files, since
+        # Linux file systems are case-sensitive
+        filename_lower = filename.lower()
         # the following condition is True for data & beam csv
         if (
-            (premouse_string + mouse_num + postmouse_string in filename)
-            and (prerun_string + run_num + postrun_string in filename)
-            and (filename.endswith(file_type_string))
+            (premouse_string + mouse_num + postmouse_string in filename_lower)
+            and (prerun_string + run_num + postrun_string in filename_lower)
+            and (filename_lower.endswith(file_type_string))
         ):
             found_it = True
             # Copy the csv/h5 file to the new subfolder
@@ -447,9 +456,9 @@ def check_this_filename_configuration(
                 if os.path.exists(vidpath):
                     shutil.copy2(vidpath, os.path.join(results_dir, vidname))
                 else:
-                    if data_string in vidname:
+                    if data_string in vidname.lower():
                         whichvideo = "Data"
-                    elif beam_string in vidname:
+                    elif beam_string in vidname.lower():
                         whichvideo = "Beam"
                     this_message = (
                         "\n***********\n! WARNING !\n***********\n"
