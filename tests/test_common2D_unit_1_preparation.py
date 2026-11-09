@@ -120,10 +120,9 @@ def fixture_extract_cfg():
 def test_move_data_to_folders_smoke_normal(
     fixture_extract_info, fixture_extract_folderinfo
 ):
-    move_data_to_folders(
-        "DLC", ".csv", fixture_extract_info, fixture_extract_folderinfo
-    )
-    assert len(os.listdir(fixture_extract_info["results_dir"])) == 3
+    move_data_to_folders(".csv", fixture_extract_info, fixture_extract_folderinfo)
+    # only the data & beam csv files - nothing else (e.g. videos) is copied
+    assert len(os.listdir(fixture_extract_info["results_dir"])) == 2
     for file in os.listdir(fixture_extract_info["results_dir"]):
         if file.endswith(".csv"):
             assert (
@@ -144,9 +143,7 @@ def test_move_data_to_folders_ignores_case_of_identifiers(
     fixture_extract_folderinfo["postmouse_string"] = "25MM"
     fixture_extract_folderinfo["prerun_string"] = "RUN"
     fixture_extract_folderinfo["postrun_string"] = "6dlc"
-    move_data_to_folders(
-        "DLC", ".csv", fixture_extract_info, fixture_extract_folderinfo
-    )
+    move_data_to_folders(".csv", fixture_extract_info, fixture_extract_folderinfo)
     # copies must keep their original filenames, else they can't be opened on Linux
     # => compare names, since CI runs on macOS where file systems ignore case
     original_csvs = sorted(
@@ -252,8 +249,9 @@ def test_move_data_to_folders_leading_zeros_handled(
             os.remove(os.path.join(this_info["results_dir"], file))
         os.rmdir(this_info["results_dir"])
     # run with this_info
-    move_data_to_folders("DLC", ".csv", this_info, fixture_extract_folderinfo)
-    assert len(os.listdir(this_info["results_dir"])) == 2
+    move_data_to_folders(".csv", this_info, fixture_extract_folderinfo)
+    # only this run's data csv - nothing else (e.g. videos) is copied
+    assert len(os.listdir(this_info["results_dir"])) == 1
 
 
 # %%..........................  cfg & string stuff  ....................................

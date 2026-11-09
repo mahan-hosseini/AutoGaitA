@@ -60,7 +60,6 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     interpolate_data = cfg["interpolate_data"]
 
     # .............................  move data  ........................................
-    # => slightly different for DLC or SLEAP (see local functions below)
     # => see if we can delete a previous runs results folder if existant. if not, it's a
     #    bit ugly since we only update results if filenames match...
     # => for example if angle acceleration not wanted in current run, but was stored in
@@ -69,9 +68,9 @@ def some_prep(tracking_software, info, folderinfo, cfg):
     if os.path.exists(results_dir):
         try:
             shutil.rmtree(results_dir)
-            move_data_to_folders(tracking_software, file_type_string, info, folderinfo)
+            move_data_to_folders(file_type_string, info, folderinfo)
         except OSError:
-            move_data_to_folders(tracking_software, file_type_string, info, folderinfo)
+            move_data_to_folders(file_type_string, info, folderinfo)
             unable_to_rm_resdir_error = (
                 "\n***********\n! WARNING !\n***********\n"
                 + "Unable to remove previous Results subfolder of ID: "
@@ -81,7 +80,7 @@ def some_prep(tracking_software, info, folderinfo, cfg):
             print(unable_to_rm_resdir_error)
             write_issues_to_textfile(unable_to_rm_resdir_error, info)
     else:
-        move_data_to_folders(tracking_software, file_type_string, info, folderinfo)
+        move_data_to_folders(file_type_string, info, folderinfo)
 
     # .......  initialise Issues.txt & quick check for file existence  .................
     # Issues.txt - delete if saved in a previous run
@@ -372,8 +371,8 @@ def prepare_DLC_df(df, separator=" "):
 # ...............................  generic helpers  ....................................
 
 
-def move_data_to_folders(tracking_software, file_type_string, info, folderinfo):
-    """Find files, copy data, video, beamdata & beamvideo to new results_dir"""
+def move_data_to_folders(file_type_string, info, folderinfo):
+    """Find this ID's data & beam files & copy them to new results_dir"""
     # unpack
     results_dir = info["results_dir"]
     postmouse_string = folderinfo["postmouse_string"]
@@ -390,7 +389,6 @@ def move_data_to_folders(tracking_software, file_type_string, info, folderinfo):
         for run_string_addition in FILE_ID_STRING_ADDITIONS:
             candidate_postrun_string = run_string_addition + postrun_string
             found_it = check_this_filename_configuration(
-                tracking_software,
                 file_type_string,
                 info,
                 folderinfo,
@@ -403,7 +401,6 @@ def move_data_to_folders(tracking_software, file_type_string, info, folderinfo):
 
 
 def check_this_filename_configuration(
-    tracking_software,
     file_type_string,
     info,
     folderinfo,
@@ -413,17 +410,13 @@ def check_this_filename_configuration(
 ):
     # unpack
     # => file identifiers are case-insensitive - lower them & only use them to compare!
-    name = info["name"]
     mouse_num = info["mouse_num"]
     run_num = info["run_num"]
     root_dir = folderinfo["root_dir"]
-    data_string = folderinfo["data_string"].lower()
-    beam_string = folderinfo["beam_string"].lower()
     premouse_string = folderinfo["premouse_string"].lower()
     postmouse_string = postmouse_string.lower()
     prerun_string = folderinfo["prerun_string"].lower()
     postrun_string = postrun_string.lower()
-    whichvideo = ""  # initialise
     found_it = False
     # handle leading zeros that we identified previously - if none convert nums to str
     if "leading_mouse_num_zeros" in info.keys():
@@ -449,27 +442,6 @@ def check_this_filename_configuration(
             shutil.copy2(
                 os.path.join(root_dir, filename), os.path.join(results_dir, filename)
             )
-            # Check if there is a video and if so copy it too (only for DLC atm)
-            if tracking_software == "DLC":
-                vidname = filename[:-4] + "_labeled.mp4"
-                vidpath = os.path.join(root_dir, vidname)
-                if os.path.exists(vidpath):
-                    shutil.copy2(vidpath, os.path.join(results_dir, vidname))
-                else:
-                    if data_string in vidname.lower():
-                        whichvideo = "Data"
-                    elif beam_string in vidname.lower():
-                        whichvideo = "Beam"
-                    this_message = (
-                        "\n***********\n! WARNING !\n***********\n"
-                        + "No "
-                        + whichvideo
-                        + "video for "
-                        + name
-                        + "!"
-                    )
-                    print(this_message)
-                    write_issues_to_textfile(this_message, info)
     return found_it
 
 
