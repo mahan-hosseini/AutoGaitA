@@ -29,6 +29,10 @@ from autogaita.gui.gui_constants import (
     get_widget_cfg_dict,  # function!
 )
 from autogaita.group.group_constants import AVG_SHEET_NAME, AVG_GROUP_SHEET_NAME
+from autogaita.gui.group_cross_species_gui import (
+    cross_species_window,
+    CFG_KEY as CROSS_SPECIES_CFG_KEY,
+)
 
 # these colors are GUI-specific - add to common widget cfg
 FG_COLOR = GROUP_FG_COLOR
@@ -73,6 +77,8 @@ TK_STR_VARS = [
     "color_palette",
 ]
 EXCLUDED_VARS_FROM_CFG_FILE = ["last_runs_stats_variables", "last_runs_PCA_variables"]
+# plain dicts that are saved to the GUI's config file but never passed to group()
+GUI_ONLY_DICT_VARS = [CROSS_SPECIES_CFG_KEY]
 
 # %%...............................  MAIN PROGRAM ......................................
 
@@ -415,6 +421,26 @@ def build_mainwindow(root, group_number, root_dimensions):
             columnspan=3,
         )
 
+        # cross species preparation
+        cross_species_button = gaita_widgets.header_button(
+            mainwindow, "Cross Species Preparation", WIDGET_CFG
+        )
+        cross_species_button.configure(
+            command=lambda: cross_species_window(
+                mainwindow,
+                group_names,
+                group_dirs,
+                cfg,
+                WIDGET_CFG,
+                os.path.join(AUTOGAITA_FOLDER_PATH, CONFIG_FILE_NAME),
+            ),
+        )
+        cross_species_button.grid(
+            row=last_group_row + 12,
+            column=0,
+            columnspan=3,
+        )
+
         # define features button
         definefeatures_button = gaita_widgets.header_button(
             mainwindow, "I am ready - define features!", WIDGET_CFG
@@ -432,12 +458,12 @@ def build_mainwindow(root, group_number, root_dimensions):
                 ),
             ),
         )
-        definefeatures_button.grid(row=last_group_row + 12, column=0, columnspan=3)
+        definefeatures_button.grid(row=last_group_row + 13, column=0, columnspan=3)
 
         # empty label four for spacing
         empty_label_four = ctk.CTkLabel(mainwindow, text="")
         empty_label_four.grid(
-            row=last_group_row + 13, column=1, columnspan=3, sticky="ns"
+            row=last_group_row + 14, column=1, columnspan=3, sticky="ns"
         )
 
         # exit button
@@ -449,7 +475,7 @@ def build_mainwindow(root, group_number, root_dimensions):
                 mainwindow.after(5000, mainwindow.destroy),
             ),
         )
-        exit_button.grid(row=last_group_row + 14, column=0, columnspan=3)
+        exit_button.grid(row=last_group_row + 15, column=0, columnspan=3)
 
         # maximise widgets to fit fullscreen
         maximise_widgets(mainwindow)
@@ -1121,7 +1147,8 @@ def extract_this_runs_folderinfo_and_cfg(folderinfo, cfg):
         if key in LIST_VARS:  # no get() needed - since these are lists already
             this_runs_cfg[key] = cfg[key]
             # elif is necessary as we want to exclude "last_runs_stats/PCA_variables"
-        elif key not in EXCLUDED_VARS_FROM_CFG_FILE:
+            # and GUI-only dicts (e.g. cross species columns)
+        elif key not in EXCLUDED_VARS_FROM_CFG_FILE + GUI_ONLY_DICT_VARS:
             this_runs_cfg[key] = cfg[key].get()
             # convert to numbers
             if key in FLOAT_VARS:
@@ -1235,6 +1262,8 @@ def update_config_file(folderinfo, cfg):
                     output_dicts[i][key] = []
                     for entry in input_dict[key]:
                         output_dicts[i][key].append(entry)
+                elif key in GUI_ONLY_DICT_VARS:  # plain dicts - no get()
+                    output_dicts[i][key] = copy.deepcopy(input_dict[key])
                 # otherwise (if str, int or bool) get() and define
                 elif (
                     key not in EXCLUDED_VARS_FROM_CFG_FILE
@@ -1281,6 +1310,9 @@ def extract_cfg_from_json_file(root):
             cfg["last_runs_" + key] = []
             for entry in last_runs_cfg[key]:
                 cfg["last_runs_" + key].append(entry)
+    # plain dicts (default to empty if config files of older versions lack them)
+    for key in GUI_ONLY_DICT_VARS:
+        cfg[key] = copy.deepcopy(last_runs_cfg.get(key, {}))
 
     return cfg
 

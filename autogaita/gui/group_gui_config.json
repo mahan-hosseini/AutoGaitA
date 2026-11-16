@@ -37,6 +37,26 @@
         "stats_variables": [
         ],
         "PCA_variables": [
-        ]
+        ],
+        "cross_species_columns": {
+            "Fly": [
+                "Tar",
+                "Ti-Tar",
+                "Fe-Ti",
+                "Cx-Tr"
+            ],
+            "Mouse": [
+                "Hind paw tao",
+                "Ankle",
+                "Knee",
+                "Hip"
+            ],
+            "Human": [
+                "Midfoot",
+                "Ankle",
+                "Knee",
+                "Hip"
+            ]
+        }    
     }
 ]

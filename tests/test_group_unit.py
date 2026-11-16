@@ -5,7 +5,18 @@ from autogaita.group.group_main import (
     create_stats_df,
     cluster_extent_test,
 )
-from autogaita.group.group_1_preparation import some_prep
+from autogaita.group.group_1_preparation import (
+    some_prep,
+    merge_and_check_first_level_cfgs,
+)
+from autogaita.group.group_cross_species import (
+    prepare_cross_species_columns,
+    build_column_map,
+    identify_species,
+    validate_species_joints,
+    translate_first_level_cfg,
+    rename_sheet_file,
+)
 from autogaita.group.group_2_data_processing import (
     load_previous_runs_dataframes,
     check_PCA_and_stats_variables,
@@ -25,6 +36,8 @@ from autogaita.group.group_4_stats import (
 from autogaita.resources.utils import bin_num_to_percentages
 import os
 import math
+import json
+import copy
 import pytest
 from sklearn import datasets
 import pandas as pd
@@ -42,8 +55,15 @@ from autogaita.group.group_constants import (
     TTEST_MASK_COL,
     CLUSTER_TMASS_COL,
     CLUSTER_MASK_COL,
+    ORIG_SHEET_NAME,
+    NORM_SHEET_NAME,
+    CROSS_SPECIES_DIR_NAME,
 )
-from autogaita.resources.constants import SC_PERCENTAGE_COL
+from autogaita.resources.constants import (
+    SC_PERCENTAGE_COL,
+    CONFIG_JSON_FILENAME,
+    ISSUES_TXT_FILENAME,
+)
 
 
 # %%................................  fixtures  ........................................
@@ -531,6 +551,268 @@ def build_permtest_results_df(contrast_data):
                 }
             )
     return pd.DataFrame(rows)
+
+
+# %%..........................  cross species preparation  ............................
+MOUSE_JOINTS = ["Hind paw tao", "Ankle", "Knee", "Hip", "Iliac Crest"]
+FLY_JOINTS = ["Tar", "Ti-Tar", "Fe-Ti", "Cx-Tr", "Th-Cx"]
+EXAMPLE_ORIG_SHEET_PATH = (
+    "example data/12mm/Results/ID 14 - Run 3/ID 14 - Run 3 - Original Stepcycles.xlsx"
+)
+EXAMPLE_CONFIG_PATH = "example data/12mm/Results/config.json"
+UNIVERSAL3D_AVG_SHEET_PATH = (
+    "tests/test_data/universal3D_data/true_data/TestSubject - Average Stepcycle.xlsx"
+)
+
+
+@pytest.fixture
+def mouse_columns():
+    return list(pd.read_excel(EXAMPLE_ORIG_SHEET_PATH, nrows=0).columns)
+
+
+@pytest.fixture
+def mouse_cfg():
+    with open(EXAMPLE_CONFIG_PATH, "r") as config_file:
+        return json.load(config_file)
+
+
+def test_cross_species_column_map_2D(mouse_columns, mouse_cfg):
+    rename_dict, drop_list = build_column_map(
+        mouse_columns, MOUSE_JOINTS, mouse_cfg["angles"], is_3D=False
+    )
+    assert rename_dict["Hind paw tao x"] == "Joint1 x"
+    assert rename_dict["Hind paw tao likelihood"] == "Joint1 likelihood"
+    assert rename_dict["Iliac Crest Velocity"] == "Joint5 Velocity"
+    assert rename_dict["Ankle Angle"] == "Joint2 Angle"
+    assert rename_dict["Hip Angle Velocity"] == "Joint4 Angle Velocity"
+    for column in ["Nose x", "Tail tip y", "Front paw tao x", "Wrist likelihood"]:
+        assert column in drop_list
+    renamed_columns = (
+        pd.DataFrame(columns=mouse_columns)
+        .drop(columns=drop_list)
+        .rename(columns=rename_dict)
+        .columns
+    )
+    assert all(
+        column.startswith("Joint") or column in ["Time", "Flipped"]
+        for column in renamed_columns
+    )
+    assert "Time" in renamed_columns and "Flipped" in renamed_columns
+
+
+def test_cross_species_column_map_matches_exact_joint_names():
+    columns = ["Tail x", "Tail y", "Tail base x", "Tail base y", "Tail Velocity"]
+    rename_dict, drop_list = build_column_map(columns, ["Tail"], None, is_3D=False)
+    assert rename_dict == {
+        "Tail x": "Joint1 x",
+        "Tail y": "Joint1 y",
+        "Tail Velocity": "Joint1 Velocity",
+    }
+    assert drop_list == ["Tail base x", "Tail base y"]
+
+
+def test_cross_species_column_map_drops_angles_with_unmapped_joints(
+    mouse_columns, mouse_cfg
+):
+    # the Hip angle's upper joint (Iliac Crest) is not mapped
+    rename_dict, drop_list = build_column_map(
+        mouse_columns, MOUSE_JOINTS[:4], mouse_cfg["angles"], is_3D=False
+    )
+    assert "Hip Angle" in drop_list
+    assert "Hip Angle Velocity" in drop_list
+    assert rename_dict["Hip x"] == "Joint4 x"
+    assert rename_dict["Knee Angle"] == "Joint3 Angle"
+
+
+def test_cross_species_column_map_3D():
+    columns = list(pd.read_excel(UNIVERSAL3D_AVG_SHEET_PATH, nrows=0).columns)
+    joints = ["Midfoot", "Ankle", "Knee", "Hip", "Pelvis"]
+    angles = {
+        "name": ["Ankle", "Knee", "Hip"],
+        "lower_joint": ["Midfoot", "Ankle", "Knee"],
+        "upper_joint": ["Knee", "Hip", "Pelvis "],
+    }
+    rename_dict, drop_list = build_column_map(columns, joints, angles, is_3D=True)
+    assert rename_dict["Hip, right X"] == "Joint4, right X"
+    assert rename_dict["Pelvis X"] == "Joint5 X"
+    assert rename_dict["Ankle, left Angle"] == "Joint2, left Angle"
+    assert rename_dict["Midfoot, right Velocity"] == "Joint1, right Velocity"
+    assert "Spine, low X" in drop_list
+    assert "SC Percentage" not in drop_list
+    assert "SC Percentage" not in rename_dict
+
+
+def test_identify_species(mouse_columns):
+    species_joints = {"Mouse": MOUSE_JOINTS, "Fly": FLY_JOINTS}
+    assert identify_species(mouse_columns, species_joints, is_3D=False) == "Mouse"
+    with pytest.raises(ValueError, match="Fly - missing: Tar, Ti-Tar"):
+        identify_species(mouse_columns, {"Fly": FLY_JOINTS}, is_3D=False)
+    species_joints["Rat"] = MOUSE_JOINTS  # rat & mouse share all joint names
+    with pytest.raises(ValueError, match="more than one species: Mouse, Rat"):
+        identify_species(mouse_columns, species_joints, is_3D=False)
+
+
+def test_validate_species_joints():
+    # a single species is fine & blank rows are skipped
+    assert validate_species_joints({" Mouse ": [" Ankle", "Knee "], "": ["", ""]}) == {
+        "Mouse": ["Ankle", "Knee"]
+    }
+    with pytest.raises(ValueError, match="same number of joints"):
+        validate_species_joints({"Mouse": ["Ankle", "Knee"], "Fly": ["Tar"]})
+    with pytest.raises(ValueError, match="more than once"):
+        validate_species_joints({"Mouse": ["Ankle", "Ankle"]})
+    with pytest.raises(ValueError, match="empty joint names"):
+        validate_species_joints({"Mouse": ["Ankle", " "]})
+
+
+def test_translate_first_level_cfg(mouse_cfg):
+    mouse_cfg["hind_joints"].reverse()  # translated lists are sorted by Joint idx
+    translated_cfg = translate_first_level_cfg(mouse_cfg, MOUSE_JOINTS)
+    assert translated_cfg["hind_joints"] == [f"Joint{i} " for i in range(1, 6)]
+    assert translated_cfg["fore_joints"] == []
+    assert translated_cfg["angles"] == {
+        "name": ["Joint2 ", "Joint3 ", "Joint4 "],
+        "lower_joint": ["Joint1 ", "Joint2 ", "Joint3 "],
+        "upper_joint": ["Joint3 ", "Joint4 ", "Joint5 "],
+    }
+    # trailing-space convention is kept
+    assert translated_cfg["x_standardisation_joint"] == "Joint1 "
+    assert translated_cfg["y_standardisation_joint"] == "Joint1"
+    # other keys & the original dict are unchanged
+    assert translated_cfg["sampling_rate"] == mouse_cfg["sampling_rate"]
+    assert mouse_cfg["hind_joints"][-1] == "Hind paw tao "
+    # unmapped angles are dropped
+    translated_cfg = translate_first_level_cfg(mouse_cfg, MOUSE_JOINTS[:4])
+    assert translated_cfg["angles"]["name"] == ["Joint2 ", "Joint3 "]
+
+
+def test_merge_and_check_first_level_cfgs(extract_folderinfo, mouse_cfg):
+    # DLC & SLEAP can always be compared, Universal 3D cannot
+    sleap_cfg = copy.deepcopy(mouse_cfg)
+    sleap_cfg["tracking_software"] = "SLEAP"
+    merged_cfg = merge_and_check_first_level_cfgs(
+        [mouse_cfg, sleap_cfg], extract_folderinfo
+    )
+    assert merged_cfg["tracking_software"] == "DLC"
+    universal3D_cfg = copy.deepcopy(mouse_cfg)
+    universal3D_cfg["tracking_software"] = "Universal 3D"
+    with pytest.raises(ValueError, match="Mismatch at tracking_software"):
+        merge_and_check_first_level_cfgs(
+            [mouse_cfg, universal3D_cfg], extract_folderinfo
+        )
+    # without cross species columns, sampling rates must match
+    other_rate_cfg = copy.deepcopy(mouse_cfg)
+    other_rate_cfg["sampling_rate"] = 200
+    with pytest.raises(ValueError, match="Mismatch at sampling_rate"):
+        merge_and_check_first_level_cfgs(
+            [mouse_cfg, other_rate_cfg], extract_folderinfo
+        )
+    # cross species: species-specific vars are not checked, sampling rate is warned
+    mouse_cross_cfg = translate_first_level_cfg(mouse_cfg, MOUSE_JOINTS)
+    fly_cross_cfg = copy.deepcopy(mouse_cross_cfg)
+    fly_cross_cfg["sampling_rate"] = 200
+    fly_cross_cfg["x_sc_broken_threshold"] = 5
+    fly_cross_cfg["x_standardisation_joint"] = "Tar "
+    merged_cfg = merge_and_check_first_level_cfgs(
+        [mouse_cross_cfg, fly_cross_cfg], extract_folderinfo
+    )
+    assert merged_cfg["sampling_rate"] == mouse_cfg["sampling_rate"]
+    issues_path = os.path.join(extract_folderinfo["results_dir"], ISSUES_TXT_FILENAME)
+    with open(issues_path, "r") as issues_file:
+        assert "Sampling rates differ" in issues_file.read()
+    # ... but vars that define group analysis' data still have to match
+    fly_cross_cfg["bin_num"] = 50
+    with pytest.raises(ValueError, match="Mismatch at bin_num"):
+        merge_and_check_first_level_cfgs(
+            [mouse_cross_cfg, fly_cross_cfg], extract_folderinfo
+        )
+
+
+def test_prepare_cross_species_columns(tmp_path, mouse_cfg):
+    """File I/O: renamed sheets & translated config.json are written to subfolders"""
+    fly_cfg = copy.deepcopy(mouse_cfg)
+    fly_cfg["tracking_software"] = "SLEAP"
+    fly_cfg["hind_joints"] = [joint + " " for joint in FLY_JOINTS]
+    fly_cfg["fore_joints"] = []
+    fly_cfg["angles"] = {
+        "name": ["Ti-Tar ", "Fe-Ti ", "Cx-Tr "],
+        "lower_joint": ["Tar ", "Ti-Tar ", "Fe-Ti "],
+        "upper_joint": ["Fe-Ti ", "Cx-Tr ", "Th-Cx "],
+    }
+    ID = "ID 1 - Run 1"
+    for group_dir, cfg, joints, extension in [
+        (tmp_path / "mouse", mouse_cfg, MOUSE_JOINTS, ".xlsx"),
+        (tmp_path / "fly", fly_cfg, FLY_JOINTS, ".csv"),
+    ]:
+        os.makedirs(group_dir / ID)
+        with open(group_dir / CONFIG_JSON_FILENAME, "w") as config_file:
+            json.dump(cfg, config_file)
+        df = pd.DataFrame({"Time": [0.0, 0.1], "Nose x": [1.0, 2.0]})
+        for joint in joints:
+            df[joint + " x"] = [1.0, 2.0]
+            df[joint + " y"] = [3.0, 4.0]
+        for sheet_name in [ORIG_SHEET_NAME, NORM_SHEET_NAME]:
+            sheet_path = group_dir / ID / f"{ID} - {sheet_name}{extension}"
+            if extension == ".xlsx":
+                df.to_excel(sheet_path, index=False)
+            else:
+                df.to_csv(sheet_path, index=False)
+    # files of a previous run are replaced
+    os.makedirs(tmp_path / "mouse" / CROSS_SPECIES_DIR_NAME)
+    (tmp_path / "mouse" / CROSS_SPECIES_DIR_NAME / "old.txt").write_text("old")
+
+    report = prepare_cross_species_columns(
+        ["Mice", "Flies"],
+        [str(tmp_path / "mouse"), str(tmp_path / "fly")],
+        {"Mouse": MOUSE_JOINTS, "Fly": FLY_JOINTS},
+    )
+
+    assert [entry["species"] for entry in report] == ["Mouse", "Fly"]
+    mouse_out = tmp_path / "mouse" / CROSS_SPECIES_DIR_NAME
+    fly_out = tmp_path / "fly" / CROSS_SPECIES_DIR_NAME
+    assert sorted(os.listdir(mouse_out)) == [ID, CONFIG_JSON_FILENAME]
+    expected_columns = ["Time"] + [
+        f"Joint{i} {coord}" for i in range(1, 6) for coord in ["x", "y"]
+    ]
+    mouse_df = pd.read_excel(mouse_out / ID / f"{ID} - {NORM_SHEET_NAME}.xlsx")
+    fly_df = pd.read_csv(fly_out / ID / f"{ID} - {ORIG_SHEET_NAME}.csv")
+    assert list(mouse_df.columns) == expected_columns
+    assert list(fly_df.columns) == expected_columns
+    # translated configs pass group's check, originals are untouched
+    translated_cfgs = []
+    for out_dir in [mouse_out, fly_out]:
+        with open(out_dir / CONFIG_JSON_FILENAME, "r") as config_file:
+            translated_cfgs.append(json.load(config_file))
+    merge_and_check_first_level_cfgs(
+        translated_cfgs, {"group_names": ["Mice", "Flies"], "results_dir": tmp_path}
+    )
+    with open(tmp_path / "mouse" / CONFIG_JSON_FILENAME, "r") as config_file:
+        assert json.load(config_file)["hind_joints"] == mouse_cfg["hind_joints"]
+    # running on a cross species folder itself is refused
+    with pytest.raises(ValueError, match="already is a"):
+        prepare_cross_species_columns(
+            ["Mice"], [str(mouse_out)], {"Mouse": MOUSE_JOINTS}
+        )
+
+
+def test_rename_sheet_file_keeps_all_xlsx_sheets(tmp_path):
+    input_path = tmp_path / "in.xlsx"
+    with pd.ExcelWriter(input_path) as writer:
+        pd.DataFrame({"Hip, left Y": [1.0], "Spine, low Y": [2.0]}).to_excel(
+            writer, sheet_name="left", index=False
+        )
+        pd.DataFrame({"Hip, right Y": [1.0]}).to_excel(
+            writer, sheet_name="right", index=False
+        )
+        pd.DataFrame().to_excel(writer, sheet_name="both", index=False)
+    rename_sheet_file(
+        str(input_path), str(tmp_path / "out.xlsx"), ["Hip"], None, is_3D=True
+    )
+    sheets = pd.read_excel(tmp_path / "out.xlsx", sheet_name=None)
+    assert list(sheets) == ["left", "right", "both"]
+    assert list(sheets["left"].columns) == ["Joint1, left Y"]
+    assert list(sheets["right"].columns) == ["Joint1, right Y"]
+    assert sheets["both"].empty
 
 
 # NOTE !!!

@@ -13,6 +13,11 @@ FIRST_LEVEL_CFG_VARS_TO_NOT_CHECK = [
     "coordinate_standardisation_xls",
     "interpolate_data",
 ]
+# TRACKING SOFTWARE FAMILIES
+# => DLC & SLEAP can be compared with each other but not with Universal 3D
+TRACKING_SOFTWARE_2D = ["DLC", "SLEAP"]
+TRACKING_SOFTWARE_3D = ["Universal 3D"]
+
 
 # DERIVED CFG KEYS TO NOT WRITE TO CONFIG.JSON
 # => cyclers not json serialisable and loaded is just used in a unit test
@@ -79,3 +84,49 @@ STD_LW = 0
 # PLOT GUI COLORS
 FG_COLOR = "#5a7d9a"  # steel blue
 HOVER_COLOR = "#8ab8fe"  # carolina blue
+
+
+# CROSS SPECIES PREPARATION
+# => species' joints are renamed to JOINT_PREFIX + idx (Joint1 is the most distal one)
+#    and saved to a subfolder of each group dir
+CROSS_SPECIES_DIR_NAME = "Cross Species Columns"
+CROSS_SPECIES_JOINT_PREFIX = "Joint"
+# column suffixes that belong to a joint (angle suffixes cover angle columns)
+CROSS_SPECIES_2D_COORD_SUFFIXES = ["x", "y", "likelihood"]
+CROSS_SPECIES_3D_COORD_SUFFIXES = ["X", "Y", "Z"]
+CROSS_SPECIES_JOINT_SUFFIXES = ["Velocity", "Acceleration"]
+CROSS_SPECIES_ANGLE_SUFFIXES = ["Angle", "Angle Velocity", "Angle Acceleration"]
+CROSS_SPECIES_3D_SIDES = ["", ", left", ", right"]
+# first-level cfg keys that hold joint names & are translated in the config.json copy
+CROSS_SPECIES_CFG_JOINT_LIST_KEYS = ["hind_joints", "fore_joints", "joints"]
+CROSS_SPECIES_CFG_JOINT_STRING_KEYS = [
+    "x_standardisation_joint",
+    "y_standardisation_joint",
+    "z_standardisation_joint",
+]
+# first-level cfg keys that may differ between species (only skipped if all groups are
+# cross-species dirs) - sampling_rate is not checked but users are warned if it differs
+CROSS_SPECIES_CFG_VARS_TO_NOT_CHECK = [
+    "sampling_rate",
+    "x_sc_broken_threshold",
+    "y_sc_broken_threshold",
+    "invert_y_axis",
+    "flip_gait_direction",
+    "standardise_y_at_SC_level",
+    "standardise_y_to_a_joint",
+    "x_standardisation_joint",
+    "y_standardisation_joint",
+    "fore_joints",
+    "standardise_z_at_SC_level",
+    "standardise_z_to_a_joint",
+    "z_standardisation_joint",
+]
+
+# per-ID sheets that group analysis reads & cross species preparation renames
+# => the *_GROUP_SHEET_NAMEs above are group outputs (results_dir), not inputs
+CROSS_SPECIES_SHEET_NAMES = [
+    ORIG_SHEET_NAME,
+    NORM_SHEET_NAME,
+    X_STANDARDISED_SHEET_NAME,
+    AVG_SHEET_NAME,
+]

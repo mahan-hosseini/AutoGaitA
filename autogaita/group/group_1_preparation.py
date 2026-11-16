@@ -9,6 +9,9 @@ import seaborn as sns
 from autogaita.resources.constants import ISSUES_TXT_FILENAME, CONFIG_JSON_FILENAME
 from autogaita.group.group_constants import (
     FIRST_LEVEL_CFG_VARS_TO_NOT_CHECK,
+    CROSS_SPECIES_CFG_VARS_TO_NOT_CHECK,
+    CROSS_SPECIES_JOINT_PREFIX,
+    TRACKING_SOFTWARE_2D,
     CFG_KEYS_NOT_FOR_JSON,
     GROUP_CONFIG_TXT_FILENAME,
     STATS_TXT_FILENAME,
@@ -83,31 +86,13 @@ def some_prep(folderinfo, cfg):
     # if not loading previous results, ensure cfg-keys are equivalent across groups
     # then add them to cfg dict
     if len(folderinfo["load_dir"]) == 0:
-        for g_idx, group_dir in enumerate(group_dirs):
+        first_level_cfgs = []
+        for group_dir in group_dirs:
             with open(
                 os.path.join(group_dir, CONFIG_JSON_FILENAME), "r"
             ) as config_json_file:
-                config_vars_from_json = json.load(config_json_file)
-                for key in config_vars_from_json.keys():
-                    if key in FIRST_LEVEL_CFG_VARS_TO_NOT_CHECK:
-                        continue  # skip equivalence check for this key
-                    # assigning like this ensure all keys are in all jsons across groups
-                    if g_idx == 0:
-                        cfg[key] = config_vars_from_json[key]
-                    else:
-                        # sanity check for group-differences in cfg variables!
-                        if (key not in cfg.keys()) | (
-                            cfg[key] != config_vars_from_json[key]
-                        ):
-                            error_message = (
-                                "config.json variables differ between groups!"
-                                + "\nPlease make sure that all cfg variables between "
-                                + "groups match & try again!"
-                                + f"\nMismatch at {key} in group {group_names[g_idx]}"
-                            )
-                            raise ValueError(error_message)
-                        else:
-                            cfg[key] = config_vars_from_json[key]
+                first_level_cfgs.append(json.load(config_json_file))
+        cfg.update(merge_and_check_first_level_cfgs(first_level_cfgs, folderinfo))
 
     # rename hind_joints to joints (if DLC or SLEAP)
     if "hind_joints" in cfg.keys():
@@ -164,6 +149,90 @@ def some_prep(folderinfo, cfg):
         cfg["loaded"] = True
 
     return folderinfo, cfg
+
+
+def merge_and_check_first_level_cfgs(first_level_cfgs, folderinfo):
+    """Check that first-level config.json vars match across groups & return them merged
+
+    Notes
+    -----
+    => DLC & SLEAP results can always be compared only 2D vs. Universal 3D raises.
+    => If all groups are cross-species dirs (i.e., their joints were renamed to Joint1,
+       ...) vars that legitimately differ between species are not checked & group 1's
+       values are used. Users are warned if sampling rates differ.
+    """
+    group_names = folderinfo["group_names"]
+    cross_species = all(
+        is_cross_species_cfg(first_level_cfg) for first_level_cfg in first_level_cfgs
+    )  # true if all group_dirs' cfgs are cross species (have a Joint1 in there)
+    merged_cfg = {}
+    for g_idx, first_level_cfg in enumerate(first_level_cfgs):
+        for key, value in first_level_cfg.items():
+            if key in FIRST_LEVEL_CFG_VARS_TO_NOT_CHECK:
+                continue  # skip equivalence check for this key
+            # assigning like this ensure all keys are in all jsons across groups
+            if g_idx == 0:
+                merged_cfg[key] = value
+                continue
+            if key not in merged_cfg:
+                values_match = False
+            elif cross_species and key in CROSS_SPECIES_CFG_VARS_TO_NOT_CHECK:
+                values_match = True  # keep group 1's value
+            elif key == "tracking_software":
+                values_match = tracking_software_family(
+                    merged_cfg[key]
+                ) == tracking_software_family(value)
+            else:
+                values_match = merged_cfg[key] == value
+            # sanity check for group-differences in cfg variables!
+            if not values_match:
+                error_message = (
+                    "config.json variables differ between groups!"
+                    + "\nPlease make sure that all cfg variables between "
+                    + "groups match & try again!"
+                    + f"\nMismatch at {key} in group {group_names[g_idx]}"
+                )
+                raise ValueError(error_message)
+    if cross_species:
+        warn_if_sampling_rates_differ(first_level_cfgs, folderinfo)
+    return merged_cfg
+
+
+def is_cross_species_cfg(first_level_cfg):
+    """True if joints were renamed by cross species preparation (Joint1 is present)"""
+    joints = first_level_cfg.get("hind_joints", first_level_cfg.get("joints", []))
+    return any(joint.strip() == CROSS_SPECIES_JOINT_PREFIX + "1" for joint in joints)
+
+
+def tracking_software_family(tracking_software):
+    """DLC & SLEAP are one family (2D), Universal 3D is another"""
+    if tracking_software in TRACKING_SOFTWARE_2D:
+        return "2D"
+    return tracking_software
+
+
+def warn_if_sampling_rates_differ(first_level_cfgs, folderinfo):
+    """Velocities & accelerations are per frame - warn if sampling rates differ"""
+    group_names = folderinfo["group_names"]
+    sampling_rates = [
+        first_level_cfg.get("sampling_rate") for first_level_cfg in first_level_cfgs
+    ]
+    if len(set(sampling_rates)) > 1:
+        rates_listing = "\n".join(
+            f"{group_name}: {sampling_rate}"
+            for group_name, sampling_rate in zip(group_names, sampling_rates)
+        )
+        warning_message = (
+            "\n***********\n! WARNING !\n***********\n"
+            + "Sampling rates differ between groups:\n"
+            + rates_listing
+            + "\nVelocities & accelerations are computed per frame, so they are not "
+            + "directly comparable between these groups!"
+            + "\nAxis labels of velocity & acceleration plots use the sampling rate of "
+            + f"{group_names[0]} ({sampling_rates[0]})."
+        )
+        print(warning_message)
+        write_issues_to_textfile(warning_message, folderinfo)
 
 
 def load_previous_runs_first_level_cfg_vars(folderinfo, cfg):

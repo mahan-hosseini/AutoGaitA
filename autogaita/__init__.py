@@ -17,6 +17,10 @@ from .universal3D.universal3D_main import (
 )  # autogaita.universal3D(info, folderinfo, cfg)
 from .group.group_main import group  # autogaita.group(folderinfo, cfg)
 
+# cross species preparation for group analysis
+# => autogaita.prepare_cross_species_columns(group_names, group_dirs, species_joints)
+from .group.group_cross_species import prepare_cross_species_columns
+
 # 7 batchrun functions - call via e.g. autogaita.dlc_singlerun()
 from .batchrun_scripts.dlc_singlerun import dlc_singlerun
 from .batchrun_scripts.dlc_multirun import dlc_multirun
