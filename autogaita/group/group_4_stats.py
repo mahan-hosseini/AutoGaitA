@@ -98,6 +98,12 @@ def anova_design_sanity_check(stats_df, folderinfo, cfg):
     if cfg["do_permtest"]:
         tests_to_skip.append("permutation test")
     skip_string = "skipping " + " & ".join(tests_to_skip) + "!"
+    # added to errors that also catch designs combining a between- & a within-subjects
+    # factor (2-way #1 & #2 below)
+    two_way_hint = (
+        "\n\nNote: designs combining a between- & a within-subjects factor (e.g. age x "
+        + "beam width) are not supported by the ANOVA or the permutation test."
+    )
 
     # get IDs for each group to check if they are unique
     group_IDs = stats_df.groupby("Group")["ID"].unique()
@@ -115,10 +121,11 @@ def anova_design_sanity_check(stats_df, folderinfo, cfg):
         else:  # 2-way #1 is caught here (non-unique IDs when Mixed)
             mixed_anova_error_message = (
                 "\n*********\n! ERROR !\n*********\n"
-                + "\nANOVA design seems wrong - "
+                + "\nAnalysis design seems wrong - "
                 + skip_string
-                + "\nMixed ANOVA requires unique IDs across groups & we found "
-                + "duplicates!"
+                + "\nBetween-subjects designs require unique IDs across groups & we "
+                + "found duplicates!"
+                + two_way_hint
                 + "\n\nIDs were:\n"
                 + str(group_IDs)
             )
@@ -165,7 +172,7 @@ def anova_design_sanity_check(stats_df, folderinfo, cfg):
                             + "completely, meaning drastically reduced power."
                             + "\n\nIDs with missing data:\n"
                             + str(missing_data_IDs)
-                            + "\n\nWe still compute Tukey's but interpret reults with caution."
+                            + "\n\nWe still compute Tukey's but interpret results with caution."
                         )
                         print(rm_anova_missing_data_warning)
                         write_issues_to_textfile(
@@ -177,12 +184,13 @@ def anova_design_sanity_check(stats_df, folderinfo, cfg):
             else:
                 rm_anova_too_few_valid_IDs_message = (
                     "\n*********\n! ERROR !\n*********\n"
-                    + "\nANOVA design seems wrong - "
+                    + "\nAnalysis design seems wrong - "
                     + skip_string
-                    + "\nRM ANOVA requires at least two IDs to be present in all "
-                    + "groups & we found "
+                    + "\nWithin-subjects designs require at least two IDs to be "
+                    + "present in all groups & we found "
                     + str(len(valid_IDs))
                     + "!"
+                    + two_way_hint
                     + "\n\nIDs were:\n"
                     + str(group_IDs)
                 )
@@ -192,10 +200,10 @@ def anova_design_sanity_check(stats_df, folderinfo, cfg):
         else:
             rm_anova_error_message = (
                 "\n*********\n! ERROR !\n*********\n"
-                + "\nANOVA design seems wrong - "
+                + "\nAnalysis design seems wrong - "
                 + skip_string
-                + "\nRM ANOVA requires IDs to be present in all groups & we found "
-                + "only unique IDs!"
+                + "\nWithin-subjects designs require IDs to be present in all groups "
+                + "& we found only unique IDs!"
                 + "\n\nIDs were:\n"
                 + str(group_IDs)
             )

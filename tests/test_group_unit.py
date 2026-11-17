@@ -526,15 +526,25 @@ sanity_check_layouts = {
     "no ID in all groups": {"g1": [1, 2], "g2": [2, 3], "g3": [3, 1]},
     "one ID in all groups": {"g1": [1, 2, 3], "g2": [1, 2], "g3": [1, 3]},
     "two IDs in all groups": {"g1": [1, 2, 3], "g2": [1, 2, 3], "g3": [1, 2]},
+    # e.g. age (between-subjects) x beam width (within-subjects)
+    "mixed 2-way": {
+        "young 5mm": [1, 2, 3, 4],
+        "young 12mm": [1, 2, 3, 4],
+        "old 5mm": [5, 6, 7, 8],
+        "old 12mm": [5, 6, 7, 8],
+    },
 }
+# (anova_design, layout, IDs match design, two-way hint expected in error)
 sanity_check_cases = [
-    ("RM ANOVA", "unique IDs", False),
-    ("Mixed ANOVA", "shared IDs", False),
-    ("RM ANOVA", "no ID in all groups", False),
-    ("RM ANOVA", "one ID in all groups", False),
-    ("RM ANOVA", "two IDs in all groups", True),
-    ("RM ANOVA", "shared IDs", True),
-    ("Mixed ANOVA", "unique IDs", True),
+    ("RM ANOVA", "unique IDs", False, False),
+    ("Mixed ANOVA", "shared IDs", False, True),
+    ("RM ANOVA", "no ID in all groups", False, True),
+    ("RM ANOVA", "one ID in all groups", False, True),
+    ("RM ANOVA", "mixed 2-way", False, True),
+    ("Mixed ANOVA", "mixed 2-way", False, True),
+    ("RM ANOVA", "two IDs in all groups", True, False),
+    ("RM ANOVA", "shared IDs", True, False),
+    ("Mixed ANOVA", "unique IDs", True, False),
 ]
 tests_to_run_cases = [
     (True, False, "skipping ANOVA!"),
@@ -543,19 +553,24 @@ tests_to_run_cases = [
 ]
 
 
-@pytest.mark.parametrize("anova_design, layout, IDs_match_design", sanity_check_cases)
+@pytest.mark.parametrize(
+    "anova_design, layout, IDs_match_design, two_way_hint", sanity_check_cases
+)
 @pytest.mark.parametrize("do_anova, do_permtest, skip_string", tests_to_run_cases)
 def test_design_sanity_check_guards_both_tests(
     anova_design,
     layout,
     IDs_match_design,
+    two_way_hint,
     do_anova,
     do_permtest,
     skip_string,
     tmp_path,
 ):
-    """The design sanity check returns whether IDs match anova_design & its error
-    message names exactly the tests that are skipped because of a mismatch"""
+    """The design sanity check returns whether IDs match anova_design. Its error
+    message is about the analysis design (which both tests use), names exactly the
+    tests that are skipped & points out unsupported two-way designs where these can
+    be the cause"""
     stats_df = build_synthetic_stats_df(sanity_check_layouts[layout], bin_num=3)
     folderinfo = {"results_dir": tmp_path}
     cfg = {
@@ -574,7 +589,12 @@ def test_design_sanity_check_guards_both_tests(
         )
     else:
         assert "ERROR" in issues
+        assert "Analysis design seems wrong" in issues
+        assert "ANOVA design" not in issues
         assert skip_string in issues
+        assert (
+            "not supported by the ANOVA or the permutation test" in issues
+        ) == two_way_hint
 
 
 # (IDs with missing data out of 10 IDs, do_anova, warning expected)

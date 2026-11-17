@@ -264,12 +264,12 @@ def statplots_suplabels(
 
 # %% ........................  misc. helper functions  .................................
 def tukeys_only_info_message(folderinfo):
-    """Inform user about the fact that we are only doing Tukeys due to our ANOVA sanity check failing"""
+    """Inform user about the fact that we are only doing Tukeys due to our analysis design sanity check failing"""
     tukeys_only_info_message = (
         "\n***********\n! WARNING !\n***********\n\n"
-        + "Your ANOVA settings were wrong.This either happens because: \n 1) You ran "
-        + "a one-way ANOVA with wrong inputs (there should be another message about "
-        + "this) or \n 2) You attempted to run a two-way design which is not "
+        + "Your analysis design seems wrong. This either happens because: \n 1) Your "
+        + "analysis design does not match your IDs (there should be another message "
+        + "about this) or \n 2) You attempted to run a two-way design which is not "
         + "supported yet.\nWe will run Tukey's test for multiple comparisons anyways."
     )
     print(tukeys_only_info_message)
