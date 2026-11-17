@@ -113,10 +113,16 @@ def print_start(folderinfo, cfg):
         else:
             start_string += "\nNo ANOVA"
         if cfg["do_permtest"]:
+            if cfg["anova_design"] == "RM ANOVA":
+                permutation_scheme = "within-subject: conditions swapped within IDs"
+            else:
+                permutation_scheme = "between-subject: IDs shuffled across groups"
             start_string += (
                 "\nCluster-extent permutation test with "
                 + str(cfg["permutation_number"])
-                + " permutations"
+                + " permutations ("
+                + permutation_scheme
+                + ")"
             )
         else:
             start_string += "\nNo Permutation Test"

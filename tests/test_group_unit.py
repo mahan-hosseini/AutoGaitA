@@ -27,6 +27,11 @@ from autogaita.group.group_3_PCA import (
     convert_PCA_bins_to_list,
 )
 from autogaita.group.group_4_stats import (
+    anova_design_sanity_check,
+    prepare_within_subject_permtest,
+    initialise_results_df,
+    compute_first_level_results,
+    permute_true_observed_df,
     compute_and_assign_clustersize,
     extract_all_clusters,
     run_ANOVA,
@@ -38,8 +43,10 @@ import os
 import math
 import json
 import copy
+import warnings
 import pytest
 from sklearn import datasets
+from scipy import stats
 import pandas as pd
 import pandas.testing as pdt
 import numpy as np
@@ -49,6 +56,7 @@ from autogaita.group.group_constants import (
     PCA_PERMANOVA_TXT_FILENAME,
     MULTCOMP_EXCEL_FILENAME_1,
     MULTCOMP_RESULT_SPLIT_STR,
+    GROUP_COL,
     CONTRASTS_COL,
     TTEST_P_COL,
     TTEST_T_COL,
@@ -61,6 +69,7 @@ from autogaita.group.group_constants import (
 )
 from autogaita.resources.constants import (
     SC_PERCENTAGE_COL,
+    ID_COL,
     CONFIG_JSON_FILENAME,
     ISSUES_TXT_FILENAME,
 )
@@ -244,12 +253,16 @@ def test_load_previous_runs_dataframes(extract_folderinfo, extract_cfg):
 # %%..............................  4. statistics  .....................................
 
 
-def test_load_dfs_stats_df_perm_test_smoke(extract_folderinfo, extract_cfg):
+@pytest.mark.parametrize("anova_design", ["Mixed ANOVA", "RM ANOVA"])
+def test_load_dfs_stats_df_perm_test_smoke(
+    anova_design, extract_folderinfo, extract_cfg
+):
     """Smoke test three functions:
     1. load_previous_runs-dataframes
     2. create_stats_df
     3. cluster_extent_test
-    => Check if it all runs without errors on our repo's example data
+    => Check if it all runs without errors on our repo's example data with both
+       designs' permutation schemes (example data has IDs missing in some groups)
     """
     # first, prepare approrpiately & overwrite the fixtures of this script as needed
     # 1) for load_previous_runs_dataframes (called by load repos group data)
@@ -261,11 +274,14 @@ def test_load_dfs_stats_df_perm_test_smoke(extract_folderinfo, extract_cfg):
     # 2) for stats_df & the permutation test functions
     extract_cfg["sampling_rate"] = 100
     extract_cfg["do_permtest"] = True
+    extract_cfg["anova_design"] = anova_design
     extract_cfg["dont_show_plots"] = True
     extract_cfg["tracking_software"] = "DLC"
     extract_cfg["group_color_dict"] = {"5 mm": "red", "12 mm": "blue", "25 mm": "green"}
     extract_folderinfo["contrasts"] = ["5 mm & 12 mm", "5 mm & 25 mm", "12 mm & 25 mm"]
     stats_df = create_stats_df(avg_dfs, extract_folderinfo, extract_cfg)
+    if anova_design == "RM ANOVA":
+        stats_df = prepare_within_subject_permtest(stats_df, extract_folderinfo)
     plot_panel_instance = None
     cluster_extent_test(
         stats_df,
@@ -341,6 +357,251 @@ def test_extract_all_clusters():
     assert extract_all_clusters(results_df, "D") == [[0, 1], [2, 2]]
     # E: single sig. bin at the last idx
     assert extract_all_clusters(results_df, "E") == [[2, 2]]
+
+
+def test_permute_RM_swaps_conditions_within_IDs():
+    """Within-subject permutations only swap group labels among each ID's own blocks:
+    each ID keeps its set of groups, each block (i.e. average step cycle) keeps a
+    single label & all data columns stay untouched"""
+    bin_num = 4
+    group_IDs = {
+        "g1": [1, 2, 3, 4, 5, 6],
+        "g2": [1, 2, 3, 4, 5, 6],
+        "g3": [1, 2, 3, 4, 5],  # ID 6 is missing in g3
+    }
+    trueobs_df = build_synthetic_stats_df(group_IDs, bin_num)
+    cfg = {"bin_num": bin_num, "anova_design": "RM ANOVA"}
+    true_blocks = trueobs_df.loc[0, [ID_COL, GROUP_COL]].reset_index(drop=True)
+    true_groups_per_ID = true_blocks.groupby(ID_COL)[GROUP_COL].apply(sorted).to_dict()
+    relabelled_IDs = set()
+    np.random.seed(0)
+    for _ in range(200):
+        permuted_df = permute_true_observed_df(trueobs_df, cfg)
+        pdt.assert_frame_equal(
+            permuted_df.drop(columns=GROUP_COL), trueobs_df.drop(columns=GROUP_COL)
+        )
+        block_labels = permuted_df[GROUP_COL].to_numpy().reshape(-1, bin_num)
+        assert (block_labels == block_labels[:, [0]]).all()
+        permuted_blocks = permuted_df.loc[0, [ID_COL, GROUP_COL]].reset_index(drop=True)
+        permuted_groups_per_ID = (
+            permuted_blocks.groupby(ID_COL)[GROUP_COL].apply(sorted).to_dict()
+        )
+        assert permuted_groups_per_ID == true_groups_per_ID
+        relabelled = permuted_blocks[GROUP_COL] != true_blocks[GROUP_COL]
+        relabelled_IDs.update(permuted_blocks.loc[relabelled, ID_COL])
+    # every ID was swapped at least once (incl. ID 6 which is missing in g3)
+    assert relabelled_IDs == set(group_IDs["g1"])
+
+
+def test_permute_Mixed_shuffles_IDs_across_groups():
+    """Between-subject permutations shuffle group labels across IDs: each block
+    keeps a single label, data columns stay untouched & group sizes are preserved"""
+    bin_num = 4
+    group_IDs = {"g1": [1, 2, 3, 4], "g2": [5, 6, 7, 8], "g3": [9, 10, 11, 12]}
+    trueobs_df = build_synthetic_stats_df(group_IDs, bin_num)
+    cfg = {"bin_num": bin_num, "anova_design": "Mixed ANOVA"}
+    true_blocks = trueobs_df.loc[0, [ID_COL, GROUP_COL]].reset_index(drop=True)
+    relabelled_IDs = set()
+    np.random.seed(0)
+    for _ in range(200):
+        permuted_df = permute_true_observed_df(trueobs_df, cfg)
+        pdt.assert_frame_equal(
+            permuted_df.drop(columns=GROUP_COL), trueobs_df.drop(columns=GROUP_COL)
+        )
+        block_labels = permuted_df[GROUP_COL].to_numpy().reshape(-1, bin_num)
+        assert (block_labels == block_labels[:, [0]]).all()
+        permuted_blocks = permuted_df.loc[0, [ID_COL, GROUP_COL]].reset_index(drop=True)
+        assert permuted_blocks[GROUP_COL].value_counts().to_dict() == {
+            "g1": 4,
+            "g2": 4,
+            "g3": 4,
+        }
+        relabelled = permuted_blocks[GROUP_COL] != true_blocks[GROUP_COL]
+        relabelled_IDs.update(permuted_blocks.loc[relabelled, ID_COL])
+    # IDs moved across groups (all of them at least once)
+    assert relabelled_IDs == set(range(1, 13))
+
+
+def test_prepare_within_subject_permtest_drops_single_group_IDs(tmp_path):
+    """IDs with data in only one group cannot be swapped & have no pair, so they are
+    excluded from a within-subject permutation test & listed in Issues.txt"""
+    bin_num = 3
+    group_IDs = {"g1": [1, 2, 3, 4, 5], "g2": [1, 2, 3, 4, 6]}
+    stats_df = build_synthetic_stats_df(group_IDs, bin_num)
+    folderinfo = {"contrasts": ["g1 & g2"], "results_dir": tmp_path}
+    permtest_df = prepare_within_subject_permtest(stats_df, folderinfo)
+    pdt.assert_frame_equal(permtest_df, stats_df[stats_df[ID_COL].isin([1, 2, 3, 4])])
+    issues = read_issues_textfile(tmp_path)
+    assert "excluded from the within-subject permutation test" in issues
+    assert "5, 6" in issues
+    assert "WARNING" not in issues  # 4 shared IDs are enough for paired ttests
+
+
+def test_prepare_within_subject_permtest_warns_about_unpaired_contrasts(tmp_path):
+    """Contrasts with less than 2 IDs shared by both groups cannot have paired ttests,
+    so the user is warned about exactly these contrasts"""
+    bin_num = 3
+    group_IDs = {"g1": [1, 2, 3, 4], "g2": [1, 2, 3, 4, 5], "g3": [1, 5]}
+    stats_df = build_synthetic_stats_df(group_IDs, bin_num)
+    folderinfo = {
+        "contrasts": ["g1 & g2", "g1 & g3", "g2 & g3"],
+        "results_dir": tmp_path,
+    }
+    permtest_df = prepare_within_subject_permtest(stats_df, folderinfo)
+    pdt.assert_frame_equal(permtest_df, stats_df)  # all IDs are in at least 2 groups
+    issues = read_issues_textfile(tmp_path)
+    assert "Contrast 'g1 & g3'" in issues  # only ID 1 is shared
+    assert "'g1 & g2'" not in issues
+    assert "'g2 & g3'" not in issues
+    assert "excluded" not in issues
+
+
+@pytest.mark.parametrize("anova_design", ["RM ANOVA", "Mixed ANOVA"])
+def test_first_level_ttest_matches_design(anova_design):
+    """RM designs use paired ttests on IDs with data in both groups (paired by ID,
+    not by row order), Mixed designs use independent ttests on all IDs"""
+    bin_num = 5
+    rng = np.random.default_rng(42)
+    shared_IDs = [1, 2, 3, 4, 5, 6]
+    values = {}
+    for ID in shared_IDs:
+        offset = 10.0 * ID  # large differences between IDs
+        values[(ID, "g1")] = offset + rng.normal(0, 0.5, bin_num)
+        # small but consistent within-ID effect
+        values[(ID, "g2")] = offset + 1 + rng.normal(0, 0.5, bin_num)
+    values[(7, "g1")] = 70 + rng.normal(0, 0.5, bin_num)  # ID 7 only in g1
+    # g2's rows are in reversed ID order so pairs must be found by ID
+    group_IDs = {"g1": shared_IDs + [7], "g2": shared_IDs[::-1]}
+    stats_df = build_synthetic_stats_df(group_IDs, bin_num, values)
+    folderinfo = {"contrasts": ["g1 & g2"]}
+    cfg = {"bin_num": bin_num, "anova_design": anova_design}
+    results_df = initialise_results_df(folderinfo, cfg)
+    results_df = compute_first_level_results(
+        stats_df, results_df, "Variable", folderinfo, cfg
+    )
+    for b, sc_percentage in enumerate(bin_num_to_percentages(bin_num)):
+        if anova_design == "RM ANOVA":
+            expected_t, expected_p = stats.ttest_rel(
+                [values[(ID, "g1")][b] for ID in shared_IDs],
+                [values[(ID, "g2")][b] for ID in shared_IDs],
+            )
+        else:
+            expected_t, expected_p = stats.ttest_ind(
+                [values[(ID, "g1")][b] for ID in shared_IDs + [7]],
+                [values[(ID, "g2")][b] for ID in shared_IDs],
+            )
+        this_row = results_df[SC_PERCENTAGE_COL] == sc_percentage
+        assert math.isclose(results_df.loc[this_row, TTEST_T_COL].item(), expected_t)
+        assert math.isclose(results_df.loc[this_row, TTEST_P_COL].item(), expected_p)
+
+
+def test_paired_ttest_skipped_without_enough_shared_IDs():
+    """A paired ttest is undefined for less than 2 pairs, so such bins keep t = 0 &
+    p = 1 (i.e., can never be significant) without raising any warnings"""
+    bin_num = 4
+    rng = np.random.default_rng(0)
+    group_IDs = {"g1": [1, 2, 3], "g2": [3, 4, 5]}  # only ID 3 is shared
+    values = {
+        (ID, group_name): rng.normal(0, 1, bin_num)
+        for group_name, IDs in group_IDs.items()
+        for ID in IDs
+    }
+    stats_df = build_synthetic_stats_df(group_IDs, bin_num, values)
+    folderinfo = {"contrasts": ["g1 & g2"]}
+    cfg = {"bin_num": bin_num, "anova_design": "RM ANOVA"}
+    results_df = initialise_results_df(folderinfo, cfg)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        results_df = compute_first_level_results(
+            stats_df, results_df, "Variable", folderinfo, cfg
+        )
+    assert (results_df[TTEST_T_COL] == 0).all()
+    assert (results_df[TTEST_P_COL] == 1).all()
+    assert not results_df[TTEST_MASK_COL].any()
+
+
+sanity_check_layouts = {
+    "unique IDs": {"g1": [1, 2, 3], "g2": [4, 5, 6], "g3": [7, 8, 9]},
+    "shared IDs": {"g1": [1, 2, 3], "g2": [1, 2, 3], "g3": [1, 2, 3]},
+    "no ID in all groups": {"g1": [1, 2], "g2": [2, 3], "g3": [3, 1]},
+    "one ID in all groups": {"g1": [1, 2, 3], "g2": [1, 2], "g3": [1, 3]},
+    "two IDs in all groups": {"g1": [1, 2, 3], "g2": [1, 2, 3], "g3": [1, 2]},
+}
+sanity_check_cases = [
+    ("RM ANOVA", "unique IDs", False),
+    ("Mixed ANOVA", "shared IDs", False),
+    ("RM ANOVA", "no ID in all groups", False),
+    ("RM ANOVA", "one ID in all groups", False),
+    ("RM ANOVA", "two IDs in all groups", True),
+    ("RM ANOVA", "shared IDs", True),
+    ("Mixed ANOVA", "unique IDs", True),
+]
+tests_to_run_cases = [
+    (True, False, "skipping ANOVA!"),
+    (False, True, "skipping permutation test!"),
+    (True, True, "skipping ANOVA & permutation test!"),
+]
+
+
+@pytest.mark.parametrize("anova_design, layout, IDs_match_design", sanity_check_cases)
+@pytest.mark.parametrize("do_anova, do_permtest, skip_string", tests_to_run_cases)
+def test_design_sanity_check_guards_both_tests(
+    anova_design,
+    layout,
+    IDs_match_design,
+    do_anova,
+    do_permtest,
+    skip_string,
+    tmp_path,
+):
+    """The design sanity check returns whether IDs match anova_design & its error
+    message names exactly the tests that are skipped because of a mismatch"""
+    stats_df = build_synthetic_stats_df(sanity_check_layouts[layout], bin_num=3)
+    folderinfo = {"results_dir": tmp_path}
+    cfg = {
+        "anova_design": anova_design,
+        "do_anova": do_anova,
+        "do_permtest": do_permtest,
+    }
+    assert anova_design_sanity_check(stats_df, folderinfo, cfg) is IDs_match_design
+    issues = read_issues_textfile(tmp_path)
+    if IDs_match_design:
+        assert "ERROR" not in issues
+        # the info about which IDs are included in the RM ANOVA only matters if we
+        # run an ANOVA
+        assert ("included in RM ANOVA" in issues) == (
+            do_anova and anova_design == "RM ANOVA"
+        )
+    else:
+        assert "ERROR" in issues
+        assert skip_string in issues
+
+
+# (IDs with missing data out of 10 IDs, do_anova, warning expected)
+missing_data_cases = [
+    (3, True, False),  # 30% is not more than the threshold
+    (4, True, True),
+    (4, False, False),  # no ANOVA, so its removal of IDs does not matter
+]
+
+
+@pytest.mark.parametrize("missing_data_num, do_anova, warn", missing_data_cases)
+def test_RM_ANOVA_warns_about_many_IDs_with_missing_data(
+    missing_data_num, do_anova, warn, tmp_path
+):
+    """RM ANOVA removes all IDs with missing groups, so users are warned about the
+    reduced power if more than 30% of IDs have missing data"""
+    all_IDs = list(range(1, 11))
+    complete_IDs = all_IDs[: len(all_IDs) - missing_data_num]
+    group_IDs = {"g1": all_IDs, "g2": complete_IDs}  # missing data only in g2
+    stats_df = build_synthetic_stats_df(group_IDs, bin_num=3)
+    folderinfo = {"results_dir": tmp_path}
+    cfg = {"anova_design": "RM ANOVA", "do_anova": do_anova, "do_permtest": True}
+    assert anova_design_sanity_check(stats_df, folderinfo, cfg) is True
+    issues = read_issues_textfile(tmp_path)
+    assert ("drastically reduced power" in issues) == warn
+    if warn:
+        assert f"{missing_data_num * 10}% of IDs ({missing_data_num} of 10)" in issues
 
 
 def test_Mixed_ANOVA(extract_cfg):
@@ -551,6 +812,42 @@ def build_permtest_results_df(contrast_data):
                 }
             )
     return pd.DataFrame(rows)
+
+
+def build_synthetic_stats_df(group_IDs, bin_num, values=None):
+    """Build a stats_df in create_stats_df's layout from a {group: [IDs]} dict
+    => groups' blocks are concatenated along rows & each ID x group block has bin_num
+       rows with an index running from 0 to bin_num - 1
+    => values maps (ID, group) to bin_num values of "Variable" (default: ID + bin)
+    """
+    percentages = bin_num_to_percentages(bin_num)
+    block_dfs = []
+    for group_name, IDs in group_IDs.items():
+        for ID in IDs:
+            if values is None:
+                this_blocks_values = ID + np.arange(bin_num, dtype=float)
+            else:
+                this_blocks_values = values[(ID, group_name)]
+            block_dfs.append(
+                pd.DataFrame(
+                    {
+                        ID_COL: ID,
+                        GROUP_COL: group_name,
+                        SC_PERCENTAGE_COL: percentages,
+                        "Variable": this_blocks_values,
+                    }
+                )
+            )
+    return pd.concat(block_dfs, axis=0)
+
+
+def read_issues_textfile(results_dir):
+    """Return the content of results_dir's Issues.txt (empty if there is none)"""
+    issues_path = os.path.join(results_dir, ISSUES_TXT_FILENAME)
+    if not os.path.exists(issues_path):
+        return ""
+    with open(issues_path, "r") as f:
+        return f.read()
 
 
 # %%..........................  cross species preparation  ............................

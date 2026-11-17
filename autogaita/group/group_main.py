@@ -9,8 +9,9 @@ from autogaita.group.group_2_data_processing import (
 from autogaita.group.group_3_PCA import PCA_main
 from autogaita.group.group_4_stats import (
     create_stats_df,
-    cluster_extent_test,
     anova_design_sanity_check,
+    prepare_within_subject_permtest,
+    cluster_extent_test,
     ANOVA_main,
 )
 from autogaita.group.group_5_plots import plot_results
@@ -39,8 +40,8 @@ def group(folderinfo, cfg):
     2) import the results folders and create dfs and raw_dfs (non-standardised) SC data
     3) compute average/std (ID-level) and grand-average/grand-std dataframes
     4) PCA
-    5) prepare stats: create stats_df
-    6) perform the cluster-extent permutation test
+    5) prepare stats: create stats_df & check that IDs match the design
+    6) perform the cluster-extent permutation test (design-specific permutations)
     7) perform the RM-/Mixed-ANOVA
     8) plots
     """
@@ -90,12 +91,22 @@ def group(folderinfo, cfg):
         # ............................  prepare statistics  ............................
         stats_df = create_stats_df(avg_dfs, folderinfo, cfg)
 
-        # ....................  cluster-extent permutation test  .......................
         if cfg["stats_variables"]:  # empty lists are falsey!
-            if cfg["do_permtest"]:
+            # ..........................  design sanity check  ........................
+            # => anova_design defines the design of both tests, so check it once here
+            if cfg["do_permtest"] or cfg["do_anova"]:
+                IDs_match_design = anova_design_sanity_check(stats_df, folderinfo, cfg)
+
+            # ...................  cluster-extent permutation test  ....................
+            # => skipped if IDs do not match the design (sanity check informs user)
+            if cfg["do_permtest"] and IDs_match_design is True:
+                if cfg["anova_design"] == "RM ANOVA":
+                    permtest_df = prepare_within_subject_permtest(stats_df, folderinfo)
+                else:
+                    permtest_df = stats_df
                 for stats_var in cfg["stats_variables"]:
                     cluster_extent_test(
-                        stats_df,
+                        permtest_df,
                         g_avg_dfs,
                         g_std_dfs,
                         stats_var,
@@ -107,7 +118,7 @@ def group(folderinfo, cfg):
 
             # ................................  ANOVA  .................................
             if cfg["do_anova"]:  # indentation since we check for stats-vars here too!
-                if anova_design_sanity_check(stats_df, folderinfo, cfg) is not True:
+                if IDs_match_design is not True:
                     just_do_tukeys = True
                     tukeys_only_info_message(folderinfo)
                 else:

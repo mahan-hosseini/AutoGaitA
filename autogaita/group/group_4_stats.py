@@ -29,6 +29,7 @@ from autogaita.group.group_constants import (
     CONTRASTS_COL,
     CONTRAST_SPLIT_STR,
     TTEST_MASK_THRESHOLD,  # STATS
+    RM_ANOVA_MISSING_DATA_WARNING_THRESHOLD,
     TTEST_P_COL,
     TTEST_T_COL,
     TTEST_MASK_COL,
@@ -78,6 +79,131 @@ def create_stats_df(avg_dfs, folderinfo, cfg):
     return stats_df
 
 
+def anova_design_sanity_check(stats_df, folderinfo, cfg):
+    """Sanity check the anova_design input of the user based on stats_df's IDs
+    => anova_design defines the design of both the ANOVA & the permutation test, so
+       this check guards both tests
+    Note
+    ----
+    This function also catches cases in which a user might have a 2-way design and just wants to run Tukeys (see below for 2-way #1 and #2)
+    """
+
+    # unpack
+    anova_design = cfg["anova_design"]
+
+    # name the tests that are skipped if this check fails
+    tests_to_skip = []
+    if cfg["do_anova"]:
+        tests_to_skip.append("ANOVA")
+    if cfg["do_permtest"]:
+        tests_to_skip.append("permutation test")
+    skip_string = "skipping " + " & ".join(tests_to_skip) + "!"
+
+    # get IDs for each group to check if they are unique
+    group_IDs = stats_df.groupby("Group")["ID"].unique()
+    ID_list = []
+    for this_groups_IDs in group_IDs:
+        for ID in this_groups_IDs:
+            ID_list.append(ID)
+    ID_list = [str(IDs) for IDs in ID_list]
+    unique_ID_list = list(set(ID_list))
+
+    # Mixed ANOVA - no duplicate IDs across groups!
+    if anova_design == "Mixed ANOVA":
+        if len(ID_list) == len(unique_ID_list):  # check passed
+            return True
+        else:  # 2-way #1 is caught here (non-unique IDs when Mixed)
+            mixed_anova_error_message = (
+                "\n*********\n! ERROR !\n*********\n"
+                + "\nANOVA design seems wrong - "
+                + skip_string
+                + "\nMixed ANOVA requires unique IDs across groups & we found "
+                + "duplicates!"
+                + "\n\nIDs were:\n"
+                + str(group_IDs)
+            )
+            print(mixed_anova_error_message)
+            write_issues_to_textfile(mixed_anova_error_message, folderinfo)
+            return False
+    # RM ANOVA - IDs in each group must be the same!
+    elif anova_design == "RM ANOVA":
+        if len(ID_list) != len(unique_ID_list):  # check passed
+            # Bonus - inform user about which IDs were valid (have data)
+            # ==> based on pingouin's approach of removing all IDs that do not have
+            #     data in all conditions (see https://pingouin-stats.org/build/
+            #     html/generated/pingouin.rm_anova.html under "Missing values...")
+            valid_IDs = []
+            group_number = len(group_IDs.index)
+            for ID in unique_ID_list:
+                ID_count = ID_list.count(ID)
+                if ID_count == group_number:
+                    valid_IDs.append(ID)
+            rm_anova_info_message = (
+                "\n********\n! INFO !\n********\n"
+                + "\nFollowing IDs with valid data in all conditions after first-level "
+                + "analyses will be included in RM ANOVA:\n\n"
+                + str(valid_IDs)
+            )
+            if len(valid_IDs) >= 2:
+                if cfg["do_anova"]:
+                    print(rm_anova_info_message)
+                    write_issues_to_textfile(rm_anova_info_message, folderinfo)
+                    # removing IDs with missing groups drastically reduces power if
+                    # this affects many IDs - inform user if so
+                    missing_data_IDs = sorted(
+                        ID for ID in unique_ID_list if ID not in valid_IDs
+                    )
+                    missing_data_fraction = len(missing_data_IDs) / len(unique_ID_list)
+                    if missing_data_fraction > RM_ANOVA_MISSING_DATA_WARNING_THRESHOLD:
+                        rm_anova_missing_data_warning = (
+                            "\n***********\n! WARNING !\n***********\n"
+                            + "\n"
+                            + f"{missing_data_fraction * 100:.0f}% of IDs "
+                            + f"({len(missing_data_IDs)} of {len(unique_ID_list)}) "
+                            + "have missing data in at least one group!"
+                            + "\nRM ANOVA removes all IDs with missing groups "
+                            + "completely, meaning drastically reduced power."
+                            + "\n\nIDs with missing data:\n"
+                            + str(missing_data_IDs)
+                            + "\n\nWe still compute Tukey's but interpret reults with caution."
+                        )
+                        print(rm_anova_missing_data_warning)
+                        write_issues_to_textfile(
+                            rm_anova_missing_data_warning, folderinfo
+                        )
+                return True
+            # less than 2 IDs in all groups - this also catches 2-way #2: a 2-way RM
+            # design in which IDs are not present in all groups
+            else:
+                rm_anova_too_few_valid_IDs_message = (
+                    "\n*********\n! ERROR !\n*********\n"
+                    + "\nANOVA design seems wrong - "
+                    + skip_string
+                    + "\nRM ANOVA requires at least two IDs to be present in all "
+                    + "groups & we found "
+                    + str(len(valid_IDs))
+                    + "!"
+                    + "\n\nIDs were:\n"
+                    + str(group_IDs)
+                )
+                print(rm_anova_too_few_valid_IDs_message)
+                write_issues_to_textfile(rm_anova_too_few_valid_IDs_message, folderinfo)
+                return False
+        else:
+            rm_anova_error_message = (
+                "\n*********\n! ERROR !\n*********\n"
+                + "\nANOVA design seems wrong - "
+                + skip_string
+                + "\nRM ANOVA requires IDs to be present in all groups & we found "
+                + "only unique IDs!"
+                + "\n\nIDs were:\n"
+                + str(group_IDs)
+            )
+            print(rm_anova_error_message)
+            write_issues_to_textfile(rm_anova_error_message, folderinfo)
+            return False
+
+
 # %% ...........  local functions #2 - cluster-extent permutation test  ................
 
 
@@ -98,7 +224,7 @@ def cluster_extent_test(
     trueobs_df = stats_df.copy()
     trueobs_results_df = initialise_results_df(folderinfo, cfg)
     trueobs_results_df = compute_first_level_results(
-        trueobs_df, trueobs_results_df, stats_var, folderinfo
+        trueobs_df, trueobs_results_df, stats_var, folderinfo, cfg
     )
     # permutation
     max_tmass = np.zeros(permutation_number)  # tmass
@@ -106,7 +232,7 @@ def cluster_extent_test(
         permuted_df = permute_true_observed_df(trueobs_df, cfg)
         permuted_results_df = initialise_results_df(folderinfo, cfg)
         permuted_results_df = compute_first_level_results(
-            permuted_df, permuted_results_df, stats_var, folderinfo
+            permuted_df, permuted_results_df, stats_var, folderinfo, cfg
         )
         # max tmass
         max_tmass[p] = max(permuted_results_df[CLUSTER_TMASS_COL])
@@ -163,12 +289,64 @@ def initialise_results_df(folderinfo, cfg):
     return results_df
 
 
-# ...............................  first-level  ........................................
-def compute_first_level_results(stats_df, results_df, stats_var, folderinfo):
-    """Compute the results of our first level, i.e., mass ttests"""
+def prepare_within_subject_permtest(stats_df, folderinfo):
+    """Prepare stats_df for a within-subject (RM) permutation test
+
+    1) Drop IDs with data in only one group - these cannot be swapped between groups &
+       have no pair in any contrast
+    2) Warn about contrasts with less than 2 IDs shared by both groups - paired ttests
+       cannot be computed for these, so they can never have significant clusters
+    """
 
     # unpack
     contrasts = folderinfo["contrasts"]
+
+    # 1) drop IDs with data in only one group
+    groups_per_ID = stats_df.groupby(ID_COL)[GROUP_COL].nunique()
+    single_group_IDs = list(groups_per_ID[groups_per_ID < 2].index)
+    if single_group_IDs:
+        single_group_IDs_message = (
+            "\n********\n! INFO !\n********\n"
+            + "\nFollowing IDs only have data in one group and are excluded from the "
+            + "within-subject permutation test:\n\n"
+            + ", ".join(str(ID) for ID in single_group_IDs)
+        )
+        print(single_group_IDs_message)
+        write_issues_to_textfile(single_group_IDs_message, folderinfo)
+    permtest_df = stats_df[~stats_df[ID_COL].isin(single_group_IDs)]
+
+    # 2) warn about contrasts without enough pairs
+    for contrast in contrasts:
+        group1, group2 = contrast.split(CONTRAST_SPLIT_STR)
+        group1_IDs = set(permtest_df.loc[permtest_df[GROUP_COL] == group1, ID_COL])
+        group2_IDs = set(permtest_df.loc[permtest_df[GROUP_COL] == group2, ID_COL])
+        shared_IDs = group1_IDs & group2_IDs
+        if len(shared_IDs) < 2:
+            unpaired_contrast_message = (
+                "\n***********\n! WARNING !\n***********\n"
+                + "\nContrast '"
+                + contrast
+                + "' has less than 2 IDs with data in both groups. Paired t-tests "
+                + "cannot be computed, so the permutation test cannot find significant "
+                + "clusters for this contrast."
+                + "\n\nShared IDs were: "
+                + (", ".join(str(ID) for ID in sorted(shared_IDs, key=str)) or "none")
+            )
+            print(unpaired_contrast_message)
+            write_issues_to_textfile(unpaired_contrast_message, folderinfo)
+    return permtest_df
+
+
+# ...............................  first-level  ........................................
+def compute_first_level_results(stats_df, results_df, stats_var, folderinfo, cfg):
+    """Compute the results of our first level, i.e., mass ttests
+    => paired ttests for within-subject (RM) designs since each ID's curves of two
+       groups are dependent - independent ttests for between-subject (Mixed) designs
+    """
+
+    # unpack
+    contrasts = folderinfo["contrasts"]
+    paired = cfg["anova_design"] == "RM ANOVA"
 
     # populate true observed results df
     idx = 0
@@ -186,6 +364,7 @@ def compute_first_level_results(stats_df, results_df, stats_var, folderinfo):
                 group2,
                 sc_percentage,
                 idx,
+                paired,
             )
             # update idx for assigning sc_perc in next iter correctly (function input)
             idx += 1
@@ -195,16 +374,36 @@ def compute_first_level_results(stats_df, results_df, stats_var, folderinfo):
 
 
 def run_and_assign_ttest(
-    stats_df, results_df, stats_var, contrast, group1, group2, sc_percentage, idx
+    stats_df,
+    results_df,
+    stats_var,
+    contrast,
+    group1,
+    group2,
+    sc_percentage,
+    idx,
+    paired,
 ):
     """Run ttest for a given pair of groups & a given percentage of the step cycle."""
     # get location of current SC Percentage
     sc_percentage_col_idx = results_df.columns.get_loc(SC_PERCENTAGE_COL)
     results_df.iloc[idx, sc_percentage_col_idx] = sc_percentage
     # extract the two arrays to be tested, test & get its results
-    arr1 = extract_variable_array(stats_df, stats_var, group1, sc_percentage)
-    arr2 = extract_variable_array(stats_df, stats_var, group2, sc_percentage)
-    this_t, this_p = stats.ttest_ind(arr1, arr2)
+    if paired:
+        arr1, arr2 = extract_paired_variable_arrays(
+            stats_df, stats_var, group1, group2, sc_percentage
+        )
+        # a paired ttest is undefined for less than 2 pairs - keep the initialised
+        # t = 0 & p = 1 of results_df so this bin can never be significant
+        # => pairs are the same in all permutations (IDs keep their groups), so this
+        #    holds for the true observed & all permuted dfs alike
+        if len(arr1) < 2:
+            return results_df
+        this_t, this_p = stats.ttest_rel(arr1, arr2)
+    else:
+        arr1 = extract_variable_array(stats_df, stats_var, group1, sc_percentage)
+        arr2 = extract_variable_array(stats_df, stats_var, group2, sc_percentage)
+        this_t, this_p = stats.ttest_ind(arr1, arr2)
     # assign the t & p-value and assign significance mask to mask-column
     # ==> this_result_rowidx_mask is all False & one True, with the True being current
     #     contrast & SC Percentage
@@ -286,20 +485,67 @@ def extract_variable_array(df, stats_var, group_name, sc_percentage):
     return np.asarray(result)
 
 
+def extract_paired_variable_arrays(df, stats_var, group1, group2, sc_percentage):
+    """Extract the two arrays of a paired ttest, aligned by ID.
+    => only IDs with data in both groups are included (pairwise deletion per contrast)
+    """
+    sc_mask = df[SC_PERCENTAGE_COL] == sc_percentage
+    group1_values = df.loc[sc_mask & (df[GROUP_COL] == group1)].set_index(ID_COL)[
+        stats_var
+    ]
+    group2_values = df.loc[sc_mask & (df[GROUP_COL] == group2)].set_index(ID_COL)[
+        stats_var
+    ]
+    shared_IDs = group1_values.index.intersection(group2_values.index)
+    arr1 = np.asarray(group1_values.loc[shared_IDs])
+    arr2 = np.asarray(group2_values.loc[shared_IDs])
+    return arr1, arr2
+
+
 # .........................  shuffle (permute) the true observed  ......................
 def permute_true_observed_df(trueobs_df, cfg):
-    """Shuffle groups of true observed and return permuted_df which is identical to
-    trueobs_df except of GROUP_COL
+    """Permute the group labels of true observed and return permuted_df which is
+    identical to trueobs_df except of GROUP_COL
+
+    Note
+    ----
+    A permutation may only produce datasets that are as likely as the true observed
+    one under the null hypothesis. Which labels are exchangeable depends on the design:
+    => Between-subject (Mixed): each ID belongs to one group, so under H0 group labels
+       are exchangeable across IDs - we shuffle labels across all IDs
+    => Within-subject (RM): each ID contributes one curve per group, so under H0 only
+       the labels of an ID's own curves are exchangeable (IDs differ from each other
+       for reasons unrelated to group) - we swap labels within each ID
+    In both cases, labels are permuted per ID x group block (i.e., per full average
+    step cycle) so the dependence across SC Percentages is preserved
     """
     # unpack
     bin_num = cfg["bin_num"]
+    anova_design = cfg["anova_design"]
 
-    real_group_labels = list(trueobs_df.loc[0, GROUP_COL])
-    permuted_group_labels = shuffle(real_group_labels)
+    # one row per ID x group block (each block's index runs from 0 to bin_num - 1)
+    block_df = trueobs_df.loc[0, [ID_COL, GROUP_COL]].reset_index(drop=True)
+    if anova_design == "RM ANOVA":
+        permuted_group_labels = swap_conditions_within_IDs(block_df)
+    else:
+        permuted_group_labels = shuffle(list(block_df[GROUP_COL]))
     permuted_group_labels = np.repeat(permuted_group_labels, bin_num)
     permuted_df = trueobs_df.copy(deep=True)  # make sure to use copy here (not df=df)!!
     permuted_df.loc[:, GROUP_COL] = permuted_group_labels
     return permuted_df
+
+
+def swap_conditions_within_IDs(block_df):
+    """Shuffle the group labels of each ID among that ID's own blocks.
+    => an ID missing some groups is shuffled among the groups it has data in
+    """
+    permuted_group_labels = block_df[GROUP_COL].to_numpy(copy=True)
+    for ID in pd.unique(block_df[ID_COL]):
+        this_IDs_idxs = np.where(block_df[ID_COL] == ID)[0]
+        permuted_group_labels[this_IDs_idxs] = shuffle(
+            permuted_group_labels[this_IDs_idxs]
+        )
+    return permuted_group_labels
 
 
 # ................................  second-level test  .................................
@@ -453,81 +699,6 @@ def extract_all_clusters(trueobs_results_df, contrast):
 
 
 # %% ...................  local functions #3 - RM/Mixed-ANOVA  .........................
-
-
-# ...............................  sanity check . ......................................
-def anova_design_sanity_check(stats_df, folderinfo, cfg):
-    """Sanity check the anova_design input of the user based on stats_df's IDs
-    Note
-    ----
-    This function also catches cases in which a user might have a 2-way design and just wants to run Tukeys (see below for 2-way #1 and #2)
-    """
-
-    # unpack
-    anova_design = cfg["anova_design"]
-
-    # get IDs for each group to check if they are unique
-    group_IDs = stats_df.groupby("Group")["ID"].unique()
-    ID_list = []
-    for this_groups_IDs in group_IDs:
-        for ID in this_groups_IDs:
-            ID_list.append(ID)
-    ID_list = [str(IDs) for IDs in ID_list]
-    unique_ID_list = list(set(ID_list))
-
-    # Mixed ANOVA - no duplicate IDs across groups!
-    if anova_design == "Mixed ANOVA":
-        if len(ID_list) == len(unique_ID_list):  # check passed
-            return True
-        else:  # 2-way #1 is caught here (non-unique IDs when Mixed)
-            mixed_anova_error_message = (
-                "\n*********\n! ERROR !\n*********\n"
-                + "\nANOVA design seems wrong - skipping ANOVA!"
-                + "\nMixed ANOVA requires unique IDs across groups & we found "
-                + "duplicates!"
-                + "\n\nIDs were:\n"
-                + str(group_IDs)
-            )
-            print(mixed_anova_error_message)
-            write_issues_to_textfile(mixed_anova_error_message, folderinfo)
-            return False
-    # RM ANOVA - IDs in each group must be the same!
-    elif anova_design == "RM ANOVA":
-        if len(ID_list) != len(unique_ID_list):  # check passed
-            # Bonus - inform user about which IDs were valid (have data)
-            # ==> based on pingouin's approach of removing all IDs that do not have
-            #     data in all conditions (see https://pingouin-stats.org/build/
-            #     html/generated/pingouin.rm_anova.html under "Missing values...")
-            valid_IDs = []
-            group_number = len(group_IDs.index)
-            for ID in unique_ID_list:
-                ID_count = ID_list.count(ID)
-                if ID_count == group_number:
-                    valid_IDs.append(ID)
-            rm_anova_info_message = (
-                "\n********\n! INFO !\n********\n"
-                + "\nFollowing IDs with valid data in all conditions after first-level "
-                + "analyses will be included in RM ANOVA:\n\n"
-                + str(valid_IDs)
-            )
-            if valid_IDs:
-                print(rm_anova_info_message)
-                write_issues_to_textfile(rm_anova_info_message, folderinfo)
-                return True
-            else:  # 2-way #2 here: not all IDs in all groups in a RM design
-                return False
-        else:
-            rm_anova_error_message = (
-                "\n*********\n! ERROR !\n*********\n"
-                + "\nANOVA design seems wrong - skipping ANOVA!"
-                + "\nRM ANOVA requires IDs to be present in all groups & we found "
-                + "only unique IDs!"
-                + "\n\nIDs were:\n"
-                + str(group_IDs)
-            )
-            print(rm_anova_error_message)
-            write_issues_to_textfile(rm_anova_error_message, folderinfo)
-            return False
 
 
 # ...............................  main function  ......................................
