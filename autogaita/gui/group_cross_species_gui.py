@@ -20,8 +20,7 @@ CFG_KEY = "cross_species_columns"  # key of the species dict in group_gui_config
 DEFAULT_SPECIES_NUM = 2
 DEFAULT_JOINT_NUM = 3
 INFO_STRING = (
-    "Name each species and list its joints. Joint1 must be the most distal joint (e.g. "
-    + "the paw), Joint2 the next one up, and so on. All species need the same number "
+    "Name each species and list its joints. All species need the same number "
     + "of joints. For Universal 3D, enter joint names without the body side (e.g. "
     + " 'Midfoot', not 'Midfoot, left').\n\n"
     + "Rename Columns identifies each group's species, renames its joints (and the "
@@ -165,7 +164,6 @@ def build_table(table_frame, rows, widget_cfg):
     headers = ["Species"] + [
         CROSS_SPECIES_JOINT_PREFIX + str(j + 1) for j in range(joint_num)
     ]
-    headers[1] += " (most distal)"
     for column, header in enumerate(headers):
         ctk.CTkLabel(table_frame, text=header, font=font).grid(
             row=0, column=column, padx=5, pady=5
