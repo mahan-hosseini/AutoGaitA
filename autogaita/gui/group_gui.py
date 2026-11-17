@@ -358,6 +358,13 @@ def build_mainwindow(root, group_number, root_dimensions):
         empty_label_two.grid(
             row=last_group_row + 5, column=0, columnspan=3, sticky="nsew"
         )
+        # statistics header
+        stats_header_label = gaita_widgets.header_label(
+            mainwindow, "Statistics", WIDGET_CFG
+        )
+        stats_header_label.grid(
+            row=last_group_row + 6, column=0, columnspan=3, sticky="nsew"
+        )
         # Perm Test
         perm_checkbox = gaita_widgets.checkbox(
             mainwindow,
@@ -365,7 +372,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             cfg["do_permtest"],
             WIDGET_CFG,
         )
-        perm_checkbox.grid(row=last_group_row + 6, column=0, columnspan=3, pady=10)
+        perm_checkbox.grid(row=last_group_row + 7, column=0, columnspan=3, pady=10)
         # ANOVA info
         ANOVA_checkbox = gaita_widgets.checkbox(
             mainwindow,
@@ -376,14 +383,14 @@ def build_mainwindow(root, group_number, root_dimensions):
         ANOVA_checkbox.configure(
             command=lambda: change_ANOVA_buttons_state(ANOVA_buttons),
         )  # dont use gui_utils here because its a bit special
-        ANOVA_checkbox.grid(row=last_group_row + 7, column=0, columnspan=3, pady=10)
-        # analysis design - used by both the permutation test & the ANOVA
-        design_label = ctk.CTkLabel(
-            mainwindow,
-            text="Analysis Design",
-            font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
+        ANOVA_checkbox.grid(row=last_group_row + 8, column=0, columnspan=3, pady=10)
+        # analysis design header - design is used by both the permutation test & ANOVA
+        design_header_label = gaita_widgets.header_label(
+            mainwindow, "Analysis Design", WIDGET_CFG
         )
-        design_label.grid(row=last_group_row + 8, column=0, columnspan=3)
+        design_header_label.grid(
+            row=last_group_row + 9, column=0, columnspan=3, sticky="nsew"
+        )
         ANOVA_string_and_var_value = [
             ["Within-subjects (e.g. pre- & post-treatment)", "RM ANOVA"],
             ["Between-subjects (e.g. age)", "Mixed ANOVA"],
@@ -398,12 +405,12 @@ def build_mainwindow(root, group_number, root_dimensions):
                     value=ANOVA_string_and_var_value[i][1],
                     fg_color=FG_COLOR,
                     hover_color=HOVER_COLOR,
-                    font=(TEXT_FONT_NAME, ADV_CFG_TEXT_FONT_SIZE),
+                    font=(TEXT_FONT_NAME, TEXT_FONT_SIZE),
                 )
             )
             if cfg["do_anova"].get() is True:
                 ANOVA_buttons[i].configure(state="normal")
-            ANOVA_buttons[-1].grid(row=last_group_row + 9 + i, column=0, columnspan=3)
+            ANOVA_buttons[-1].grid(row=last_group_row + 10 + i, column=0, columnspan=3)
         # both checkboxes toggle the design buttons' state
         perm_checkbox.configure(
             command=lambda: change_ANOVA_buttons_state(ANOVA_buttons),
@@ -415,7 +422,7 @@ def build_mainwindow(root, group_number, root_dimensions):
         # empty label 3 for spacing
         empty_label_three = ctk.CTkLabel(mainwindow, text="")
         empty_label_three.grid(
-            row=last_group_row + 11, column=0, columnspan=3, sticky="nsew"
+            row=last_group_row + 12, column=0, columnspan=3, sticky="nsew"
         )
 
         # advanced cfg
@@ -426,7 +433,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             command=lambda: (advanced_cfgwindow(mainwindow)),
         )
         cfgwindow_button.grid(
-            row=last_group_row + 12,
+            row=last_group_row + 13,
             column=0,
             columnspan=3,
         )
@@ -446,7 +453,7 @@ def build_mainwindow(root, group_number, root_dimensions):
             ),
         )
         cross_species_button.grid(
-            row=last_group_row + 13,
+            row=last_group_row + 14,
             column=0,
             columnspan=3,
         )
@@ -468,12 +475,12 @@ def build_mainwindow(root, group_number, root_dimensions):
                 ),
             ),
         )
-        definefeatures_button.grid(row=last_group_row + 14, column=0, columnspan=3)
+        definefeatures_button.grid(row=last_group_row + 15, column=0, columnspan=3)
 
         # empty label four for spacing
         empty_label_four = ctk.CTkLabel(mainwindow, text="")
         empty_label_four.grid(
-            row=last_group_row + 15, column=1, columnspan=3, sticky="ns"
+            row=last_group_row + 16, column=1, columnspan=3, sticky="ns"
         )
 
         # exit button
@@ -485,7 +492,7 @@ def build_mainwindow(root, group_number, root_dimensions):
                 mainwindow.after(5000, mainwindow.destroy),
             ),
         )
-        exit_button.grid(row=last_group_row + 16, column=0, columnspan=3)
+        exit_button.grid(row=last_group_row + 17, column=0, columnspan=3)
 
         # maximise widgets to fit fullscreen
         maximise_widgets(mainwindow)
