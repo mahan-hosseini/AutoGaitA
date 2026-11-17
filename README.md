@@ -108,6 +108,9 @@ Step cycles are normalised via averaging temporally adjacent data points if thei
 # 2D Kinematics in AutoGaitA Universal 3D
 **We strongly advise** AutoGaitA Universal 3D users to carefully consider how our toolbox computes kinematics in 2D, i.e., angles along the y/z-plane and velocities along the y-dimensions. For more information, please see the corresponding **[important note on 2D kinematics in our documentation](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.xc5ome7hzfid)**.
 
+# Comparing species - Cross Species Preparation 🪰🐭🧍
+AutoGaitA Group can only compare groups if the kinematic features to be analysed with PCA & statistics are present in all datasets with matching column names, which is rarely the case across species (e.g. *Midfoot*, *Hind paw* and *Tarsus* in humans, mice and flies). The **Cross Species Preparation** window of AutoGaitA Group renames species-specific joints to shared names (*Joint1*, *Joint2*, ...) automatically. For details, see **[Cross Species Preparation in our documentation](https://docs.google.com/document/d/1iQxSwqBW3VdIXHm-AtV4TGlgpJPDldogVx6qzscsGxA/edit?tab=t.0#heading=h.q517qnz8v0jy)**.
+
 # Analysing other behaviours - AutoCyclA 🚴
 Even though AutoGaitA's main focus is to automate and standardise gait analyses, our toolbox can be used to automate the analyses of any rhythmic behaviour of interest. For a proof-of-principle demonstration and an introduction of the general workflow of such analyses, see **[AutoCyclA - Automated Cycling Analysis with AutoGaitA.](https://github.com/mahan-hosseini/AutoGaitA/tree/main/autocycla)**
 
